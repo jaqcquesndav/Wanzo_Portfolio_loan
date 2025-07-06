@@ -1,0 +1,10 @@
+src/components/dashboard/DashboardAlerts.tsx
+src/components/dashboard/RecentOperations.tsx
+src/components/dashboard/RiskMetrics.tsx
+src/components/dashboard/PortfolioOverview.tsx
+src/components/dashboard/PortfolioDistribution.tsx
+src/components/dashboard/PerformanceChart.tsx
+src/components/dashboard/DashboardMetrics.tsx
+src/components/dashboard/MarketAnalysis.tsx
+src/components/dashboard/DashboardPortfolioSelector.tsx
+src/components/dashboard/RiskAnalysis.tsx
