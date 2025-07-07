@@ -88,9 +88,20 @@ export interface TraditionalPortfolio extends BasePortfolio {
 }
 
 import type { LeasingTransaction } from '../types/leasing-transaction';
+// Harmonisation avec le type métier (src/types/leasing.ts)
 export interface LeasingPortfolio extends BasePortfolio {
   type: 'leasing';
-  equipments: LeasingEquipment[];
+  equipment_catalog: import('../types/leasing').Equipment[];
+  leasing_terms?: {
+    min_duration: number;
+    max_duration: number;
+    interest_rate_range: {
+      min: number;
+      max: number;
+    };
+    maintenance_included: boolean;
+    insurance_required: boolean;
+  };
   transactions?: LeasingTransaction[];
   // ...autres champs spécifiques
 }

@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, Filter } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { EquipmentForm } from '../components/portfolio/leasing/EquipmentForm';
-import { EquipmentCard } from '../components/portfolio/leasing/EquipmentCard';
+// import { EquipmentCard } from '../components/portfolio/leasing/EquipmentCard';
 import { EquipmentFilters } from '../components/portfolio/leasing/EquipmentFilters';
 import { useLeasingPortfolio } from '../hooks/useLeasingPortfolio';
 import { useNotification } from '../contexts/NotificationContext';
@@ -15,7 +15,7 @@ export default function LeasingPortfolioDetails() {
   const { id, portfolioType = 'leasing' } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const { portfolio, loading, addEquipment, updateEquipment, removeEquipment } = useLeasingPortfolio(id!);
+  const { portfolio, loading, addOrUpdate } = useLeasingPortfolio(id!);
   const [showEquipmentForm, setShowEquipmentForm] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -52,10 +52,17 @@ export default function LeasingPortfolioDetails() {
   }
 
 
-  // Accept EquipmentFormData & { images: string[] } to match EquipmentForm
+  // Ajout, édition, suppression d'équipement via addOrUpdate (type safe)
   const handleCreateEquipment = async (data: EquipmentFormData & { images: string[] }) => {
+    if (!portfolio || portfolio.type !== 'leasing') return;
     try {
-      await addEquipment({ ...data, imageUrl: data.images[0] });
+      const newEquipment = {
+        ...data,
+        imageUrl: data.images[0],
+        id: crypto.randomUUID(),
+        specifications: data.specifications ?? {},
+      };
+      await addOrUpdate({ equipment_catalog: [...portfolio.equipment_catalog, newEquipment] });
       showNotification('Équipement ajouté avec succès', 'success');
       setShowEquipmentForm(false);
     } catch {
@@ -63,12 +70,17 @@ export default function LeasingPortfolioDetails() {
     }
   };
 
-
-  // Accept EquipmentFormData & { images: string[] } for update as well
   const handleUpdateEquipment = async (data: EquipmentFormData & { images: string[] }) => {
+    if (!portfolio || portfolio.type !== 'leasing' || !selectedEquipment) return;
     try {
-      if (!selectedEquipment) return;
-      await updateEquipment({ ...selectedEquipment, ...data, imageUrl: data.images[0] });
+      const updated = {
+        ...selectedEquipment,
+        ...data,
+        imageUrl: data.images[0],
+        specifications: data.specifications ?? selectedEquipment.specifications ?? {},
+      };
+      const updatedList = portfolio.equipment_catalog.map(eq => eq.id === updated.id ? updated : eq);
+      await addOrUpdate({ equipment_catalog: updatedList });
       showNotification('Équipement mis à jour avec succès', 'success');
       setSelectedEquipment(null);
     } catch {
@@ -77,9 +89,11 @@ export default function LeasingPortfolioDetails() {
   };
 
   const handleDeleteEquipment = async (equipmentId: string) => {
+    if (!portfolio || portfolio.type !== 'leasing') return;
     if (confirm('Êtes-vous sûr de vouloir supprimer cet équipement ?')) {
       try {
-        await removeEquipment(equipmentId);
+        const updatedList = portfolio.equipment_catalog.filter(eq => eq.id !== equipmentId);
+        await addOrUpdate({ equipment_catalog: updatedList });
         showNotification('Équipement supprimé avec succès', 'success');
       } catch {
         showNotification('Erreur lors de la suppression de l\'équipement', 'error');
@@ -118,7 +132,10 @@ export default function LeasingPortfolioDetails() {
            matchesAvailability && matchesManufacturer && matchesPriceRange;
   };
 
-  const filteredEquipment = portfolio.equipment_catalog.filter(filterEquipment);
+  // Type guard pour accéder à equipment_catalog
+  const filteredEquipment = (portfolio && portfolio.type === 'leasing' && Array.isArray(portfolio.equipment_catalog))
+    ? portfolio.equipment_catalog.filter((equipment: Equipment) => filterEquipment(equipment))
+    : [];
 
   return (
     <div className="space-y-6 flex flex-col items-center justify-start">
@@ -173,25 +190,48 @@ export default function LeasingPortfolioDetails() {
         />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredEquipment.map(equipment => (
-          <EquipmentCard
-            key={equipment.id}
-            equipment={equipment}
-            onView={() => setSelectedEquipment(equipment)}
-            onEdit={() => setSelectedEquipment(equipment)}
-            onDelete={() => handleDeleteEquipment(equipment.id)}
-          />
-        ))}
+      <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700 w-full">
+        <table className="min-w-full bg-white dark:bg-gray-800">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+              <th className="px-4 py-2 text-left">Nom</th>
+              <th className="px-4 py-2 text-left">Catégorie</th>
+              <th className="px-4 py-2 text-left">Fabricant</th>
+              <th className="px-4 py-2 text-left">Modèle</th>
+              <th className="px-4 py-2 text-left">Année</th>
+              <th className="px-4 py-2 text-left">Prix</th>
+              <th className="px-4 py-2 text-left">État</th>
+              <th className="px-4 py-2 text-left">Disponibilité</th>
+              <th className="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredEquipment.length > 0 ? (
+              filteredEquipment.map((equipment: Equipment) => (
+                <tr key={equipment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  <td className="px-4 py-2">{equipment.name}</td>
+                  <td className="px-4 py-2">{equipment.category}</td>
+                  <td className="px-4 py-2">{equipment.manufacturer}</td>
+                  <td className="px-4 py-2">{equipment.model}</td>
+                  <td className="px-4 py-2">{equipment.year}</td>
+                  <td className="px-4 py-2">{equipment.price}</td>
+                  <td className="px-4 py-2">{equipment.condition}</td>
+                  <td className="px-4 py-2">{equipment.availability ? 'Oui' : 'Non'}</td>
+                  <td className="px-4 py-2">
+                    <Button size="sm" variant="outline" onClick={() => setSelectedEquipment(equipment)}>Voir</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedEquipment(equipment)}>Éditer</Button>
+                    <Button size="sm" variant="danger" onClick={() => handleDeleteEquipment(equipment.id)}>Supprimer</Button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={9} className="text-center py-8 text-gray-400">Aucun équipement à afficher</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-
-      {filteredEquipment.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
-          <p className="text-gray-500 dark:text-gray-400">
-            Aucun équipement ne correspond à vos critères
-          </p>
-        </div>
-      )}
 
       {/* Modal d'ajout/modification d'équipement */}
       {(showEquipmentForm || selectedEquipment) && (

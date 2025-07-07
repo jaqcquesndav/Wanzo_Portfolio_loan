@@ -48,17 +48,18 @@ export function useLeasingPortfolios() {
   }, [portfolios, filters]);
 
   const createPortfolio = async (
-    data: Omit<LeasingPortfolio, 'id' | 'type' | 'status' | 'equipments' | 'created_at' | 'updated_at'>
+    data: Omit<LeasingPortfolio, 'id' | 'type' | 'status' | 'equipment_catalog' | 'created_at' | 'updated_at'>
   ): Promise<LeasingPortfolio> => {
     const newPortfolio: LeasingPortfolio = {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
       type: 'leasing',
       status: 'active',
-      equipments: [],
+      equipment_catalog: [], // Toujours initialisé
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+    // Ajout d'equipment_catalog vide si non présent (plus besoin, typé)
     await indexedDbPortfolioService.addOrUpdatePortfolio(newPortfolio);
     setPortfolios(prev => [...prev, newPortfolio]);
     return newPortfolio;

@@ -15,15 +15,11 @@ const demoUser = {
   role: 'user',
   email: 'demo@user.com',
 };
-const demoInstitution = {
-  id: 'demo-inst',
-  name: 'Institution Démo',
-};
 
 export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
   // Replace with real user/institution from Auth0 or context
   const user = demoUser;
-  const institution = demoInstitution;
+  // const institution = demoInstitution; // Remove institution from sidebar
   const { portfolioType } = useParams();
   const { portfolioType: contextPortfolioType, currentPortfolioId } = usePortfolioContext();
 
@@ -44,13 +40,8 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
             <BarChart2 className="h-8 w-8 text-white" />
             <div className="ml-2">
               <h1 className="text-lg font-semibold text-white">
-                FinanceFlow
+                Wanzo
               </h1>
-              {institution && (
-                <p className="text-sm text-primary-light">
-                  {institution.name}
-                </p>
-              )}
             </div>
           </div>
           {onClose && (

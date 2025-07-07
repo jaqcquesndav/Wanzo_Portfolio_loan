@@ -83,6 +83,13 @@ export function SidebarPortfolios() {
           taux_couverture: 0,
           taux_impayes: 0,
         },
+        leasing_terms: {
+          min_duration: 12,
+          max_duration: 60,
+          interest_rate_range: { min: 3, max: 8 },
+          maintenance_included: false,
+          insurance_required: false,
+        },
       });
     } else if (portfolioType === 'investment' && investment.createPortfolio) {
       const investmentData = data as DefaultPortfolioFormData;

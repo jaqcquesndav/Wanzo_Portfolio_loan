@@ -11,7 +11,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     target_sectors: ['Industrie', 'BTP', 'Transport'],
     risk_profile: 'moderate',
     products: [],
-    equipments: [],
+    equipment_catalog: [],
     metrics: {
       net_value: 680000000,
       average_return: 12.8,

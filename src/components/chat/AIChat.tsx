@@ -21,7 +21,7 @@ export function AIChat({ onClose }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Bonjour ! Je suis votre assistant FinanceFlow. Comment puis-je vous aider ?',
+      content: 'Bonjour ! Je suis votre assistant Wanzo. Comment puis-je vous aider ?',
       sender: 'assistant',
       timestamp: new Date().toISOString()
     }
@@ -99,7 +99,7 @@ export function AIChat({ onClose }: AIChatProps) {
         className="flex items-center justify-between p-4 border-b dark:border-gray-700 cursor-grab"
       >
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          Assistant FinanceFlow
+          Assistant Wanzo
         </h3>
         <div className="flex items-center space-x-2">
           <Button

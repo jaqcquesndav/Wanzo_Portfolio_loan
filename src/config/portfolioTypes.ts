@@ -32,13 +32,13 @@ export const portfolioTypeConfig = {
   leasing: {
     label: 'Portefeuille de leasing',
     tabs: [
-      { key: 'equipments', label: 'Équip.', component: null },
+      { key: 'equipments', label: 'Équipements', component: null },
       { key: 'contracts', label: 'Contrats', component: null },
       { key: 'incidents', label: 'Incidents', component: null },
-      { key: 'maintenance', label: 'Maint.', component: null },
-      { key: 'payments', label: 'Paiem.', component: null },
+      { key: 'maintenance', label: 'Maintenance', component: null },
+      { key: 'payments', label: 'Paiements', component: null },
       { key: 'reporting', label: 'Reporting', component: null },
-      { key: 'settings', label: 'Param.', component: null },
+      { key: 'settings', label: 'Paramètres', component: null },
     ],
     mockData: {
       equipments: 'mockEquipments',

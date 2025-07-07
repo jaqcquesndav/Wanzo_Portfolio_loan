@@ -39,10 +39,11 @@ export function useInvestmentPortfolios() {
       id: Math.random().toString(36).substr(2, 9),
       type: 'investment',
       status: 'active',
-      assets: [],
+      assets: [], // Toujours initialisé
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+    // assets est toujours présent (typé)
     await indexedDbPortfolioService.addOrUpdatePortfolio(newPortfolio);
     setPortfolios(prev => [...prev, newPortfolio]);
     return newPortfolio;

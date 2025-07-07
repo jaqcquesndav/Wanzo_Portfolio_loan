@@ -313,9 +313,24 @@ export default function InvestmentPortfolioDetails() {
           </div>
         )}
       </TabsContent>
-      {/* Onglet Valorisation (à implémenter) */}
+      {/* Onglet Valorisation (toujours entêtes visibles) */}
       <TabsContent value="valuations" currentValue={tab}>
-        <div className="text-center py-8 text-gray-400">Aucune valorisation à afficher (à implémenter)</div>
+        <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <table className="min-w-full bg-white dark:bg-gray-800">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                <th className="px-4 py-2 text-left">Date</th>
+                <th className="px-4 py-2 text-left">Valeur</th>
+                <th className="px-4 py-2 text-left">Commentaire</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan={3} className="text-center py-8 text-gray-400">Aucune valorisation à afficher</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </TabsContent>
       {/* Onglet Reporting (tableau des reportings) */}
       <TabsContent value="reporting" currentValue={tab}>
@@ -325,9 +340,23 @@ export default function InvestmentPortfolioDetails() {
           onView={entityId => navigate(`/app/portfolio/${id}/company-reports/${entityId}`)}
         />
       </TabsContent>
-      {/* Onglet Paramètres */}
+      {/* Onglet Paramètres (toujours entêtes visibles) */}
       <TabsContent value="settings" currentValue={tab}>
-        <div className="text-center py-8 text-gray-400">Paramètres du portefeuille (à implémenter)</div>
+        <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <table className="min-w-full bg-white dark:bg-gray-800">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                <th className="px-4 py-2 text-left">Clé</th>
+                <th className="px-4 py-2 text-left">Valeur</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan={2} className="text-center py-8 text-gray-400">Aucun paramètre à afficher</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </TabsContent>
       </Tabs>
 

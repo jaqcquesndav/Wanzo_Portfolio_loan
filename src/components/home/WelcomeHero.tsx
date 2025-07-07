@@ -1,19 +1,17 @@
-import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { usePortfolioType } from '../../hooks/usePortfolioType';
 import { Button } from '../ui/Button';
 import { ArrowRight } from 'lucide-react';
 
 export function WelcomeHero() {
-  const { user } = useAuth();
-
+  const portfolioType = usePortfolioType();
   return (
     <div className="relative bg-gradient-to-r from-primary to-primary-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white sm:text-5xl md:text-6xl">
-            <span className="block">Bienvenue sur FinanceFlow</span>
+            <span className="block">Bienvenue sur Wanzo</span>
             <span className="block text-primary-light mt-2 text-2xl">
-              Votre plateforme de gestion de portefeuille
+              {portfolioType ? `Votre plateforme ${portfolioType}` : 'Votre plateforme de gestion de portefeuille'}
             </span>
           </h1>
           <p className="mt-3 max-w-md mx-auto text-base text-white sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
