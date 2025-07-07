@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, TrendingUp, TrendingDown, Minus, MoreVertical } from 'lucide-react';
 import { Button, Badge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui';
@@ -8,27 +8,56 @@ import { PerformanceComparisonScroller } from './PerformanceComparisonScroller';
 import { formatCurrency } from '../../utils/formatters';
 import type { Company } from '../../types/company';
 import type { Portfolio } from '../../types/portfolio';
-import { mockCompanies } from '../../data/mockCompanies';
-import { mockPortfolios } from '../../data/mockPortfolios';
+// Utiliser les entreprises partagées pour toutes les opportunités
+import { mockPMCompanies } from '../../data/mockPMCompanies';
+import { indexedDbPortfolioService, seedMockInvestmentPortfoliosIfNeeded, seedMockLeasingPortfoliosIfNeeded, seedMockTraditionalPortfoliosIfNeeded } from '../../lib/indexedDbPortfolioService';
+import { usePortfolioType } from '../../hooks/usePortfolioType';
 
-export default function FundingOffers() {
+const FundingOffers = () => {
   const navigate = useNavigate();
-  const [selectedPortfolio, setSelectedPortfolio] = useState(mockPortfolios[0]);
+  const portfolioType = usePortfolioType();
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [performanceType, setPerformanceType] = useState<'performance_curve' | 'return' | 'benchmark'>('performance_curve');
+
+  useEffect(() => {
+    // Seed et charge dynamiquement selon le type courant
+    let seedPromise: Promise<void>;
+    if (portfolioType === 'investment') seedPromise = seedMockInvestmentPortfoliosIfNeeded();
+    else if (portfolioType === 'leasing') seedPromise = seedMockLeasingPortfoliosIfNeeded();
+    else if (portfolioType === 'traditional') seedPromise = seedMockTraditionalPortfoliosIfNeeded();
+    else seedPromise = Promise.resolve();
+
+    seedPromise.then(() => {
+      if (!portfolioType) return setPortfolios([]);
+      indexedDbPortfolioService.getPortfoliosByType(portfolioType).then((data) => {
+        setPortfolios(data);
+        if (!selectedPortfolio && data.length > 0) setSelectedPortfolio(data[0]);
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portfolioType]);
+
+  useEffect(() => {
+    if (!selectedPortfolio && portfolios.length > 0) {
+      setSelectedPortfolio(portfolios[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portfolios]);
 
   // Labels et données dynamiques selon le type sélectionné
   const performanceLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil'];
   let performanceData: number[] = [];
-  if (performanceType === 'performance_curve') {
+  if (selectedPortfolio && performanceType === 'performance_curve') {
     performanceData = Array.isArray(selectedPortfolio.metrics.performance_curve)
       ? selectedPortfolio.metrics.performance_curve
       : [100, 110, 120, 115, 130, 128, 140];
-  } else if (performanceType === 'return') {
+  } else if (selectedPortfolio && performanceType === 'return') {
     performanceData = Array.isArray(selectedPortfolio.metrics.returns)
       ? selectedPortfolio.metrics.returns
       : [2, 3, 2.5, 4, 3.2, 3.8, 4.1];
-  } else if (performanceType === 'benchmark') {
+  } else if (selectedPortfolio && performanceType === 'benchmark') {
     performanceData = Array.isArray(selectedPortfolio.metrics.benchmark)
       ? selectedPortfolio.metrics.benchmark
       : [1.5, 2.2, 2.1, 2.8, 2.5, 2.9, 3.0];
@@ -36,33 +65,50 @@ export default function FundingOffers() {
 
   // Indicateurs selon le type de portefeuille
   let indicators: Array<{ label: string; value: string | number; trend?: 'up' | 'down' | 'neutral'; tag?: string; color?: string }> = [];
-  if (selectedPortfolio.type === 'traditional') {
-    indicators = [
-      { label: 'Valeur nette', value: `${selectedPortfolio.metrics.net_value || 0} CDF`, trend: 'up', tag: 'Net', color: '#2563eb' },
-      { label: 'Rendement', value: `${selectedPortfolio.metrics.average_return || 0}%`, trend: 'up', tag: 'YTD', color: '#059669' },
-      { label: 'Volatilité', value: `${selectedPortfolio.metrics.volatility || 0}%`, trend: 'down', tag: 'Risk', color: '#f59e42' },
-      { label: 'Sharpe', value: selectedPortfolio.metrics.sharpe_ratio || 0, trend: 'up', tag: 'Sharpe', color: '#a21caf' },
-      // Indicateurs crédit
-      ...(selectedPortfolio.metrics.balance_AGE ? [
-        { label: 'Balance AGE', value: `${selectedPortfolio.metrics.balance_AGE.total} CDF`, trend: 'down' as const, tag: 'AGE', color: '#f43f5e' },
-        { label: 'Impayés', value: `${selectedPortfolio.metrics.taux_impayes ?? 0}%`, trend: ((selectedPortfolio.metrics.taux_impayes ?? 0) > 2 ? 'down' : 'up') as 'down' | 'up', tag: 'Impayés', color: '#eab308' },
-        { label: 'Couverture', value: `${selectedPortfolio.metrics.taux_couverture ?? 0}%`, trend: 'up' as const, tag: 'Couv.', color: '#0ea5e9' },
-      ] : [])
-    ];
-  } else if (selectedPortfolio.type === 'investment') {
-    indicators = [
-      { label: 'Valeur nette', value: `${selectedPortfolio.metrics.net_value || 0} CDF`, trend: 'up', tag: 'Net', color: '#2563eb' },
-      { label: 'Rendement', value: `${selectedPortfolio.metrics.average_return || 0}%`, trend: 'up', tag: 'YTD', color: '#059669' },
-      { label: 'Volatilité', value: `${selectedPortfolio.metrics.volatility || 0}%`, trend: 'down', tag: 'Risk', color: '#f59e42' },
-      { label: 'Sharpe', value: selectedPortfolio.metrics.sharpe_ratio || 0, trend: 'up', tag: 'Sharpe', color: '#a21caf' },
-    ];
-  } else if (selectedPortfolio.type === 'leasing') {
-    indicators = [
-      { label: 'Valeur nette', value: `${selectedPortfolio.metrics.net_value || 0} CDF`, trend: 'up', tag: 'Net', color: '#2563eb' },
-      { label: 'Rendement', value: `${selectedPortfolio.metrics.average_return || 0}%`, trend: 'up', tag: 'YTD', color: '#059669' },
-      { label: 'Volatilité', value: `${selectedPortfolio.metrics.volatility || 0}%`, trend: 'down', tag: 'Risk', color: '#f59e42' },
-      { label: 'Sharpe', value: selectedPortfolio.metrics.sharpe_ratio || 0, trend: 'up', tag: 'Sharpe', color: '#a21caf' },
-    ];
+  if (selectedPortfolio) {
+    if (selectedPortfolio.type === 'investment') {
+      indicators = [
+        { label: 'Valeur nette', value: `${selectedPortfolio.metrics.net_value || 0} CDF`, trend: 'up', tag: 'Net', color: '#2563eb' },
+        { label: 'Rendement', value: `${selectedPortfolio.metrics.average_return || 0}%`, trend: 'up', tag: 'YTD', color: '#059669' },
+        { label: 'Volatilité', value: `${selectedPortfolio.metrics.volatility || 0}%`, trend: 'down', tag: 'Risk', color: '#f59e42' },
+        { label: 'Sharpe', value: selectedPortfolio.metrics.sharpe_ratio || 0, trend: 'up', tag: 'Sharpe', color: '#a21caf' },
+        { label: 'Tickets', value: selectedPortfolio.metrics.nb_requests ?? '-', trend: 'neutral', tag: 'Demandes', color: '#0ea5e9' },
+        { label: 'Investissements', value: selectedPortfolio.metrics.nb_transactions ?? '-', trend: 'neutral', tag: 'Trx', color: '#6366f1' },
+        { label: 'Total investi', value: selectedPortfolio.metrics.total_invested ? `${selectedPortfolio.metrics.total_invested.toLocaleString()} CDF` : '-', trend: 'up', tag: 'Investi', color: '#22c55e' },
+        { label: 'Total sorti', value: selectedPortfolio.metrics.total_exited ? `${selectedPortfolio.metrics.total_exited.toLocaleString()} CDF` : '-', trend: 'down', tag: 'Sorti', color: '#ef4444' },
+        { label: 'IRR', value: selectedPortfolio.metrics.irr ? `${selectedPortfolio.metrics.irr}%` : '-', trend: 'up', tag: 'IRR', color: '#fbbf24' },
+        { label: 'Multiple', value: selectedPortfolio.metrics.multiple ?? '-', trend: 'up', tag: 'Multiple', color: '#a21caf' },
+        { label: 'Ticket moyen', value: selectedPortfolio.metrics.avg_ticket ? `${selectedPortfolio.metrics.avg_ticket.toLocaleString()} CDF` : '-', trend: 'neutral', tag: 'Ticket', color: '#059669' },
+        { label: 'Sociétés', value: selectedPortfolio.metrics.nb_companies ?? '-', trend: 'neutral', tag: 'Sociétés', color: '#2563eb' }
+      ];
+    } else if (selectedPortfolio.type === 'traditional') {
+      indicators = [
+        { label: 'Valeur nette', value: `${selectedPortfolio.metrics.net_value || 0} CDF`, trend: 'up', tag: 'Net', color: '#2563eb' },
+        { label: 'Rendement', value: `${selectedPortfolio.metrics.average_return || 0}%`, trend: 'up', tag: 'YTD', color: '#059669' },
+        { label: 'Taux impayés', value: `${selectedPortfolio.metrics.taux_impayes || 0}%`, trend: 'down', tag: 'Impayés', color: '#f59e42' },
+        { label: 'Taux couverture', value: `${selectedPortfolio.metrics.taux_couverture || 0}%`, trend: 'up', tag: 'Couverture', color: '#a21caf' },
+        { label: 'Nombre de crédits', value: selectedPortfolio.metrics.nb_credits ?? '-', trend: 'neutral', tag: 'Crédits', color: '#6366f1' },
+        { label: 'Total crédits', value: selectedPortfolio.metrics.total_credits ? `${selectedPortfolio.metrics.total_credits.toLocaleString()} CDF` : '-', trend: 'up', tag: 'Total crédits', color: '#22c55e' },
+        { label: 'Crédit moyen', value: selectedPortfolio.metrics.avg_credit ? `${selectedPortfolio.metrics.avg_credit.toLocaleString()} CDF` : '-', trend: 'neutral', tag: 'Moyen', color: '#059669' },
+        { label: 'Clients', value: selectedPortfolio.metrics.nb_clients ?? '-', trend: 'neutral', tag: 'Clients', color: '#0ea5e9' },
+        { label: 'Taux rotation', value: selectedPortfolio.metrics.taux_rotation ? `${selectedPortfolio.metrics.taux_rotation}%` : '-', trend: 'up', tag: 'Rotation', color: '#fbbf24' },
+        { label: 'Taux provision', value: selectedPortfolio.metrics.taux_provision ? `${selectedPortfolio.metrics.taux_provision}%` : '-', trend: 'down', tag: 'Provision', color: '#ef4444' },
+        { label: 'Taux recouvrement', value: selectedPortfolio.metrics.taux_recouvrement ? `${selectedPortfolio.metrics.taux_recouvrement}%` : '-', trend: 'up', tag: 'Recouvrement', color: '#10b981' }
+      ];
+    } else if (selectedPortfolio.type === 'leasing') {
+      indicators = [
+        { label: 'Valeur nette', value: `${selectedPortfolio.metrics.net_value || 0} CDF`, trend: 'up', tag: 'Net', color: '#2563eb' },
+        { label: 'Rendement', value: `${selectedPortfolio.metrics.average_return || 0}%`, trend: 'up', tag: 'YTD', color: '#059669' },
+        { label: 'Taux d’utilisation', value: `${selectedPortfolio.metrics.asset_utilization_rate || 0}%`, trend: 'up', tag: 'Utilisation', color: '#0ea5e9' },
+        { label: 'Valeur résiduelle', value: `${selectedPortfolio.metrics.average_residual_value?.toLocaleString() || 0} CDF`, trend: 'neutral', tag: 'Résiduelle', color: '#f59e42' },
+        { label: 'Taux de défaut', value: `${selectedPortfolio.metrics.default_rate || 0}%`, trend: 'down', tag: 'Défaut', color: '#ef4444' },
+        { label: 'Durée moyenne', value: `${selectedPortfolio.metrics.avg_contract_duration_months || 0} mois`, trend: 'neutral', tag: 'Durée', color: '#6366f1' },
+        { label: 'Actifs gérés', value: selectedPortfolio.metrics.assets_under_management || 0, trend: 'neutral', tag: 'Actifs', color: '#a21caf' },
+        { label: 'Taux de renouvellement', value: `${selectedPortfolio.metrics.contract_renewal_rate || 0}%`, trend: 'up', tag: 'Renouvellement', color: '#22c55e' },
+        { label: 'Loyers facturés', value: `${selectedPortfolio.metrics.total_rent_billed?.toLocaleString() || 0} CDF`, trend: 'up', tag: 'Loyers', color: '#fbbf24' },
+        { label: 'Taux de recouvrement', value: `${selectedPortfolio.metrics.collection_rate || 0}%`, trend: 'up', tag: 'Recouvrement', color: '#10b981' }
+      ];
+    }
   }
 
   // Rassembler toutes les opportunités recommandées dans un seul tableau
@@ -74,10 +120,10 @@ export default function FundingOffers() {
 
   function calculateMatchScore(company: Company, portfolio: Portfolio): number {
     let score = 0;
-    if (portfolio.target_sectors.includes(company.sector)) {
+    if (portfolio.target_sectors && portfolio.target_sectors.includes(company.sector)) {
       score += 40;
     }
-    const revenueScore = Math.min(company.annual_revenue / portfolio.target_amount, 1) * 30;
+    const revenueScore = Math.min(company.annual_revenue / (portfolio.target_amount || 1), 1) * 30;
     score += revenueScore;
     if (company.financial_metrics.revenue_growth > 20) {
       score += 30;
@@ -89,8 +135,8 @@ export default function FundingOffers() {
     return score;
   }
 
-  mockPortfolios.forEach(portfolio => {
-    mockCompanies
+  portfolios.forEach((portfolio: Portfolio) => {
+    mockPMCompanies
       .map(company => ({
         company,
         score: calculateMatchScore(company, portfolio)
@@ -129,15 +175,15 @@ export default function FundingOffers() {
               <span className="text-lg font-semibold text-gray-900 dark:text-white">Performance portefeuille</span>
               <div className="relative">
                 <Button variant="ghost" size="md" onClick={() => setMenuOpen(v => !v)} aria-label="Sélectionner portefeuille">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{selectedPortfolio.name}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{selectedPortfolio?.name ?? ''}</span>
                   <MoreVertical className="ml-2 h-4 w-4" />
                 </Button>
                 {menuOpen && (
                   <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-20">
-                    {mockPortfolios.map(p => (
+                    {portfolios.map((p: Portfolio) => (
                       <button
                         key={p.id}
-                        className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedPortfolio.id === p.id ? 'font-bold text-primary' : ''}`}
+                        className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedPortfolio && selectedPortfolio.id === p.id ? 'font-bold text-primary' : ''}`}
                         onClick={() => { setSelectedPortfolio(p); setMenuOpen(false); }}
                       >
                         {p.name}
@@ -171,8 +217,8 @@ export default function FundingOffers() {
                 role="button"
                 tabIndex={0}
                 className="focus:outline-none"
-                onClick={() => navigate(`/reports/kpi/${selectedPortfolio.id}/${encodeURIComponent(ind.label)}`)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(`/reports/kpi/${selectedPortfolio.id}/${encodeURIComponent(ind.label)}`); }}
+                onClick={() => selectedPortfolio && navigate(`/reports/kpi/${selectedPortfolio.id}/${encodeURIComponent(ind.label)}`)}
+                onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && selectedPortfolio) navigate(`/reports/kpi/${selectedPortfolio.id}/${encodeURIComponent(ind.label)}`); }}
                 style={{ cursor: 'pointer' }}
                 aria-label={`Voir le détail de l'indicateur ${ind.label}`}
               >
@@ -198,8 +244,9 @@ export default function FundingOffers() {
           </span>
         </h3>
         <PerformanceComparisonScroller
-          currentPortfolio={selectedPortfolio}
+          currentPortfolio={selectedPortfolio ?? portfolios[0]}
           performanceType={performanceType}
+          portfolios={portfolios}
         />
       </div>
 
@@ -286,4 +333,6 @@ export default function FundingOffers() {
       </div>
     </div>
   );
-}
+};
+
+export default FundingOffers;

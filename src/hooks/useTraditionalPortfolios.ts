@@ -21,9 +21,13 @@ export function useTraditionalPortfolios() {
   });
 
   useEffect(() => {
-    // Charger les portefeuilles depuis IndexedDB
-    indexedDbPortfolioService.getPortfoliosByType('traditional').then((result) => {
-      setPortfolios(result as TraditionalPortfolio[]);
+    // Injecte les mocks si besoin puis charge les portefeuilles traditionnels
+    import('../lib/indexedDbPortfolioService').then(({ seedMockTraditionalPortfoliosIfNeeded, indexedDbPortfolioService }) => {
+      seedMockTraditionalPortfoliosIfNeeded().then(() => {
+        indexedDbPortfolioService.getPortfoliosByType('traditional').then((result) => {
+          setPortfolios(result as TraditionalPortfolio[]);
+        });
+      });
     });
   }, []);
 

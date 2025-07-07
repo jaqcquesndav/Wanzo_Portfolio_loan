@@ -4,10 +4,11 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 
 interface InvestmentTransactionsTableProps {
   transactions: InvestmentTransaction[];
+  loading?: boolean;
   onView: (id: string) => void;
 }
 
-export const InvestmentTransactionsTable: React.FC<InvestmentTransactionsTableProps> = ({ transactions, onView }) => {
+export const InvestmentTransactionsTable: React.FC<InvestmentTransactionsTableProps> = ({ transactions, loading, onView }) => {
   return (
     <div className="overflow-x-auto overflow-visible rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <table className="min-w-full bg-white dark:bg-gray-800">
@@ -22,7 +23,13 @@ export const InvestmentTransactionsTable: React.FC<InvestmentTransactionsTablePr
           </tr>
         </thead>
         <tbody>
-          {transactions.length === 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={6} className="py-8">
+                <div className="animate-pulse h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+              </td>
+            </tr>
+          ) : transactions.length === 0 ? (
             <tr>
               <td colSpan={6} className="text-center py-8 text-gray-400">Aucune transaction</td>
             </tr>

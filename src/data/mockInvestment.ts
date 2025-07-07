@@ -2,9 +2,9 @@ import type { InvestmentRequest, DueDiligenceReport, InvestmentDecision, Investm
 
 export const mockInvestmentRequests: InvestmentRequest[] = [
   {
-    id: 'INVEST-REQ-20250707-0001',
-    portfolioId: 'invest-1',
-    companyId: '1',
+    id: 'INVEST-REQ-2024-CI-001',
+    portfolioId: 'INVEST-2024-CI-001',
+    companyId: 'COMP-2024-001',
     stage: 'amorcage',
     amountRequested: 50000000,
     status: 'en instruction',
@@ -12,9 +12,9 @@ export const mockInvestmentRequests: InvestmentRequest[] = [
     updated_at: '2025-07-01T10:00:00Z',
   },
   {
-    id: 'INVEST-REQ-20250707-0002',
-    portfolioId: 'invest-1',
-    companyId: '2',
+    id: 'INVEST-REQ-2024-CI-002',
+    portfolioId: 'INVEST-2024-CI-001',
+    companyId: 'COMP-2024-002',
     stage: 'developpement',
     amountRequested: 120000000,
     status: 'acceptée',
@@ -50,24 +50,36 @@ export const mockInvestmentDecisions: InvestmentDecision[] = [
 
 export const mockInvestmentTransactions: InvestmentTransaction[] = [
   {
-    id: 'INVEST-TRX-20250707-0001',
-    portfolioId: 'invest-1',
-    companyId: '1',
-    investmentRequestId: 'INVEST-REQ-20250707-0001',
+    id: 'INVEST-TRX-2024-CI-001',
+    portfolioId: 'INVEST-2024-CI-001',
+    companyId: 'COMP-2024-001',
+    investmentRequestId: 'INVEST-REQ-2024-CI-001',
     amount: 50000000,
     date: '2025-07-05',
     type: 'prise de participation',
     status: 'effectué',
     created_at: '2025-07-05T10:00:00Z',
     updated_at: '2025-07-05T10:00:00Z',
+  },
+  {
+    id: 'INVEST-TRX-2024-CI-002',
+    portfolioId: 'INVEST-2024-CI-001',
+    companyId: 'COMP-2024-002',
+    investmentRequestId: 'INVEST-REQ-2024-CI-002',
+    amount: 120000000,
+    date: '2025-07-10',
+    type: 'prise de participation',
+    status: 'effectué',
+    created_at: '2025-07-10T10:00:00Z',
+    updated_at: '2025-07-10T10:00:00Z',
   }
 ];
 
 export const mockPortfolioCompanyReports: PortfolioCompanyReport[] = [
   {
-    id: 'PCR-20250707-0001',
-    portfolioId: 'invest-1',
-    companyId: '1',
+    id: 'PCR-2024-CI-001',
+    portfolioId: 'INVEST-2024-CI-001',
+    companyId: 'COMP-2024-001',
     period: '2025-Q2',
     kpis: { ca: 120000000, ebitda: 18000000, effectif: 25 },
     reportUrl: 'https://example.com/report1.pdf',
@@ -78,9 +90,9 @@ export const mockPortfolioCompanyReports: PortfolioCompanyReport[] = [
 
 export const mockExitEvents: ExitEvent[] = [
   {
-    id: 'EXIT-20250707-0001',
-    portfolioId: 'invest-1',
-    companyId: '1',
+    id: 'EXIT-2024-CI-001',
+    portfolioId: 'INVEST-2024-CI-001',
+    companyId: 'COMP-2024-001',
     type: 'cession',
     date: '2027-12-31',
     amount: 90000000,

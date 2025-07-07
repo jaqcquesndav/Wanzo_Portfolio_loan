@@ -108,7 +108,12 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                     <NavLink
                       key={item.name}
                       to={to}
-                      onClick={onClose}
+                      onClick={() => {
+                        if (currentPortfolio) {
+                          localStorage.setItem('portfolioType', currentPortfolio);
+                        }
+                        if (onClose) onClose();
+                      }}
                       className={({ isActive }) => `
                         flex items-center px-3 py-2 text-sm font-medium rounded-md
                         transition-colors duration-200

@@ -1,42 +1,49 @@
 import React, { useRef } from 'react';
 import type { Portfolio } from '../../types/portfolio';
-import { mockPortfolios } from '../../data/mockPortfolios';
+// Removed mockPortfolios import; now receives portfolios as prop
 import { PerformanceComparisonCard } from './PerformanceComparisonCard';
+
 
 interface PerformanceComparisonScrollerProps {
   currentPortfolio: Portfolio;
   performanceType: 'performance_curve' | 'return' | 'benchmark';
+  portfolios: Portfolio[];
 }
 
-export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScrollerProps> = ({ currentPortfolio, performanceType }) => {
+export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScrollerProps> = ({ currentPortfolio, performanceType, portfolios }) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   // Filtrer les portefeuilles du même type (hors sélectionné)
-  const sameTypePortfolios = mockPortfolios.filter(p => p.type === currentPortfolio.type && p.id !== currentPortfolio.id);
+  const sameTypePortfolios = portfolios.filter(
+    (p) => p && p.type === currentPortfolio.type && p.id !== currentPortfolio.id && p.metrics
+  );
   // Valeur du portefeuille courant (dernier point de la courbe)
   const currentValue = getPerfValue(currentPortfolio, performanceType);
 
   // Générer les cards à afficher
   const cards = [
     ...sameTypePortfolios.map(p => {
+      if (!p || !p.name) return null;
       const value = getPerfValue(p, performanceType);
       const trend = value > currentValue ? 'up' : value < currentValue ? 'down' : 'neutral';
       return (
         <PerformanceComparisonCard
-          key={p.id}
-          portfolioName={p.name}
+          key={p.id || Math.random()}
+          portfolioName={p.name || 'Portefeuille inconnu'}
           value={value}
           trend={trend}
         />
       );
-    }),
+    }).filter(Boolean),
     // Card du portefeuille courant, toujours à la fin
-    <PerformanceComparisonCard
-      key={currentPortfolio.id}
-      portfolioName={currentPortfolio.name + ' (vous)'}
-      value={currentValue}
-      trend="neutral"
-      highlight
-    />
+    currentPortfolio && currentPortfolio.name ? (
+      <PerformanceComparisonCard
+        key={currentPortfolio.id}
+        portfolioName={currentPortfolio.name + ' (vous)'}
+        value={currentValue}
+        trend="neutral"
+        highlight
+      />
+    ) : null
   ];
 
   // Scroll horizontal fluide
@@ -79,7 +86,8 @@ export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScroll
   );
 };
 
-function getPerfValue(portfolio: Portfolio, type: 'performance_curve' | 'return' | 'benchmark'): number {
+function getPerfValue(portfolio: Portfolio | undefined, type: 'performance_curve' | 'return' | 'benchmark'): number {
+  if (!portfolio || !portfolio.metrics) return 0;
   if (type === 'performance_curve') {
     return Array.isArray(portfolio.metrics.performance_curve) ? portfolio.metrics.performance_curve.slice(-1)[0] : 0;
   } else if (type === 'return') {

@@ -54,10 +54,10 @@ export const portfolioTypeConfig = {
     label: 'Portefeuille d’investissement',
     tabs: [
       { key: 'assets', label: 'Actifs', component: null },
-      { key: 'subscriptions', label: 'Souscrip.', component: null },
-      { key: 'valuations', label: 'Valo.', component: null },
+      { key: 'subscriptions', label: 'Souscriptions', component: null },
+      { key: 'valuations', label: 'Valorisation', component: null },
       { key: 'reporting', label: 'Reporting', component: null },
-      { key: 'settings', label: 'Param.', component: null },
+      { key: 'settings', label: 'Paramètres', component: null },
     ],
     mockData: {
       assets: 'mockAssets',

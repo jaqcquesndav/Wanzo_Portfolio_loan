@@ -46,20 +46,25 @@ export function TabsOverflow({ tabs, value, onValueChange, className }: TabsOver
   }, [tabs, value]);
 
   return (
-    <div ref={containerRef} className={cn('flex border-b border-gray-200 relative', className)}>
+    <div
+      ref={containerRef}
+      className={cn('flex border-b border-gray-200 relative overflow-x-auto scrollbar-none', className)}
+      style={{ minHeight: 48 }}
+    >
       {visibleTabs.map(tab => (
         <button
           key={tab.key}
           onClick={() => onValueChange(tab.key)}
           className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2',
+            'px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap',
             value === tab.key
               ? 'text-primary border-primary'
               : 'text-gray-500 border-transparent hover:text-gray-700',
             'focus:outline-none'
           )}
+          style={{ wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: 200, overflow: 'visible', textOverflow: 'clip' }}
         >
-          {tab.label}
+          <span style={{ display: 'inline-block', minWidth: 0 }}>{tab.label}</span>
         </button>
       ))}
       {overflowTabs.length > 0 && (
@@ -82,8 +87,9 @@ export function TabsOverflow({ tabs, value, onValueChange, className }: TabsOver
                     'block w-full text-left px-4 py-2 text-sm',
                     value === tab.key ? 'bg-primary text-white' : 'hover:bg-gray-100'
                   )}
+                  style={{ wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: 200, overflow: 'visible', textOverflow: 'clip' }}
                 >
-                  {tab.label}
+                  <span style={{ display: 'inline-block', minWidth: 0 }}>{tab.label}</span>
                 </button>
               ))}
             </div>

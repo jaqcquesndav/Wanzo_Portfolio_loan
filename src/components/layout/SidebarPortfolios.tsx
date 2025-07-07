@@ -171,7 +171,12 @@ export function SidebarPortfolios() {
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
                       className="flex items-center bg-primary-dark/70 hover:bg-primary-dark rounded-md px-3 py-2 cursor-pointer group transition-colors"
-                      onClick={() => navigate(`/app/${portfolioType}/${portfolio.id}`)}
+                      onClick={() => {
+                        if (portfolioType) {
+                          localStorage.setItem('portfolioType', portfolioType);
+                        }
+                        navigate(`/app/${portfolioType}/${portfolio.id}`);
+                      }}
                     >
                       <span className="flex-1 truncate text-white" title={portfolio.name}>{portfolio.name}</span>
                       <PortfolioActionsDropdown

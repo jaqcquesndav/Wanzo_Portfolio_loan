@@ -77,36 +77,8 @@ export const mockPortfolios: Portfolio[] = [
   }
 ];
 
-export const mockInvestmentPortfolios: Portfolio[] = [
-  {
-    id: 'inv-1',
-    name: 'Portefeuille Tech & Innovation',
-    type: 'investment',
-    status: 'active',
-    target_amount: 1000000000,
-    target_return: 20,
-    target_sectors: ['Technologies', 'Fintech', 'E-commerce'],
-    risk_profile: 'aggressive',
-    products: [],
-    investment_stage: 'early',
-    metrics: {
-      net_value: 850000000,
-      average_return: 18.5,
-      risk_portfolio: 15,
-      sharpe_ratio: 1.6,
-      volatility: 22,
-      alpha: 4.5,
-      beta: 1.2,
-      asset_allocation: [
-        { type: 'Capital-risque', percentage: 60 },
-        { type: 'Capital-développement', percentage: 30 },
-        { type: 'Trésorerie', percentage: 10 }
-      ]
-    },
-    created_at: '2024-01-15',
-    updated_at: '2024-03-15'
-  }
-];
+// Les portefeuilles investment sont désormais créés dynamiquement et accèdent à leurs données via IndexedDB, comme pour le type traditionnel.
+export const mockInvestmentPortfolios: import('../lib/indexedDbPortfolioService').InvestmentPortfolio[] = [];
 
 export const mockLeasingPortfolios: Portfolio[] = [
   {

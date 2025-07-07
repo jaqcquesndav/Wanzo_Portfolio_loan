@@ -20,8 +20,13 @@ export function useLeasingPortfolios() {
   const [portfolios, setPortfolios] = useState<LeasingPortfolio[]>([]);
   // Charger depuis IndexedDB au montage
   useEffect(() => {
-    indexedDbPortfolioService.getPortfoliosByType('leasing').then((result) => {
-      setPortfolios(result as LeasingPortfolio[]);
+    // Injecte les mocks si besoin puis charge les portefeuilles leasing
+    import('../lib/indexedDbPortfolioService').then(({ seedMockLeasingPortfoliosIfNeeded, indexedDbPortfolioService }) => {
+      seedMockLeasingPortfoliosIfNeeded().then(() => {
+        indexedDbPortfolioService.getPortfoliosByType('leasing').then((result) => {
+          setPortfolios(result as LeasingPortfolio[]);
+        });
+      });
     });
   }, []);
   const [filters, setFilters] = useState<Filters>({

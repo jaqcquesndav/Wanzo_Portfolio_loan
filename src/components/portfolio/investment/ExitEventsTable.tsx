@@ -4,10 +4,11 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 
 interface ExitEventsTableProps {
   exits: ExitEvent[];
+  loading?: boolean;
   onView: (id: string) => void;
 }
 
-export const ExitEventsTable: React.FC<ExitEventsTableProps> = ({ exits, onView }) => {
+export const ExitEventsTable: React.FC<ExitEventsTableProps> = ({ exits, loading, onView }) => {
   return (
     <div className="overflow-x-auto overflow-visible rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <table className="min-w-full bg-white dark:bg-gray-800">
@@ -23,7 +24,13 @@ export const ExitEventsTable: React.FC<ExitEventsTableProps> = ({ exits, onView 
           </tr>
         </thead>
         <tbody>
-          {exits.length === 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={7} className="py-8">
+                <div className="animate-pulse h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+              </td>
+            </tr>
+          ) : exits.length === 0 ? (
             <tr>
               <td colSpan={7} className="text-center py-8 text-gray-400">Aucune sortie</td>
             </tr>

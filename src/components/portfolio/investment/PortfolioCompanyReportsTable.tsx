@@ -4,10 +4,11 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 
 interface PortfolioCompanyReportsTableProps {
   reports: PortfolioCompanyReport[];
+  loading?: boolean;
   onView: (id: string) => void;
 }
 
-export const PortfolioCompanyReportsTable: React.FC<PortfolioCompanyReportsTableProps> = ({ reports, onView }) => {
+export const PortfolioCompanyReportsTable: React.FC<PortfolioCompanyReportsTableProps> = ({ reports, loading, onView }) => {
   return (
     <div className="overflow-x-auto overflow-visible rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <table className="min-w-full bg-white dark:bg-gray-800">
@@ -21,7 +22,13 @@ export const PortfolioCompanyReportsTable: React.FC<PortfolioCompanyReportsTable
           </tr>
         </thead>
         <tbody>
-          {reports.length === 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={5} className="py-8">
+                <div className="animate-pulse h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+              </td>
+            </tr>
+          ) : reports.length === 0 ? (
             <tr>
               <td colSpan={5} className="text-center py-8 text-gray-400">Aucun reporting</td>
             </tr>
