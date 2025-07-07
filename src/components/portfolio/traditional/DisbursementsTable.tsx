@@ -9,6 +9,8 @@ export interface Disbursement {
   amount: number;
   status: 'en attente' | 'effectué';
   date: string;
+  requestId?: string;
+  portfolioId: string;
 }
 
 interface DisbursementsTableProps {
@@ -38,8 +40,12 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({ disburse
             </tr>
           ) : (
             disbursements.map((d) => (
-              <tr key={d.id} className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                <td className="px-4 py-2 font-medium">{d.company}</td>
+              <tr
+                key={d.id}
+                className="hover:bg-primary-light/10 cursor-pointer"
+                onClick={() => onView(d.id)}
+              >
+                <td className="px-4 py-2">{d.company}</td>
                 <td className="px-4 py-2">{d.product}</td>
                 <td className="px-4 py-2">{d.amount.toLocaleString()} FCFA</td>
                 <td className="px-4 py-2">

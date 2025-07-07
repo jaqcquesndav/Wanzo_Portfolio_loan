@@ -10,6 +10,7 @@ export interface FundingRequest {
   amount: number;
   status: 'en attente' | 'validée' | 'refusée' | 'décaissée';
   created_at: string;
+  portfolioId: string;
 }
 
 interface FundingRequestsTableProps {
@@ -41,7 +42,23 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({ requ
             </tr>
           ) : (
             requests.map((req) => (
-              <tr key={req.id} className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+              <tr
+                key={req.id}
+                className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition group cursor-pointer"
+                onClick={e => {
+                  // Ne pas déclencher si clic sur le menu Actions
+                  if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
+                  onView(req.id);
+                }}
+                tabIndex={0}
+                aria-label={`Voir la demande de crédit ${req.company}`}
+                style={{ outline: 'none' }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    onView(req.id);
+                  }
+                }}
+              >
                 <td className="px-4 py-2 font-medium">{req.company}</td>
                 <td className="px-4 py-2">{req.product}</td>
                 <td className="px-4 py-2">{req.amount.toLocaleString()} FCFA</td>
@@ -50,14 +67,16 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({ requ
                 </td>
                 <td className="px-4 py-2 text-xs">{new Date(req.created_at).toLocaleDateString()}</td>
                 <td className="px-4 py-2 text-center overflow-visible" style={{ position: 'relative' }}>
-                  <ActionsDropdown
-                    actions={[
-                      { label: 'Voir', onClick: () => onView(req.id) },
-                      req.status === 'en attente' ? { label: 'Valider', onClick: () => onValidate(req.id) } : null,
-                      req.status === 'en attente' ? { label: 'Refuser', onClick: () => onRefuse(req.id) } : null,
-                      req.status === 'validée' ? { label: 'Débloquer', onClick: () => onDisburse(req.id) } : null,
-                    ].filter(Boolean) as { label: string; onClick: () => void }[]}
-                  />
+                  <div className="actions-dropdown inline-block">
+                    <ActionsDropdown
+                      actions={[
+                        { label: 'Voir', onClick: () => onView(req.id) },
+                        req.status === 'en attente' ? { label: 'Valider', onClick: () => onValidate(req.id) } : null,
+                        req.status === 'en attente' ? { label: 'Refuser', onClick: () => onRefuse(req.id) } : null,
+                        req.status === 'validée' ? { label: 'Débloquer', onClick: () => onDisburse(req.id) } : null,
+                      ].filter(Boolean) as { label: string; onClick: () => void }[]}
+                    />
+                  </div>
                 </td>
               </tr>
             ))

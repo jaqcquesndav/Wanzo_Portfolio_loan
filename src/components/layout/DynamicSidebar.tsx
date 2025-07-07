@@ -1,11 +1,10 @@
-// import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import { X, BarChart2 } from 'lucide-react';
 import { SidebarPortfolios } from './SidebarPortfolios';
 import { Button } from '../ui/Button';
 import { navigation } from '../../config/navigation';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
-// import { ROLE_PERMISSIONS } from '../../constants/auth';
+// ...existing code...
 interface DynamicSidebarProps {
   onClose?: () => void;
 }

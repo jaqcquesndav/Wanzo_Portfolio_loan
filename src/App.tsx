@@ -6,6 +6,7 @@ import { PortfolioProvider } from './contexts/PortfolioContext';
 import { initializeMockData } from './services/db/mockDataInitializer';
 import { db } from './services/db/indexedDB';
 import { syncService } from './services/sync/syncService';
+import { SYNC_ENABLED } from './config/sync';
 
 export default function App() {
   useEffect(() => {
@@ -17,10 +18,14 @@ export default function App() {
         // Charger les données de mock
         await initializeMockData();
         
-        // Démarrer le service de synchronisation
-        const token = localStorage.getItem('token');
-        if (token) {
-          syncService.startSync();
+        // Démarrer le service de synchronisation si activée
+        if (SYNC_ENABLED) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            syncService.startSync();
+          }
+        } else {
+          console.info('Synchronisation réseau désactivée (mode offline)');
         }
       } catch (error) {
         console.error('Error initializing app:', error);

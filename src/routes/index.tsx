@@ -22,6 +22,10 @@ import OperationValidation from '../pages/operations/Validation';
 import OperationHistory from '../pages/operations/History';
 import RequestDetails from '../pages/operations/RequestDetails';
 import RequestValidation from '../pages/operations/RequestValidation';
+import CreditRequestDetails from '../pages/CreditRequestDetails';
+import DisbursementDetails from '../pages/DisbursementDetails';
+import RepaymentDetails from '../pages/RepaymentDetails';
+import GuaranteeDetails from '../pages/GuaranteeDetails';
 import WorkflowCreation from '../pages/operations/WorkflowCreation';
 import Workflows from '../pages/operations/Workflows';
 import Documentation from '../pages/Documentation';
@@ -120,6 +124,11 @@ export const router = createBrowserRouter([
       // Traditional
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: ':id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      // Métier detail routes (must be before :id and *)
+      { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
+      { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
+      { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <RepaymentDetails /> },
+      { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },
       // Investment
       { path: 'investment', element: <InvestmentPortfolio /> },
       { path: ':id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },

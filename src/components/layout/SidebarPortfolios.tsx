@@ -32,21 +32,13 @@ export function SidebarPortfolios() {
 
   // Sélection du bon tableau et créateur selon le type
   let portfolios: TraditionalPortfolio[] | LeasingPortfolio[] | InvestmentPortfolio[] = [];
-  let createPortfolio:
-    | ((data: Parameters<typeof traditional.createPortfolio>[0]) => Promise<TraditionalPortfolio>)
-    | ((data: Parameters<typeof leasing.createPortfolio>[0]) => Promise<LeasingPortfolio>)
-    | ((data: Parameters<typeof investment.createPortfolio>[0]) => Promise<InvestmentPortfolio>)
-    | undefined = undefined;
-
+  // Sélection du bon tableau selon le type
   if (portfolioType === 'traditional') {
     portfolios = traditional.portfolios;
-    createPortfolio = traditional.createPortfolio;
   } else if (portfolioType === 'leasing') {
     portfolios = leasing.portfolios;
-    createPortfolio = leasing.createPortfolio;
   } else if (portfolioType === 'investment') {
     portfolios = investment.portfolios;
-    createPortfolio = investment.createPortfolio;
   }
 
   const filteredPortfolios = portfolioType

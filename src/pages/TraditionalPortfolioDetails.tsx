@@ -1,35 +1,34 @@
-import { PortfolioSettingsPanel } from '../components/portfolio/traditional/PortfolioSettingsPanel';
-import { useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+import { useState, useCallback, useEffect } from 'react';
+import { portfolioTypeConfig } from '../config/portfolioTypes';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
-import { FinancialProductForm } from '../components/portfolio/traditional/FinancialProductForm';
-import { FinancialProductDetails } from '../components/portfolio/traditional/FinancialProductDetails';
-import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
-import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
-import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
-import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
-import { ReportingTable } from '../components/portfolio/traditional/ReportingTable';
-import { usePortfolio } from '../hooks/usePortfolio';
-import { useEffect } from 'react';
-import { usePortfolioContext } from '../contexts/usePortfolioContext';
-// ...existing code...
-import { mockFundingRequests } from '../data/mockFundingRequests';
-import { mockDisbursements } from '../data/mockDisbursements';
-import { mockRepayments } from '../data/mockRepayments';
-import { mockGuarantees } from '../data/mockGuarantees';
-import { mockReporting } from '../data/mockReporting';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
 import { PortfolioSettingsEditModal } from '../components/portfolio/traditional/PortfolioSettingsEditModal';
+import { PortfolioSettingsPanel } from '../components/portfolio/traditional/PortfolioSettingsPanel';
+import { Plus } from 'lucide-react';
+import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
+import { FinancialProductForm } from '../components/portfolio/traditional/FinancialProductForm';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
+import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
+import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
+import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
+import { usePortfolio } from '../hooks/usePortfolio';
+import { usePortfolioContext } from '../contexts/usePortfolioContext';
+import { mockFundingRequests } from '../data/mockFundingRequests';
+import { mockDisbursements } from '../data/mockDisbursements';
+import { mockRepayments } from '../data/mockRepayments';
+import { mockGuarantees } from '../data/mockGuarantees';
 import { useNotification } from '../contexts/NotificationContext';
-import { portfolioTypeConfig } from '../config/portfolioTypes';
 import type { AnyPortfolio, PortfolioType, TraditionalPortfolio } from '../lib/indexedDbPortfolioService';
 import type { FinancialProduct } from '../types/traditional-portfolio';
 import type { ProductFormData } from '../components/portfolio/traditional/FinancialProductForm';
+// import CreditRequestDetails from './CreditRequestDetails';
+// import DisbursementDetails from './DisbursementDetails';
+// import RepaymentDetails from './RepaymentDetails';
+// import GuaranteeDetails from './GuaranteeDetails';
 
 // TODO: brancher la logique d'authentification/autorisation ici
 // import { useAuth } from '../contexts/AuthContext';
@@ -41,6 +40,13 @@ export default function TraditionalPortfolioDetails() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { setCurrentPortfolioId } = usePortfolioContext();
+  const [showProductForm, setShowProductForm] = useState(false);
+// const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | null>(null);
+  const [tab, setTab] = useState('products');
+  // const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  // const [selectedDisbursementId, setSelectedDisbursementId] = useState<string | null>(null);
+  // const [selectedRepaymentId, setSelectedRepaymentId] = useState<string | null>(null);
+  // const [selectedGuaranteeId, setSelectedGuaranteeId] = useState<string | null>(null);
 
   // Sync current portfolio id in context for sidebar navigation
   useEffect(() => {
@@ -53,9 +59,7 @@ export default function TraditionalPortfolioDetails() {
   // DEBUG: Affichage des paramètres pour diagnostic
   // console.log('TraditionalPortfolioDetails', { id, portfolioType, portfolio });
   // const { user } = useAuth(); // TODO: Sécurité
-  const [showProductForm, setShowProductForm] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | null>(null);
-  const [tab, setTab] = useState('products');
+
   // Hook factorisé pour la persistance multi-type (IndexedDB)
   const { portfolio, loading, addOrUpdate } = usePortfolio(id, portfolioType as PortfolioType);
 
@@ -94,20 +98,20 @@ export default function TraditionalPortfolioDetails() {
     }
   }, [addOrUpdate, showNotification, portfolio]);
 
-  const handleUpdateProduct = useCallback(async (updatedProduct: FinancialProduct) => {
-    if (!updatedProduct.id) {
-      showNotification('Produit invalide', 'error');
-      return;
-    }
-    if (!isTraditionalPortfolio(portfolio)) return;
-    try {
-      const products: FinancialProduct[] = portfolio.products.map((p) => p.id === updatedProduct.id ? updatedProduct : p);
-      await addOrUpdate({ products });
-      showNotification('Produit financier mis à jour avec succès', 'success');
-    } catch {
-      showNotification('Erreur lors de la mise à jour du produit', 'error');
-    }
-  }, [addOrUpdate, showNotification, portfolio]);
+  // const handleUpdateProduct = useCallback(async (updatedProduct: FinancialProduct) => {
+  //   if (!updatedProduct.id) {
+  //     showNotification('Produit invalide', 'error');
+  //     return;
+  //   }
+  //   if (!isTraditionalPortfolio(portfolio)) return;
+  //   try {
+  //     const products: FinancialProduct[] = portfolio.products.map((p) => p.id === updatedProduct.id ? updatedProduct : p);
+  //     await addOrUpdate({ products });
+  //     showNotification('Produit financier mis à jour avec succès', 'success');
+  //   } catch {
+  //     showNotification('Erreur lors de la mise à jour du produit', 'error');
+  //   }
+  // }, [addOrUpdate, showNotification, portfolio]);
 
   // Sécurité: fallback si id absent ou non valide
   if (!id) {
@@ -231,7 +235,7 @@ export default function TraditionalPortfolioDetails() {
                 {products && products.length > 0 ? (
                   <FinancialProductsList
                     products={products}
-                    onViewDetails={setSelectedProduct}
+                    onViewDetails={(product) => navigate(`/app/portfolio/${id}/products/${product.id}`)}
                   />
                 ) : (
                   <div className="text-center py-12 text-gray-500">
@@ -264,7 +268,7 @@ export default function TraditionalPortfolioDetails() {
                   onValidate={() => {}}
                   onRefuse={() => {}}
                   onDisburse={() => {}}
-                  onView={() => {}}
+                  onView={(requestId: string) => navigate(`/app/portfolio/${id}/requests/${requestId}`)}
                 />
               </TabsContent>
             );
@@ -279,7 +283,7 @@ export default function TraditionalPortfolioDetails() {
                 <DisbursementsTable
                   disbursements={mockDisbursements}
                   onConfirm={() => {}}
-                  onView={() => {}}
+                  onView={(disbursementId: string) => navigate(`/app/portfolio/${id}/disbursements/${disbursementId}`)}
                 />
               </TabsContent>
             );
@@ -294,7 +298,7 @@ export default function TraditionalPortfolioDetails() {
                 <RepaymentsTable
                   repayments={mockRepayments}
                   onMarkPaid={() => {}}
-                  onView={() => {}}
+                  onView={(repaymentId: string) => navigate(`/app/portfolio/${id}/repayments/${repaymentId}`)}
                 />
               </TabsContent>
             );
@@ -310,27 +314,17 @@ export default function TraditionalPortfolioDetails() {
                   guarantees={mockGuarantees}
                   onRelease={() => {}}
                   onSeize={() => {}}
-                  onView={() => {}}
+                  onView={(guaranteeId: string) => navigate(`/app/portfolio/${id}/guarantees/${guaranteeId}`)}
                 />
               </TabsContent>
             );
           }
-          if (tabConfig.key === 'reporting') {
-            return (
-              <TabsContent
-                key={tabConfig.key}
-                value={tabConfig.key}
-                currentValue={tab}
-              >
-                <ReportingTable data={mockReporting} />
-              </TabsContent>
-            );
-          }
-          // Placeholder pour les autres tabs (leasing/investment)
           return null;
         })}
       </Tabs>
 
+      {/* Popups métier pour détails (UX professionnelle) */}
+      {/* Plus de modales pour les détails métier, navigation uniquement */}
       {/* Modal de création de produit */}
       {showProductForm && isTraditionalPortfolio(portfolio) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Créer un produit financier">
@@ -347,16 +341,6 @@ export default function TraditionalPortfolioDetails() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Modal de détails du produit */}
-      {selectedProduct && (
-        <FinancialProductDetails
-          product={selectedProduct}
-          portfolio={portfolio as TraditionalPortfolio}
-          onClose={() => setSelectedProduct(null)}
-          onUpdate={handleUpdateProduct}
-        />
       )}
     </div>
   );

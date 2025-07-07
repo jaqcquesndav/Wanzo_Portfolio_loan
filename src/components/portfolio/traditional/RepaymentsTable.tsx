@@ -9,6 +9,8 @@ export interface Repayment {
   dueDate: string;
   amount: number;
   status: 'à venir' | 'payé' | 'retard';
+  requestId?: string;
+  portfolioId: string;
 }
 
 interface RepaymentsTableProps {
@@ -38,20 +40,22 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({ repayments, on
             </tr>
           ) : (
             repayments.map((r) => (
-              <tr key={r.id} className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                <td className="px-4 py-2 font-medium">{r.company}</td>
+              <tr
+                key={r.id}
+                className="hover:bg-primary-light/10 cursor-pointer"
+                onClick={() => onView(r.id)}
+              >
+                <td className="px-4 py-2">{r.company}</td>
                 <td className="px-4 py-2">{r.product}</td>
-                <td className="px-4 py-2 text-xs">{new Date(r.dueDate).toLocaleDateString()}</td>
-                <td className="px-4 py-2">{r.amount.toLocaleString()} FCFA</td>
-                <td className="px-4 py-2">
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${r.status === 'payé' ? 'bg-green-100 text-green-700' : r.status === 'retard' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status}</span>
-                </td>
-                <td className="px-4 py-2 text-center overflow-visible" style={{ position: 'relative' }}>
+                <td className="px-4 py-2">{r.dueDate}</td>
+                <td className="px-4 py-2">{r.amount}</td>
+                <td className="px-4 py-2">{r.status}</td>
+                <td className="px-4 py-2 text-center">
                   <ActionsDropdown
                     actions={[
                       { label: 'Voir', onClick: () => onView(r.id) },
-                      r.status !== 'payé' ? { label: 'Marquer payé', onClick: () => onMarkPaid(r.id) } : null,
-                    ].filter(Boolean) as { label: string; onClick: () => void }[]}
+                      { label: 'Marquer comme payé', onClick: () => onMarkPaid(r.id), disabled: r.status !== 'à venir' }
+                    ]}
                   />
                 </td>
               </tr>

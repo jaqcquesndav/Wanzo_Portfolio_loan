@@ -2,27 +2,30 @@ import { FundingRequest } from '../components/portfolio/traditional/FundingReque
 
 export const mockFundingRequests: FundingRequest[] = [
   {
-    id: 'req-1',
+    id: 'REQ-TRAD-20250701-0001', // Financial data engineering style
     company: 'PME Agro Sarl',
     product: 'Crédit PME 12 mois',
     amount: 15000000,
     status: 'en attente',
     created_at: '2025-07-01T10:00:00Z',
+    portfolioId: 'qf3081zdd',
   },
   {
-    id: 'req-2',
+    id: 'REQ-TRAD-20250628-0002',
     company: 'TransLogistics',
     product: 'Crédit Trésorerie',
     amount: 8000000,
     status: 'validée',
     created_at: '2025-06-28T14:30:00Z',
+    portfolioId: 'qf3081zdd',
   },
   {
-    id: 'req-3',
+    id: 'REQ-TRAD-20250620-0003',
     company: 'BTP Services',
     product: 'Crédit Equipement',
     amount: 25000000,
     status: 'décaissée',
     created_at: '2025-06-20T09:15:00Z',
+    portfolioId: 'qf3081zdd',
   },
 ];

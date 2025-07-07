@@ -9,6 +9,8 @@ export interface Guarantee {
   value: number;
   status: 'active' | 'libérée' | 'saisie';
   created_at: string;
+  requestId?: string;
+  portfolioId: string;
 }
 
 interface GuaranteesTableProps {
@@ -39,8 +41,12 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({ guarantees, on
             </tr>
           ) : (
             guarantees.map((g) => (
-              <tr key={g.id} className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                <td className="px-4 py-2 font-medium">{g.company}</td>
+              <tr
+                key={g.id}
+                className="hover:bg-primary-light/10 cursor-pointer"
+                onClick={() => onView(g.id)}
+              >
+                <td className="px-4 py-2">{g.company}</td>
                 <td className="px-4 py-2">{g.type}</td>
                 <td className="px-4 py-2">{g.value.toLocaleString()} FCFA</td>
                 <td className="px-4 py-2">
