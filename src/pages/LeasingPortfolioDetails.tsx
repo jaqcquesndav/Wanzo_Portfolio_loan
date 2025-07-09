@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+// Removed unused ArrowLeft and Button imports
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
@@ -15,89 +14,140 @@ import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTab
 import { PaymentsTable } from '../components/portfolio/leasing/PaymentsTable';
 import { ReportingTable } from '../components/portfolio/leasing/ReportingTable';
 import { SettingsTable } from '../components/portfolio/leasing/SettingsTable';
+import { portfolioTypeConfig } from '../config/portfolioTypes';
 import type { LeasingPortfolio } from '../types/leasing';
 
 
 export default function LeasingPortfolioDetails() {
-  const { id, portfolioType = 'leasing' } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { portfolio, loading } = useLeasingPortfolio(id!);
-  const [tab, setTab] = useState('equipments');
+  const portfolioType = 'leasing';
+  // If you want to support dynamic portfolioType from params, you can add logic here
+  const { portfolio, loading } = useLeasingPortfolio(id || '');
+  const config = portfolioTypeConfig[portfolioType] || portfolioTypeConfig['leasing'];
+  const [tab, setTab] = useState(config.tabs[0]?.key || 'equipments');
+
+  // Harmonized error/loading/guard logic (like InvestmentPortfolioDetails)
+  if (!id) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold text-gray-900">ID de portefeuille manquant</h2>
+        <button
+          className="mt-4 px-4 py-2 border rounded border-gray-300 bg-white hover:bg-gray-50"
+          onClick={() => navigate(`/app/${portfolioType}`)}
+        >
+          Retour au dashboard
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" aria-label="Chargement..." />
       </div>
     );
   }
 
-  if (!portfolio) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Portefeuille non trouvé</h2>
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/app/${portfolioType}/portfolios/leasing`)}
-          className="mt-4"
-        >
-          Retour à la liste
-        </Button>
-      </div>
-    );
+  if (!portfolio && !loading) {
+    navigate(`/app/${portfolioType}`, { replace: true });
+    return null;
   }
+
+  // Guard: only show if portfolio.type === 'leasing'
+  if (!portfolio || portfolio.type !== 'leasing') {
+    navigate(`/app/${portfolioType}`, { replace: true });
+    return null;
+  }
+
+  // Dynamic config for tabs (supprimé, déjà défini plus haut)
+
+  // Debug log to help diagnose tab/config issues
+  // eslint-disable-next-line no-console
+  console.log('DEBUG LeasingPortfolioDetails:', {
+    configTabs: config.tabs,
+    tab,
+    portfolio,
+    tabsKeys: config.tabs.map(t => t.key),
+  });
+
+  // Fallback UI if no tab matches
+  const validTabKeys = config.tabs.map(t => t.key);
+  const isTabValid = validTabKeys.includes(tab);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Breadcrumb
         items={[
-          { label: 'Portefeuilles', href: `/app/${portfolioType}/portfolios/leasing` },
-          { label: portfolio.name }
+          { label: 'Dashboard', href: `/app/${portfolioType}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${id}` },
         ]}
+        portfolioType={portfolioType}
       />
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/app/${portfolioType}/portfolios/leasing`)}
-            icon={<ArrowLeft className="h-5 w-5" />} 
-          >
-            Retour
-          </Button>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{portfolio.name}</h1>
-        </div>
+        <h1 className="text-2xl font-semibold">{portfolio.name}</h1>
       </div>
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsOverflow
-          tabs={[
-            { key: 'equipments', label: 'Équipements' },
-            { key: 'contracts', label: 'Contrats' },
-            { key: 'incidents', label: 'Incidents' },
-            { key: 'maintenance', label: 'Maintenance' },
-            { key: 'payments', label: 'Paiements' },
-            { key: 'reporting', label: 'Reporting' },
-            { key: 'settings', label: 'Paramètres' },
-          ]}
+          tabs={config.tabs.map(({ key, label }) => ({ key, label }))}
           value={tab}
           onValueChange={setTab}
         />
+        {!isTabValid && (
+          <div className="text-center text-red-500 py-8">
+            <p>Onglet inconnu ou non configuré : <b>{tab}</b></p>
+            <p>Onglets valides : {validTabKeys.join(', ')}</p>
+          </div>
+        )}
+        {/* Tab rendering, harmonized with config */}
         <TabsContent value="equipments" currentValue={tab}>
-          <EquipmentsTable equipments={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).equipment_catalog : []} />
+          <EquipmentsTable
+            equipments={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).equipment_catalog : []}
+            onRowClick={(equipment) => {
+              window.location.assign(`/app/leasing/${portfolio.id}/equipments/${equipment.id}`);
+            }}
+          />
         </TabsContent>
         <TabsContent value="contracts" currentValue={tab}>
-          <ContractsTable contracts={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).contracts : []} />
+          <ContractsTable
+            contracts={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).contracts : []}
+            onRowClick={(contract) => {
+              window.location.assign(`/app/leasing/${portfolio.id}/contracts/${contract.id}`);
+            }}
+          />
         </TabsContent>
         <TabsContent value="incidents" currentValue={tab}>
-          <IncidentsTable incidents={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).incidents : []} />
+          <IncidentsTable
+            incidents={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).incidents : []}
+            onRowClick={(incident) => {
+              window.location.assign(`/app/leasing/${portfolio.id}/incidents/${incident.id}`);
+            }}
+          />
         </TabsContent>
         <TabsContent value="maintenance" currentValue={tab}>
-          <MaintenanceTable maintenances={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).maintenances : []} />
+          <MaintenanceTable
+            maintenances={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).maintenances : []}
+            onRowClick={(maintenance) => {
+              window.location.assign(`/app/leasing/${portfolio.id}/maintenance/${maintenance.id}`);
+            }}
+          />
         </TabsContent>
         <TabsContent value="payments" currentValue={tab}>
-          <PaymentsTable payments={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).payments : []} />
+          <PaymentsTable
+            payments={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).payments : []}
+            onRowClick={(payment) => {
+              window.location.assign(`/app/leasing/${portfolio.id}/payments/${payment.id}`);
+            }}
+          />
         </TabsContent>
         <TabsContent value="reporting" currentValue={tab}>
-          <ReportingTable />
+          <ReportingTable
+            reports={portfolio.type === 'leasing' && Array.isArray((portfolio as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] })['reports']) ? (portfolio as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] }).reports ?? [] : []}
+            onRowClick={(report) => {
+              window.location.assign(`/app/leasing/${portfolio.id}/reporting/${report.id}`);
+            }}
+          />
         </TabsContent>
         <TabsContent value="settings" currentValue={tab}>
           <SettingsTable />

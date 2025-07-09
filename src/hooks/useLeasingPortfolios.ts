@@ -1,8 +1,10 @@
 // src/hooks/useLeasingPortfolios.ts
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { usePortfolios } from './usePortfolios';
 import { indexedDbPortfolioService } from '../lib/indexedDbPortfolioService';
 
 import type { LeasingPortfolio } from '../lib/indexedDbPortfolioService';
+
 
 
 
@@ -15,20 +17,11 @@ interface Filters {
 }
 
 export function useLeasingPortfolios() {
-
-
-  const [portfolios, setPortfolios] = useState<LeasingPortfolio[]>([]);
-  // Charger depuis IndexedDB au montage
-  useEffect(() => {
-    // Injecte les mocks si besoin puis charge les portefeuilles leasing
-    import('../lib/indexedDbPortfolioService').then(({ seedMockLeasingPortfoliosIfNeeded, indexedDbPortfolioService }) => {
-      seedMockLeasingPortfoliosIfNeeded().then(() => {
-        indexedDbPortfolioService.getPortfoliosByType('leasing').then((result) => {
-          setPortfolios(result as LeasingPortfolio[]);
-        });
-      });
-    });
-  }, []);
+  // Utilise le hook générique qui gère le chargement automatique depuis IndexedDB
+  // et la seed automatique (voir correction dans initializeMockData)
+  // On ne garde que les portefeuilles de type leasing (sécurité typage)
+  const { portfolios: allPortfolios, loading, refresh } = usePortfolios('leasing');
+  const portfolios = allPortfolios.filter((p): p is LeasingPortfolio => p.type === 'leasing');
   const [filters, setFilters] = useState<Filters>({
     status: '',
     riskProfile: '',
@@ -55,21 +48,23 @@ export function useLeasingPortfolios() {
       id: Math.random().toString(36).substr(2, 9),
       type: 'leasing',
       status: 'active',
-      equipment_catalog: [], // Toujours initialisé
+      equipment_catalog: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    // Ajout d'equipment_catalog vide si non présent (plus besoin, typé)
     await indexedDbPortfolioService.addOrUpdatePortfolio(newPortfolio);
-    setPortfolios(prev => [...prev, newPortfolio]);
+    refresh(); // Rafraîchit la liste après création
     return newPortfolio;
   };
 
   return {
     portfolios,
+    loading,
     filters,
     setFilters,
     filteredPortfolios,
-    createPortfolio
+    createPortfolio,
+    refresh,
   };
 }
+

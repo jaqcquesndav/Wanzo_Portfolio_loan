@@ -154,9 +154,10 @@ export default function TraditionalPortfolioDetails() {
       {/* Breadcrumb sécurisé */}
       <Breadcrumb
         items={[
-          { label: 'Dashboard', href: '/app/dashboard' },
+          { label: 'Dashboard', href: `/app/${portfolioType}` },
           { label: portfolio.name }
         ]}
+        portfolioType={portfolioType}
       />
 
       {/* En-tête */}

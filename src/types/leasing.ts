@@ -6,6 +6,13 @@ export interface LeasingPortfolio extends Portfolio {
   incidents: import('./leasing-asset').Incident[];
   maintenances: import('./leasing-asset').Maintenance[];
   payments: import('./leasing-payment').LeasingPayment[];
+  // Ajout pour reporting métier (optionnel)
+  reports?: Array<{
+    id: string;
+    period: string;
+    type: string;
+    status: string;
+  }>;
   leasing_terms: {
     min_duration: number;
     max_duration: number;

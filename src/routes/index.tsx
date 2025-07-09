@@ -1,3 +1,9 @@
+import LeasingEquipmentDetail from '../pages/leasing/LeasingEquipmentDetail';
+import LeasingContractDetail from '../pages/leasing/LeasingContractDetail';
+import LeasingIncidentDetail from '../pages/leasing/LeasingIncidentDetail';
+import LeasingMaintenanceDetail from '../pages/leasing/LeasingMaintenanceDetail';
+import LeasingPaymentDetail from '../pages/leasing/LeasingPaymentDetail';
+import LeasingReportingDetail from '../pages/leasing/LeasingReportingDetail';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import PortfolioTypeSelector from '../pages/PortfolioTypeSelector';
@@ -127,7 +133,7 @@ export const router = createBrowserRouter([
       { path: '', element: <Dashboard /> },
       // Traditional
       { path: 'traditional', element: <TraditionalPortfolio /> },
-      { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: ':id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
       { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
@@ -135,19 +141,24 @@ export const router = createBrowserRouter([
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },
       // Investment
       { path: 'investment', element: <InvestmentPortfolio /> },
-      // Investment detail pages
-      { path: ':id/assets/:assetId', element: <InvestmentAssetDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: ':id/subscriptions/:subscriptionId', element: <InvestmentSubscriptionDetail /> },
-      { path: ':id/valuations/:valuationId', element: <InvestmentValuationDetail /> },
-      { path: ':id/reporting/:reportId', element: <InvestmentReportingDetail /> },
+      { path: 'assets/:assetId', element: <InvestmentAssetDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'subscriptions/:subscriptionId', element: <InvestmentSubscriptionDetail /> },
+      { path: 'valuations/:valuationId', element: <InvestmentValuationDetail /> },
+      { path: 'reporting/:reportId', element: <InvestmentReportingDetail /> },
       { path: ':id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Leasing
       { path: 'leasing', element: <LeasingPortfolio /> },
-      { path: 'leasing/:id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/reservations', element: <LeasingReservationsPage /> },
-      { path: 'leasing/maintenance', element: <LeasingMaintenancePage /> },
-      { path: 'leasing/incidents', element: <LeasingIncidentsPage /> },
-      { path: 'leasing/movements', element: <LeasingMovementsPage /> },
+      { path: 'equipments/:equipmentId', element: <LeasingEquipmentDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'contracts/:contractId', element: <LeasingContractDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'incidents/:incidentId', element: <LeasingIncidentDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'maintenance/:maintenanceId', element: <LeasingMaintenanceDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'payments/:paymentId', element: <LeasingPaymentDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'reporting/:reportId', element: <LeasingReportingDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'reservations', element: <LeasingReservationsPage /> },
+      { path: 'maintenance', element: <LeasingMaintenancePage /> },
+      { path: 'incidents', element: <LeasingIncidentsPage /> },
+      { path: 'movements', element: <LeasingMovementsPage /> },
+      { path: ':id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Operations
       { path: 'operations', element: <Operations /> },
       { path: 'operations/requests', element: <Requests /> },

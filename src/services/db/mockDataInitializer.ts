@@ -1,39 +1,60 @@
-import { db } from './indexedDB';
+import { db, StoreName } from './indexedDB';
 import { mockCompanies } from '../../data/mockCompanies';
 import { mockOperations } from '../../data/mockOperations';
-import { mockPortfolios } from '../../data/mockPortfolios';
+// import { mockPortfolios } from '../../data/mockPortfolios';
+import { seedMockLeasingPortfoliosIfNeeded, seedMockInvestmentPortfoliosIfNeeded, seedMockTraditionalPortfoliosIfNeeded } from '../../lib/indexedDbPortfolioService';
 
 
 export async function initializeMockData() {
   try {
-    // Vérifier si les données sont déjà initialisées
-    const initialized = localStorage.getItem('mockDataInitialized');
-    if (initialized) return;
+    // Vérifier la présence réelle de données dans IndexedDB
+    const portfolios = await db.getAll('portfolios');
+    if (portfolios && portfolios.length > 0) {
+      localStorage.setItem('mockDataInitialized', 'true');
+      return;
+    }
 
-    // Initialiser les données dans IndexedDB
-    const stores = [
+    // Initialiser les portefeuilles mockés dans IndexedDB (tous types)
+    await seedMockLeasingPortfoliosIfNeeded();
+    await seedMockInvestmentPortfoliosIfNeeded();
+    await seedMockTraditionalPortfoliosIfNeeded();
+
+    // Initialiser les données dans IndexedDB (hors portefeuilles, qui sont injectés via les seeds métiers)
+    const stores: { name: StoreName; data: unknown[] }[] = [
       { name: 'companies', data: mockCompanies },
-      { name: 'operations', data: mockOperations },
-      { name: 'portfolios', data: mockPortfolios }
+      { name: 'operations', data: mockOperations }
     ];
 
     for (const store of stores) {
       for (const item of store.data) {
         try {
           // Vérifier si l'élément existe déjà
-          const existing = await db.get(store.name, item.id);
+          const existing = await db.get(store.name, (item as { id: string }).id);
           if (!existing) {
-            await db.add(store.name, item);
+            // Cast explicite selon le store
+            if (store.name === 'companies') {
+              await db.add('companies', item as import('./indexedDB').Company);
+            } else if (store.name === 'operations') {
+              await db.add('operations', item as import('./indexedDB').Operation);
+            } else {
+              throw new Error(`Type de store inattendu: ${store.name}`);
+            }
           }
-        } catch (error) {
-          console.warn(`Skipping duplicate item in ${store.name}:`, item.id);
+        } catch {
+          // Duplicate or error, skip
         }
       }
     }
 
-    // Marquer comme initialisé
-    localStorage.setItem('mockDataInitialized', 'true');
-    console.log('Mock data initialized in IndexedDB');
+    // Marquer comme initialisé uniquement si la base contient bien des portefeuilles
+    const portfoliosAfter = await db.getAll('portfolios');
+    if (portfoliosAfter && portfoliosAfter.length > 0) {
+      localStorage.setItem('mockDataInitialized', 'true');
+      console.log('Mock data initialized in IndexedDB');
+    } else {
+      localStorage.removeItem('mockDataInitialized');
+      console.warn('Aucune donnée mock n’a pu être injectée dans IndexedDB.');
+    }
   } catch (error) {
     console.error('Error initializing mock data:', error);
   }

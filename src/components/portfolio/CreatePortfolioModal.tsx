@@ -4,13 +4,14 @@ import { useLocation } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { PortfolioStepperForm, PortfolioStepperFormData } from './PortfolioStepperForm';
+import { PortfolioStepperForm } from './PortfolioStepperForm';
 import { CreateLeasingPortfolioForm } from './leasing/CreateLeasingPortfolioForm';
+
 
 import type { DefaultPortfolioFormData } from './DefaultPortfolioForm';
 import type { LeasingPortfolioFormData } from './leasing/CreateLeasingPortfolioForm';
 
-type PortfolioModalData = DefaultPortfolioFormData | LeasingPortfolioFormData;
+export type PortfolioModalData = DefaultPortfolioFormData | LeasingPortfolioFormData;
 
 interface CreatePortfolioModalProps {
   onClose: () => void;
@@ -22,7 +23,32 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
   const portfolioType = location.pathname.split('/')[2]; // 'traditional', 'investment', ou 'leasing'
 
   // Pour chaque type, on force le bon typage du handler
-  const handleDefaultSubmit = (data: PortfolioStepperFormData) => onSubmit(data);
+  // Transforme explicitement PortfolioStepperFormData en DefaultPortfolioFormData pour onSubmit
+  const handleDefaultSubmit = async (data: Record<string, unknown>) => {
+    // Correction de typage stricte pour TypeScript
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      typeof data.name !== 'string' ||
+      typeof data.description !== 'string' ||
+      typeof data.target_amount !== 'number' ||
+      typeof data.target_return !== 'number' ||
+      (data.risk_profile !== 'conservative' && data.risk_profile !== 'moderate' && data.risk_profile !== 'aggressive') ||
+      !Array.isArray(data.target_sectors) ||
+      !data.target_sectors.every((s) => typeof s === 'string')
+    ) {
+      throw new Error('Les données du formulaire sont invalides.');
+    }
+    const defaultData: DefaultPortfolioFormData = {
+      name: data.name,
+      description: data.description,
+      target_amount: data.target_amount,
+      target_return: data.target_return,
+      risk_profile: data.risk_profile,
+      target_sectors: data.target_sectors
+    };
+    return onSubmit(defaultData);
+  };
   const handleLeasingSubmit = (data: LeasingPortfolioFormData) => onSubmit(data);
 
   // Portal target: document.body

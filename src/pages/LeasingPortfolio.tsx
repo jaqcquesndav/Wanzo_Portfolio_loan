@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { LeasingPortfolio } from '../types/leasing';
 import type { LeasingPortfolioFormData } from '../components/portfolio/leasing/CreateLeasingPortfolioForm';
 import { useNavigate } from 'react-router-dom';
+import type { PortfolioModalData } from '../components/portfolio/CreatePortfolioModal';
 import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Form';
@@ -46,13 +47,48 @@ export default function LeasingPortfolio() {
         insurance_required: data.leasing_terms.insurance_required
       },
       metrics: {
-        totalLeased: 0,
-        utilizationRate: 0,
-        defaultRate: 0,
-        totalRevenue: 0,
-        totalIncidents: 0,
-        totalMaintenance: 0
-      }
+        net_value: 0,
+        average_return: 0,
+        risk_portfolio: 0,
+        sharpe_ratio: 0,
+        volatility: 0,
+        alpha: 0,
+        beta: 0,
+        asset_allocation: [],
+        performance_curve: [],
+        returns: [],
+        benchmark: [],
+        // Métriques leasing spécifiques
+        asset_utilization_rate: 0,
+        average_residual_value: 0,
+        default_rate: 0,
+        avg_contract_duration_months: 0,
+        assets_under_management: 0,
+        contract_renewal_rate: 0,
+        total_rent_billed: 0,
+        collection_rate: 0,
+        // Métriques crédit (optionnelles)
+        balance_AGE: undefined,
+        taux_impayes: undefined,
+        taux_couverture: undefined,
+        nb_credits: undefined,
+        total_credits: undefined,
+        avg_credit: undefined,
+        nb_clients: undefined,
+        taux_rotation: undefined,
+        taux_provision: undefined,
+        taux_recouvrement: undefined,
+        // Métriques investissement (optionnelles)
+        nb_requests: undefined,
+        nb_transactions: undefined,
+        total_invested: undefined,
+        total_exited: undefined,
+        irr: undefined,
+        multiple: undefined,
+        avg_ticket: undefined,
+        nb_companies: undefined
+      },
+      products: []
     };
     try {
       const newPortfolio = await createPortfolio(mappedData);
@@ -80,10 +116,22 @@ export default function LeasingPortfolio() {
   );
 
   const totalPages = Math.ceil(searchedPortfolios.length / ITEMS_PER_PAGE);
+
   const paginatedPortfolios = searchedPortfolios.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  // Handler générique pour le modal (corrige le typage)
+  const handleModalSubmit = async (data: PortfolioModalData) => {
+    // Si c'est un portefeuille leasing, on utilise le handler leasing
+    if ('leasing_terms' in data) {
+      await handleCreatePortfolio(data as LeasingPortfolioFormData);
+    } else {
+      // Sinon, on ignore ou on peut ajouter d'autres types si besoin
+      showNotification('Type de portefeuille non supporté', 'error');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -162,7 +210,7 @@ export default function LeasingPortfolio() {
       {showCreateModal && (
         <CreatePortfolioModal
           onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreatePortfolio}
+          onSubmit={handleModalSubmit}
         />
       )}
     </div>

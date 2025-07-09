@@ -1,5 +1,6 @@
 // src/hooks/useTraditionalPortfolios.ts
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { usePortfolios } from './usePortfolios';
 import { indexedDbPortfolioService } from '../lib/indexedDbPortfolioService';
 
 import type { TraditionalPortfolio } from '../lib/indexedDbPortfolioService';
@@ -12,24 +13,14 @@ interface Filters {
 }
 
 export function useTraditionalPortfolios() {
-  const [portfolios, setPortfolios] = useState<TraditionalPortfolio[]>([]);
+  const { portfolios: allPortfolios, loading, refresh } = usePortfolios('traditional');
+  const portfolios = allPortfolios.filter((p): p is TraditionalPortfolio => p.type === 'traditional');
   const [filters, setFilters] = useState<Filters>({
     status: '',
     riskProfile: '',
     sector: '',
     minAmount: ''
   });
-
-  useEffect(() => {
-    // Injecte les mocks si besoin puis charge les portefeuilles traditionnels
-    import('../lib/indexedDbPortfolioService').then(({ seedMockTraditionalPortfoliosIfNeeded, indexedDbPortfolioService }) => {
-      seedMockTraditionalPortfoliosIfNeeded().then(() => {
-        indexedDbPortfolioService.getPortfoliosByType('traditional').then((result) => {
-          setPortfolios(result as TraditionalPortfolio[]);
-        });
-      });
-    });
-  }, []);
 
   const createPortfolio = async (data: Omit<TraditionalPortfolio, 'id' | 'type' | 'status' | 'products' | 'metrics' | 'created_at' | 'updated_at'>): Promise<TraditionalPortfolio> => {
     const newPortfolio: TraditionalPortfolio = {
@@ -52,23 +43,27 @@ export function useTraditionalPortfolios() {
       updated_at: new Date().toISOString()
     };
     await indexedDbPortfolioService.addOrUpdatePortfolio(newPortfolio);
-    setPortfolios(prev => [...prev, newPortfolio]);
+    refresh(); // Rafraîchit la liste après création
     return newPortfolio;
   };
 
-  const filteredPortfolios = portfolios.filter(portfolio => {
-    if (filters.status && portfolio.status !== filters.status) return false;
-    if (filters.riskProfile && portfolio.risk_profile !== filters.riskProfile) return false;
-    if (filters.sector && !portfolio.target_sectors.includes(filters.sector)) return false;
-    if (filters.minAmount && portfolio.target_amount < parseInt(filters.minAmount)) return false;
-    return true;
-  });
+  const filteredPortfolios = useMemo(() => {
+    return portfolios.filter(portfolio => {
+      if (filters.status && portfolio.status !== filters.status) return false;
+      if (filters.riskProfile && portfolio.risk_profile !== filters.riskProfile) return false;
+      if (filters.sector && !portfolio.target_sectors.includes(filters.sector)) return false;
+      if (filters.minAmount && portfolio.target_amount < parseInt(filters.minAmount)) return false;
+      return true;
+    });
+  }, [portfolios, filters]);
 
   return {
     portfolios,
+    loading,
     filters,
     setFilters,
     filteredPortfolios,
-    createPortfolio
+    createPortfolio,
+    refresh,
   };
 }

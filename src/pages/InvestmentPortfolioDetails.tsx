@@ -13,9 +13,12 @@ import { ValuationsTable } from '../components/portfolio/investment/ValuationsTa
 import { ReportingTable } from '../components/portfolio/investment/ReportingTable';
 import { InvestmentPortfolioSettingsDisplay } from '../components/portfolio/investment/InvestmentPortfolioSettingsDisplay';
 import { InvestmentPortfolioSettingsEditModal } from '../components/portfolio/investment/InvestmentPortfolioSettingsEditModal';
-import type { InvestmentPortfolio } from '../types/investment-portfolio';
+
+
 import { usePortfolioType } from '../hooks/usePortfolioType';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { portfolioTypeConfig } from '../config/portfolioTypes';
+import type { InvestmentPortfolio } from '../types/investment-portfolio';
 
 export default function InvestmentPortfolioDetails() {
 
@@ -29,28 +32,66 @@ export default function InvestmentPortfolioDetails() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!portfolio) {
+  // Gestion harmonisée des erreurs et du chargement (comme la page traditionnelle)
+  if (!id) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Portefeuille non trouvé</h2>
+        <h2 className="text-xl font-semibold text-gray-900">ID de portefeuille manquant</h2>
         <Button
           variant="outline"
-          onClick={() => navigate(`/app/${portfolioType}/portfolios/investment`)}
+          onClick={() => navigate(`/app/${portfolioType}`)}
           className="mt-4"
         >
-          Retour à la liste
+          Retour au dashboard
         </Button>
       </div>
     );
   }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" aria-label="Chargement..." />
+      </div>
+    );
+  }
+
+
+  if (!portfolio && !loading) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold text-red-600">Portefeuille introuvable</h2>
+        <p className="text-gray-500 mt-2">Aucun portefeuille avec l'ID <span className="font-mono bg-gray-100 px-2 py-1 rounded">{id}</span> n'a été trouvé dans la base de données.</p>
+        <div className="flex flex-col items-center gap-4 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/app/${portfolioType}`)}
+          >
+            Retour à la liste
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              localStorage.removeItem('mockDataInitialized');
+              window.location.reload();
+            }}
+          >
+            Réinitialiser les données mock
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+
+  // Ne pas afficher cette page si le portefeuille n'est pas de type investment
+  if (!portfolio || portfolio.type !== 'investment') {
+    navigate(`/app/${portfolioType}`, { replace: true });
+    return null;
+  }
+
+  // Config dynamique selon le type de portefeuille (sécurise l'affichage des tabs)
+  const config = portfolioTypeConfig[portfolioType] || portfolioTypeConfig['investment'];
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -59,6 +100,7 @@ export default function InvestmentPortfolioDetails() {
           { label: 'Dashboard', href: `/app/${portfolioType}` },
           { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${id}` },
         ]}
+        portfolioType={portfolioType}
       />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{portfolio.name}</h1>
@@ -66,14 +108,7 @@ export default function InvestmentPortfolioDetails() {
       {/* Onglet Aperçu */}
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsOverflow
-          tabs={[
-            { key: 'overview', label: 'Aperçu' },
-            { key: 'assets', label: 'Actifs' },
-            { key: 'subscriptions', label: 'Souscriptions' },
-            { key: 'valuations', label: 'Valorisation' },
-            { key: 'reporting', label: 'Reporting' },
-            { key: 'settings', label: 'Paramètres' },
-          ]}
+          tabs={config.tabs.map((tab: { key: string; label: string }) => ({ key: tab.key, label: tab.label }))}
           value={tab}
           onValueChange={setTab}
         />
@@ -114,16 +149,25 @@ export default function InvestmentPortfolioDetails() {
           </div>
         </TabsContent>
         <TabsContent value="assets" currentValue={tab}>
-          <AssetsTable assets={portfolio.type === 'investment' ? (portfolio as InvestmentPortfolio).assets : []} />
+          <AssetsTable
+            assets={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).assets) ? (portfolio as InvestmentPortfolio).assets : []}
+            loading={loading}
+          />
         </TabsContent>
         <TabsContent value="subscriptions" currentValue={tab}>
-          <SubscriptionsTable subscriptions={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).subscriptions) ? (portfolio as InvestmentPortfolio).subscriptions! : []} />
+          <SubscriptionsTable
+            subscriptions={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).subscriptions) ? (portfolio as InvestmentPortfolio).subscriptions! : []}
+            loading={loading}
+          />
         </TabsContent>
         <TabsContent value="valuations" currentValue={tab}>
-          <ValuationsTable valuations={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).valuations) ? (portfolio as InvestmentPortfolio).valuations! : []} />
+          <ValuationsTable
+            valuations={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).valuations) ? (portfolio as InvestmentPortfolio).valuations! : []}
+            loading={loading}
+          />
         </TabsContent>
         <TabsContent value="reporting" currentValue={tab}>
-          <ReportingTable />
+          <ReportingTable loading={loading} />
         </TabsContent>
         <TabsContent value="settings" currentValue={tab}>
           <InvestmentPortfolioSettingsDisplay

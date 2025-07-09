@@ -1,6 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { usePortfolios } from './usePortfolios';
 import { indexedDbPortfolioService } from '../lib/indexedDbPortfolioService';
 import type { InvestmentPortfolio } from '../lib/indexedDbPortfolioService';
+
 
 interface Filters {
   status: string;
@@ -11,17 +13,9 @@ interface Filters {
 }
 
 export function useInvestmentPortfolios() {
-  const [portfolios, setPortfolios] = useState<InvestmentPortfolio[]>([]);
-  // Charger depuis IndexedDB au montage, seed les mocks si vide
-  useEffect(() => {
-    import('../lib/indexedDbPortfolioService').then(({ seedMockInvestmentPortfoliosIfNeeded, indexedDbPortfolioService }) => {
-      seedMockInvestmentPortfoliosIfNeeded().then(() => {
-        indexedDbPortfolioService.getPortfoliosByType('investment').then((result) => {
-          setPortfolios(result as InvestmentPortfolio[]);
-        });
-      });
-    });
-  }, []);
+  // Utilise le hook générique qui gère le chargement automatique depuis IndexedDB
+  const { portfolios: allPortfolios, loading, refresh } = usePortfolios('investment');
+  const portfolios = allPortfolios.filter((p): p is InvestmentPortfolio => p.type === 'investment');
   const [filters, setFilters] = useState<Filters>({
     status: '',
     riskProfile: '',
@@ -36,13 +30,12 @@ export function useInvestmentPortfolios() {
       id: Math.random().toString(36).substr(2, 9),
       type: 'investment',
       status: 'active',
-      assets: [], // Toujours initialisé
+      assets: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    // assets est toujours présent (typé)
     await indexedDbPortfolioService.addOrUpdatePortfolio(newPortfolio);
-    setPortfolios(prev => [...prev, newPortfolio]);
+    refresh(); // Rafraîchit la liste après création
     return newPortfolio;
   };
 
@@ -57,11 +50,15 @@ export function useInvestmentPortfolios() {
     });
   }, [portfolios, filters]);
 
+
+
   return {
     portfolios,
+    loading,
     filters,
     setFilters,
     filteredPortfolios,
     createPortfolio
   };
 }
+
