@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 interface TableProps {
   children: React.ReactNode;
@@ -31,11 +31,27 @@ export function TableBody({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TableRow({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+
+
+
+type TableRowProps = {
+  children: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTableRowElement>) => void;
+  tabIndex?: number;
+  ariaLabel?: string;
+  style?: React.CSSProperties;
+};
+
+export function TableRow({ children, onClick, onKeyDown, tabIndex, ariaLabel, style }: TableRowProps) {
   return (
-    <tr 
+    <tr
       className={`${onClick ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
       onClick={onClick}
+      onKeyDown={onKeyDown}
+      tabIndex={tabIndex}
+      aria-label={ariaLabel}
+      style={style}
     >
       {children}
     </tr>

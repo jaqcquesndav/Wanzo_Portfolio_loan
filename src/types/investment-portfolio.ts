@@ -1,3 +1,19 @@
+import type { Portfolio } from './portfolio';
+import type { InvestmentAsset } from '../lib/indexedDbPortfolioService';
+
+import type { SecuritySubscription, CompanyValuation } from './securities';
+
+export interface InvestmentPortfolio extends Portfolio {
+  type: 'investment';
+  assets: InvestmentAsset[];
+  subscriptions?: SecuritySubscription[];
+  valuations?: CompanyValuation[];
+  requests?: InvestmentRequest[];
+  transactions?: InvestmentTransaction[];
+  reports?: PortfolioCompanyReport[];
+  exitEvents?: ExitEvent[];
+  // ...autres champs spécifiques
+}
 // Types métier pour le portefeuille Capital Investissement
 
 export type InvestmentStage = 'amorcage' | 'developpement' | 'transmission' | 'reprise';

@@ -12,17 +12,14 @@ interface Filters {
 
 export function useInvestmentPortfolios() {
   const [portfolios, setPortfolios] = useState<InvestmentPortfolio[]>([]);
-  // Charger depuis IndexedDB au montage, fallback sur les mocks si vide
+  // Charger depuis IndexedDB au montage, seed les mocks si vide
   useEffect(() => {
-    indexedDbPortfolioService.getPortfoliosByType('investment').then((result) => {
-      if (result && result.length > 0) {
-        setPortfolios(result as InvestmentPortfolio[]);
-      } else {
-        // fallback dev: charger les mocks si la base est vide
-        import('../data/mockPortfolios').then(mod => {
-          setPortfolios((mod.mockInvestmentPortfolios || []) as InvestmentPortfolio[]);
+    import('../lib/indexedDbPortfolioService').then(({ seedMockInvestmentPortfoliosIfNeeded, indexedDbPortfolioService }) => {
+      seedMockInvestmentPortfoliosIfNeeded().then(() => {
+        indexedDbPortfolioService.getPortfoliosByType('investment').then((result) => {
+          setPortfolios(result as InvestmentPortfolio[]);
         });
-      }
+      });
     });
   }, []);
   const [filters, setFilters] = useState<Filters>({

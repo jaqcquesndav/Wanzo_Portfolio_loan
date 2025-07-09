@@ -10,6 +10,10 @@ import TraditionalPortfolio from '../pages/TraditionalPortfolio';
 import TraditionalPortfolioDetails from '../pages/TraditionalPortfolioDetails';
 import InvestmentPortfolio from '../pages/InvestmentPortfolio';
 import InvestmentPortfolioDetails from '../pages/InvestmentPortfolioDetails';
+import InvestmentAssetDetail from '../pages/InvestmentAssetDetail';
+import InvestmentSubscriptionDetail from '../pages/InvestmentSubscriptionDetail';
+import InvestmentValuationDetail from '../pages/InvestmentValuationDetail';
+import InvestmentReportingDetail from '../pages/InvestmentReportingDetail';
 import LeasingPortfolio from '../pages/LeasingPortfolio';
 import LeasingPortfolioDetails from '../pages/LeasingPortfolioDetails';
 import LeasingReservationsPage from '../pages/leasing/LeasingReservationsPage';
@@ -123,7 +127,7 @@ export const router = createBrowserRouter([
       { path: '', element: <Dashboard /> },
       // Traditional
       { path: 'traditional', element: <TraditionalPortfolio /> },
-      { path: ':id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
       { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
@@ -131,10 +135,15 @@ export const router = createBrowserRouter([
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },
       // Investment
       { path: 'investment', element: <InvestmentPortfolio /> },
+      // Investment detail pages
+      { path: ':id/assets/:assetId', element: <InvestmentAssetDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: ':id/subscriptions/:subscriptionId', element: <InvestmentSubscriptionDetail /> },
+      { path: ':id/valuations/:valuationId', element: <InvestmentValuationDetail /> },
+      { path: ':id/reporting/:reportId', element: <InvestmentReportingDetail /> },
       { path: ':id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Leasing
       { path: 'leasing', element: <LeasingPortfolio /> },
-      { path: ':id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'leasing/reservations', element: <LeasingReservationsPage /> },
       { path: 'leasing/maintenance', element: <LeasingMaintenancePage /> },
       { path: 'leasing/incidents', element: <LeasingIncidentsPage /> },
@@ -167,6 +176,7 @@ export const router = createBrowserRouter([
       // KPI Detail (Rapports)
       { path: 'reports/kpi/:portfolioId/:indicator', element: <ReportKPIDetail /> },
       // 404 Not Found pour les détails de portefeuille
+      // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
       { path: 'traditional/*', element: <PortfolioNotFound /> },
       { path: 'investment/*', element: <PortfolioNotFound /> },
       { path: 'leasing/*', element: <PortfolioNotFound /> }

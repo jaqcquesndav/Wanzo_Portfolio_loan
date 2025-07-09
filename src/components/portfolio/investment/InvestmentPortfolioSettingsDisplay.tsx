@@ -1,17 +1,16 @@
-//
-import { Button } from '../../ui/Button';
-import type { Portfolio } from '../../../types/portfolio';
-import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
 import { useState } from 'react';
+import { Button } from '../../ui/Button';
+import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
+import type { InvestmentPortfolio } from '../../../types/investment-portfolio';
 import { ConfirmModal } from '../../ui/ConfirmModal';
 
-interface PortfolioSettingsDisplayProps {
-  portfolio: Portfolio;
+interface InvestmentPortfolioSettingsDisplayProps {
+  portfolio: InvestmentPortfolio;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: PortfolioSettingsDisplayProps) {
+export function InvestmentPortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: InvestmentPortfolioSettingsDisplayProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   return (
     <div className="space-y-8">
@@ -20,9 +19,6 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
           <h3 className="text-lg font-bold text-primary mb-2">Informations générales</h3>
           <div className="flex flex-col gap-1 text-base text-gray-800 dark:text-gray-100">
             <div><span className="font-semibold">Nom :</span> {portfolio.name}</div>
-            {'description' in portfolio && (
-              <div><span className="font-semibold">Description :</span> {portfolio.description ? String(portfolio.description) : <span className="italic text-gray-400">Aucune</span>}</div>
-            )}
             <div>
               <span className="font-semibold">Statut :</span> 
               <span className="ml-1">{getPortfolioStatusLabel(portfolio.status)}</span>

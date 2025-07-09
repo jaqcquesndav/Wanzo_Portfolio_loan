@@ -1,11 +1,23 @@
 // src/config/portfolioTypes.ts
+import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
 import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
 import { ReportingTable } from '../components/portfolio/traditional/ReportingTable';
-import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
-// Leasing et Investment à compléter
+import { EquipmentsTable } from '../components/portfolio/leasing/EquipmentsTable';
+import { ContractsTable } from '../components/portfolio/leasing/ContractsTable';
+import { IncidentsTable } from '../components/portfolio/leasing/IncidentsTable';
+import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTable';
+import { PaymentsTable } from '../components/portfolio/leasing/PaymentsTable';
+import { ReportingTable as LeasingReportingTable } from '../components/portfolio/leasing/ReportingTable';
+import { SettingsTable as LeasingSettingsTable } from '../components/portfolio/leasing/SettingsTable';
+import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
+import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
+import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
+import { ReportingTable as InvestmentReportingTable } from '../components/portfolio/investment/ReportingTable';
+import { SettingsTable as InvestmentSettingsTable } from '../components/portfolio/investment/SettingsTable';
+import { SettingsTable as TraditionalSettingsTable } from '../components/portfolio/traditional/SettingsTable';
 
 export const portfolioTypeConfig = {
   traditional: {
@@ -17,7 +29,7 @@ export const portfolioTypeConfig = {
       { key: 'repayments', label: 'Remb.', component: RepaymentsTable },
       { key: 'guarantees', label: 'Garanties', component: GuaranteesTable },
       { key: 'reporting', label: 'Reporting', component: ReportingTable },
-      { key: 'settings', label: 'Param.', component: null },
+      { key: 'settings', label: 'Param.', component: TraditionalSettingsTable },
     ],
     mockData: {
       products: 'mockFinancialProducts',
@@ -32,13 +44,13 @@ export const portfolioTypeConfig = {
   leasing: {
     label: 'Portefeuille de leasing',
     tabs: [
-      { key: 'equipments', label: 'Équipements', component: null },
-      { key: 'contracts', label: 'Contrats', component: null },
-      { key: 'incidents', label: 'Incidents', component: null },
-      { key: 'maintenance', label: 'Maintenance', component: null },
-      { key: 'payments', label: 'Paiements', component: null },
-      { key: 'reporting', label: 'Reporting', component: null },
-      { key: 'settings', label: 'Paramètres', component: null },
+      { key: 'equipments', label: 'Équipements', component: EquipmentsTable },
+      { key: 'contracts', label: 'Contrats', component: ContractsTable },
+      { key: 'incidents', label: 'Incidents', component: IncidentsTable },
+      { key: 'maintenance', label: 'Maintenance', component: MaintenanceTable },
+      { key: 'payments', label: 'Paiements', component: PaymentsTable },
+      { key: 'reporting', label: 'Reporting', component: LeasingReportingTable },
+      { key: 'settings', label: 'Paramètres', component: LeasingSettingsTable },
     ],
     mockData: {
       equipments: 'mockEquipments',
@@ -53,11 +65,11 @@ export const portfolioTypeConfig = {
   investment: {
     label: 'Portefeuille d’investissement',
     tabs: [
-      { key: 'assets', label: 'Actifs', component: null },
-      { key: 'subscriptions', label: 'Souscriptions', component: null },
-      { key: 'valuations', label: 'Valorisation', component: null },
-      { key: 'reporting', label: 'Reporting', component: null },
-      { key: 'settings', label: 'Paramètres', component: null },
+      { key: 'assets', label: 'Actifs', component: AssetsTable },
+      { key: 'subscriptions', label: 'Souscriptions', component: SubscriptionsTable },
+      { key: 'valuations', label: 'Valorisation', component: ValuationsTable },
+      { key: 'reporting', label: 'Reporting', component: InvestmentReportingTable },
+      { key: 'settings', label: 'Paramètres', component: InvestmentSettingsTable },
     ],
     mockData: {
       assets: 'mockAssets',

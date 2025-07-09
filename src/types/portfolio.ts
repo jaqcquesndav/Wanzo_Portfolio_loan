@@ -1,10 +1,12 @@
 import type { FinancialProduct } from './traditional-portfolio';
 
+export type PortfolioStatus = 'active' | 'inactive' | 'pending' | 'archived';
+
 export interface Portfolio {
   id: string;
   name: string;
   type: 'traditional' | 'investment' | 'leasing';
-  status: 'active' | 'inactive';
+  status: PortfolioStatus;
   target_amount: number;
   target_return: number;
   target_sectors: string[];

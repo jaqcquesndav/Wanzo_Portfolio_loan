@@ -1,4 +1,4 @@
-import type { LeasingPortfolio } from '../lib/indexedDbPortfolioService';
+import type { LeasingPortfolio } from '../types/leasing';
 
 export const mockLeasingPortfolios: LeasingPortfolio[] = [
   {
@@ -37,6 +37,17 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
       contract_renewal_rate: 28, // taux de renouvellement (%)
       total_rent_billed: 95000000, // montant total des loyers facturés (FCFA)
       collection_rate: 96.5 // taux de recouvrement (%)
+    },
+    contracts: [],
+    incidents: [],
+    maintenances: [],
+    payments: [],
+    leasing_terms: {
+      min_duration: 12,
+      max_duration: 60,
+      interest_rate_range: { min: 4.5, max: 8.5 },
+      maintenance_included: true,
+      insurance_required: true
     },
     created_at: '2024-02-01',
     updated_at: '2024-03-15'

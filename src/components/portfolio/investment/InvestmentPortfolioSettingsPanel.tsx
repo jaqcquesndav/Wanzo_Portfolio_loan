@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import type { InvestmentPortfolio } from '../../../types/investment-portfolio';
 import { Button } from '../../ui/Button';
-import type { Portfolio } from '../../../types/portfolio';
 import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
 
 const riskProfiles = [
@@ -20,20 +20,18 @@ const sectorOptions = [
   'Agriculture', 'Industrie', 'Services', 'Technologie', 'Santé', 'Éducation', 'Immobilier', 'Énergie', 'Finance', 'Autre'
 ];
 
-interface PortfolioSettingsPanelProps {
-  portfolio: Portfolio;
-  onSave: (data: Partial<Portfolio>) => void;
+interface InvestmentPortfolioSettingsPanelProps {
+  portfolio: InvestmentPortfolio;
+  onSave: (data: Partial<InvestmentPortfolio>) => void;
 }
 
-export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ portfolio, onSave }) => {
+export const InvestmentPortfolioSettingsPanel: React.FC<InvestmentPortfolioSettingsPanelProps> = ({ portfolio, onSave }) => {
   const [name, setName] = useState(portfolio.name);
-  // On supporte description si présent (pour traditional), sinon chaîne vide
-  const [description, setDescription] = useState((portfolio as { description?: string }).description || '');
-  const [status, setStatus] = useState<Portfolio['status']>(portfolio.status);
+  const [status, setStatus] = useState<InvestmentPortfolio['status']>(portfolio.status);
   const [targetAmount, setTargetAmount] = useState(portfolio.target_amount);
   const [targetReturn, setTargetReturn] = useState(portfolio.target_return);
   const [targetSectors, setTargetSectors] = useState<string[]>(portfolio.target_sectors || []);
-  const [riskProfile, setRiskProfile] = useState<Portfolio['risk_profile']>(portfolio.risk_profile);
+  const [riskProfile, setRiskProfile] = useState<InvestmentPortfolio['risk_profile']>(portfolio.risk_profile);
   const [investmentStage, setInvestmentStage] = useState(portfolio.investment_stage || '');
   const [saving, setSaving] = useState(false);
 
@@ -47,8 +45,7 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
     e.preventDefault();
     setSaving(true);
     setTimeout(() => {
-      // On n'inclut description que si elle existe dans le type de portefeuille
-      const data: Partial<Portfolio> & { description?: string } = {
+      const data: Partial<InvestmentPortfolio> = {
         name,
         status,
         target_amount: Number(targetAmount),
@@ -57,9 +54,6 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
         risk_profile: riskProfile,
         investment_stage: investmentStage,
       };
-      if ('description' in portfolio) {
-        data.description = description;
-      }
       onSave(data);
       setSaving(false);
     }, 800);
@@ -79,20 +73,11 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea
-            className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            rows={2}
-          />
-        </div>
-        <div>
           <label className="block text-sm font-medium mb-1">Statut</label>
           <select
             className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
             value={status}
-            onChange={e => setStatus(e.target.value as Portfolio['status'])}
+            onChange={e => setStatus(e.target.value as InvestmentPortfolio['status'])}
           >
             {statusOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -141,7 +126,7 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
           <select
             className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
             value={riskProfile}
-            onChange={e => setRiskProfile(e.target.value as Portfolio['risk_profile'])}
+            onChange={e => setRiskProfile(e.target.value as InvestmentPortfolio['risk_profile'])}
           >
             {riskProfiles.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

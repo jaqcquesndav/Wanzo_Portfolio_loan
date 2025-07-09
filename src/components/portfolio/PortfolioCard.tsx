@@ -1,7 +1,8 @@
-import React from 'react';
+// import React from 'react';
 import { TrendingUp, Users, Target, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { getPortfolioStatusLabel, getPortfolioStatusColor } from '../../utils/portfolioStatus';
 import { formatCurrency } from '../../utils/formatters';
 import type { Portfolio } from '../../types/portfolio';
 
@@ -11,18 +12,7 @@ interface PortfolioCardProps {
 }
 
 export function PortfolioCard({ portfolio, onView }: PortfolioCardProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'draft':
-        return 'warning';
-      case 'closed':
-        return 'error';
-      default:
-        return 'primary';
-    }
-  };
+  // Utilitaire centralisé pour badge statut
 
   const getRiskColor = (profile: string) => {
     switch (profile) {
@@ -42,8 +32,8 @@ export function PortfolioCard({ portfolio, onView }: PortfolioCardProps) {
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <Badge variant={getStatusColor(portfolio.status)}>
-              {portfolio.status}
+            <Badge variant={getPortfolioStatusColor(portfolio.status)}>
+              {getPortfolioStatusLabel(portfolio.status)}
             </Badge>
             <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">
               {portfolio.name}

@@ -17,6 +17,7 @@ export async function seedMockInvestmentPortfoliosIfNeeded() {
         ...p,
         requests,
         transactions,
+        type: 'investment', // Assure explicitement le type pour harmonisation
         updated_at: new Date().toISOString(),
       });
     }
@@ -28,7 +29,7 @@ export async function seedMockTraditionalPortfoliosIfNeeded() {
   const existing = await db.getAllFromIndex('portfolios', 'by-type', 'traditional');
   if (!existing || existing.length === 0) {
     for (const p of mockTraditionalPortfolios) {
-      await db.put('portfolios', { ...p, updated_at: new Date().toISOString() });
+      await db.put('portfolios', { ...p, type: 'traditional', updated_at: new Date().toISOString() });
     }
   }
 }
@@ -41,9 +42,19 @@ export async function seedMockLeasingPortfoliosIfNeeded() {
     for (const p of mockLeasingPortfolios) {
       // Associer les mocks métiers à chaque portefeuille
       const transactions = mockLeasingTransactions.filter(t => t.portfolioId === p.id);
+      // Si le champ cash existe, on l'ignore, sinon on passe tout
+      // Nettoyage du champ cash si présent dans les mocks (type-safe, sans casser le typage)
+      // Évite l'utilisation de 'any' en nettoyant cash via une fonction utilitaire
+      function omitCash<T extends object>(obj: T): T {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cash: _unused, ...rest } = obj as Record<string, unknown>;
+        return rest as T;
+      }
+      const portfolioToInsert = omitCash(p);
       await db.put('portfolios', {
-        ...p,
+        ...portfolioToInsert,
         transactions,
+        type: 'leasing', // Assure explicitement le type
         updated_at: new Date().toISOString(),
       });
     }

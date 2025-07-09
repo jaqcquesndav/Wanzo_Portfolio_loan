@@ -7,12 +7,17 @@ import { usePortfolio } from '../hooks/usePortfolio';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import { PortfolioCompanyReportsTable } from '../components/portfolio/investment/PortfolioCompanyReportsTable';
-import { InvestmentRequestsTable } from '../components/portfolio/investment/InvestmentRequestsTable';
-import { usePortfolioCompanyReports } from '../hooks/usePortfolioCompanyReports';
-import { useInvestmentRequests } from '../hooks/useInvestmentRequests';
+import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
+import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
+import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
+import { ReportingTable } from '../components/portfolio/investment/ReportingTable';
+import { InvestmentPortfolioSettingsDisplay } from '../components/portfolio/investment/InvestmentPortfolioSettingsDisplay';
+// import { InvestmentPortfolioSettingsPanel } from '../components/portfolio/investment/InvestmentPortfolioSettingsPanel';
+import { InvestmentPortfolioSettingsEditModal } from '../components/portfolio/investment/InvestmentPortfolioSettingsEditModal';
+import type { InvestmentPortfolio } from '../types/investment-portfolio';
+// Removed unused hooks
 import { PortfolioType } from '../lib/indexedDbPortfolioService';
-import { mockInvestmentPortfolios } from '../data/mockPortfolios';
+import { mockInvestmentPortfolios } from '../data/mockInvestmentPortfolios';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 export default function InvestmentPortfolioDetails() {
@@ -20,38 +25,30 @@ export default function InvestmentPortfolioDetails() {
   const navigate = useNavigate();
   // Par défaut, on affiche l'onglet "assets" (premier tab métier investment)
   const [tab, setTab] = React.useState('assets');
+  const [showEditModal, setShowEditModal] = useState(false);
   // Gestion des assets (ajout dynamiquement comme dans traditionnel)
-  const [showAssetForm, setShowAssetForm] = useState(false);
-  const [newAssetName, setNewAssetName] = useState('');
+  // Removed unused asset form state
   // Seed automatique des mocks si la base est vide (aligné avec traditionnel)
   useEffect(() => {
     if (!id) return;
-    import('../lib/indexedDbPortfolioService').then(({ indexedDbPortfolioService }) => {
-      indexedDbPortfolioService.getPortfolio(id).then((existing) => {
-        if (!existing) {
-          // On seed uniquement si l'ID correspond à notre mock pro (conforme financial data engineering)
-          const mock = mockInvestmentPortfolios.find(p => p.id === 'INVEST-2024-CI-001');
-          if (mock && id === 'INVEST-2024-CI-001') {
+    import('../lib/indexedDbPortfolioService').then(({ seedMockInvestmentPortfoliosIfNeeded, indexedDbPortfolioService }) => {
+      // Toujours seed les mocks si besoin (comme pour traditional)
+      seedMockInvestmentPortfoliosIfNeeded().then(() => {
+        indexedDbPortfolioService.getPortfolio(id).then((existing) => {
+          // Si le mock existe et diffère, on le met à jour (dev only)
+          const mock = mockInvestmentPortfolios.find(p => p.id === id);
+          if (mock && (!existing || JSON.stringify(existing) !== JSON.stringify(mock))) {
             indexedDbPortfolioService.addOrUpdatePortfolio({ ...mock });
           }
-        }
+        });
       });
     });
   }, [id]);
-  const { portfolio, loading, addOrUpdate } = usePortfolio(id, portfolioType as PortfolioType);
+  const { portfolio, loading } = usePortfolio(id, portfolioType as PortfolioType);
   // Hooks métier investment
-  const { reports, loading: loadingReports } = usePortfolioCompanyReports(id);
-  const { requests, loading: loadingRequests, addRequest, updateRequest, deleteRequest } = useInvestmentRequests(id);
+  // Removed unused hooks for company reports and investment requests
   // State pour la modale d'ajout de demande d'investissement
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [editingRequest, setEditingRequest] = useState<null | import('../types/investment-portfolio').InvestmentRequest>(null);
-  const [requestForm, setRequestForm] = useState({
-    companyId: '',
-    stage: 'amorcage',
-    amountRequested: 0,
-    status: 'en instruction',
-  });
-  const [saving, setSaving] = useState(false);
+  // Removed unused state for investment request modal
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   if (loading) {
@@ -95,307 +92,83 @@ export default function InvestmentPortfolioDetails() {
           <h1 className="text-2xl font-semibold">{portfolio.name}</h1>
         </div>
       </div>
+      {/* Onglet Aperçu */}
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-      <TabsOverflow
-        tabs={[
-          { key: 'assets', label: 'Actifs' },
-          { key: 'subscriptions', label: 'Souscriptions' },
-          { key: 'valuations', label: 'Valorisation' },
-          { key: 'reporting', label: 'Reporting' },
-          { key: 'settings', label: 'Paramètres' },
-        ]}
-        value={tab}
-        onValueChange={setTab}
-      />
-      {/* Onglet Actifs (tableau des assets du portefeuille) */}
-      <TabsContent value="assets" currentValue={tab}>
-        <div className="flex justify-end mb-4">
-          <Button size="sm" onClick={() => setShowAssetForm(true)} aria-label="Ajouter un actif">Nouvel actif</Button>
-        </div>
-        {('assets' in portfolio) && Array.isArray((portfolio as import('../lib/indexedDbPortfolioService').InvestmentPortfolio).assets)
-          ? <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
-              <table className="min-w-full bg-white dark:bg-gray-800">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                    <th className="px-4 py-2 text-left">Nom de l'actif</th>
-                    <th className="px-4 py-2 text-left">ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(portfolio as import('../lib/indexedDbPortfolioService').InvestmentPortfolio).assets.length > 0 ? (
-                    (portfolio as import('../lib/indexedDbPortfolioService').InvestmentPortfolio).assets.map(asset => (
-                      <tr key={asset.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                        <td className="px-4 py-2">{asset.name}</td>
-                        <td className="px-4 py-2">{asset.id}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="text-center py-8 text-gray-400">Aucun actif à afficher</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          : <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
-              <table className="min-w-full bg-white dark:bg-gray-800">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                    <th className="px-4 py-2 text-left">Nom de l'actif</th>
-                    <th className="px-4 py-2 text-left">ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colSpan={2} className="text-center py-8 text-gray-400">Aucun actif à afficher</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-        }
-
-        {/* Modal d'ajout d'actif */}
-        {showAssetForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Ajouter un actif">
-            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b dark:border-gray-700">
-                <h2 className="text-xl font-semibold">Nouvel actif</h2>
-              </div>
-              <form className="p-6" onSubmit={async (e) => {
-                e.preventDefault();
-                if (!newAssetName.trim()) return;
-                const assets = ('assets' in portfolio && Array.isArray((portfolio as import('../lib/indexedDbPortfolioService').InvestmentPortfolio).assets))
-                  ? [...(portfolio as import('../lib/indexedDbPortfolioService').InvestmentPortfolio).assets]
-                  : [];
-                const newAsset = { id: crypto.randomUUID(), name: newAssetName.trim() };
-                await addOrUpdate({ assets: [...assets, newAsset] });
-                setShowAssetForm(false);
-                setNewAssetName('');
-              }}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Nom de l'actif</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2"
-                    value={newAssetName}
-                    onChange={e => setNewAssetName(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setShowAssetForm(false)}>Annuler</Button>
-                  <Button type="submit">Ajouter</Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </TabsContent>
-      {/* Onglet Souscriptions (Investment Requests) */}
-      <TabsContent value="subscriptions" currentValue={tab}>
-        <div className="mb-4 flex justify-end">
-          <Button size="sm" onClick={() => {
-            setEditingRequest(null);
-            setRequestForm({ companyId: '', stage: 'amorcage', amountRequested: 0, status: 'en instruction' });
-            setShowRequestModal(true);
-          }} aria-label="Nouvelle demande">Nouvelle demande</Button>
-        </div>
-        <div>
-          <InvestmentRequestsTable
-            requests={Array.isArray(requests) ? requests : []}
-            loading={loadingRequests}
-            onView={(entityId: string) => navigate(`/app/portfolio/${id}/requests/${entityId}`)}
-            onDelete={async (requestId: string) => {
-              setConfirmDeleteId(requestId);
-            }}
-            onEdit={(req) => {
-              setEditingRequest(req);
-              setRequestForm({
-                companyId: req.companyId,
-                stage: req.stage,
-                amountRequested: req.amountRequested,
-                status: req.status,
-              });
-              setShowRequestModal(true);
-            }}
-          />
-        </div>
-        {/* Modal d'ajout de demande d'investissement */}
-        {showRequestModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label={editingRequest ? 'Éditer une demande' : 'Nouvelle demande'}>
-            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b dark:border-gray-700">
-                <h2 className="text-xl font-semibold">{editingRequest ? "Éditer la demande d'investissement" : "Nouvelle demande d'investissement"}</h2>
-              </div>
-              <form className="p-6" onSubmit={async (e) => {
-                e.preventDefault();
-                if (!requestForm.companyId.trim() || !requestForm.amountRequested) return;
-                setSaving(true);
-                if (editingRequest) {
-                  await updateRequest({
-                    ...editingRequest,
-                    companyId: requestForm.companyId.trim(),
-                    stage: requestForm.stage as import('../types/investment-portfolio').InvestmentStage,
-                    amountRequested: Number(requestForm.amountRequested),
-                    status: requestForm.status as import('../types/investment-portfolio').InvestmentRequestStatus,
-                    updated_at: new Date().toISOString(),
-                  });
-                } else {
-                  await addRequest({
-                    id: 'INVEST-REQ-' + Date.now(),
-                    portfolioId: id!,
-                    companyId: requestForm.companyId.trim(),
-                    stage: requestForm.stage as import('../types/investment-portfolio').InvestmentStage,
-                    amountRequested: Number(requestForm.amountRequested),
-                    status: requestForm.status as import('../types/investment-portfolio').InvestmentRequestStatus,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  });
-                }
-                setShowRequestModal(false);
-                setEditingRequest(null);
-                setRequestForm({ companyId: '', stage: 'amorcage', amountRequested: 0, status: 'en instruction' });
-                setSaving(false);
-              }}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Entreprise</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2"
-                    value={requestForm.companyId}
-                    onChange={e => setRequestForm(r => ({ ...r, companyId: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Stade</label>
-                  <select
-                    className="w-full border rounded px-3 py-2"
-                    value={requestForm.stage}
-                    onChange={e => setRequestForm(r => ({ ...r, stage: e.target.value }))}
-                  >
-                    <option value="amorcage">Amorçage</option>
-                    <option value="developpement">Développement</option>
-                    <option value="transmission">Transmission</option>
-                    <option value="reprise">Reprise</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Montant demandé</label>
-                  <input
-                    type="number"
-                    className="w-full border rounded px-3 py-2"
-                    value={requestForm.amountRequested}
-                    onChange={e => setRequestForm(r => ({ ...r, amountRequested: Number(e.target.value) }))}
-                    min={1}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Statut</label>
-                  <select
-                    className="w-full border rounded px-3 py-2"
-                    value={requestForm.status}
-                    onChange={e => setRequestForm(r => ({ ...r, status: e.target.value }))}
-                  >
-                    <option value="en instruction">En instruction</option>
-                    <option value="acceptée">Acceptée</option>
-                    <option value="refusée">Refusée</option>
-                    <option value="abandonnée">Abandonnée</option>
-                  </select>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => { setShowRequestModal(false); setEditingRequest(null); }} disabled={saving}>Annuler</Button>
-                  <Button type="submit" disabled={saving}>{saving ? (editingRequest ? 'Enregistrement...' : 'Ajout...') : (editingRequest ? 'Enregistrer' : 'Ajouter')}</Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </TabsContent>
-      {/* Onglet Valorisation (toujours entêtes visibles) */}
-      <TabsContent value="valuations" currentValue={tab}>
-        <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
-          <table className="min-w-full bg-white dark:bg-gray-800">
-            <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                <th className="px-4 py-2 text-left">Date</th>
-                <th className="px-4 py-2 text-left">Valeur</th>
-                <th className="px-4 py-2 text-left">Commentaire</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan={3} className="text-center py-8 text-gray-400">Aucune valorisation à afficher</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </TabsContent>
-      {/* Onglet Reporting (tableau des reportings) */}
-      <TabsContent value="reporting" currentValue={tab}>
-        <PortfolioCompanyReportsTable
-          reports={reports}
-          loading={loadingReports}
-          onView={entityId => navigate(`/app/portfolio/${id}/company-reports/${entityId}`)}
+        <TabsOverflow
+          tabs={[
+            { key: 'overview', label: 'Aperçu' },
+            { key: 'assets', label: 'Actifs' },
+            { key: 'subscriptions', label: 'Souscriptions' },
+            { key: 'valuations', label: 'Valorisation' },
+            { key: 'reporting', label: 'Reporting' },
+            { key: 'settings', label: 'Paramètres' },
+          ]}
+          value={tab}
+          onValueChange={setTab}
         />
-      </TabsContent>
-      {/* Onglet Paramètres (toujours entêtes visibles) */}
-      <TabsContent value="settings" currentValue={tab}>
-        <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
-          <table className="min-w-full bg-white dark:bg-gray-800">
-            <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                <th className="px-4 py-2 text-left">Clé</th>
-                <th className="px-4 py-2 text-left">Valeur</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan={2} className="text-center py-8 text-gray-400">Aucun paramètre à afficher</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </TabsContent>
-      </Tabs>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-medium mb-4">Détails du portefeuille</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Montant cible</p>
-                <p className="font-medium">{portfolio.target_amount.toLocaleString()} FCFA</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Rendement cible</p>
-                <p className="font-medium">{portfolio.target_return}%</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Profil de risque</p>
-                <p className="font-medium capitalize">{portfolio.risk_profile}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Secteurs cibles</p>
-                <div className="flex flex-wrap gap-2">
-                  {portfolio.target_sectors.map((sector) => (
-                    <span key={sector} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {sector}
-                    </span>
-                  ))}
+        <TabsContent value="overview" currentValue={tab}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h2 className="text-lg font-medium mb-4">Détails du portefeuille</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Montant cible</p>
+                    <p className="font-medium">{portfolio.target_amount.toLocaleString()} FCFA</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Rendement cible</p>
+                    <p className="font-medium">{portfolio.target_return}%</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Profil de risque</p>
+                    <p className="font-medium capitalize">{portfolio.risk_profile}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Secteurs cibles</p>
+                    <div className="flex flex-wrap gap-2">
+                      {portfolio.target_sectors.map((sector) => (
+                        <span key={sector} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {sector}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+            <div>
+              <PortfolioMetrics portfolio={portfolio} />
+            </div>
           </div>
-        </div>
-        <div>
-          <PortfolioMetrics portfolio={portfolio} />
-        </div>
-      </div>
-
-      {/* Confirm delete modal for investment request */}
+        </TabsContent>
+        <TabsContent value="assets" currentValue={tab}>
+          <AssetsTable assets={portfolio.type === 'investment' ? (portfolio as InvestmentPortfolio).assets : []} />
+        </TabsContent>
+        <TabsContent value="subscriptions" currentValue={tab}>
+          <SubscriptionsTable subscriptions={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).subscriptions) ? (portfolio as InvestmentPortfolio).subscriptions! : []} />
+        </TabsContent>
+        <TabsContent value="valuations" currentValue={tab}>
+          <ValuationsTable valuations={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).valuations) ? (portfolio as InvestmentPortfolio).valuations! : []} />
+        </TabsContent>
+        <TabsContent value="reporting" currentValue={tab}>
+          <ReportingTable />
+        </TabsContent>
+        <TabsContent value="settings" currentValue={tab}>
+          <InvestmentPortfolioSettingsDisplay
+            portfolio={portfolio as InvestmentPortfolio}
+            onEdit={() => setShowEditModal(true)}
+            onDelete={() => {/* TODO: brancher la suppression réelle ici */}}
+          />
+          <InvestmentPortfolioSettingsEditModal
+            open={showEditModal}
+            portfolio={portfolio as InvestmentPortfolio}
+            onSave={() => setShowEditModal(false)}
+            onClose={() => setShowEditModal(false)}
+          />
+        </TabsContent>
+      </Tabs>
+      {/* Confirm delete modal for investment request (à déplacer si besoin) */}
       <ConfirmModal
         open={!!confirmDeleteId}
         title="Confirmation"
@@ -404,7 +177,6 @@ export default function InvestmentPortfolioDetails() {
         cancelLabel="Annuler"
         onConfirm={async () => {
           if (confirmDeleteId) {
-            await deleteRequest(confirmDeleteId);
             setConfirmDeleteId(null);
           }
         }}

@@ -2,6 +2,10 @@ import type { Portfolio } from './portfolio';
 
 export interface LeasingPortfolio extends Portfolio {
   equipment_catalog: Equipment[];
+  contracts: LeasingContract[];
+  incidents: import('./leasing-asset').Incident[];
+  maintenances: import('./leasing-asset').Maintenance[];
+  payments: import('./leasing-payment').LeasingPayment[];
   leasing_terms: {
     min_duration: number;
     max_duration: number;
