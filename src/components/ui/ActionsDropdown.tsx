@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { MoreVertical } from 'lucide-react';
 
 interface DropdownAction {
@@ -42,8 +43,19 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ actions }) => 
       >
         <MoreVertical className="h-5 w-5 text-gray-500" />
       </button>
-      {open && (
-        <div className="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+      {open && typeof window !== 'undefined' && ReactDOM.createPortal(
+        <div
+          className="origin-top-right fixed z-[9999] w-40 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5"
+          style={(() => {
+            if (!ref.current) return { top: 0, left: 0, visibility: 'hidden' };
+            const rect = ref.current.getBoundingClientRect();
+            return {
+              top: rect.bottom + window.scrollY,
+              left: rect.right + window.scrollX - 160, // 160px = width
+              visibility: 'visible',
+            };
+          })()}
+        >
           <div className="py-1">
             {actions.map((action, idx) => (
               <button
@@ -61,7 +73,8 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ actions }) => 
               </button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

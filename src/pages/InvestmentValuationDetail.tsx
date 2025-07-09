@@ -1,14 +1,15 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { ArrowLeft } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { usePortfolio } from '../hooks/usePortfolio';
+import { usePortfolioType } from '../hooks/usePortfolioType';
+import type { PortfolioType as ServicePortfolioType } from '../lib/indexedDbPortfolioService';
 import type { InvestmentPortfolio } from '../types/investment-portfolio';
 import type { CompanyValuation } from '../types/securities';
+import { Breadcrumb } from '../components/common/Breadcrumb';
 
 export default function InvestmentValuationDetail() {
   const { id: portfolioId, valuationId } = useParams();
-  const navigate = useNavigate();
-  const { portfolio, loading } = usePortfolio(portfolioId, 'investment');
+  const portfolioType = usePortfolioType() as ServicePortfolioType;
+  const { portfolio, loading } = usePortfolio(portfolioId, portfolioType);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
@@ -21,9 +22,18 @@ export default function InvestmentValuationDetail() {
   if (!valuation) {
     return <div className="text-center py-12">Valorisation introuvable.</div>;
   }
+
+  // Breadcrumb dynamique : Home (dashboard du type courant) > Nom portefeuille > Valorisation > #id
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <Button variant="ghost" onClick={() => navigate(-1)} icon={<ArrowLeft className="h-5 w-5" />}>Retour</Button>
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: `/app/${portfolioType}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${portfolioId}` },
+          { label: 'Valorisation', href: `/app/${portfolioType}/${portfolioId}?tab=valuations` },
+          { label: `#${valuation.id}` }
+        ]}
+      />
       <h1 className="text-2xl font-semibold mb-4">Détail de la valorisation</h1>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
         <div><span className="font-semibold">ID :</span> {String(valuation.id)}</div>

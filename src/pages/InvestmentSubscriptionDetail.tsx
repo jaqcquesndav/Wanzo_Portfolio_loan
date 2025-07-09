@@ -1,14 +1,17 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { ArrowLeft } from 'lucide-react';
+
+import { useParams } from 'react-router-dom';
+import { Breadcrumb } from '../components/common/Breadcrumb';
 import { usePortfolio } from '../hooks/usePortfolio';
+import { usePortfolioType } from '../hooks/usePortfolioType';
 import type { InvestmentPortfolio } from '../types/investment-portfolio';
 import type { SecuritySubscription } from '../types/securities';
 
+
 export default function InvestmentSubscriptionDetail() {
   const { id: portfolioId, subscriptionId } = useParams();
-  const navigate = useNavigate();
-  const { portfolio, loading } = usePortfolio(portfolioId, 'investment');
+  let portfolioType = usePortfolioType();
+  if (!portfolioType) portfolioType = 'investment';
+  const { portfolio, loading } = usePortfolio(portfolioId, portfolioType);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
@@ -23,7 +26,14 @@ export default function InvestmentSubscriptionDetail() {
   }
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <Button variant="ghost" onClick={() => navigate(-1)} icon={<ArrowLeft className="h-5 w-5" />}>Retour</Button>
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: `/app/${portfolioType}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${portfolioId}` },
+          { label: 'Souscriptions', href: `/app/${portfolioType}/${portfolioId}?tab=subscriptions` },
+          { label: `#${subscription.id}` }
+        ]}
+      />
       <h1 className="text-2xl font-semibold mb-4">Détail de la souscription</h1>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
         <div><span className="font-semibold">ID :</span> {String(subscription.id)}</div>
