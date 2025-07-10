@@ -64,13 +64,13 @@ export default function LeasingPortfolioDetails() {
   // Dynamic config for tabs (supprimé, déjà défini plus haut)
 
   // Debug log to help diagnose tab/config issues
-  // eslint-disable-next-line no-console
-  console.log('DEBUG LeasingPortfolioDetails:', {
-    configTabs: config.tabs,
-    tab,
-    portfolio,
-    tabsKeys: config.tabs.map(t => t.key),
-  });
+  // (removed unused eslint-disable-next-line no-console)
+  // console.log('DEBUG LeasingPortfolioDetails:', {
+  //   configTabs: config.tabs,
+  //   tab,
+  //   portfolio,
+  //   tabsKeys: config.tabs.map(t => t.key),
+  // });
 
   // Fallback UI if no tab matches
   const validTabKeys = config.tabs.map(t => t.key);
@@ -103,7 +103,7 @@ export default function LeasingPortfolioDetails() {
         {/* Tab rendering, harmonized with config */}
         <TabsContent value="equipments" currentValue={tab}>
           <EquipmentsTable
-            equipments={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).equipment_catalog : []}
+            equipments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).equipment_catalog : []}
             onRowClick={(equipment) => {
               window.location.assign(`/app/leasing/${portfolio.id}/equipments/${equipment.id}`);
             }}
@@ -111,7 +111,7 @@ export default function LeasingPortfolioDetails() {
         </TabsContent>
         <TabsContent value="contracts" currentValue={tab}>
           <ContractsTable
-            contracts={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).contracts : []}
+            contracts={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).contracts : []}
             onRowClick={(contract) => {
               window.location.assign(`/app/leasing/${portfolio.id}/contracts/${contract.id}`);
             }}
@@ -119,7 +119,7 @@ export default function LeasingPortfolioDetails() {
         </TabsContent>
         <TabsContent value="incidents" currentValue={tab}>
           <IncidentsTable
-            incidents={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).incidents : []}
+            incidents={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).incidents : []}
             onRowClick={(incident) => {
               window.location.assign(`/app/leasing/${portfolio.id}/incidents/${incident.id}`);
             }}
@@ -127,7 +127,7 @@ export default function LeasingPortfolioDetails() {
         </TabsContent>
         <TabsContent value="maintenance" currentValue={tab}>
           <MaintenanceTable
-            maintenances={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).maintenances : []}
+            maintenances={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).maintenances : []}
             onRowClick={(maintenance) => {
               window.location.assign(`/app/leasing/${portfolio.id}/maintenance/${maintenance.id}`);
             }}
@@ -135,7 +135,7 @@ export default function LeasingPortfolioDetails() {
         </TabsContent>
         <TabsContent value="payments" currentValue={tab}>
           <PaymentsTable
-            payments={portfolio.type === 'leasing' ? (portfolio as LeasingPortfolio).payments : []}
+            payments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).payments : []}
             onRowClick={(payment) => {
               window.location.assign(`/app/leasing/${portfolio.id}/payments/${payment.id}`);
             }}
@@ -143,7 +143,7 @@ export default function LeasingPortfolioDetails() {
         </TabsContent>
         <TabsContent value="reporting" currentValue={tab}>
           <ReportingTable
-            reports={portfolio.type === 'leasing' && Array.isArray((portfolio as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] })['reports']) ? (portfolio as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] }).reports ?? [] : []}
+            reports={portfolio.type === 'leasing' && Array.isArray((portfolio as unknown as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] })['reports']) ? (portfolio as unknown as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] }).reports ?? [] : []}
             onRowClick={(report) => {
               window.location.assign(`/app/leasing/${portfolio.id}/reporting/${report.id}`);
             }}

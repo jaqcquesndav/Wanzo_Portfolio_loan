@@ -1,3 +1,22 @@
+// Exported for unified DB typing
+export interface PortfolioWithType extends Portfolio {
+  // Investment
+  assets?: unknown[];
+  subscriptions?: import('./securities').SecuritySubscription[];
+  valuations?: import('./securities').CompanyValuation[];
+  requests?: import('./investment-portfolio').InvestmentRequest[];
+  transactions?: import('./investment-portfolio').InvestmentTransaction[];
+  reports?: import('./investment-portfolio').PortfolioCompanyReport[];
+  exitEvents?: import('./investment-portfolio').ExitEvent[];
+  // Leasing
+  equipment_catalog?: import('./leasing').Equipment[];
+  contracts?: import('./leasing').LeasingContract[];
+  incidents?: import('./leasing-asset').Incident[];
+  maintenances?: import('./leasing-asset').Maintenance[];
+  payments?: import('./leasing-payment').LeasingPayment[];
+  // Optionals for compatibility
+  [key: string]: unknown;
+}
 import type { FinancialProduct } from './traditional-portfolio';
 
 export type PortfolioStatus = 'active' | 'inactive' | 'pending' | 'archived';

@@ -2,7 +2,10 @@ import { db, StoreName } from './indexedDB';
 import { mockCompanies } from '../../data/mockCompanies';
 import { mockOperations } from '../../data/mockOperations';
 // import { mockPortfolios } from '../../data/mockPortfolios';
-import { seedMockLeasingPortfoliosIfNeeded, seedMockInvestmentPortfoliosIfNeeded, seedMockTraditionalPortfoliosIfNeeded } from '../../lib/indexedDbPortfolioService';
+import { mockLeasingPortfolios } from '../../data/mockLeasingPortfolios';
+import { mockInvestmentPortfolios } from '../../data/mockInvestmentPortfolios';
+import { mockTraditionalPortfolios } from '../../data/mockTraditionalPortfolios';
+import { portfolioDbService } from './indexedDB';
 
 
 export async function initializeMockData() {
@@ -14,10 +17,17 @@ export async function initializeMockData() {
       return;
     }
 
-    // Initialiser les portefeuilles mockés dans IndexedDB (tous types)
-    await seedMockLeasingPortfoliosIfNeeded();
-    await seedMockInvestmentPortfoliosIfNeeded();
-    await seedMockTraditionalPortfoliosIfNeeded();
+    // Injecter les portefeuilles mockés dans la base principale (financeflow_db)
+    for (const p of mockLeasingPortfolios) {
+      // Ensure reports is an empty array for type compatibility
+      await portfolioDbService.addOrUpdatePortfolio({ ...p, type: 'leasing', reports: [] });
+    }
+    for (const p of mockInvestmentPortfolios) {
+      await portfolioDbService.addOrUpdatePortfolio({ ...p, type: 'investment' });
+    }
+    for (const p of mockTraditionalPortfolios) {
+      await portfolioDbService.addOrUpdatePortfolio({ ...p, type: 'traditional' });
+    }
 
     // Initialiser les données dans IndexedDB (hors portefeuilles, qui sont injectés via les seeds métiers)
     const stores: { name: StoreName; data: unknown[] }[] = [

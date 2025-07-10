@@ -1,3 +1,142 @@
+// --- Portfolio unified CRUD for all types (traditional, leasing, investment) ---
+
+
+import type { Portfolio as AnyPortfolio } from '../../types/portfolio';
+import type { FinancialProduct } from '../../types/traditional-portfolio';
+import type { InvestmentRequest, InvestmentTransaction, PortfolioCompanyReport, ExitEvent } from '../../types/investment-portfolio';
+import type { SecuritySubscription, CompanyValuation } from '../../types/securities';
+import type { Equipment, LeasingContract } from '../../types/leasing';
+import type { Incident, Maintenance } from '../../types/leasing-asset';
+import type { LeasingPayment } from '../../types/leasing-payment';
+
+// Unified Portfolio type for all portfolio types
+export interface PortfolioWithType {
+  id: string;
+  name: string;
+  type: 'traditional' | 'leasing' | 'investment';
+  status: import('../../types/portfolio').PortfolioStatus;
+  products: FinancialProduct[];
+  metrics: AnyPortfolio['metrics'];
+  target_amount: number;
+  target_return: number;
+  target_sectors: string[];
+  risk_profile: 'conservative' | 'moderate' | 'aggressive';
+  created_at: string;
+  updated_at: string;
+  // Investment
+  assets?: unknown[]; // If you have a type for assets, import and use it here
+  subscriptions?: SecuritySubscription[];
+  valuations?: CompanyValuation[];
+  requests?: InvestmentRequest[];
+  transactions?: InvestmentTransaction[];
+  reports?: PortfolioCompanyReport[];
+  exitEvents?: ExitEvent[];
+  // Leasing
+  equipment_catalog?: Equipment[];
+  contracts?: LeasingContract[];
+  incidents?: Incident[];
+  maintenances?: Maintenance[];
+  payments?: LeasingPayment[];
+  // Optionals for compatibility
+  [key: string]: unknown;
+}
+
+
+
+// --- Normalization helpers for all portfolio types ---
+// TraditionalPortfolio is not exported from '../../types/portfolio', so use PortfolioWithType for normalization
+
+function normalizeLeasingPortfolio(portfolio: PortfolioWithType): PortfolioWithType {
+  return {
+    ...portfolio,
+    equipment_catalog: Array.isArray(portfolio.equipment_catalog) ? portfolio.equipment_catalog : [],
+    contracts: Array.isArray(portfolio.contracts) ? portfolio.contracts : [],
+    incidents: Array.isArray(portfolio.incidents) ? portfolio.incidents : [],
+    maintenances: Array.isArray(portfolio.maintenances) ? portfolio.maintenances : [],
+    payments: Array.isArray(portfolio.payments) ? portfolio.payments : [],
+    reports: Array.isArray(portfolio.reports) ? portfolio.reports : [],
+    // Ensure all required base fields are present
+    id: portfolio.id,
+    type: portfolio.type,
+    status: portfolio.status,
+    products: portfolio.products,
+    metrics: portfolio.metrics,
+    target_amount: portfolio.target_amount,
+    target_return: portfolio.target_return,
+    target_sectors: portfolio.target_sectors,
+    risk_profile: portfolio.risk_profile,
+  };
+}
+
+function normalizeInvestmentPortfolio(portfolio: PortfolioWithType): PortfolioWithType {
+  return {
+    ...portfolio,
+    assets: Array.isArray(portfolio.assets) ? portfolio.assets : [],
+    subscriptions: Array.isArray(portfolio.subscriptions) ? portfolio.subscriptions : [],
+    valuations: Array.isArray(portfolio.valuations) ? portfolio.valuations : [],
+    requests: Array.isArray(portfolio.requests) ? portfolio.requests : [],
+    transactions: Array.isArray(portfolio.transactions) ? portfolio.transactions : [],
+    reports: Array.isArray(portfolio.reports) ? portfolio.reports : [],
+    exitEvents: Array.isArray(portfolio.exitEvents) ? portfolio.exitEvents : [],
+    // Ensure all required base fields are present
+    id: portfolio.id,
+    type: portfolio.type,
+    status: portfolio.status,
+    products: portfolio.products,
+    metrics: portfolio.metrics,
+    target_amount: portfolio.target_amount,
+    target_return: portfolio.target_return,
+    target_sectors: portfolio.target_sectors,
+    risk_profile: portfolio.risk_profile,
+  };
+}
+
+function normalizeTraditionalPortfolio(portfolio: PortfolioWithType): PortfolioWithType {
+  return {
+    ...portfolio,
+    products: Array.isArray(portfolio['products']) ? portfolio['products'] : [],
+    requests: Array.isArray(portfolio['requests']) ? portfolio['requests'] : [],
+    disbursements: Array.isArray(portfolio['disbursements']) ? portfolio['disbursements'] : [],
+    repayments: Array.isArray(portfolio['repayments']) ? portfolio['repayments'] : [],
+    guarantees: Array.isArray(portfolio['guarantees']) ? portfolio['guarantees'] : [],
+    reporting: Array.isArray(portfolio['reporting']) ? portfolio['reporting'] : [],
+  };
+}
+
+function normalizePortfolio(portfolio: PortfolioWithType): PortfolioWithType {
+  if (!portfolio || typeof portfolio !== 'object' || !('type' in portfolio)) return portfolio;
+  switch (portfolio.type) {
+    case 'leasing':
+      return normalizeLeasingPortfolio(portfolio);
+    case 'investment':
+      return normalizeInvestmentPortfolio(portfolio);
+    case 'traditional':
+      return normalizeTraditionalPortfolio(portfolio);
+    default:
+      return portfolio;
+  }
+}
+
+export const portfolioDbService = {
+  async getPortfolio(id: string): Promise<PortfolioWithType | undefined> {
+    const raw = await db.get('portfolios', id);
+    return raw ? normalizePortfolio(raw as PortfolioWithType) : undefined;
+  },
+  async getPortfoliosByType(type: string): Promise<PortfolioWithType[]> {
+    const result = await db.getByIndex('portfolios', 'by-type', type);
+    return (result as unknown as PortfolioWithType[]).map(normalizePortfolio);
+  },
+  async addOrUpdatePortfolio(portfolio: PortfolioWithType): Promise<void> {
+    await db.update('portfolios', portfolio.id, { ...portfolio, updated_at: new Date().toISOString() });
+  },
+  async deletePortfolio(id: string): Promise<void> {
+    await db.delete('portfolios', id);
+  },
+  async getAllPortfolios(): Promise<PortfolioWithType[]> {
+    const result = await db.getAll('portfolios');
+    return (result as unknown as PortfolioWithType[]).map(normalizePortfolio);
+  },
+};
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 // Define strict types for each store

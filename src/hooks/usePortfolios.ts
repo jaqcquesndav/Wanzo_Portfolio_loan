@@ -1,6 +1,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
-import { indexedDbPortfolioService, AnyPortfolio, PortfolioType } from '../lib/indexedDbPortfolioService';
+import { portfolioDbService } from '../services/db/indexedDB';
+import type { Portfolio as AnyPortfolio } from '../types/portfolio';
+export type PortfolioType = 'traditional' | 'leasing' | 'investment';
 
 export function usePortfolios(type: PortfolioType) {
   const [portfolios, setPortfolios] = useState<AnyPortfolio[]>([]);
@@ -9,7 +11,7 @@ export function usePortfolios(type: PortfolioType) {
   // Permet de forcer le rechargement depuis l'extérieur (ex: après création)
   const refresh = useCallback(() => {
     setLoading(true);
-    indexedDbPortfolioService.getPortfoliosByType(type)
+    portfolioDbService.getPortfoliosByType(type)
       .then(setPortfolios)
       .finally(() => setLoading(false));
   }, [type]);

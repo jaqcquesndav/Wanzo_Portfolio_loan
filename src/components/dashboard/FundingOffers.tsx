@@ -10,7 +10,7 @@ import type { Company } from '../../types/company';
 import type { Portfolio } from '../../types/portfolio';
 // Utiliser les entreprises partagées pour toutes les opportunités
 import { mockPMCompanies } from '../../data/mockPMCompanies';
-import { indexedDbPortfolioService, seedMockInvestmentPortfoliosIfNeeded, seedMockLeasingPortfoliosIfNeeded, seedMockTraditionalPortfoliosIfNeeded } from '../../lib/indexedDbPortfolioService';
+import { portfolioDbService } from '../../services/db/indexedDB';
 import { usePortfolioType } from '../../hooks/usePortfolioType';
 
 const FundingOffers = () => {
@@ -23,18 +23,10 @@ const FundingOffers = () => {
 
   useEffect(() => {
     // Seed et charge dynamiquement selon le type courant
-    let seedPromise: Promise<void>;
-    if (portfolioType === 'investment') seedPromise = seedMockInvestmentPortfoliosIfNeeded();
-    else if (portfolioType === 'leasing') seedPromise = seedMockLeasingPortfoliosIfNeeded();
-    else if (portfolioType === 'traditional') seedPromise = seedMockTraditionalPortfoliosIfNeeded();
-    else seedPromise = Promise.resolve();
-
-    seedPromise.then(() => {
-      if (!portfolioType) return setPortfolios([]);
-      indexedDbPortfolioService.getPortfoliosByType(portfolioType).then((data) => {
-        setPortfolios(data);
-        if (!selectedPortfolio && data.length > 0) setSelectedPortfolio(data[0]);
-      });
+    if (!portfolioType) return setPortfolios([]);
+    portfolioDbService.getPortfoliosByType(portfolioType).then((data) => {
+      setPortfolios(data);
+      if (!selectedPortfolio && data.length > 0) setSelectedPortfolio(data[0]);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolioType]);

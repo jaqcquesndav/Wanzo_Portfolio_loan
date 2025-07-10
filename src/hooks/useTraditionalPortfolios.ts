@@ -1,9 +1,8 @@
 // src/hooks/useTraditionalPortfolios.ts
 import { useState, useMemo } from 'react';
 import { usePortfolios } from './usePortfolios';
-import { indexedDbPortfolioService } from '../lib/indexedDbPortfolioService';
-
-import type { TraditionalPortfolio } from '../lib/indexedDbPortfolioService';
+import type { TraditionalPortfolio } from '../types/traditional-portfolio';
+import { portfolioDbService } from '../services/db/indexedDB';
 
 interface Filters {
   status: string;
@@ -42,7 +41,7 @@ export function useTraditionalPortfolios() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    await indexedDbPortfolioService.addOrUpdatePortfolio(newPortfolio);
+    await portfolioDbService.addOrUpdatePortfolio(newPortfolio as unknown as import('../types/portfolio').PortfolioWithType);
     refresh(); // Rafraîchit la liste après création
     return newPortfolio;
   };

@@ -1,3 +1,4 @@
+import { initializeMockData } from './services/db/mockDataInitializer';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
@@ -6,13 +7,16 @@ import './styles/colors.css';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
-const root = createRoot(rootElement);
-
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+// Initialise les mockdata dans IndexedDB avant de lancer l'app
+initializeMockData().finally(() => {
+  const root = createRoot(rootElement);
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
+});

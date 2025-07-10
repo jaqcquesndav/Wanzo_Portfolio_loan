@@ -1,18 +1,8 @@
-import type { Portfolio } from './portfolio';
-import type { InvestmentAsset } from '../lib/indexedDbPortfolioService';
+import type { PortfolioWithType } from './portfolio';
 
-import type { SecuritySubscription, CompanyValuation } from './securities';
-
-export interface InvestmentPortfolio extends Portfolio {
+// If you have a specific type for assets, import and use it here, otherwise use unknown[]
+export interface InvestmentPortfolio extends PortfolioWithType {
   type: 'investment';
-  assets: InvestmentAsset[];
-  subscriptions?: SecuritySubscription[];
-  valuations?: CompanyValuation[];
-  requests?: InvestmentRequest[];
-  transactions?: InvestmentTransaction[];
-  reports?: PortfolioCompanyReport[];
-  exitEvents?: ExitEvent[];
-  // ...autres champs spécifiques
 }
 // Types métier pour le portefeuille Capital Investissement
 
