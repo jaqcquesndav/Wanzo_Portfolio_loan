@@ -122,6 +122,14 @@ export const useChatStore = create<ChatStore>()(
         if (typeof content !== 'string') {
           content = String(content);
         }
+        // Correction : si le contenu est un React element (object), le convertir en string
+        if (typeof content === 'object' && content !== null) {
+          if (Object.prototype.hasOwnProperty.call(content, 'props') && Object.prototype.hasOwnProperty.call(content, 'type')) {
+            content = '[Objet React]';
+          } else {
+            content = JSON.stringify(content);
+          }
+        }
         const store = get();
         const activeConversation = store.conversations.find(
           c => c.id === store.activeConversationId

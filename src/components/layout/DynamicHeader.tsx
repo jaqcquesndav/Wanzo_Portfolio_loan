@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Bell, MessageSquare, Calendar, Menu } from 'lucide-react';
+import { Search, Bell, MessageSquare, Menu } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Form';
 import { ProfileMenu } from './ProfileMenu';
 import { NotificationsPopover } from '../notifications/NotificationsPopover';
 import { AIChat } from '../chat/AIChat';
-// import { useAuth } from '../../contexts/AuthContext';
 
 interface DynamicHeaderProps {
   onMenuClick: () => void;
@@ -14,8 +13,6 @@ interface DynamicHeaderProps {
 
 export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
   const location = useLocation();
-  // Remplacer par un utilisateur de démonstration ou une logique Auth0 plus tard
-  const user = { name: 'Démo', role: 'admin', photo: 'https://ui-avatars.com/api/?name=Demo+User' };
   const [showNotifications, setShowNotifications] = useState(false);
   const [showChat, setShowChat] = useState(false);
 
@@ -73,6 +70,8 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
             </Button>
 
             {/* Only show for admin or manager roles, not 'portfolio_manager' (which doesn't exist) */}
+            {/* Calendrier supprimé selon demande */}
+            {/*
             {(user?.role === 'admin' || user?.role === 'manager') && (
               <Button
                 variant="ghost"
@@ -81,6 +80,7 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
                 aria-label="Rendez-vous"
               />
             )}
+            */}
             
             <Button
               variant="ghost"

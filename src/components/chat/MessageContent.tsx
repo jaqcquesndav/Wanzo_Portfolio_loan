@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { InlineMath, BlockMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import Plot from 'react-plotly.js';
-import { Edit2, Copy, Download, ZoomIn, BarChart, LineChart, PieChart } from 'lucide-react';
+import { Copy, Download, ZoomIn, BarChart, LineChart, PieChart } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface MessageContentProps {
@@ -13,14 +13,9 @@ interface MessageContentProps {
   onEdit?: (content: string) => void;
 }
 
-interface CodeBlock {
-  language: string;
-  code: string;
-}
-
 interface ChartData {
   type: 'bar' | 'line' | 'pie';
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export function MessageContent({ content, onEdit }: MessageContentProps) {
@@ -29,29 +24,9 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
   const [selectedChartType, setSelectedChartType] = useState<'bar' | 'line' | 'pie'>('bar');
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // Détecter le type de contenu
-  const hasCode = content.includes('```');
-  const hasMath = content.includes('$');
-  const hasChart = content.includes('```chart');
-
-  const extractCodeBlocks = (markdown: string): CodeBlock[] => {
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    const blocks: CodeBlock[] = [];
-    let match;
-
-    while ((match = codeBlockRegex.exec(markdown)) !== null) {
-      blocks.push({
-        language: match[1] || 'text',
-        code: match[2].trim()
-      });
-    }
-
-    return blocks;
-  };
-
   const parseChartData = (code: string): ChartData | null => {
     try {
-      const data = JSON.parse(code);
+      const data: Record<string, unknown> = JSON.parse(code);
       return {
         type: 'bar',
         data
@@ -65,7 +40,7 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
     navigator.clipboard.writeText(code);
   };
 
-  const handleDownloadChart = (chartData: any) => {
+  const handleDownloadChart = (chartData: Record<string, unknown>) => {
     const blob = new Blob([JSON.stringify(chartData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -114,14 +89,10 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
       <div className="space-y-4">
         <ReactMarkdown
           components={{
-            code({ node, inline, className, children, ...props }) {
+            code({ className, children }) {
               const match = /language-(\w+)/.exec(className || '');
               const language = match ? match[1] : '';
               
-              if (inline) {
-                return <code className="bg-gray-100 px-1 rounded" {...props}>{children}</code>;
-              }
-
               if (language === 'chart') {
                 const chartData = parseChartData(String(children));
                 if (!chartData) return null;
@@ -132,7 +103,7 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
                       <Button
                         variant="secondary"
                         size="sm"
-                        icon={ZoomIn}
+                        icon={<ZoomIn />}
                         onClick={() => setIsZoomed(!isZoomed)}
                       >
                         {isZoomed ? 'Réduire' : 'Agrandir'}
@@ -140,7 +111,7 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
                       <Button
                         variant="secondary"
                         size="sm"
-                        icon={Download}
+                        icon={<Download />}
                         onClick={() => handleDownloadChart(chartData.data)}
                       >
                         Données
@@ -149,19 +120,19 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
                         <Button
                           variant={selectedChartType === 'bar' ? 'primary' : 'secondary'}
                           size="sm"
-                          icon={BarChart}
+                          icon={<BarChart />}
                           onClick={() => setSelectedChartType('bar')}
                         />
                         <Button
                           variant={selectedChartType === 'line' ? 'primary' : 'secondary'}
                           size="sm"
-                          icon={LineChart}
+                          icon={<LineChart />}
                           onClick={() => setSelectedChartType('line')}
                         />
                         <Button
                           variant={selectedChartType === 'pie' ? 'primary' : 'secondary'}
                           size="sm"
-                          icon={PieChart}
+                          icon={<PieChart />}
                           onClick={() => setSelectedChartType('pie')}
                         />
                       </div>
@@ -229,17 +200,6 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
         >
           {content}
         </ReactMarkdown>
-
-        {onEdit && (
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={Edit2}
-            onClick={() => setIsEditing(true)}
-          >
-            Modifier
-          </Button>
-        )}
       </div>
     );
   };
