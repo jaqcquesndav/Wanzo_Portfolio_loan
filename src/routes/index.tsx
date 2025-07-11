@@ -44,7 +44,6 @@ import Settings from '../pages/Settings';
 import Users from '../pages/Users';
 import InstitutionManagement from '../pages/InstitutionManagement';
 import CentralRisque from '../pages/CentralRisque';
-import ReportKPIDetail from '../pages/ReportKPIDetail';
 import Reports from '../pages/Reports';
 import FinancialReports from '../pages/reports/Financial';
 import InvestmentReports from '../pages/reports/Investment';
@@ -187,8 +186,6 @@ export const router = createBrowserRouter([
       { path: 'reports/financial', element: <FinancialReports /> },
       { path: 'reports/investment', element: <InvestmentReports /> },
       { path: 'reports/risk', element: <RiskReports /> },
-      // KPI Detail (Rapports)
-      { path: 'reports/kpi/:portfolioId/:indicator', element: <ReportKPIDetail /> },
       // 404 Not Found pour les détails de portefeuille
       // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
       { path: 'traditional/*', element: <PortfolioNotFound /> },

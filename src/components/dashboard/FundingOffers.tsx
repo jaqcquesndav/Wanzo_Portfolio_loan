@@ -12,6 +12,16 @@ import type { Portfolio } from '../../types/portfolio';
 import { mockPMCompanies } from '../../data/mockPMCompanies';
 import { portfolioDbService } from '../../services/db/indexedDB';
 import { usePortfolioType } from '../../hooks/usePortfolioType';
+import { MetricDetailModal } from '../ui/MetricDetailModal';
+
+// Indicateur type
+export type Indicator = {
+  label: string;
+  value: string | number;
+  trend?: 'up' | 'down' | 'neutral';
+  tag?: string;
+  color?: string;
+};
 
 const FundingOffers = () => {
   const navigate = useNavigate();
@@ -20,6 +30,8 @@ const FundingOffers = () => {
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [performanceType, setPerformanceType] = useState<'performance_curve' | 'return' | 'benchmark'>('performance_curve');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedIndicator, setSelectedIndicator] = useState<Indicator | null>(null);
 
   useEffect(() => {
     // Seed et charge dynamiquement selon le type courant
@@ -209,8 +221,16 @@ const FundingOffers = () => {
                 role="button"
                 tabIndex={0}
                 className="focus:outline-none"
-                onClick={() => selectedPortfolio && navigate(`/reports/kpi/${selectedPortfolio.id}/${encodeURIComponent(ind.label)}`)}
-                onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && selectedPortfolio) navigate(`/reports/kpi/${selectedPortfolio.id}/${encodeURIComponent(ind.label)}`); }}
+                onClick={() => {
+                  setSelectedIndicator(ind);
+                  setModalOpen(true);
+                }}
+                onKeyDown={e => {
+                  if ((e.key === 'Enter' || e.key === ' ') && selectedPortfolio) {
+                    setSelectedIndicator(ind);
+                    setModalOpen(true);
+                  }
+                }}
                 style={{ cursor: 'pointer' }}
                 aria-label={`Voir le détail de l'indicateur ${ind.label}`}
               >
@@ -323,6 +343,12 @@ const FundingOffers = () => {
           </div>
         </div>
       </div>
+
+      <MetricDetailModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        indicator={selectedIndicator}
+      />
     </div>
   );
 };
