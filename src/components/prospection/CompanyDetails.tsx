@@ -1,25 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Building, Users, TrendingUp, DollarSign, Calendar, X, Play } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { formatCurrency } from '../../utils/formatters';
-import type { Company } from '../../types/company';
+import type { Company as BaseCompany, SecurityOpportunity, CompanyDocument as CompanyDocType } from '../../types/company';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import { SecurityOpportunities } from './SecurityOpportunities';
 import { CompanyDocuments } from './CompanyDocuments';
+
+interface FinancialHighlights {
+  [key: string]: number | string;
+}
+interface Company extends BaseCompany {
+  founded?: number;
+  employees?: number;
+  financialHighlights?: FinancialHighlights;
+  securities?: SecurityOpportunity[];
+  documents?: CompanyDocType[];
+  logo?: string;
+  creditRating?: string;
+  esgScore?: string | number;
+  industry?: string;
+  legalForm?: string;
+  rccm?: string;
+  taxId?: string;
+  natId?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    country?: string;
+  };
+  contacts?: {
+    email?: string;
+    phone?: string;
+  };
+  capital?: {
+    amount?: number;
+    currency?: string;
+    isApplicable?: boolean;
+  };
+}
 
 interface CompanyDetailsProps {
   company: Company;
   onClose: () => void;
-  onContact: (company: Company) => void;
-  onScheduleMeeting: (company: Company) => void;
 }
 
 export function CompanyDetails({
   company,
   onClose,
-  onContact,
-  onScheduleMeeting,
 }: CompanyDetailsProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const modalRef = useRef<HTMLDivElement>(null);
@@ -56,10 +84,6 @@ export function CompanyDetails({
             </h2>
           </div>
           <div className="flex space-x-4">
-            <Button onClick={() => onContact(company)}>Contacter</Button>
-            <Button variant="outline" onClick={() => onScheduleMeeting(company)}>
-              Planifier RDV
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -71,84 +95,62 @@ export function CompanyDetails({
             </Button>
           </div>
         </div>
-
-        {/* Sections avec onglets */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="p-6">
-          <TabsList>
-            <TabsTrigger value="overview" currentValue={activeTab} onValueChange={setActiveTab}>
-              Aperçu
-            </TabsTrigger>
-            <TabsTrigger value="financials" currentValue={activeTab} onValueChange={setActiveTab}>
-              Données financières
-            </TabsTrigger>
-            <TabsTrigger value="securities" currentValue={activeTab} onValueChange={setActiveTab}>
-              Valeurs mobilières
-            </TabsTrigger>
-            <TabsTrigger value="documents" currentValue={activeTab} onValueChange={setActiveTab}>
-              Documents
-            </TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="overview" currentValue={activeTab} onValueChange={setActiveTab}>Aperçu</TabsTrigger>
+            <TabsTrigger value="financials" currentValue={activeTab} onValueChange={setActiveTab}>Finances</TabsTrigger>
+            <TabsTrigger value="documents" currentValue={activeTab} onValueChange={setActiveTab}>Documents</TabsTrigger>
           </TabsList>
- 
-          {/* Aperçu */}
           <TabsContent value="overview" currentValue={activeTab}>
-            <div className="space-y-6">
-              {/* Vidéo de pitch */}
-              {company.pitch_deck_url && (
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Pitch de l'entreprise
-                  </h3>
-                  <div className="aspect-w-16 aspect-h-9">
-                    <iframe
-                      src={company.pitch_deck_url}
-                      title="Company Pitch"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full rounded-lg"
-                    />
+            <div className="flex flex-col md:flex-row gap-8 items-center mb-8">
+              <img
+                src={company.logo || '/default-logo.png'}
+                alt={company.name}
+                className="w-28 h-28 rounded-full object-cover border shadow"
+              />
+              <div className="flex-1">
+                <div className="flex flex-wrap gap-2 items-center mb-2">
+                  {company.sector || company.industry ? (
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-600 dark:text-gray-300">
+                      {company.sector || company.industry}
+                    </span>
+                  ) : null}
+                  <Badge variant={company.status === 'active' ? 'success' : 'warning'}>
+                    {company.status === 'active' ? 'Actif' : 'Inactif'}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4">
+                  <div>
+                    <div className="mb-1"><span className="font-semibold">Identifiant :</span> <span className="text-gray-700 dark:text-gray-200">{company.id}</span></div>
+                    {company.legalForm && (
+                      <div className="mb-1"><span className="font-semibold">Forme juridique :</span> <span className="text-gray-700 dark:text-gray-200">{company.legalForm}</span></div>
+                    )}
+                    {company.rccm && (
+                      <div className="mb-1"><span className="font-semibold">RCCM :</span> <span className="text-gray-700 dark:text-gray-200">{company.rccm}</span></div>
+                    )}
+                    {company.taxId && (
+                      <div className="mb-1"><span className="font-semibold">Identifiant fiscal :</span> <span className="text-gray-700 dark:text-gray-200">{company.taxId}</span></div>
+                    )}
+                    {company.natId && (
+                      <div className="mb-1"><span className="font-semibold">Identifiant national :</span> <span className="text-gray-700 dark:text-gray-200">{company.natId}</span></div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="mb-1"><span className="font-semibold">Adresse :</span> <span className="text-gray-700 dark:text-gray-200">{[company.address?.street, company.address?.city, company.address?.country].filter(Boolean).join(', ') || '-'}</span></div>
+                    <div className="mb-1"><span className="font-semibold">Contacts :</span> <span className="text-gray-700 dark:text-gray-200">{company.contacts?.email ? `Email : ${company.contacts.email}` : ''}{company.contacts?.email && company.contacts?.phone ? ' | ' : ''}{company.contacts?.phone ? `Téléphone : ${company.contacts.phone}` : ''}</span></div>
+                    <div className="mb-1"><span className="font-semibold">Capital :</span> <span className="text-gray-700 dark:text-gray-200">{company.capital?.amount ? `${company.capital.amount.toLocaleString()} ${company.capital.currency}` : '-'} {company.capital?.isApplicable ? '(Applicable)' : ''}</span></div>
                   </div>
                 </div>
-              )}
-
-              {/* Informations générales */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center">
-                  <Building className="h-5 w-5 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Secteur</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{company.sector || 'Non disponible'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Users className="h-5 w-5 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Employés</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{company.employee_count}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <DollarSign className="h-5 w-5 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Chiffre d'affaires</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(company.annual_revenue)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <TrendingUp className="h-5 w-5 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Croissance</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {company.financial_metrics.revenue_growth}%
-                    </p>
-                  </div>
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div><span className="font-semibold">Année de création :</span> <span className="text-gray-700 dark:text-gray-200">{company.founded || '-'}</span></div>
+                  <div><span className="font-semibold">Nombre d'employés :</span> <span className="text-gray-700 dark:text-gray-200">{company.employee_count || company.employees || '-'}</span></div>
+                  <div><span className="font-semibold">Chiffre d'affaires :</span> <span className="text-gray-700 dark:text-gray-200">{company.annual_revenue ? formatCurrency(company.annual_revenue) : '-'}</span></div>
+                  <div><span className="font-semibold">Cote crédit :</span> <span className="text-gray-700 dark:text-gray-200">{company.creditRating || '-'}</span></div>
+                  <div><span className="font-semibold">Note ESG :</span> <span className="text-gray-700 dark:text-gray-200">{company.esgScore !== undefined ? company.esgScore : '-'}</span></div>
                 </div>
               </div>
             </div>
           </TabsContent>
-
-          {/* Données financières */}
           <TabsContent value="financials" currentValue={activeTab}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {company.financialHighlights &&
@@ -161,29 +163,13 @@ export function CompanyDetails({
                       {typeof value === 'number'
                         ? key.toLowerCase().includes('ratio') || key.toLowerCase().includes('growth')
                           ? `${value.toFixed(2)}%`
-                          : formatCurrency(value)
+                          : formatCurrency(value as number)
                         : value}
                     </p>
                   </div>
                 ))}
             </div>
           </TabsContent>
-
-          {/* Valeurs mobilières */}
-          <TabsContent value="securities" currentValue={activeTab}>
-            {company.securities && company.securities.length > 0 ? (
-              <SecurityOpportunities
-                opportunities={company.securities}
-                onViewDetails={(opportunity) => {
-                  console.log('Détails de l\'opportunité:', opportunity);
-                }}
-              />
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400">Aucune opportunité de valeurs mobilières disponible.</p>
-            )}
-          </TabsContent>
-
-          {/* Documents */}
           <TabsContent value="documents" currentValue={activeTab}>
             {company.documents && company.documents.length > 0 ? (
               <CompanyDocuments
@@ -194,7 +180,7 @@ export function CompanyDetails({
                 onDownload={(doc) => {
                   const link = document.createElement('a');
                   link.href = doc.url;
-                  link.download = doc.name;
+                  link.download = doc.title;
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
@@ -205,7 +191,7 @@ export function CompanyDetails({
             )}
           </TabsContent>
         </Tabs>
-     </div>
+      </div>
     </div>
   );
 }

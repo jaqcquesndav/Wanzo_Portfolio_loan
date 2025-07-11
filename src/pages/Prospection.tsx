@@ -12,6 +12,7 @@ import { MeetingScheduler } from '../components/prospection/MeetingScheduler';
 import { useProspection } from '../hooks/useProspection';
 import type { Company } from '../types/company';
 import { mockCompanies } from '../data/mockCompanies';
+import { mockCompanyDetails } from '../data/mockCompanyDetails';
 
 
 
@@ -29,18 +30,32 @@ export default function Prospection() {
   setShowMeetingScheduler,
   // showNewCompanyModal,
   // setShowNewCompanyModal,
-  handleContact,
-  handleScheduleMeeting,
-  // handleCreateCompany
 } = useProspection(mockCompanies); // Passez mockCompanies comme données initiales
 
-  const handleViewDetails = (company: Company) => {
-    setSelectedCompany(company);
-  };
+  // Merge enriched details if TechInnovate Sénégal is selected
 
-  const handleScheduleMeetingClick = (company: Company) => {
-    setSelectedCompany(company);
-    setShowMeetingScheduler(true);
+  const handleViewDetails = (company: Company) => {
+    if (company.name === 'TechInnovate Sénégal') {
+      // Map enriched details to match Company type
+      setSelectedCompany({
+        ...company,
+        ...mockCompanyDetails,
+        sector: 'Technologies', // match mockCompanies
+        status: 'active', // match CompanyStatus type
+        financial_metrics: {
+          revenue_growth: mockCompanyDetails.financial_metrics?.revenue_growth ?? company.financial_metrics.revenue_growth,
+          profit_margin: company.financial_metrics.profit_margin,
+          cash_flow: company.financial_metrics.cash_flow,
+          debt_ratio: company.financial_metrics.debt_ratio,
+          working_capital: company.financial_metrics.working_capital,
+          credit_score: company.financial_metrics.credit_score,
+          financial_rating: company.financial_metrics.financial_rating,
+          ebitda: company.financial_metrics.ebitda,
+        },
+      });
+    } else {
+      setSelectedCompany(company);
+    }
   };
 
   const filteredCompanies = mockCompanies.filter(company => {
@@ -96,8 +111,6 @@ export default function Prospection() {
         <CompanyDetails
           company={selectedCompany}
           onClose={() => setSelectedCompany(null)}
-          onContact={handleContact}
-          onScheduleMeeting={handleScheduleMeetingClick}
         />
       )}
 
@@ -108,7 +121,7 @@ export default function Prospection() {
             setShowMeetingScheduler(false);
             setSelectedCompany(null);
           }}
-          onSchedule={handleScheduleMeeting}
+          onSchedule={async () => {}}
         />
       )}
 
