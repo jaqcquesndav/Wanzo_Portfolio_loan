@@ -19,6 +19,7 @@
     "chart.js": "^4.5.0",
     "clsx": "^2.1.0",
     "idb": "^8.0.0",
+    "katex": "^0.16.22",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
@@ -26,12 +27,17 @@
     "react-dom": "^18.3.1",
     "react-grid-layout": "^1.4.4",
     "react-hook-form": "^7.51.0",
+    "react-katex": "^3.1.0",
     "react-leaflet": "^4.2.1",
+    "react-markdown": "^10.1.0",
+    "react-plotly.js": "^2.6.0",
     "react-router-dom": "^6.22.2",
+    "react-syntax-highlighter": "^15.6.1",
     "recharts": "^2.12.2",
     "tailwind-merge": "^2.2.1",
     "uuid": "^11.1.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

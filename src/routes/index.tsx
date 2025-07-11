@@ -51,6 +51,7 @@ import InvestmentReports from '../pages/reports/Investment';
 import RiskReports from '../pages/reports/Risk';
 import PortfolioNotFound from '../pages/PortfolioNotFound';
 import PortfolioErrorBoundary from '../pages/PortfolioErrorBoundary';
+import { ChatPage } from '../pages/chat/ChatPage';
 
 
 export const router = createBrowserRouter([
@@ -176,6 +177,8 @@ export const router = createBrowserRouter([
       { path: 'central-risque', element: <CentralRisque /> },
       // Prospection partagé
       { path: 'prospection', element: <Prospection /> },
+      // Chat page
+      { path: 'chat', element: <ChatPage /> },
       // Help & Documentation
       { path: 'docs', element: <Documentation /> },
       { path: 'help', element: <Help /> },

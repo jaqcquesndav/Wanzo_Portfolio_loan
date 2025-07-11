@@ -37,7 +37,18 @@ export default function AuthCallback() {
           localStorage.setItem('token', data.access_token);
           if (data.id_token) localStorage.setItem('id_token', data.id_token);
           if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
-          // Optionally decode id_token for roles/permissions
+          // Récupérer le profil utilisateur Auth0
+          try {
+            const userRes = await fetch(`https://${domain}/userinfo`, {
+              headers: { Authorization: `Bearer ${data.access_token}` }
+            });
+            if (userRes.ok) {
+              const user = await userRes.json();
+              localStorage.setItem('auth0_user', JSON.stringify(user));
+            }
+          } catch {
+            // ignore userinfo fetch error
+          }
           // Redirect to app
           const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
           navigate(`/app/${portfolioType}`);

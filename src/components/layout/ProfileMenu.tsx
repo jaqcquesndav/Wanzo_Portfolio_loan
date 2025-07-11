@@ -94,6 +94,12 @@ export function ProfileMenu() {
     }
   };
 
+  // Purge localStorage if user profile is corrupted (missing name or email)
+  if (!user.name && !user.email) {
+    localStorage.removeItem('auth0_user');
+    user = { name: 'Utilisateur', email: '', picture: '' };
+  }
+
   return (
     <div className="relative" ref={menuRef}>
       <Button
@@ -120,6 +126,10 @@ export function ProfileMenu() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
           <div className="py-1">
+            <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+              <span className="block font-semibold">{user.name}</span>
+              {user.email && <span className="block">{user.email}</span>}
+            </div>
             <button
               onClick={() => {
                 navigate('/settings');
