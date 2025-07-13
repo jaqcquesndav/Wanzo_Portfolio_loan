@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { TableSkeleton } from '../../ui/TableSkeleton';
-import type { InvestmentAsset } from '../../../lib/indexedDbPortfolioService';
+import type { InvestmentAsset } from '../../../types/investment-portfolio';
 
 interface AssetsTableProps {
   assets?: InvestmentAsset[];

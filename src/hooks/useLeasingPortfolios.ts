@@ -45,7 +45,7 @@ function getDefaultMetrics(): Portfolio['metrics'] {
 // src/hooks/useLeasingPortfolios.ts
 import { useState, useMemo } from 'react';
 import { usePortfolios } from './usePortfolios';
-
+import { portfolioStorageService } from '../services/storage/localStorage';
 import type { LeasingPortfolio } from '../types/leasing';
 
 
@@ -88,35 +88,66 @@ export function useLeasingPortfolios() {
     data: Omit<LeasingPortfolio, 'id' | 'type' | 'status' | 'equipment_catalog' | 'created_at' | 'updated_at'>
   ): Promise<LeasingPortfolio> => {
     const now = new Date().toISOString();
+    // Utiliser un ID unique pour le nouveau portefeuille
+    const portfolioId = Math.random().toString(36).substr(2, 9);
+    
+    // Importer les données mockées pour obtenir un portefeuille de référence
+    const { mockLeasingPortfolios } = await import('../data/mockLeasingPortfolios');
+    const mockPortfolio = mockLeasingPortfolios[0]; // Prendre le premier comme template
+    
+    // Créer le nouveau portefeuille en combinant les données du formulaire avec les données mockées
     const newPortfolio: LeasingPortfolio = {
       ...data,
-      id: Math.random().toString(36).substr(2, 9),
+      id: portfolioId,
       name: typeof data.name === 'string' ? data.name : 'Nouveau portefeuille',
       type: 'leasing',
       status: 'active',
       products: Array.isArray(data.products) ? data.products : [],
-      metrics: typeof data.metrics === 'object' && data.metrics !== null && 'net_value' in data.metrics ? data.metrics as Portfolio['metrics'] : getDefaultMetrics(),
+      metrics: typeof data.metrics === 'object' && data.metrics !== null && 'net_value' in data.metrics 
+        ? data.metrics as Portfolio['metrics'] 
+        : getDefaultMetrics(),
       target_amount: typeof data.target_amount === 'number' ? data.target_amount : 0,
       target_return: typeof data.target_return === 'number' ? data.target_return : 0,
       target_sectors: Array.isArray(data.target_sectors) ? data.target_sectors : [],
-      risk_profile: data.risk_profile === 'conservative' || data.risk_profile === 'moderate' || data.risk_profile === 'aggressive' ? data.risk_profile : 'moderate',
-      equipment_catalog: [],
-      contracts: [],
-      incidents: [],
-      maintenances: [],
-      payments: [],
+      risk_profile: data.risk_profile === 'conservative' || data.risk_profile === 'moderate' || data.risk_profile === 'aggressive' 
+        ? data.risk_profile 
+        : 'moderate',
+      // Hériter des données mockées pour faciliter le déploiement
+      equipment_catalog: mockPortfolio?.equipment_catalog?.map(item => ({
+        ...item,
+        id: `eq-${portfolioId.substring(0, 5)}-${Math.floor(Math.random() * 1000)}`
+      })) || [],
+      contracts: mockPortfolio?.contracts?.map(item => ({
+        ...item,
+        id: `contr-${portfolioId.substring(0, 5)}-${Math.floor(Math.random() * 1000)}`
+      })) || [],
+      incidents: mockPortfolio?.incidents?.map(item => ({
+        ...item,
+        id: `inc-${portfolioId.substring(0, 5)}-${Math.floor(Math.random() * 1000)}`
+      })) || [],
+      maintenances: mockPortfolio?.maintenances?.map(item => ({
+        ...item,
+        id: `mnt-${portfolioId.substring(0, 5)}-${Math.floor(Math.random() * 1000)}`
+      })) || [],
+      payments: mockPortfolio?.payments?.map(item => ({
+        ...item,
+        id: `pay-${portfolioId.substring(0, 5)}-${Math.floor(Math.random() * 1000)}`
+      })) || [],
       leasing_terms: {
         min_duration: 12,
         max_duration: 60,
-        interest_rate_range: { min: 3, max: 10 },
+        interest_rate_range: {
+          min: 3,
+          max: 10
+        },
         maintenance_included: false,
-        insurance_required: false,
+        insurance_required: false
       },
       created_at: now,
       updated_at: now,
     };
-    const { portfolioDbService } = await import('../services/db/indexedDB');
-    await portfolioDbService.addOrUpdatePortfolio(newPortfolio as unknown as import('../types/portfolio').PortfolioWithType);
+    // Utiliser le service localStorage au lieu de IndexedDB
+    await portfolioStorageService.addOrUpdatePortfolio(newPortfolio as unknown as import('../types/portfolio').PortfolioWithType);
     refresh(); // Rafraîchit la liste après création
     return newPortfolio;
   };

@@ -133,7 +133,7 @@ export const router = createBrowserRouter([
       { path: '', element: <Dashboard /> },
       // Traditional
       { path: 'traditional', element: <TraditionalPortfolio /> },
-      { path: ':id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
       { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
@@ -141,13 +141,14 @@ export const router = createBrowserRouter([
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },
       // Investment
       { path: 'investment', element: <InvestmentPortfolio /> },
+      { path: 'investment/:id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'assets/:assetId', element: <InvestmentAssetDetail />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'subscriptions/:subscriptionId', element: <InvestmentSubscriptionDetail /> },
       { path: 'valuations/:valuationId', element: <InvestmentValuationDetail /> },
       { path: 'reporting/:reportId', element: <InvestmentReportingDetail /> },
-      { path: ':id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Leasing
       { path: 'leasing', element: <LeasingPortfolio /> },
+      { path: 'leasing/:id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'equipments/:equipmentId', element: <LeasingEquipmentDetail />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'contracts/:contractId', element: <LeasingContractDetail />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'incidents/:incidentId', element: <LeasingIncidentDetail />, errorElement: <PortfolioErrorBoundary /> },
@@ -158,7 +159,6 @@ export const router = createBrowserRouter([
       { path: 'maintenance', element: <LeasingMaintenancePage /> },
       { path: 'incidents', element: <LeasingIncidentsPage /> },
       { path: 'movements', element: <LeasingMovementsPage /> },
-      { path: ':id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Operations
       { path: 'operations', element: <Operations /> },
       { path: 'operations/requests', element: <Requests /> },

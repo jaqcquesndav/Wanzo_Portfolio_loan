@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { usePortfolios } from './usePortfolios';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
-import { portfolioDbService } from '../services/db/indexedDB';
+import { portfolioStorageService } from '../services/storage/localStorage';
 
 interface Filters {
   status: string;
@@ -41,7 +41,7 @@ export function useTraditionalPortfolios() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    await portfolioDbService.addOrUpdatePortfolio(newPortfolio as unknown as import('../types/portfolio').PortfolioWithType);
+    await portfolioStorageService.addOrUpdatePortfolio(newPortfolio as unknown as import('../types/portfolio').PortfolioWithType);
     refresh(); // Rafraîchit la liste après création
     return newPortfolio;
   };

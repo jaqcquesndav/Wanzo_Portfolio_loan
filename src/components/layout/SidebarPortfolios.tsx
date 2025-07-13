@@ -9,9 +9,9 @@ import { CreatePortfolioModal } from '../portfolio/CreatePortfolioModal';
 import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
 import { useLeasingPortfolios } from '../../hooks/useLeasingPortfolios';
 import { useInvestmentPortfolios } from '../../hooks/useInvestmentPortfolios';
-import type { TraditionalPortfolio } from '../../lib/indexedDbPortfolioService';
-import type { LeasingPortfolio } from '../../lib/indexedDbPortfolioService';
-import type { InvestmentPortfolio } from '../../lib/indexedDbPortfolioService';
+import type { TraditionalPortfolio } from '../../types/traditional-portfolio';
+import type { LeasingPortfolio } from '../../types/leasing';
+import type { InvestmentPortfolio } from '../../types/investment-portfolio';
 import type { DefaultPortfolioFormData } from '../portfolio/DefaultPortfolioForm';
 import type { LeasingPortfolioFormData } from '../portfolio/leasing/CreateLeasingPortfolioForm';
 
@@ -182,7 +182,7 @@ export function SidebarPortfolios() {
                         if (portfolioType) {
                           localStorage.setItem('portfolioType', portfolioType);
                         }
-                        navigate(`/app/${portfolioType}/${portfolio.id}`);
+                        navigate(`/app/${portfolioType}/${portfolioType}/${portfolio.id}`);
                       }}
                     >
                       <span className="flex-1 truncate text-white" title={portfolio.name}>{portfolio.name}</span>

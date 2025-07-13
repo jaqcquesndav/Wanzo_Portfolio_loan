@@ -81,7 +81,7 @@ export default function LeasingPortfolioDetails() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: `/app/${portfolioType}` },
-          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${id}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${portfolioType}/${id}` },
         ]}
         portfolioType={portfolioType}
       />
@@ -105,7 +105,7 @@ export default function LeasingPortfolioDetails() {
           <EquipmentsTable
             equipments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).equipment_catalog : []}
             onRowClick={(equipment) => {
-              window.location.assign(`/app/leasing/${portfolio.id}/equipments/${equipment.id}`);
+              navigate(`/app/${portfolioType}/equipments/${equipment.id}`);
             }}
           />
         </TabsContent>
@@ -113,7 +113,7 @@ export default function LeasingPortfolioDetails() {
           <ContractsTable
             contracts={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).contracts : []}
             onRowClick={(contract) => {
-              window.location.assign(`/app/leasing/${portfolio.id}/contracts/${contract.id}`);
+              navigate(`/app/${portfolioType}/contracts/${contract.id}`);
             }}
           />
         </TabsContent>
@@ -121,7 +121,7 @@ export default function LeasingPortfolioDetails() {
           <IncidentsTable
             incidents={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).incidents : []}
             onRowClick={(incident) => {
-              window.location.assign(`/app/leasing/${portfolio.id}/incidents/${incident.id}`);
+              navigate(`/app/${portfolioType}/incidents/${incident.id}`);
             }}
           />
         </TabsContent>
@@ -129,7 +129,7 @@ export default function LeasingPortfolioDetails() {
           <MaintenanceTable
             maintenances={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).maintenances : []}
             onRowClick={(maintenance) => {
-              window.location.assign(`/app/leasing/${portfolio.id}/maintenance/${maintenance.id}`);
+              navigate(`/app/${portfolioType}/maintenance/${maintenance.id}`);
             }}
           />
         </TabsContent>
@@ -137,7 +137,7 @@ export default function LeasingPortfolioDetails() {
           <PaymentsTable
             payments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).payments : []}
             onRowClick={(payment) => {
-              window.location.assign(`/app/leasing/${portfolio.id}/payments/${payment.id}`);
+              navigate(`/app/${portfolioType}/payments/${payment.id}`);
             }}
           />
         </TabsContent>
@@ -145,7 +145,7 @@ export default function LeasingPortfolioDetails() {
           <ReportingTable
             reports={portfolio.type === 'leasing' && Array.isArray((portfolio as unknown as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] })['reports']) ? (portfolio as unknown as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] }).reports ?? [] : []}
             onRowClick={(report) => {
-              window.location.assign(`/app/leasing/${portfolio.id}/reporting/${report.id}`);
+              navigate(`/app/${portfolioType}/reporting/${report.id}`);
             }}
           />
         </TabsContent>

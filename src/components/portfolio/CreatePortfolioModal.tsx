@@ -5,13 +5,10 @@ import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { PortfolioStepperForm } from './PortfolioStepperForm';
-import { CreateLeasingPortfolioForm } from './leasing/CreateLeasingPortfolioForm';
-
 
 import type { DefaultPortfolioFormData } from './DefaultPortfolioForm';
-import type { LeasingPortfolioFormData } from './leasing/CreateLeasingPortfolioForm';
 
-export type PortfolioModalData = DefaultPortfolioFormData | LeasingPortfolioFormData;
+export type PortfolioModalData = DefaultPortfolioFormData;
 
 interface CreatePortfolioModalProps {
   onClose: () => void;
@@ -49,7 +46,7 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
     };
     return onSubmit(defaultData);
   };
-  const handleLeasingSubmit = (data: LeasingPortfolioFormData) => onSubmit(data);
+  // Supprimé handleLeasingSubmit car il n'est plus nécessaire
 
   // Portal target: document.body
   return ReactDOM.createPortal(
@@ -74,11 +71,8 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
             />
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-primary-light scrollbar-track-transparent p-6">
-            {portfolioType === 'leasing' ? (
-              <CreateLeasingPortfolioForm onSubmit={handleLeasingSubmit} onCancel={onClose} />
-            ) : (
-              <PortfolioStepperForm onSubmit={handleDefaultSubmit} onCancel={onClose} />
-            )}
+            {/* Utiliser le même formulaire pour tous les types de portefeuille */}
+            <PortfolioStepperForm onSubmit={handleDefaultSubmit} onCancel={onClose} />
           </div>
         </div>
       </div>

@@ -22,7 +22,9 @@ import { mockDisbursements } from '../data/mockDisbursements';
 import { mockRepayments } from '../data/mockRepayments';
 import { mockGuarantees } from '../data/mockGuarantees';
 import { useNotification } from '../contexts/NotificationContext';
-import type { AnyPortfolio, PortfolioType, TraditionalPortfolio } from '../lib/indexedDbPortfolioService';
+import type { Portfolio as AnyPortfolio } from '../types/portfolio';
+import type { TraditionalPortfolio } from '../types/traditional-portfolio';
+import type { PortfolioType } from '../hooks/usePortfolio';
 import type { FinancialProduct } from '../types/traditional-portfolio';
 import type { ProductFormData } from '../components/portfolio/traditional/FinancialProductForm';
 // import CreditRequestDetails from './CreditRequestDetails';
@@ -60,7 +62,7 @@ export default function TraditionalPortfolioDetails() {
   // console.log('TraditionalPortfolioDetails', { id, portfolioType, portfolio });
   // const { user } = useAuth(); // TODO: Sécurité
 
-  // Hook factorisé pour la persistance multi-type (IndexedDB)
+  // Hook factorisé pour la persistance multi-type (localStorage)
   const { portfolio, loading, addOrUpdate } = usePortfolio(id, portfolioType as PortfolioType);
 
   // Hooks d'action (toujours avant tout return)
@@ -79,7 +81,7 @@ export default function TraditionalPortfolioDetails() {
       showNotification('Veuillez renseigner tous les champs obligatoires', 'error');
       return;
     }
-    if (!isTraditionalPortfolio(portfolio)) return;
+    if (!portfolio || !isTraditionalPortfolio(portfolio)) return;
     try {
       const now = new Date().toISOString();
       const newProduct: FinancialProduct = {
@@ -155,7 +157,7 @@ export default function TraditionalPortfolioDetails() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: `/app/${portfolioType}` },
-          { label: portfolio.name }
+          { label: portfolio.name, href: `/app/${portfolioType}/${portfolioType}/${id}` }
         ]}
         portfolioType={portfolioType}
       />
@@ -236,7 +238,7 @@ export default function TraditionalPortfolioDetails() {
                 {products && products.length > 0 ? (
                   <FinancialProductsList
                     products={products}
-                    onViewDetails={(product) => navigate(`/app/portfolio/${id}/products/${product.id}`)}
+                    onViewDetails={(product) => navigate(`/app/${portfolioType}/portfolio/${id}/products/${product.id}`)}
                   />
                 ) : (
                   <div className="text-center py-12 text-gray-500">
@@ -269,7 +271,7 @@ export default function TraditionalPortfolioDetails() {
                   onValidate={() => {}}
                   onRefuse={() => {}}
                   onDisburse={() => {}}
-                  onView={(requestId: string) => navigate(`/app/portfolio/${id}/requests/${requestId}`)}
+                  onView={(requestId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)}
                 />
               </TabsContent>
             );
@@ -284,7 +286,7 @@ export default function TraditionalPortfolioDetails() {
                 <DisbursementsTable
                   disbursements={mockDisbursements}
                   onConfirm={() => {}}
-                  onView={(disbursementId: string) => navigate(`/app/portfolio/${id}/disbursements/${disbursementId}`)}
+                  onView={(disbursementId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/disbursements/${disbursementId}`)}
                 />
               </TabsContent>
             );
@@ -299,7 +301,7 @@ export default function TraditionalPortfolioDetails() {
                 <RepaymentsTable
                   repayments={mockRepayments}
                   onMarkPaid={() => {}}
-                  onView={(repaymentId: string) => navigate(`/app/portfolio/${id}/repayments/${repaymentId}`)}
+                  onView={(repaymentId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/repayments/${repaymentId}`)}
                 />
               </TabsContent>
             );
@@ -315,7 +317,7 @@ export default function TraditionalPortfolioDetails() {
                   guarantees={mockGuarantees}
                   onRelease={() => {}}
                   onSeize={() => {}}
-                  onView={(guaranteeId: string) => navigate(`/app/portfolio/${id}/guarantees/${guaranteeId}`)}
+                  onView={(guaranteeId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/guarantees/${guaranteeId}`)}
                 />
               </TabsContent>
             );

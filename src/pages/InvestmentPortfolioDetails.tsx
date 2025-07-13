@@ -98,7 +98,7 @@ export default function InvestmentPortfolioDetails() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: `/app/${portfolioType}` },
-          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${id}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${portfolioType}/${id}` },
         ]}
         portfolioType={portfolioType}
       />

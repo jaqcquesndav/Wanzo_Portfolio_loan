@@ -1,8 +1,22 @@
 import type { PortfolioWithType } from './portfolio';
 
+export interface InvestmentAsset {
+  id: string;
+  name: string;
+  companyId: string;
+  type: 'share' | 'bond' | 'other';
+  acquiredDate: string;
+  initialValue: number;
+  currentValue?: number;
+  status: 'active' | 'exited' | 'written-off';
+  created_at: string;
+  updated_at: string;
+}
+
 // If you have a specific type for assets, import and use it here, otherwise use unknown[]
 export interface InvestmentPortfolio extends PortfolioWithType {
   type: 'investment';
+  assets?: InvestmentAsset[];
 }
 // Types métier pour le portefeuille Capital Investissement
 

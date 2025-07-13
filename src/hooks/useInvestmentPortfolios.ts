@@ -45,7 +45,7 @@ import { useState, useMemo } from 'react';
 import { usePortfolios } from './usePortfolios';
 import type { InvestmentPortfolio } from '../types/investment-portfolio';
 import type { PortfolioWithType, Portfolio } from '../types/portfolio';
-import { portfolioDbService } from '../services/db/indexedDB';
+import { portfolioStorageService } from '../services/storage/localStorage';
 
 
 interface Filters {
@@ -98,7 +98,7 @@ export function useInvestmentPortfolios() {
       updated_at: now,
       ...data,
     };
-    await portfolioDbService.addOrUpdatePortfolio(newPortfolio);
+    await portfolioStorageService.addOrUpdatePortfolio(newPortfolio);
     refresh(); // Rafraîchit la liste après création
     return newPortfolio as unknown as InvestmentPortfolio;
   };
@@ -122,7 +122,8 @@ export function useInvestmentPortfolios() {
     filters,
     setFilters,
     filteredPortfolios,
-    createPortfolio
+    createPortfolio,
+    refresh
   };
 }
 
