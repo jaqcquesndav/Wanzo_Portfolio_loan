@@ -1,72 +1,198 @@
-// Removed unused React import
+import { useMemo } from 'react';
 import type { Maintenance } from '../../../types/leasing-asset';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
-
+import { LeasingTable, type Column } from '../../ui/LeasingTable';
+import { formatters } from '../../../utils/tableFormatters';
+import { formatCurrency, generateTransactionId } from '../../../utils/formatters';
 
 interface MaintenanceTableProps {
-  maintenances: Maintenance[];
+  maintenance: Maintenance[];
   loading?: boolean;
   onRowClick?: (maintenance: Maintenance) => void;
 }
 
-export function MaintenanceTable({ maintenances, loading = false, onRowClick }: MaintenanceTableProps) {
+export function MaintenanceTable({ maintenance, loading = false, onRowClick }: MaintenanceTableProps) {
+  // Map des statuts de maintenance avec leurs variantes et labels
+  const statusMap = useMemo(() => ({
+    'scheduled': { label: 'Planifiée', variant: 'info' as const },
+    'in_progress': { label: 'En cours', variant: 'warning' as const },
+    'completed': { label: 'Terminée', variant: 'success' as const },
+    'cancelled': { label: 'Annulée', variant: 'default' as const }
+  }), []);
+  
+  // Map des types de maintenance avec leurs variantes et labels
+  const typeMap = useMemo(() => ({
+    'preventive': { label: 'Préventive', variant: 'info' as const },
+    'curative': { label: 'Curative', variant: 'warning' as const }
+  }), []);
+  
+  // Compter les maintenances par statut
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      scheduled: 0,
+      in_progress: 0,
+      completed: 0,
+      cancelled: 0
+    };
+    
+    maintenance.forEach(item => {
+      if (counts[item.status] !== undefined) {
+        counts[item.status]++;
+      }
+    });
+    
+    return counts;
+  }, [maintenance]);
+
+  // Calculer le coût total des maintenances
+  const totalCost = useMemo(() => {
+    return maintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
+  }, [maintenance]);
+
+  // Configuration des colonnes
+  const columns = useMemo<Column<Maintenance>[]>(() => [
+    {
+      header: 'Référence',
+      accessorKey: 'id',
+      cell: (item) => {
+        const maintenanceId = generateTransactionId('MAINT', parseInt(item.id.replace('maint-', '')));
+        return <span className="font-mono">{maintenanceId}</span>;
+      }
+    },
+    {
+      header: 'Équipement',
+      accessorKey: 'equipment_id'
+    },
+    {
+      header: 'Type',
+      accessorKey: 'type',
+      cell: (item) => {
+        const type = item.type;
+        const config = typeMap[type] || { label: type, variant: 'default' as const };
+        return formatters.badge(type, config.variant, config.label);
+      }
+    },
+    {
+      header: 'Description',
+      accessorKey: 'description',
+      cell: (item) => (
+        <div className="max-w-xs truncate" title={item.description}>
+          {item.description}
+        </div>
+      )
+    },
+    {
+      header: 'Date planifiée',
+      accessorKey: 'scheduled_date',
+      cell: (item) => formatters.date(item.scheduled_date)
+    },
+    {
+      header: 'Date réalisation',
+      accessorKey: 'completed_date',
+      cell: (item) => item.completed_date ? formatters.date(item.completed_date) : '-'
+    },
+    {
+      header: 'Prestataire',
+      accessorKey: 'provider',
+      cell: (item) => item.provider || '-'
+    },
+    {
+      header: 'Coût',
+      accessorKey: 'cost',
+      cell: (item) => item.cost ? formatCurrency(item.cost) : '-',
+      align: 'right' as const
+    },
+    {
+      header: 'Statut',
+      accessorKey: 'status',
+      cell: (item) => {
+        const status = item.status;
+        const config = statusMap[status] || { label: status, variant: 'default' as const };
+        return formatters.badge(status, config.variant, config.label);
+      }
+    },
+    {
+      header: 'Actions',
+      accessorKey: (() => '') as unknown as keyof Maintenance,
+      cell: (item) => (
+        <div className="actions-dropdown inline-block">
+          <ActionsDropdown
+            actions={[
+              { 
+                label: 'Voir détails', 
+                onClick: () => onRowClick && onRowClick(item)
+              },
+              { 
+                label: item.status === 'scheduled' ? 'Démarrer' : 'Mettre à jour',
+                onClick: () => console.log('TODO: Update maintenance status', item.id),
+                disabled: item.status === 'completed' || item.status === 'cancelled'
+              },
+              { 
+                label: 'Marquer comme terminée',
+                onClick: () => console.log('TODO: Complete maintenance', item.id),
+                disabled: item.status !== 'in_progress'
+              }
+            ]}
+          />
+        </div>
+      ),
+      align: 'center' as const
+    }
+  ], [onRowClick, statusMap, typeMap]);
+
+  // Options de filtrage
+  const filterOptions = [
+    {
+      id: 'type',
+      label: 'Type',
+      options: [
+        { value: 'preventive', label: 'Préventive' },
+        { value: 'curative', label: 'Curative' }
+      ]
+    },
+    {
+      id: 'status',
+      label: 'Statut',
+      options: [
+        { value: 'scheduled', label: 'Planifiée' },
+        { value: 'in_progress', label: 'En cours' },
+        { value: 'completed', label: 'Terminée' },
+        { value: 'cancelled', label: 'Annulée' }
+      ]
+    }
+  ];
+
+  // Données pour le résumé
+  const summaryData = [
+    { 
+      label: 'Total maintenances', 
+      value: maintenance.length
+    },
+    { 
+      label: 'Planifiées', 
+      value: statusCounts.scheduled 
+    },
+    {
+      label: 'En cours',
+      value: statusCounts.in_progress
+    },
+    {
+      label: 'Coût total',
+      value: formatCurrency(totalCost)
+    }
+  ];
+
   return (
-    <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700 w-full">
-      <table className="min-w-full bg-white dark:bg-gray-800">
-        <thead>
-          <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-            <th className="px-4 py-2 text-left">Date</th>
-            <th className="px-4 py-2 text-left">Équipement</th>
-            <th className="px-4 py-2 text-left">Type</th>
-            <th className="px-4 py-2 text-left">Statut</th>
-            <th className="px-4 py-2 text-left">Coût</th>
-            <th className="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            Array.from({ length: 3 }).map((_, idx) => (
-              <tr key={idx} className="animate-pulse">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <td key={i} className="px-4 py-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto" />
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : maintenances.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="text-center py-8 text-gray-400">Aucune maintenance à afficher</td>
-            </tr>
-          ) : (
-            maintenances.map((m) => (
-              <tr
-                key={m.id}
-                className="group hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
-                onClick={onRowClick ? (e) => {
-                  if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                  onRowClick(m);
-                } : undefined}
-              >
-                <td className="px-4 py-2">{m.scheduled_date}</td>
-                <td className="px-4 py-2">{m.equipment_id}</td>
-                <td className="px-4 py-2">{m.type}</td>
-                <td className="px-4 py-2">{m.status}</td>
-                <td className="px-4 py-2">{m.cost ? m.cost.toLocaleString() + ' €' : '-'}</td>
-                <td className="px-4 py-2 actions-dropdown" onClick={e => e.stopPropagation()}>
-                  <ActionsDropdown
-                    actions={[
-                      { label: 'Détail', onClick: () => onRowClick && onRowClick(m) },
-                      { label: 'Exporter', onClick: () => {/* TODO: Exporter */} },
-                      { label: 'Supprimer', onClick: () => {/* TODO: Supprimer */} },
-                    ]}
-                  />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <LeasingTable
+      data={maintenance}
+      columns={columns}
+      loading={loading}
+      onRowClick={onRowClick}
+      keyExtractor={(item) => item.id}
+      filterOptions={filterOptions}
+      searchPlaceholder="Rechercher une maintenance..."
+      noDataMessage="Aucune maintenance à afficher"
+      summaryData={summaryData}
+    />
   );
 }

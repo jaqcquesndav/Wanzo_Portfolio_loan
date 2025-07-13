@@ -1,7 +1,9 @@
 import type { PortfolioWithType } from './portfolio';
+import type { LeasingRequest } from './leasing-request';
 
 export interface LeasingPortfolio extends PortfolioWithType {
   equipment_catalog: Equipment[];
+  leasing_requests: LeasingRequest[];
   contracts: LeasingContract[];
   incidents: import('./leasing-asset').Incident[];
   maintenances: import('./leasing-asset').Maintenance[];

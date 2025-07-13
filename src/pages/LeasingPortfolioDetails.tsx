@@ -6,8 +6,10 @@ import { Breadcrumb } from '../components/common/Breadcrumb';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { useLeasingPortfolio } from '../hooks/useLeasingPortfolio';
+import { useInitMockData } from '../hooks/useInitMockData';
 
 import { EquipmentsTable } from '../components/portfolio/leasing/EquipmentsTable';
+import { LeasingRequestsTable } from '../components/portfolio/leasing/LeasingRequestsTable';
 import { ContractsTable } from '../components/portfolio/leasing/ContractsTable';
 import { IncidentsTable } from '../components/portfolio/leasing/IncidentsTable';
 import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTable';
@@ -21,8 +23,12 @@ export default function LeasingPortfolioDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const portfolioType = 'leasing';
+  // S'assurer que les données sont à jour avec la dernière version
+  const { isInitialized, loading: initLoading } = useInitMockData();
   // Utiliser toujours le type spécifique pour ce composant
-  const { portfolio, loading } = useLeasingPortfolio(id || '');
+  const { portfolio, loading: portfolioLoading } = useLeasingPortfolio(id || '');
+  // Combiner les états de chargement
+  const loading = portfolioLoading || initLoading || !isInitialized;
   const config = portfolioTypeConfig[portfolioType];
   const [tab, setTab] = useState(config.tabs[0]?.key || 'equipments');
 
@@ -123,6 +129,27 @@ export default function LeasingPortfolioDetails() {
             }}
           />
         </TabsContent>
+        <TabsContent value="requests" currentValue={tab}>
+          <LeasingRequestsTable
+            requests={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).leasing_requests : []}
+            equipments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).equipment_catalog : []}
+            onViewDetails={(request) => {
+              navigate(`/app/${portfolioType}/requests/${request.id}`);
+            }}
+            onApprove={(request) => {
+              console.log('Approuver la demande:', request);
+              // Implémenter la logique d'approbation
+            }}
+            onReject={(request) => {
+              console.log('Rejeter la demande:', request);
+              // Implémenter la logique de rejet
+            }}
+            onDownloadTechnicalSheet={(request) => {
+              console.log('Télécharger la fiche technique:', request);
+              // Implémenter le téléchargement
+            }}
+          />
+        </TabsContent>
         <TabsContent value="contracts" currentValue={tab}>
           <ContractsTable
             contracts={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).contracts : []}
@@ -141,7 +168,7 @@ export default function LeasingPortfolioDetails() {
         </TabsContent>
         <TabsContent value="maintenance" currentValue={tab}>
           <MaintenanceTable
-            maintenances={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).maintenances : []}
+            maintenance={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).maintenances : []}
             onRowClick={(maintenance) => {
               navigate(`/app/${portfolioType}/maintenance/${maintenance.id}`);
             }}

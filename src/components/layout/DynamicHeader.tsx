@@ -6,6 +6,7 @@ import { Input } from '../ui/Form';
 import { ProfileMenu } from './ProfileMenu';
 import { NotificationsPopover } from '../notifications/NotificationsPopover';
 import { AIChat } from '../chat/AIChat';
+import { ResetMockDataButton } from '../ResetMockDataButton';
 
 interface DynamicHeaderProps {
   onMenuClick: () => void;
@@ -93,6 +94,11 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
             {showNotifications && (
               <NotificationsPopover onClose={() => setShowNotifications(false)} />
             )}
+            
+            {/* Bouton de réinitialisation des données (environnement de développement) */}
+            <div className="mr-2">
+              <ResetMockDataButton />
+            </div>
 
             {/* Profil utilisateur (photo + nom + menu) */}
             <ProfileMenu />

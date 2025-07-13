@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { MoreVertical } from 'lucide-react';
 
-interface DropdownAction {
+export interface DropdownAction {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  className?: string;
 }
 
 interface ActionsDropdownProps {
@@ -60,7 +61,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ actions }) => 
             {actions.map((action, idx) => (
               <button
                 key={idx}
-                className={`w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''} ${action.className || ''}`}
                 onClick={() => {
                   if (!action.disabled) {
                     action.onClick();

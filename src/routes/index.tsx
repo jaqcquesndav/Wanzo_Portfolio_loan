@@ -26,18 +26,12 @@ import LeasingReservationsPage from '../pages/leasing/LeasingReservationsPage';
 import LeasingMaintenancePage from '../pages/leasing/LeasingMaintenancePage';
 import LeasingIncidentsPage from '../pages/leasing/LeasingIncidentsPage';
 import LeasingMovementsPage from '../pages/leasing/LeasingMovementsPage';
-import Operations from '../pages/Operations';
-import { Requests } from '../pages/operations/Requests';
-import OperationValidation from '../pages/operations/Validation';
-import OperationHistory from '../pages/operations/History';
-import RequestDetails from '../pages/operations/RequestDetails';
-import RequestValidation from '../pages/operations/RequestValidation';
+// Imports d'opérations supprimés
 import CreditRequestDetails from '../pages/CreditRequestDetails';
 import DisbursementDetails from '../pages/DisbursementDetails';
 import RepaymentDetails from '../pages/RepaymentDetails';
 import GuaranteeDetails from '../pages/GuaranteeDetails';
-import WorkflowCreation from '../pages/operations/WorkflowCreation';
-import Workflows from '../pages/operations/Workflows';
+
 import Documentation from '../pages/Documentation';
 import Help from '../pages/Help';
 import Settings from '../pages/Settings';
@@ -187,15 +181,7 @@ export const router = createBrowserRouter([
       { path: 'maintenance', element: <LeasingMaintenancePage /> },
       { path: 'incidents', element: <LeasingIncidentsPage /> },
       { path: 'movements', element: <LeasingMovementsPage /> },
-      // Operations
-      { path: 'operations', element: <Operations /> },
-      { path: 'operations/requests', element: <Requests /> },
-      { path: 'operations/requests/:id', element: <RequestDetails /> },
-      { path: 'operations/validation', element: <OperationValidation /> },
-      { path: 'operations/validation/:id', element: <RequestValidation /> },
-      { path: 'operations/workflows', element: <Workflows /> },
-      { path: 'operations/workflows/new', element: <WorkflowCreation /> },
-      { path: 'operations/history', element: <OperationHistory /> },
+      // Operations - Supprimées
       // Settings
       { path: 'settings', element: <Settings /> },
       // Administration

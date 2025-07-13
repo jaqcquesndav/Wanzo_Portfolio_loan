@@ -1,7 +1,9 @@
-// Removed unused React import
+import { useMemo } from 'react';
 import type { LeasingPayment } from '../../../types/leasing-payment';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
-
+import { LeasingTable, type Column } from '../../ui/LeasingTable';
+import { formatters } from '../../../utils/tableFormatters';
+import { formatCurrency, generateTransactionId } from '../../../utils/formatters';
 
 interface PaymentsTableProps {
   payments: LeasingPayment[];
@@ -10,61 +12,149 @@ interface PaymentsTableProps {
 }
 
 export function PaymentsTable({ payments, loading = false, onRowClick }: PaymentsTableProps) {
+  // Map des statuts de paiement avec leurs variantes et labels
+  const statusMap = useMemo(() => ({
+    'paid': { label: 'Payé', variant: 'success' as const },
+    'pending': { label: 'En attente', variant: 'warning' as const },
+    'failed': { label: 'Échoué', variant: 'error' as const },
+    'cancelled': { label: 'Annulé', variant: 'default' as const },
+  }), []);
+  
+  // Map des types de paiement avec leurs variantes et labels
+  const typeMap = useMemo(() => ({
+    'rent': { label: 'Loyer', variant: 'info' as const },
+    'deposit': { label: 'Dépôt', variant: 'success' as const },
+    'fee': { label: 'Frais', variant: 'warning' as const },
+    'other': { label: 'Autre', variant: 'default' as const },
+  }), []);
+  
+  // Calculer le montant total des paiements
+  const totalAmount = useMemo(() => {
+    return payments
+      .filter(p => p.status === 'paid')
+      .reduce((sum, p) => sum + p.amount, 0);
+  }, [payments]);
+
+  // Configuration des colonnes
+  const columns = useMemo<Column<LeasingPayment>[]>(() => [
+    {
+      header: 'Référence',
+      accessorKey: 'id',
+      cell: (payment) => {
+        const paymentId = generateTransactionId('PAY', parseInt(payment.id.replace('pay-', '')));
+        return <span className="font-mono">{paymentId}</span>;
+      }
+    },
+    {
+      header: 'Contrat',
+      accessorKey: 'contract_id'
+    },
+    {
+      header: 'Date',
+      accessorKey: 'date',
+      cell: (payment) => formatters.date(payment.date)
+    },
+    {
+      header: 'Type',
+      accessorKey: 'type',
+      cell: (payment) => {
+        const type = payment.type;
+        const config = typeMap[type] || { label: type, variant: 'default' as const };
+        return formatters.badge(type, config.variant, config.label);
+      }
+    },
+    {
+      header: 'Montant',
+      accessorKey: 'amount',
+      cell: (payment) => formatCurrency(payment.amount),
+      align: 'right' as const
+    },
+    {
+      header: 'Statut',
+      accessorKey: 'status',
+      cell: (payment) => {
+        const status = payment.status;
+        const config = statusMap[status] || { label: status, variant: 'default' as const };
+        return formatters.badge(status, config.variant, config.label);
+      }
+    },
+    {
+      header: 'Actions',
+      accessorKey: (() => '') as unknown as keyof LeasingPayment,
+      cell: (payment) => (
+        <div className="actions-dropdown inline-block">
+          <ActionsDropdown
+            actions={[
+              { 
+                label: 'Voir détails', 
+                onClick: () => onRowClick && onRowClick(payment)
+              },
+              { 
+                label: 'Télécharger reçu', 
+                onClick: () => console.log('TODO: Download receipt for', payment.id),
+                disabled: payment.status !== 'paid'
+              },
+              { 
+                label: payment.status === 'pending' ? 'Marquer comme payé' : 'Modifier statut',
+                onClick: () => console.log('TODO: Update payment status for', payment.id),
+                disabled: ['cancelled', 'failed'].includes(payment.status)
+              }
+            ]}
+          />
+        </div>
+      ),
+      align: 'center' as const
+    }
+  ], [onRowClick, statusMap, typeMap]);
+
+  // Options de filtrage
+  const filterOptions = [
+    {
+      id: 'type',
+      label: 'Type',
+      options: [
+        { value: 'rent', label: 'Loyer' },
+        { value: 'deposit', label: 'Dépôt' },
+        { value: 'fee', label: 'Frais' },
+        { value: 'other', label: 'Autre' }
+      ]
+    },
+    {
+      id: 'status',
+      label: 'Statut',
+      options: [
+        { value: 'paid', label: 'Payé' },
+        { value: 'pending', label: 'En attente' },
+        { value: 'failed', label: 'Échoué' },
+        { value: 'cancelled', label: 'Annulé' }
+      ]
+    }
+  ];
+
+  // Données pour le résumé
+  const summaryData = [
+    { 
+      label: 'Total des paiements', 
+      value: formatCurrency(totalAmount)
+    },
+    { 
+      label: 'Nombre de transactions', 
+      value: payments.length 
+    }
+  ];
+
   return (
-    <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700 w-full">
-      <table className="min-w-full bg-white dark:bg-gray-800">
-        <thead>
-          <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-            <th className="px-4 py-2 text-left">Date</th>
-            <th className="px-4 py-2 text-left">Montant</th>
-            <th className="px-4 py-2 text-left">Type</th>
-            <th className="px-4 py-2 text-left">Statut</th>
-            <th className="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            Array.from({ length: 3 }).map((_, idx) => (
-              <tr key={idx} className="animate-pulse">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <td key={i} className="px-4 py-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto" />
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : payments.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="text-center py-8 text-gray-400">Aucun paiement à afficher</td>
-            </tr>
-          ) : (
-            payments.map((p) => (
-              <tr
-                key={p.id}
-                className="group hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
-                onClick={onRowClick ? (e) => {
-                  if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                  onRowClick(p);
-                } : undefined}
-              >
-                <td className="px-4 py-2">{p.date}</td>
-                <td className="px-4 py-2">{p.amount.toLocaleString()} €</td>
-                <td className="px-4 py-2">{p.type}</td>
-                <td className="px-4 py-2">{p.status}</td>
-                <td className="px-4 py-2 actions-dropdown" onClick={e => e.stopPropagation()}>
-                  <ActionsDropdown
-                    actions={[
-                      { label: 'Détail', onClick: () => onRowClick && onRowClick(p) },
-                      { label: 'Exporter', onClick: () => {/* TODO: Exporter */} },
-                      { label: 'Supprimer', onClick: () => {/* TODO: Supprimer */} },
-                    ]}
-                  />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <LeasingTable
+      data={payments}
+      columns={columns}
+      loading={loading}
+      onRowClick={onRowClick}
+      keyExtractor={(item) => item.id}
+      filterOptions={filterOptions}
+      searchPlaceholder="Rechercher un paiement..."
+      noDataMessage="Aucun paiement à afficher"
+      showFilters={true}
+      summaryData={summaryData}
+    />
   );
 }

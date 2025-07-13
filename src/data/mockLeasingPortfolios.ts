@@ -5,40 +5,130 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     id: 'lease-1',
     name: 'Portefeuille Équipements Industriels',
     type: 'leasing',
-    status: 'active',
+    status: 'active', // Portefeuille actif
     target_amount: 750000000,
     target_return: 14,
     target_sectors: ['Industrie', 'BTP', 'Transport'],
     risk_profile: 'moderate',
     products: [],
-    equipment_catalog: [
+    leasing_requests: [
       {
-        id: 'eq-1',
-        name: 'Pelle hydraulique',
-        description: 'Pelle hydraulique Caterpillar 320D, idéale pour les chantiers BTP.',
-        category: 'Engin de chantier',
-        manufacturer: 'Caterpillar',
-        model: '320D',
-        year: 2022,
-        price: 120000000,
-        condition: 'new',
-        specifications: { puissance: '110kW', poids: '21t' },
-        availability: true,
-        imageUrl: 'https://dummyimage.com/400x300/cccccc/000000&text=Pelle+320D'
+        id: "WL-00000001",
+        equipment_id: "EQP-001",
+        client_id: "CLI-001",
+        client_name: "Entreprise Alpha SARL",
+        request_date: "2025-05-15T10:30:00Z",
+        requested_duration: 24,
+        contract_type: "standard",
+        monthly_budget: 250000,
+        maintenance_included: true,
+        insurance_included: true,
+        status: "pending",
+        status_date: "2025-05-15T10:30:00Z",
+        notes: "Client prioritaire, traitement urgent demandé",
+        technical_sheet_url: "/documents/technical-sheets/EQP-001.pdf",
+        transaction_id: "TR-LR-25051500001"
       },
       {
-        id: 'eq-2',
-        name: 'Camion benne',
-        description: 'Camion benne Mercedes Actros pour transport de matériaux.',
-        category: 'Véhicule industriel',
-        manufacturer: 'Mercedes-Benz',
-        model: 'Actros',
-        year: 2021,
-        price: 95000000,
+        id: "WL-00000002",
+        equipment_id: "EQP-002",
+        client_id: "CLI-002",
+        client_name: "Compagnie Beta Inc.",
+        request_date: "2025-05-16T14:45:00Z",
+        requested_duration: 36,
+        contract_type: "premium",
+        monthly_budget: 350000,
+        maintenance_included: true,
+        insurance_included: true,
+        status: "approved",
+        status_date: "2025-05-18T09:20:00Z",
+        technical_sheet_url: "/documents/technical-sheets/EQP-002.pdf",
+        transaction_id: "TR-LR-25051600002"
+      },
+      {
+        id: "WL-00000003",
+        equipment_id: "EQP-003",
+        client_id: "CLI-003",
+        client_name: "Société Gamma SA",
+        request_date: "2025-05-17T09:15:00Z",
+        requested_duration: 12,
+        contract_type: "flex",
+        monthly_budget: 175000,
+        maintenance_included: false,
+        insurance_included: true,
+        status: "rejected",
+        status_date: "2025-05-19T16:30:00Z",
+        notes: "Budget insuffisant pour l'équipement demandé",
+        technical_sheet_url: "/documents/technical-sheets/EQP-003.pdf",
+        transaction_id: "TR-LR-25051700003"
+      }
+    ],
+    equipment_catalog: [
+      {
+        id: 'EQP-001',
+        name: 'Tracteur agricole XT5000',
+        description: 'Tracteur polyvalent idéal pour les grandes exploitations agricoles',
+        category: 'Agricole',
+        manufacturer: 'AgriTech',
+        model: 'XT5000',
+        year: 2024,
+        price: 75000000,
+        condition: 'new',
+        specifications: {
+          puissance: '120 CV',
+          carburant: 'Diesel',
+          capacité: '5000 kg',
+          vitesse: '40 km/h'
+        },
+        availability: true,
+        maintenanceIncluded: true,
+        warrantyDuration: 24,
+        deliveryTime: 15,
+        imageUrl: '/images/equipments/tracteur-xt5000.jpg'
+      },
+      {
+        id: 'EQP-002',
+        name: 'Excavatrice BTP Pro X1',
+        description: 'Excavatrice haute performance pour chantiers de grande envergure',
+        category: 'Construction',
+        manufacturer: 'ConstruMach',
+        model: 'Pro X1',
+        year: 2024,
+        price: 85000000,
+        condition: 'new',
+        specifications: {
+          poids: '12000 kg',
+          puissance: '150 CV',
+          profondeur_creusage: '5.5 m',
+          capacité_godet: '1.2 m³'
+        },
+        availability: true,
+        maintenanceIncluded: true,
+        warrantyDuration: 36,
+        deliveryTime: 30,
+        imageUrl: '/images/equipments/excavatrice-prox1.jpg'
+      },
+      {
+        id: 'EQP-003',
+        name: 'Camion Benne TD-200',
+        description: 'Camion benne robuste pour transport de matériaux lourds',
+        category: 'Transport',
+        manufacturer: 'TransDiesel',
+        model: 'TD-200',
+        year: 2023,
+        price: 65000000,
         condition: 'used',
-        specifications: { puissance: '330ch', volume: '18m3' },
-        availability: false,
-        imageUrl: 'https://dummyimage.com/400x300/cccccc/000000&text=Camion+Actros'
+        specifications: {
+          charge_utile: '20 tonnes',
+          puissance: '320 CV',
+          carburant: 'Diesel',
+          volume_benne: '16 m³'
+        },
+        availability: true,
+        maintenanceIncluded: false,
+        warrantyDuration: 12,
+        deliveryTime: 7,
+        imageUrl: '/images/equipments/camion-td200.jpg'
       }
     ],
     metrics: {
@@ -133,9 +223,15 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     reports: [
       {
         id: 'rep-1',
+        portfolioId: 'lease-1',
+        companyId: 'comp-1',
         period: 'T1 2024',
-        type: 'Financier',
-        status: 'validé'
+        kpis: { 
+          type: 'Financier',
+          status: 'validé'
+        },
+        created_at: '2024-03-31T00:00:00Z',
+        updated_at: '2024-03-31T00:00:00Z'
       }
     ]
   },
@@ -150,6 +246,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     target_sectors: [],
     risk_profile: 'conservative',
     products: [],
+    leasing_requests: [],
     equipment_catalog: [],
     metrics: {
       net_value: 0,
@@ -177,6 +274,6 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     },
     created_at: '2025-01-01',
     updated_at: '2025-01-01',
-    reports: []
+    reports: [] as import('../types/investment-portfolio').PortfolioCompanyReport[]
   }
 ];

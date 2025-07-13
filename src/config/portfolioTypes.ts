@@ -4,7 +4,7 @@ import { FundingRequestsTable } from '../components/portfolio/traditional/Fundin
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
-import { EquipmentsTable } from '../components/portfolio/leasing/EquipmentsTable';
+import { LeasingRequestsTable } from '../components/portfolio/leasing/LeasingRequestsTable';
 import { ContractsTable } from '../components/portfolio/leasing/ContractsTable';
 import { IncidentsTable } from '../components/portfolio/leasing/IncidentsTable';
 import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTable';
@@ -53,7 +53,7 @@ export const portfolioTypeConfig = {
   leasing: {
     label: 'Portefeuille de leasing',
     tabs: [
-      { key: 'equipments', label: 'Équipements', component: EquipmentsTable },
+      { key: 'requests', label: 'Demandes', component: LeasingRequestsTable },
       { key: 'contracts', label: 'Contrats', component: ContractsTable },
       { key: 'incidents', label: 'Incidents', component: IncidentsTable },
       { key: 'maintenance', label: 'Maintenance', component: MaintenanceTable },
@@ -61,7 +61,7 @@ export const portfolioTypeConfig = {
       { key: 'settings', label: 'Paramètres', component: LeasingPortfolioSettingsDisplay },
     ],
     mockData: {
-      equipments: 'mockEquipments',
+      requests: 'mockLeasingRequests',
       contracts: 'mockLeasingContracts',
       incidents: 'mockIncidents',
       maintenance: 'mockMaintenance',

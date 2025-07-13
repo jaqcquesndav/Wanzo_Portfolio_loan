@@ -7,22 +7,7 @@ export const API_ENDPOINTS = {
     validateInstitution: '/auth/validate-institution'
   },
 
-  // Operations
-  operations: {
-    base: '/operations',
-    getAll: '/operations',
-    getById: (id: string) => `/operations/${id}`,
-    create: '/operations',
-    update: (id: string) => `/operations/${id}`,
-    delete: (id: string) => `/operations/${id}`,
-    validate: (id: string) => `/operations/${id}/validate`,
-    workflow: {
-      start: (id: string) => `/operations/${id}/workflow/start`,
-      validateStep: (id: string, stepId: string) => `/operations/${id}/workflow/steps/${stepId}/validate`,
-      generateToken: (id: string, stepId: string) => `/operations/${id}/workflow/steps/${stepId}/token`,
-      validateToken: (id: string, stepId: string) => `/operations/${id}/workflow/steps/${stepId}/validate-token`
-    }
-  },
+  // Operations - Supprimées
 
   // Portfolios
   portfolios: {

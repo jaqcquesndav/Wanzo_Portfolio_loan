@@ -100,5 +100,28 @@ export function useInitMockData() {
     }
   }, []);
 
-  return { isInitialized, loading, error, resetMockData };
+  // Fonction pour vérifier si la version des données est à jour
+  const checkMockDataVersion = useCallback(() => {
+    const currentVersion = localStorage.getItem('mockDataVersion');
+    // Définir une version basée sur la date pour forcer le rechargement après les mises à jour
+    const requiredVersion = '2025-07-13';
+    
+    if (currentVersion !== requiredVersion) {
+      console.log(`Mise à jour des données mock: version ${currentVersion || 'inconnue'} -> ${requiredVersion}`);
+      resetMockData().then(() => {
+        localStorage.setItem('mockDataVersion', requiredVersion);
+      });
+      return false;
+    }
+    return true;
+  }, [resetMockData]);
+  
+  // Vérifier automatiquement la version des données au chargement
+  useEffect(() => {
+    if (isInitialized && !loading) {
+      checkMockDataVersion();
+    }
+  }, [isInitialized, loading, checkMockDataVersion]);
+
+  return { isInitialized, loading, error, resetMockData, checkMockDataVersion };
 }
