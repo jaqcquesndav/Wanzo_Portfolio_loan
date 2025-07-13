@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { PortfolioMetrics } from '../components/portfolio/PortfolioMetrics';
+
 import { usePortfolio } from '../hooks/usePortfolio';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
@@ -9,7 +9,6 @@ import { Breadcrumb } from '../components/common/Breadcrumb';
 // import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
 import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
 import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
-import { ReportingTable } from '../components/portfolio/investment/ReportingTable';
 import { InvestmentPortfolioSettingsDisplay } from '../components/portfolio/investment/InvestmentPortfolioSettingsDisplay';
 import { InvestmentPortfolioSettingsEditModal } from '../components/portfolio/investment/InvestmentPortfolioSettingsEditModal';
 import { MarketSecuritiesTable } from '../components/portfolio/investment/market/MarketSecuritiesTable';
@@ -150,49 +149,12 @@ export default function InvestmentPortfolioDetails() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{portfolio.name}</h1>
       </div>
-      {/* Onglet Aperçu */}
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsOverflow
           tabs={config.tabs.map((tab: { key: string; label: string }) => ({ key: tab.key, label: tab.label }))}
           value={tab}
           onValueChange={setTab}
         />
-        <TabsContent value="overview" currentValue={tab}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-lg font-medium mb-4">Détails du portefeuille</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Montant cible</p>
-                    <p className="font-medium">{portfolio.target_amount.toLocaleString()} FCFA</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Rendement cible</p>
-                    <p className="font-medium">{portfolio.target_return}%</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Profil de risque</p>
-                    <p className="font-medium capitalize">{portfolio.risk_profile}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Secteurs cibles</p>
-                    <div className="flex flex-wrap gap-2">
-                      {portfolio.target_sectors.map((sector: string) => (
-                        <span key={sector} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {sector}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <PortfolioMetrics portfolio={portfolio} />
-            </div>
-          </div>
-        </TabsContent>
         <TabsContent value="market" currentValue={tab}>
           <MarketSecuritiesTable
             securities={mockMarketSecurities}
@@ -203,7 +165,40 @@ export default function InvestmentPortfolioDetails() {
         <TabsContent value="assets" currentValue={tab}>
           <ActiveSecuritiesTable
             assets={portfolio?.type === 'investment' 
-              ? ((portfolio as InvestmentPortfolio).assets || []) 
+              ? ((portfolio as InvestmentPortfolio).assets || []).map(asset => {
+                  // Type asset comme un objet à structure dynamique
+                  const assetObj = asset as { 
+                    id: string; 
+                    name: string; 
+                    type: string;
+                    value?: number;
+                    created_at: string;
+                    companyId?: string;
+                    acquiredDate?: string;
+                    initialValue?: number;
+                    currentValue?: number;
+                    status?: string;
+                    updated_at?: string;
+                  };
+                  
+                  // Adapter le format des assets mockés au format attendu par ActiveSecuritiesTable
+                  if ('value' in assetObj && !('initialValue' in assetObj)) {
+                    // Ancien format - convertir
+                    return {
+                      id: assetObj.id,
+                      name: assetObj.name,
+                      companyId: 'COMP-' + assetObj.id.substring(6), // Générer un ID de compagnie
+                      type: assetObj.type === 'Venture' || assetObj.type === 'Private Equity' ? 'share' : 'other',
+                      acquiredDate: assetObj.created_at,
+                      initialValue: assetObj.value || 0,
+                      currentValue: assetObj.value || 0,
+                      status: 'active',
+                      created_at: assetObj.created_at,
+                      updated_at: assetObj.created_at
+                    } as InvestmentAsset;
+                  }
+                  return asset as InvestmentAsset;
+                })
               : []
             }
             loading={loading}
@@ -221,9 +216,6 @@ export default function InvestmentPortfolioDetails() {
             valuations={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).valuations) ? (portfolio as InvestmentPortfolio).valuations! : []}
             loading={loading}
           />
-        </TabsContent>
-        <TabsContent value="reporting" currentValue={tab}>
-          <ReportingTable loading={loading} />
         </TabsContent>
         <TabsContent value="settings" currentValue={tab}>
           <InvestmentPortfolioSettingsDisplay

@@ -4,28 +4,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
 import { BankAccountsPanel } from '../shared/BankAccountsPanel';
 import { PortfolioManagementPanel } from '../shared/PortfolioManagementPanel';
 import type { Portfolio } from '../../../types/portfolio';
-import type { InvestmentPortfolio } from '../../../types/investment-portfolio';
+import type { LeasingPortfolio } from '../../../types/leasing';
 import type { BankAccount } from '../../../types/bankAccount';
 
-interface InvestmentPortfolioSettingsEditModalProps {
+interface LeasingPortfolioSettingsEditModalProps {
   open: boolean;
-  portfolio: InvestmentPortfolio;
-  onSave: (data: Partial<InvestmentPortfolio>) => void;
+  portfolio: LeasingPortfolio;
+  onSave: (data: Partial<LeasingPortfolio>) => void;
   onClose: () => void;
 }
 
-export function InvestmentPortfolioSettingsEditModal({ open, portfolio, onSave, onClose }: InvestmentPortfolioSettingsEditModalProps) {
+export function LeasingPortfolioSettingsEditModal({ open, portfolio, onSave, onClose }: LeasingPortfolioSettingsEditModalProps) {
   const [form, setForm] = useState({
     name: portfolio.name,
     target_amount: portfolio.target_amount,
     target_return: portfolio.target_return,
     target_sectors: portfolio.target_sectors || [],
     risk_profile: portfolio.risk_profile,
-    investment_stage: portfolio.investment_stage || '',
     status: portfolio.status,
     bank_accounts: portfolio.bank_accounts || [],
     manager: portfolio.manager || null,
     management_fees: portfolio.management_fees || null,
+    leasing_terms: portfolio.leasing_terms,
   });
   const [saving, setSaving] = useState(false);
   const [currentTab, setCurrentTab] = useState('general');
@@ -57,10 +57,20 @@ export function InvestmentPortfolioSettingsEditModal({ open, portfolio, onSave, 
     }));
   };
   
-  const handleManagementUpdate = (data: Partial<InvestmentPortfolio>) => {
+  const handleManagementUpdate = (data: Partial<LeasingPortfolio>) => {
     setForm(f => ({
       ...f,
       ...data
+    }));
+  };
+
+  const handleLeasingTermsChange = (field: keyof typeof form.leasing_terms, value: number | boolean) => {
+    setForm(f => ({
+      ...f,
+      leasing_terms: {
+        ...f.leasing_terms,
+        [field]: value
+      }
     }));
   };
 
@@ -91,6 +101,7 @@ export function InvestmentPortfolioSettingsEditModal({ open, portfolio, onSave, 
             <TabsTrigger value="general" currentValue={currentTab} onValueChange={setCurrentTab}>Général</TabsTrigger>
             <TabsTrigger value="accounts" currentValue={currentTab} onValueChange={setCurrentTab}>Comptes bancaires</TabsTrigger>
             <TabsTrigger value="management" currentValue={currentTab} onValueChange={setCurrentTab}>Gestion</TabsTrigger>
+            <TabsTrigger value="leasing" currentValue={currentTab} onValueChange={setCurrentTab}>Leasing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" currentValue={currentTab}>
@@ -169,14 +180,6 @@ export function InvestmentPortfolioSettingsEditModal({ open, portfolio, onSave, 
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">Étape d'investissement</label>
-                    <input 
-                      className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
-                      value={form.investment_stage} 
-                      onChange={e => handleChange('investment_stage', e.target.value)} 
-                    />
-                  </div>
-                  <div className="flex-1">
                     <label className="block text-sm font-medium mb-1">Statut</label>
                     <select 
                       className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
@@ -223,8 +226,123 @@ export function InvestmentPortfolioSettingsEditModal({ open, portfolio, onSave, 
           <TabsContent value="management" currentValue={currentTab}>
             <PortfolioManagementPanel
               portfolio={form as unknown as Portfolio}
-              onUpdate={(data) => handleManagementUpdate(data as Partial<InvestmentPortfolio>)}
+              onUpdate={handleManagementUpdate}
             />
+            
+            <div className="flex justify-end gap-2 pt-4 mt-6">
+              <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
+              <Button 
+                type="button" 
+                variant="primary" 
+                disabled={saving}
+                onClick={handleSubmit}
+              >
+                {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="leasing" currentValue={currentTab}>
+            <div className="flex flex-col gap-6">
+              <h3 className="text-base font-semibold mb-2 text-primary">Termes de leasing</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Durée minimale (mois)</label>
+                  <input 
+                    type="number" 
+                    className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
+                    value={form.leasing_terms.min_duration} 
+                    onChange={e => handleLeasingTermsChange('min_duration', Number(e.target.value))} 
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Durée maximale (mois)</label>
+                  <input 
+                    type="number" 
+                    className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
+                    value={form.leasing_terms.max_duration} 
+                    onChange={e => handleLeasingTermsChange('max_duration', Number(e.target.value))} 
+                    min={form.leasing_terms.min_duration}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Taux d'intérêt minimum (%)</label>
+                  <input 
+                    type="number" 
+                    className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
+                    value={form.leasing_terms.interest_rate_range.min} 
+                    onChange={e => {
+                      const value = Number(e.target.value);
+                      setForm(f => ({
+                        ...f,
+                        leasing_terms: {
+                          ...f.leasing_terms,
+                          interest_rate_range: {
+                            ...f.leasing_terms.interest_rate_range,
+                            min: value
+                          }
+                        }
+                      }));
+                    }} 
+                    min={0}
+                    step={0.01}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Taux d'intérêt maximum (%)</label>
+                  <input 
+                    type="number" 
+                    className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
+                    value={form.leasing_terms.interest_rate_range.max} 
+                    onChange={e => {
+                      const value = Number(e.target.value);
+                      setForm(f => ({
+                        ...f,
+                        leasing_terms: {
+                          ...f.leasing_terms,
+                          interest_rate_range: {
+                            ...f.leasing_terms.interest_rate_range,
+                            max: value
+                          }
+                        }
+                      }));
+                    }} 
+                    min={form.leasing_terms.interest_rate_range.min}
+                    step={0.01}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Maintenance incluse</label>
+                  <select
+                    className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={form.leasing_terms.maintenance_included ? 'true' : 'false'}
+                    onChange={e => handleLeasingTermsChange('maintenance_included', e.target.value === 'true')}
+                  >
+                    <option value="true">Oui</option>
+                    <option value="false">Non</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Assurance requise</label>
+                  <select
+                    className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={form.leasing_terms.insurance_required ? 'true' : 'false'}
+                    onChange={e => handleLeasingTermsChange('insurance_required', e.target.value === 'true')}
+                  >
+                    <option value="true">Oui</option>
+                    <option value="false">Non</option>
+                  </select>
+                </div>
+              </div>
+            </div>
             
             <div className="flex justify-end gap-2 pt-4 mt-6">
               <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>

@@ -44,7 +44,7 @@ import Settings from '../pages/Settings';
 import Users from '../pages/Users';
 import InstitutionManagement from '../pages/InstitutionManagement';
 import CentralRisque from '../pages/CentralRisque';
-import Reports from '../pages/Reports';
+import ReportTypeRouter from '../pages/ReportTypeRouter';
 import FinancialReports from '../pages/reports/Financial';
 import InvestmentReports from '../pages/reports/Investment';
 import RiskReports from '../pages/reports/Risk';
@@ -209,8 +209,8 @@ export const router = createBrowserRouter([
       // Help & Documentation
       { path: 'docs', element: <Documentation /> },
       { path: 'help', element: <Help /> },
-      // Rapports
-      { path: 'reports', element: <Reports /> },
+      // Rapports - Utilise le routeur de rapports qui sélectionne le bon composant selon le type de portefeuille
+      { path: 'reports', element: <ReportTypeRouter /> },
       { path: 'reports/financial', element: <FinancialReports /> },
       { path: 'reports/investment', element: <InvestmentReports /> },
       { path: 'reports/risk', element: <RiskReports /> },

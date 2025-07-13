@@ -13,6 +13,9 @@ import {
   FileBarChart,
   FileSpreadsheet
 } from 'lucide-react';
+import { utils, writeFile } from 'xlsx';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
@@ -212,11 +215,215 @@ export const AdvancedReportingTable = ({ data, title }: AdvancedReportingTablePr
     };
   }, [filteredAndSortedData]);
 
-  // Fonction pour l'extraction des données
+  // Fonctions pour l'exportation des données
   const handleExport = (format: string): void => {
     console.log(`Exporting data in ${format} format...`);
-    // Logique d'exportation à implémenter
-    alert(`Export en ${format.toUpperCase()} déclenché (à implémenter)`);
+    
+    switch (format) {
+      case 'excel':
+        exportToExcel();
+        break;
+      case 'pdf':
+        exportToPDF();
+        break;
+      case 'csv':
+        exportToCSV();
+        break;
+      default:
+        console.warn(`Format d'exportation non pris en charge: ${format}`);
+    }
+  };
+
+  // Exportation au format Excel
+  const exportToExcel = (): void => {
+    // Préparer les données pour Excel
+    const exportData = filteredAndSortedData.map(item => {
+      const row: Record<string, unknown> = {};
+      visibleColumns.forEach(col => {
+        let value = item[col];
+        
+        // Formater les valeurs selon le type
+        if (typeof value === 'number') {
+          if (col === 'montant_investi' || col === 'valorisation_actuelle') {
+            value = formatCurrency(value);
+          } else if (col === 'rendement') {
+            value = `${(value * 100).toFixed(2)}%`;
+          }
+        } else if (typeof value === 'boolean') {
+          value = value ? 'Oui' : 'Non';
+        }
+        
+        // Utiliser des noms de colonnes plus descriptifs
+        const columnName = col === 'nom' ? 'Nom du projet' :
+                          col === 'entreprise' ? 'Entreprise' :
+                          col === 'region' ? 'Région' :
+                          col === 'secteur' ? 'Secteur' :
+                          col === 'montant_investi' ? 'Montant investi' :
+                          col === 'date_entree' ? 'Date d\'entrée' :
+                          col === 'valorisation_actuelle' ? 'Valorisation actuelle' :
+                          col === 'rendement' ? 'Rendement (TRI)' :
+                          col === 'multiple' ? 'Multiple' :
+                          col === 'duree' ? 'Durée (années)' :
+                          col === 'conformite_ohada' ? 'Conformité OHADA' :
+                          col === 'conformite_cemac' ? 'Conformité CEMAC' :
+                          col === 'impact_social' ? 'Impact social' :
+                          col === 'impact_environnemental' ? 'Impact environnemental' : col;
+        
+        row[columnName] = value;
+      });
+      return row;
+    });
+
+    // Créer une feuille Excel
+    const ws = utils.json_to_sheet(exportData);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, 'Rapport');
+    
+    // Télécharger le fichier Excel
+    const fileName = `${title || 'Rapport'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    writeFile(wb, fileName);
+  };
+
+  // Exportation au format PDF
+  const exportToPDF = (): void => {
+    const doc = new jsPDF();
+    
+    // Ajouter le titre
+    doc.setFontSize(16);
+    doc.text(title || 'Rapport', 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, 30);
+    
+    // Préparer les en-têtes et les données
+    const headers = visibleColumns.map(col => {
+      return col === 'nom' ? 'Nom du projet' :
+             col === 'entreprise' ? 'Entreprise' :
+             col === 'region' ? 'Région' :
+             col === 'secteur' ? 'Secteur' :
+             col === 'montant_investi' ? 'Montant investi' :
+             col === 'date_entree' ? 'Date d\'entrée' :
+             col === 'valorisation_actuelle' ? 'Valorisation actuelle' :
+             col === 'rendement' ? 'Rendement (TRI)' :
+             col === 'multiple' ? 'Multiple' :
+             col === 'duree' ? 'Durée (années)' :
+             col === 'conformite_ohada' ? 'Conformité OHADA' :
+             col === 'conformite_cemac' ? 'Conformité CEMAC' :
+             col === 'impact_social' ? 'Impact social' :
+             col === 'impact_environnemental' ? 'Impact environnemental' : col;
+    });
+    
+    const rows = filteredAndSortedData.map(item => {
+      return visibleColumns.map(col => {
+        let value = item[col];
+        
+        // Formater les valeurs
+        if (typeof value === 'number') {
+          if (col === 'montant_investi' || col === 'valorisation_actuelle') {
+            value = formatCurrency(value);
+          } else if (col === 'rendement') {
+            value = `${(value * 100).toFixed(2)}%`;
+          } else {
+            value = String(value);
+          }
+        } else if (typeof value === 'boolean') {
+          value = value ? 'Oui' : 'Non';
+        } else if (value === undefined || value === null) {
+          value = '';
+        }
+        
+        return String(value);
+      });
+    });
+    
+    // Créer le tableau dans le PDF
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 40,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+    });
+    
+    // Télécharger le PDF
+    const fileName = `${title || 'Rapport'}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+  };
+
+  // Exportation au format CSV
+  const exportToCSV = (): void => {
+    // Préparer les en-têtes
+    const headers = visibleColumns.map(col => {
+      return col === 'nom' ? 'Nom du projet' :
+             col === 'entreprise' ? 'Entreprise' :
+             col === 'region' ? 'Région' :
+             col === 'secteur' ? 'Secteur' :
+             col === 'montant_investi' ? 'Montant investi' :
+             col === 'date_entree' ? 'Date d\'entrée' :
+             col === 'valorisation_actuelle' ? 'Valorisation actuelle' :
+             col === 'rendement' ? 'Rendement (TRI)' :
+             col === 'multiple' ? 'Multiple' :
+             col === 'duree' ? 'Durée (années)' :
+             col === 'conformite_ohada' ? 'Conformité OHADA' :
+             col === 'conformite_cemac' ? 'Conformité CEMAC' :
+             col === 'impact_social' ? 'Impact social' :
+             col === 'impact_environnemental' ? 'Impact environnemental' : col;
+    }).join(',');
+    
+    // Préparer les lignes de données
+    const rows = filteredAndSortedData.map(item => {
+      return visibleColumns.map(col => {
+        let value = item[col];
+        
+        // Formater et échapper les valeurs
+        if (typeof value === 'number') {
+          if (col === 'montant_investi' || col === 'valorisation_actuelle') {
+            value = formatCurrency(value).replace(/\s/g, '');
+          } else if (col === 'rendement') {
+            value = `${(value * 100).toFixed(2)}%`;
+          } else {
+            value = String(value);
+          }
+        } else if (typeof value === 'boolean') {
+          value = value ? 'Oui' : 'Non';
+        } else if (value === undefined || value === null) {
+          value = '';
+        } else if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+          // Échapper les valeurs avec des guillemets si nécessaire
+          value = `"${value.replace(/"/g, '""')}"`;
+        }
+        
+        return value;
+      }).join(',');
+    }).join('\n');
+    
+    // Créer le contenu CSV
+    const csvContent = `${headers}\n${rows}`;
+    
+    // Créer un lien de téléchargement
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const fileName = `${title || 'Rapport'}_${new Date().toISOString().split('T')[0]}.csv`;
+    
+    if ('msSaveBlob' in navigator) {
+      // Pour IE et Edge
+      navigator.msSaveBlob?.(blob, fileName);
+    } else {
+      // Pour les autres navigateurs
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   // Gestion de la sélection des régions

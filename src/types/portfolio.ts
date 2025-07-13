@@ -32,6 +32,20 @@ export interface Portfolio {
   risk_profile: 'conservative' | 'moderate' | 'aggressive';
   products: FinancialProduct[]; // Maintenant obligatoire et non optionnel
   investment_stage?: string;
+  bank_accounts?: import('./bankAccount').BankAccount[];
+  manager?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    role?: string;
+    department?: string;
+  };
+  management_fees?: {
+    setup_fee?: number;
+    annual_fee?: number;
+    performance_fee?: number;
+  };
   metrics: {
     net_value: number;
     average_return: number;

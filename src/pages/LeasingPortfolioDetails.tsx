@@ -12,8 +12,7 @@ import { ContractsTable } from '../components/portfolio/leasing/ContractsTable';
 import { IncidentsTable } from '../components/portfolio/leasing/IncidentsTable';
 import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTable';
 import { PaymentsTable } from '../components/portfolio/leasing/PaymentsTable';
-import { ReportingTable } from '../components/portfolio/leasing/ReportingTable';
-import { SettingsTable } from '../components/portfolio/leasing/SettingsTable';
+import { LeasingPortfolioSettingsDisplay } from '../components/portfolio/leasing/LeasingPortfolioSettingsDisplay';
 import { portfolioTypeConfig } from '../config/portfolioTypes';
 import type { LeasingPortfolio } from '../types/leasing';
 
@@ -156,16 +155,19 @@ export default function LeasingPortfolioDetails() {
             }}
           />
         </TabsContent>
-        <TabsContent value="reporting" currentValue={tab}>
-          <ReportingTable
-            reports={portfolio.type === 'leasing' && Array.isArray((portfolio as unknown as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] })['reports']) ? (portfolio as unknown as LeasingPortfolio & { reports?: { id: string; period: string; type: string; status: string }[] }).reports ?? [] : []}
-            onRowClick={(report) => {
-              navigate(`/app/${portfolioType}/reporting/${report.id}`);
+        <TabsContent value="settings" currentValue={tab}>
+          <LeasingPortfolioSettingsDisplay 
+            portfolio={portfolio as unknown as LeasingPortfolio}
+            onEdit={() => {
+              // Implémenter la logique d'édition ici
+              console.log('Édition des paramètres du portefeuille leasing');
+            }}
+            onDelete={() => {
+              // Implémenter la logique de suppression ici
+              console.log('Suppression du portefeuille leasing');
+              navigate('/app/leasing');
             }}
           />
-        </TabsContent>
-        <TabsContent value="settings" currentValue={tab}>
-          <SettingsTable />
         </TabsContent>
       </Tabs>
     </div>

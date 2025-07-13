@@ -4,20 +4,17 @@ import { FundingRequestsTable } from '../components/portfolio/traditional/Fundin
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
-import { ReportingTable } from '../components/portfolio/traditional/ReportingTable';
 import { EquipmentsTable } from '../components/portfolio/leasing/EquipmentsTable';
 import { ContractsTable } from '../components/portfolio/leasing/ContractsTable';
 import { IncidentsTable } from '../components/portfolio/leasing/IncidentsTable';
 import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTable';
 import { PaymentsTable } from '../components/portfolio/leasing/PaymentsTable';
-import { ReportingTable as LeasingReportingTable } from '../components/portfolio/leasing/ReportingTable';
-import { SettingsTable as LeasingSettingsTable } from '../components/portfolio/leasing/SettingsTable';
+import { LeasingPortfolioSettingsDisplay } from '../components/portfolio/leasing/LeasingPortfolioSettingsDisplay';
 import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
 import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
 import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
-import { ReportingTable as InvestmentReportingTable } from '../components/portfolio/investment/ReportingTable';
-import { SettingsTable as InvestmentSettingsTable } from '../components/portfolio/investment/SettingsTable';
-import { SettingsTable as TraditionalSettingsTable } from '../components/portfolio/traditional/SettingsTable';
+import { InvestmentPortfolioSettingsDisplay } from '../components/portfolio/investment/InvestmentPortfolioSettingsDisplay';
+import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
 import { MarketSecuritiesTable } from '../components/portfolio/investment/market/MarketSecuritiesTable';
 
 // Fonction utilitaire pour vérifier la validité d'un type de portefeuille
@@ -42,8 +39,7 @@ export const portfolioTypeConfig = {
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
       { key: 'repayments', label: 'Remb.', component: RepaymentsTable },
       { key: 'guarantees', label: 'Garanties', component: GuaranteesTable },
-      { key: 'reporting', label: 'Reporting', component: ReportingTable },
-      { key: 'settings', label: 'Param.', component: TraditionalSettingsTable },
+      { key: 'settings', label: 'Param.', component: PortfolioSettingsDisplay },
     ],
     mockData: {
       products: 'mockFinancialProducts',
@@ -51,7 +47,6 @@ export const portfolioTypeConfig = {
       disbursements: 'mockDisbursements',
       repayments: 'mockRepayments',
       guarantees: 'mockGuarantees',
-      reporting: 'mockReporting',
     },
     hook: 'useTraditionalPortfolio',
   },
@@ -63,8 +58,7 @@ export const portfolioTypeConfig = {
       { key: 'incidents', label: 'Incidents', component: IncidentsTable },
       { key: 'maintenance', label: 'Maintenance', component: MaintenanceTable },
       { key: 'payments', label: 'Paiements', component: PaymentsTable },
-      { key: 'reporting', label: 'Reporting', component: LeasingReportingTable },
-      { key: 'settings', label: 'Paramètres', component: LeasingSettingsTable },
+      { key: 'settings', label: 'Paramètres', component: LeasingPortfolioSettingsDisplay },
     ],
     mockData: {
       equipments: 'mockEquipments',
@@ -72,26 +66,22 @@ export const portfolioTypeConfig = {
       incidents: 'mockIncidents',
       maintenance: 'mockMaintenance',
       payments: 'mockPayments',
-      reporting: 'mockLeasingReporting',
     },
     hook: 'useLeasingPortfolio',
   },
   investment: {
     label: 'Portefeuille d\'investissement',
     tabs: [
-      { key: 'overview', label: 'Aperçu' },
       { key: 'market', label: 'Marché', component: MarketSecuritiesTable },
       { key: 'assets', label: 'Actifs', component: AssetsTable },
       { key: 'subscriptions', label: 'Souscriptions', component: SubscriptionsTable },
       { key: 'valuations', label: 'Valorisation', component: ValuationsTable },
-      { key: 'reporting', label: 'Reporting', component: InvestmentReportingTable },
-      { key: 'settings', label: 'Paramètres', component: InvestmentSettingsTable },
+      { key: 'settings', label: 'Paramètres', component: InvestmentPortfolioSettingsDisplay },
     ],
     mockData: {
       assets: 'mockAssets',
       subscriptions: 'mockSubscriptions',
       valuations: 'mockValuations',
-      reporting: 'mockInvestmentReporting',
       market: 'mockMarketSecurities', // Ajout des données pour le marché
     },
     hook: 'useInvestmentPortfolio',
