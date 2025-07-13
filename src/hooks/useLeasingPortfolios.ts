@@ -61,7 +61,7 @@ interface Filters {
 }
 
 export function useLeasingPortfolios() {
-  // Utilise le hook générique qui gère le chargement automatique depuis IndexedDB
+  // Utilise le hook générique qui gère le chargement automatique depuis localStorage
   // et la seed automatique (voir correction dans initializeMockData)
   // On ne garde que les portefeuilles de type leasing (sécurité typage)
   const { portfolios: allPortfolios, loading, refresh } = usePortfolios('leasing');

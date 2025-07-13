@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // Removed unused ArrowLeft and Button imports
 import { Breadcrumb } from '../components/common/Breadcrumb';
@@ -22,10 +22,25 @@ export default function LeasingPortfolioDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const portfolioType = 'leasing';
-  // If you want to support dynamic portfolioType from params, you can add logic here
+  // Utiliser toujours le type spécifique pour ce composant
   const { portfolio, loading } = useLeasingPortfolio(id || '');
-  const config = portfolioTypeConfig[portfolioType] || portfolioTypeConfig['leasing'];
+  const config = portfolioTypeConfig[portfolioType];
   const [tab, setTab] = useState(config.tabs[0]?.key || 'equipments');
+
+  // Log pour debug
+  useEffect(() => {
+    if (portfolio) {
+      const leasingPortfolio = portfolio as unknown as LeasingPortfolio;
+      console.log(`LeasingPortfolioDetails: Portfolio ${id} loaded:`, {
+        name: portfolio.name,
+        type: portfolio.type,
+        hasEquipments: Array.isArray(leasingPortfolio.equipment_catalog) && leasingPortfolio.equipment_catalog.length > 0,
+        hasContracts: Array.isArray(leasingPortfolio.contracts) && leasingPortfolio.contracts.length > 0,
+        hasIncidents: Array.isArray(leasingPortfolio.incidents) && leasingPortfolio.incidents.length > 0,
+        hasMaintenances: Array.isArray(leasingPortfolio.maintenances) && leasingPortfolio.maintenances.length > 0,
+      });
+    }
+  }, [portfolio, id]);
 
   // Harmonized error/loading/guard logic (like InvestmentPortfolioDetails)
   if (!id) {
@@ -81,7 +96,7 @@ export default function LeasingPortfolioDetails() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: `/app/${portfolioType}` },
-          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${portfolioType}/${id}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${id}` },
         ]}
         portfolioType={portfolioType}
       />

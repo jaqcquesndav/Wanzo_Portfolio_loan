@@ -7,17 +7,15 @@ interface TableProps {
 
 export function Table({ children, className = '' }: TableProps) {
   return (
-    <div className={`bg-white shadow overflow-hidden sm:rounded-lg ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200">
-        {children}
-      </table>
-    </div>
+    <table className={`min-w-full divide-y divide-gray-200 ${className}`}>
+      {children}
+    </table>
   );
 }
 
-export function TableHead({ children }: { children: React.ReactNode }) {
+export function TableHead({ children, className = '' }: { children: React.ReactNode, className?: string }) {
   return (
-    <thead className="bg-gray-50">
+    <thead className={`bg-gray-50 ${className}`}>
       {children}
     </thead>
   );
@@ -41,12 +39,13 @@ type TableRowProps = {
   tabIndex?: number;
   ariaLabel?: string;
   style?: React.CSSProperties;
+  className?: string;
 };
 
-export function TableRow({ children, onClick, onKeyDown, tabIndex, ariaLabel, style }: TableRowProps) {
+export function TableRow({ children, onClick, onKeyDown, tabIndex, ariaLabel, style, className = '' }: TableRowProps) {
   return (
     <tr
-      className={`${onClick ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
+      className={`${onClick ? 'hover:bg-gray-50 cursor-pointer' : ''} ${className}`}
       onClick={onClick}
       onKeyDown={onKeyDown}
       tabIndex={tabIndex}
@@ -58,17 +57,17 @@ export function TableRow({ children, onClick, onKeyDown, tabIndex, ariaLabel, st
   );
 }
 
-export function TableHeader({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'right' | 'center' }) {
+export function TableHeader({ children, align = 'left', className = '' }: { children: React.ReactNode; align?: 'left' | 'right' | 'center', className?: string }) {
   return (
-    <th className={`px-6 py-3 text-${align} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+    <th className={`px-6 py-3 text-${align} text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
       {children}
     </th>
   );
 }
 
-export function TableCell({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'right' | 'center' }) {
+export function TableCell({ children, align = 'left', className = '', colSpan }: { children: React.ReactNode; align?: 'left' | 'right' | 'center', className?: string, colSpan?: number }) {
   return (
-    <td className={`px-6 py-4 whitespace-nowrap text-${align}`}>
+    <td className={`px-6 py-4 whitespace-nowrap text-${align} ${className}`} colSpan={colSpan}>
       {children}
     </td>
   );

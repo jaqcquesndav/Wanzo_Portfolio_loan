@@ -42,7 +42,7 @@ export default function Layout() {
         {/* Sidebar - Version mobile */}
         {isMobile && (
           <aside 
-            className={`fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-30 w-64 mt-16 ${
+            className={`fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-30 w-60 mt-16 ${
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
@@ -50,9 +50,9 @@ export default function Layout() {
           </aside>
         )}
 
-        {/* Sidebar - Version desktop */}
+        {/* Sidebar - Version desktop - réduit la largeur pour donner plus d'espace au contenu */}
         {!isMobile && (
-          <aside className="sticky top-16 h-[calc(100vh-4rem)] w-64 flex-shrink-0">
+          <aside className="sticky top-16 h-[calc(100vh-4rem)] w-52 flex-shrink-0">
             <DynamicSidebar />
           </aside>
         )}
@@ -65,11 +65,11 @@ export default function Layout() {
           />
         )}
 
-        {/* Contenu principal */}
+        {/* Contenu principal - optimisé pour utiliser tout l'espace disponible */}
         <main
-          className={`flex-1 min-h-screen transition-all duration-300 flex flex-col items-center justify-start`}
+          className={`flex-1 min-h-screen transition-all duration-300 flex flex-col items-stretch justify-start`}
         >
-          <div className="w-full max-w-5xl p-4 sm:p-6 lg:p-8">
+          <div className="w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
             <Outlet />
           </div>
         </main>

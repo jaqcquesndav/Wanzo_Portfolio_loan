@@ -91,6 +91,34 @@ export const router = createBrowserRouter([
     })()} replace />
   },
   {
+    path: '/reports',
+    element: <Navigate to={(() => {
+      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
+      return `/app/${portfolioType}/reports`;
+    })()} replace />
+  },
+  {
+    path: '/reports/financial',
+    element: <Navigate to={(() => {
+      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
+      return `/app/${portfolioType}/reports/financial`;
+    })()} replace />
+  },
+  {
+    path: '/reports/investment',
+    element: <Navigate to={(() => {
+      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
+      return `/app/${portfolioType}/reports/investment`;
+    })()} replace />
+  },
+  {
+    path: '/reports/risk',
+    element: <Navigate to={(() => {
+      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
+      return `/app/${portfolioType}/reports/risk`;
+    })()} replace />
+  },
+  {
     path: '/',
     element: <PortfolioTypeSelector />
   },

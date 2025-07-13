@@ -36,14 +36,23 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
       {/* Header */}
       <div className="p-4 border-b border-primary-dark">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <NavLink 
+            to={`/app/${currentPortfolio || 'leasing'}`} 
+            onClick={() => {
+              if (currentPortfolio) {
+                localStorage.setItem('portfolioType', currentPortfolio);
+              }
+              if (onClose) onClose();
+            }}
+            className="flex items-center"
+          >
             <BarChart2 className="h-8 w-8 text-white" />
             <div className="ml-2">
               <h1 className="text-lg font-semibold text-white">
                 Wanzo
               </h1>
             </div>
-          </div>
+          </NavLink>
           {onClose && (
             <Button
               variant="ghost"
@@ -85,11 +94,16 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
               <div className="mt-2 space-y-1">
                 {filteredItems.map(item => {
                   let to: string = item.href;
-                  if (item.href.startsWith('/portfolios/')) {
+                  // Pour le Dashboard, utiliser directement le type de portefeuille actuel
+                  if (item.href === '/dashboard' && currentPortfolio) {
+                    to = `/app/${currentPortfolio}`;
+                  }
+                  // Pour les liens de portefeuille
+                  else if (item.href.startsWith('/portfolios/')) {
                     const type = item.href.split('/')[2];
                     if (type === currentPortfolio) {
                       if (currentPortfolioId) {
-                        to = `/app/${type}/${currentPortfolioId}`;
+                        to = `/app/${type}/${type}/${currentPortfolioId}`;
                       } else {
                         to = `/app/${type}`;
                       }
@@ -100,6 +114,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                       key={item.name}
                       to={to}
                       onClick={() => {
+                        // Toujours stocker le type de portefeuille actuel
                         if (currentPortfolio) {
                           localStorage.setItem('portfolioType', currentPortfolio);
                         }
@@ -174,12 +189,16 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                 <div className="mt-2 space-y-1">
                   {filteredItems.map(item => {
                     let to: string = item.href;
+                    // Pour le Dashboard, utiliser directement le type de portefeuille actuel
+                    if (item.href === '/dashboard' && currentPortfolio) {
+                      to = `/app/${currentPortfolio}`;
+                    }
                     // Modern, type-safe navigation: if href is a portfolio root, link to current portfolio details if available
-                    if (item.href.startsWith('/portfolios/')) {
+                    else if (item.href.startsWith('/portfolios/')) {
                       const type = item.href.split('/')[2];
                       if (type === currentPortfolio) {
                         if (currentPortfolioId) {
-                          to = `/app/${type}/${currentPortfolioId}`;
+                          to = `/app/${type}/${type}/${currentPortfolioId}`;
                         } else {
                           to = `/app/${type}`;
                         }

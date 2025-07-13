@@ -1,9 +1,59 @@
-import { db, SyncQueueItem } from '../db/indexedDB';
-import type { StoreName } from '../db/indexedDB';
 import { networkService } from './networkService';
 import { apiClient } from '../api/base.api';
 import { API_CONFIG } from '../../config/api';
 
+export interface SyncQueueItem {
+  id: string;
+  action: 'create' | 'update' | 'delete';
+  entity: string;
+  data: Record<string, unknown>;
+  timestamp: number;
+  retries: number;
+  priority: number;
+}
+
+// Helper functions for localStorage
+const LOCAL_STORAGE_PREFIX = 'wanzo_';
+
+/**
+ * Helper functions to work with localStorage instead of IndexedDB
+ */
+const localStorageDB = {
+  add: (store: string, item: Record<string, unknown>): void => {
+    const storeKey = `${LOCAL_STORAGE_PREFIX}${store}`;
+    const currentData = JSON.parse(localStorage.getItem(storeKey) || '[]');
+    currentData.push(item);
+    localStorage.setItem(storeKey, JSON.stringify(currentData));
+  },
+  
+  update: (store: string, id: string, data: Record<string, unknown>): void => {
+    const storeKey = `${LOCAL_STORAGE_PREFIX}${store}`;
+    const currentData = JSON.parse(localStorage.getItem(storeKey) || '[]');
+    const index = currentData.findIndex((item: Record<string, unknown>) => item.id === id);
+    
+    if (index >= 0) {
+      currentData[index] = { ...currentData[index], ...data };
+      localStorage.setItem(storeKey, JSON.stringify(currentData));
+    }
+  },
+  
+  delete: (store: string, id: string): void => {
+    const storeKey = `${LOCAL_STORAGE_PREFIX}${store}`;
+    const currentData = JSON.parse(localStorage.getItem(storeKey) || '[]');
+    const filtered = currentData.filter((item: Record<string, unknown>) => item.id !== id);
+    localStorage.setItem(storeKey, JSON.stringify(filtered));
+  },
+  
+  getAll: (store: string): Record<string, unknown>[] => {
+    const storeKey = `${LOCAL_STORAGE_PREFIX}${store}`;
+    return JSON.parse(localStorage.getItem(storeKey) || '[]');
+  },
+  
+  clearStore: (store: string): void => {
+    const storeKey = `${LOCAL_STORAGE_PREFIX}${store}`;
+    localStorage.setItem(storeKey, '[]');
+  }
+};
 
 class SyncService {
   private syncInterval: number = 5 * 60 * 1000; // 5 minutes
@@ -121,7 +171,7 @@ class SyncService {
         await apiClient.post(API_CONFIG.endpoints.sync.push, { changes: localChanges });
         
         // Vider la file de synchronisation
-        await db.clearStore('sync_queue');
+        localStorageDB.clearStore('sync_queue');
       }
     } catch (error) {
       console.error('Sync error:', {
@@ -129,12 +179,12 @@ class SyncService {
         timestamp: new Date().toISOString()
       });
 
-      // Store failed sync attempt in IndexedDB for retry
+      // Store failed sync attempt in localStorage for retry
       try {
-        await db.add('sync_queue', {
+        localStorageDB.add('sync_queue', {
           id: crypto.randomUUID(),
-          action: 'update', // or 'error', but must be a valid SyncQueueItem action
-          entity: 'sync_error', // use a string to indicate error entity
+          action: 'update',
+          entity: 'sync_error',
           data: { error: error instanceof Error ? error.message : 'Unknown error' },
           timestamp: Date.now(),
           retries: 0,
@@ -164,23 +214,23 @@ class SyncService {
           const typedChange = change as { type: string; entity: string; data: { id: string }; id?: string };
           // Only allow string entity keys
           if (typeof typedChange.entity === 'string') {
-            const entity = typedChange.entity as StoreName;
+            const entity = typedChange.entity;
             // Only allow create/update/delete for non-cache/sync_queue stores with minimal type check
             if (entity !== 'cache' && entity !== 'sync_queue') {
               switch (typedChange.type) {
                 case 'create':
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  await db.add(entity, typedChange.data as any);
+                  localStorageDB.add(entity, typedChange.data as any);
                   break;
                 case 'update':
                   if (typedChange.id) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    await db.update(entity, typedChange.id, typedChange.data as any);
+                    localStorageDB.update(entity, typedChange.id, typedChange.data as any);
                   }
                   break;
                 case 'delete':
                   if (typedChange.id) {
-                    await db.delete(entity, typedChange.id);
+                    localStorageDB.delete(entity, typedChange.id);
                   }
                   break;
               }
@@ -205,7 +255,22 @@ class SyncService {
 
   private async getLocalChanges(): Promise<SyncQueueItem[]> {
     try {
-      return await db.getAll('sync_queue');
+      // Première conversion en unknown pour contourner le problème de typage
+      const items = localStorageDB.getAll('sync_queue');
+      
+      // Conversion en tableau de SyncQueueItem après filtrage
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (items as any[]).filter((item: any): item is SyncQueueItem => 
+        typeof item === 'object' && 
+        item !== null && 
+        'id' in item &&
+        'action' in item &&
+        'entity' in item &&
+        'data' in item &&
+        'timestamp' in item &&
+        'retries' in item &&
+        'priority' in item
+      );
     } catch (error) {
       console.error('Error getting local changes:', error);
       return [];
@@ -215,7 +280,7 @@ class SyncService {
   private async logFailedChange(change: Record<string, unknown>): Promise<void> {
     try {
       // Respecte la structure de sync_queue
-      await db.add('sync_queue', {
+      localStorageDB.add('sync_queue', {
         ...(change as {
           id: string;
           action: 'create' | 'update' | 'delete';

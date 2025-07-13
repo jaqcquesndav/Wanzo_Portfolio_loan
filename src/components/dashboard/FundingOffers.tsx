@@ -10,7 +10,7 @@ import type { Company } from '../../types/company';
 import type { Portfolio } from '../../types/portfolio';
 // Utiliser les entreprises partagées pour toutes les opportunités
 import { mockPMCompanies } from '../../data/mockPMCompanies';
-import { portfolioDbService } from '../../services/db/indexedDB';
+import { portfolioStorageService } from '../../services/storage/localStorage';
 import { usePortfolioType } from '../../hooks/usePortfolioType';
 import { MetricDetailModal } from '../ui/MetricDetailModal';
 
@@ -35,12 +35,27 @@ const FundingOffers = () => {
 
   useEffect(() => {
     // Seed et charge dynamiquement selon le type courant
-    if (!portfolioType) return setPortfolios([]);
-    portfolioDbService.getPortfoliosByType(portfolioType).then((data) => {
-      setPortfolios(data);
-      if (!selectedPortfolio && data.length > 0) setSelectedPortfolio(data[0]);
+    if (!portfolioType) {
+      console.log('FundingOffers: Type de portefeuille non défini, réinitialisation des portfolios');
+      return setPortfolios([]);
+    }
+    
+    console.log(`FundingOffers: Changement du type de portefeuille à ${portfolioType}`);
+    
+    // Réinitialiser le portefeuille sélectionné lors d'un changement de type
+    setSelectedPortfolio(null);
+    
+    portfolioStorageService.getPortfoliosByType(portfolioType).then((data) => {
+      // Filtrer strictement pour ne garder que les portefeuilles du type actuel
+      const filteredData = data.filter(p => p.type === portfolioType);
+      console.log(`FundingOffers: ${filteredData.length} portefeuilles chargés de type ${portfolioType}`);
+      
+      setPortfolios(filteredData);
+      if (filteredData.length > 0) {
+        console.log(`FundingOffers: Sélection du premier portefeuille: ${filteredData[0].name}`);
+        setSelectedPortfolio(filteredData[0]);
+      }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolioType]);
 
   useEffect(() => {

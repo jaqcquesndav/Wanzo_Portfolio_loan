@@ -1,7 +1,7 @@
 // src/services/storage/localStorage.ts
 import type { PortfolioWithType } from '../../types/portfolio';
 
-// Normalization helpers for all portfolio types (copied from indexedDB service)
+// Normalization helpers for all portfolio types
 function normalizeLeasingPortfolio(portfolio: PortfolioWithType): PortfolioWithType {
   return {
     ...portfolio,

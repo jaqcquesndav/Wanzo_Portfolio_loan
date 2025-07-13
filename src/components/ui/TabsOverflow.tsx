@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -54,7 +54,12 @@ export function TabsOverflow({ tabs, value, onValueChange, className }: TabsOver
       {visibleTabs.map(tab => (
         <button
           key={tab.key}
-          onClick={() => onValueChange(tab.key)}
+          onClick={() => {
+            // Éviter de déclencher un changement d'état si l'onglet est déjà actif
+            if (value !== tab.key) {
+              onValueChange(tab.key);
+            }
+          }}
           className={cn(
             'px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap',
             value === tab.key
@@ -82,7 +87,13 @@ export function TabsOverflow({ tabs, value, onValueChange, className }: TabsOver
               {overflowTabs.map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => { setShowDropdown(false); onValueChange(tab.key); }}
+                  onClick={() => { 
+                    setShowDropdown(false); 
+                    // Éviter de déclencher un changement d'état si l'onglet est déjà actif
+                    if (value !== tab.key) {
+                      onValueChange(tab.key); 
+                    }
+                  }}
                   className={cn(
                     'block w-full text-left px-4 py-2 text-sm',
                     value === tab.key ? 'bg-primary text-white' : 'hover:bg-gray-100'

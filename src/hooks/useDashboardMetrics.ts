@@ -116,12 +116,15 @@ const metricsByType: Record<string, DashboardMetrics> = {
   }
 };
 
+import { isValidPortfolioType, getDefaultPortfolioType } from '../config/portfolioTypes';
+
 export function useDashboardMetrics(portfolioType?: string) {
   const [metrics, setMetrics] = useState<DashboardMetrics>(() => {
-    if (portfolioType && metricsByType[portfolioType]) {
-      return metricsByType[portfolioType];
-    }
-    return metricsByType['leasing']; // fallback
+    const validType = isValidPortfolioType(portfolioType) 
+      ? portfolioType as 'traditional' | 'investment' | 'leasing'
+      : getDefaultPortfolioType(portfolioType);
+      
+    return metricsByType[validType];
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -130,12 +133,18 @@ export function useDashboardMetrics(portfolioType?: string) {
     const fetchMetrics = async () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        if (portfolioType && metricsByType[portfolioType]) {
-          setMetrics(metricsByType[portfolioType]);
+        
+        if (isValidPortfolioType(portfolioType)) {
+          const validType = portfolioType as 'traditional' | 'investment' | 'leasing';
+          console.log(`Chargement des métriques pour le type: ${validType}`);
+          setMetrics(metricsByType[validType]);
         } else {
-          setMetrics(metricsByType['leasing']);
+          const defaultType = getDefaultPortfolioType(portfolioType);
+          console.warn(`Type de portefeuille non reconnu ou invalide: ${portfolioType}, utilisation du type ${defaultType}`);
+          setMetrics(metricsByType[defaultType]);
         }
       } catch (err) {
+        console.error(`Erreur lors du chargement des métriques pour ${portfolioType}:`, err);
         setError(err as Error);
       } finally {
         setLoading(false);

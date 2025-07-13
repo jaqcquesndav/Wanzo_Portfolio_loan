@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { mockTraditionalPortfolios } from '../data/mockTraditionalPortfolios';
 import { mockInvestmentPortfolios } from '../data/mockInvestmentPortfolios';
 import { mockLeasingPortfolios } from '../data/mockLeasingPortfolios';
-import type { PortfolioWithType } from '../services/db/indexedDB';
+import type { PortfolioWithType } from '../types/portfolio';
 
 export function useInitMockData() {
   const [isInitialized, setIsInitialized] = useState(false);

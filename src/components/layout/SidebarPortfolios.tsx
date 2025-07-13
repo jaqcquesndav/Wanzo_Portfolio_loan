@@ -179,10 +179,14 @@ export function SidebarPortfolios() {
                       {...dragProvided.dragHandleProps}
                       className="flex items-center bg-primary-dark/70 hover:bg-primary-dark rounded-md px-3 py-2 cursor-pointer group transition-colors"
                       onClick={() => {
-                        if (portfolioType) {
-                          localStorage.setItem('portfolioType', portfolioType);
+                        // Assurer que la navigation utilise le bon type de portfolio (celui du portfolio, pas du contexte)
+                        const actualPortfolioType = portfolio.type;
+                        // Mettre à jour le contexte avec le type correct du portfolio
+                        if (actualPortfolioType) {
+                          localStorage.setItem('portfolioType', actualPortfolioType);
                         }
-                        navigate(`/app/${portfolioType}/${portfolioType}/${portfolio.id}`);
+                        // Naviguer vers la route correspondant au type spécifique du portfolio
+                        navigate(`/app/${actualPortfolioType}/${actualPortfolioType}/${portfolio.id}`);
                       }}
                     >
                       <span className="flex-1 truncate text-white" title={portfolio.name}>{portfolio.name}</span>

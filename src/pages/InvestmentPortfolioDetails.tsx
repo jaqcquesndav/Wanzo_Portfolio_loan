@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -7,28 +6,30 @@ import { usePortfolio } from '../hooks/usePortfolio';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
+// import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
 import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
 import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
 import { ReportingTable } from '../components/portfolio/investment/ReportingTable';
 import { InvestmentPortfolioSettingsDisplay } from '../components/portfolio/investment/InvestmentPortfolioSettingsDisplay';
 import { InvestmentPortfolioSettingsEditModal } from '../components/portfolio/investment/InvestmentPortfolioSettingsEditModal';
+import { MarketSecuritiesTable } from '../components/portfolio/investment/market/MarketSecuritiesTable';
+import { ActiveSecuritiesTable } from '../components/portfolio/investment/market/ActiveSecuritiesTable';
+import { mockMarketSecurities } from '../data/mockMarketSecurities';
+import { MarketSecurity } from '../types/market-securities';
+import { InvestmentPortfolio, InvestmentAsset } from '../types/investment-portfolio';
 
-
-import { usePortfolioType } from '../hooks/usePortfolioType';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { portfolioTypeConfig } from '../config/portfolioTypes';
-import type { InvestmentPortfolio } from '../types/investment-portfolio';
 
 export default function InvestmentPortfolioDetails() {
 
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  let portfolioType = usePortfolioType();
-  if (!portfolioType) portfolioType = 'investment';
-  const { portfolio, loading } = usePortfolio(id || '', portfolioType);
-  const [tab, setTab] = useState('overview');
+  // Forcer le type à 'investment' pour ce composant spécifique
+  const portfolioType = 'investment';
+  const { portfolio, loading, addOrUpdate } = usePortfolio(id || '', portfolioType);
+  const [tab, setTab] = useState('market');
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -90,6 +91,50 @@ export default function InvestmentPortfolioDetails() {
     return null;
   }
 
+  const handlePurchase = (security: MarketSecurity, quantity: number) => {
+    // Logique d'achat
+    console.log(`Achat de ${quantity} de ${security.name}`);
+    // Mettre à jour le portefeuille (ajouter un actif)
+    const newAsset: InvestmentAsset = {
+      id: `ASSET-${Date.now()}`,
+      name: security.name,
+      companyId: security.companyId || '', // Provide a default value if it might be undefined
+      type: 'share', // Default to 'share' as MarketSecurity type might not match InvestmentAsset type
+      acquiredDate: new Date().toISOString(),
+      initialValue: security.unitPrice * quantity,
+      currentValue: security.unitPrice * quantity,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    // Type assertion to InvestmentPortfolio
+    const investmentPortfolio = portfolio as InvestmentPortfolio;
+    const updatedAssets = [...(investmentPortfolio.assets || []), newAsset];
+    
+    // Use type assertion for addOrUpdate to accept assets property
+    addOrUpdate({ 
+      ...investmentPortfolio, 
+      assets: updatedAssets 
+    } as unknown as Partial<InvestmentPortfolio>);
+  };
+
+  const handleSell = (assetId: string, quantity: number) => {
+    // Logique de vente
+    console.log(`Vente de ${quantity} de l'actif ${assetId}`);
+    // Mettre à jour le portefeuille (modifier ou supprimer un actif)
+    
+    // Type assertion to InvestmentPortfolio
+    const investmentPortfolio = portfolio as InvestmentPortfolio;
+    const updatedAssets = (investmentPortfolio.assets || []).filter((a) => a.id !== assetId); // Simplifié
+    
+    // Use type assertion for addOrUpdate to accept assets property
+    addOrUpdate({ 
+      ...investmentPortfolio, 
+      assets: updatedAssets 
+    } as unknown as Partial<InvestmentPortfolio>);
+  };
+
   // Config dynamique selon le type de portefeuille (sécurise l'affichage des tabs)
   const config = portfolioTypeConfig[portfolioType] || portfolioTypeConfig['investment'];
 
@@ -98,7 +143,7 @@ export default function InvestmentPortfolioDetails() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: `/app/${portfolioType}` },
-          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${portfolioType}/${id}` },
+          { label: portfolio?.name || 'Portefeuille', href: `/app/${portfolioType}/${id}` },
         ]}
         portfolioType={portfolioType}
       />
@@ -148,10 +193,21 @@ export default function InvestmentPortfolioDetails() {
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="assets" currentValue={tab}>
-          <AssetsTable
-            assets={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).assets) ? (portfolio as InvestmentPortfolio).assets : []}
+        <TabsContent value="market" currentValue={tab}>
+          <MarketSecuritiesTable
+            securities={mockMarketSecurities}
             loading={loading}
+            onPurchase={handlePurchase}
+          />
+        </TabsContent>
+        <TabsContent value="assets" currentValue={tab}>
+          <ActiveSecuritiesTable
+            assets={portfolio?.type === 'investment' 
+              ? ((portfolio as InvestmentPortfolio).assets || []) 
+              : []
+            }
+            loading={loading}
+            onSell={handleSell}
           />
         </TabsContent>
         <TabsContent value="subscriptions" currentValue={tab}>

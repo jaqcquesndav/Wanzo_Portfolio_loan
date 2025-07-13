@@ -11,10 +11,25 @@ export function usePortfolio(id: string | undefined, type: PortfolioType) {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    
+    console.log(`Loading portfolio ${id} of type ${type}`);
+    
     portfolioStorageService.getPortfolio(id)
-      .then((p) => setPortfolio(p))
+      .then((p) => {
+        if (p && p.type === type) {
+          console.log(`Portfolio ${id} loaded successfully, type: ${p.type}`);
+          setPortfolio(p);
+        } else if (p) {
+          console.warn(`Portfolio ${id} found but with incorrect type: expected ${type}, got ${p.type}`);
+          setPortfolio(undefined);
+        } else {
+          console.warn(`Portfolio ${id} not found`);
+          setPortfolio(undefined);
+        }
+      })
+      .catch(err => console.error(`Error loading portfolio ${id}:`, err))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, type]);
 
 
   const addOrUpdate = useCallback(async (data: Partial<AnyPortfolio>) => {
