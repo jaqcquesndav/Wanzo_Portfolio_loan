@@ -24,7 +24,11 @@ export const mockCompanies: Company[] = [
       carbon_footprint: 12.5,
       environmental_rating: 'B',
       social_rating: 'A',
-      governance_rating: 'B'
+      governance_rating: 'B',
+      gender_ratio: {
+        male: 60,
+        female: 40
+      }
     },
     created_at: '2024-01-01',
     updated_at: '2024-03-15'

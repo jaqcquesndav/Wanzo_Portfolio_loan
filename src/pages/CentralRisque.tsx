@@ -4,6 +4,8 @@ import type { Company } from '../types/company';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/ui';
 import { Button } from '../components/ui/Button';
 import { Download, ChevronDown } from 'lucide-react';
+import { Pagination } from '../components/ui/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 // Mock data
 const mockData = [
@@ -36,6 +38,96 @@ const mockData = [
     statut: 'En défaut',
     rating: 'C',
     incidents: 2
+  },
+  {
+    id: '4',
+    institution: 'Banque Centrale du Congo',
+    entreprise: 'Goma Construction',
+    secteur: 'Construction',
+    encours: 175000000,
+    statut: 'Actif',
+    rating: 'B',
+    incidents: 0
+  },
+  {
+    id: '5',
+    institution: 'Trust Merchant Bank',
+    entreprise: 'Bukavu Technologies',
+    secteur: 'Technologies',
+    encours: 95000000,
+    statut: 'Actif',
+    rating: 'A',
+    incidents: 0
+  },
+  {
+    id: '6',
+    institution: 'Equity Bank Congo',
+    entreprise: 'Katanga Mining Corp',
+    secteur: 'Industrie',
+    encours: 320000000,
+    statut: 'En défaut',
+    rating: 'C',
+    incidents: 3
+  },
+  {
+    id: '7',
+    institution: 'Rawbank',
+    entreprise: 'Matadi Transport',
+    secteur: 'Transport',
+    encours: 110000000,
+    statut: 'Actif',
+    rating: 'B',
+    incidents: 1
+  },
+  {
+    id: '8',
+    institution: 'FINCA RDC',
+    entreprise: 'Kisangani Food Processing',
+    secteur: 'Agroalimentaire',
+    encours: 65000000,
+    statut: 'Actif',
+    rating: 'B',
+    incidents: 0
+  },
+  {
+    id: '9',
+    institution: 'Afriland First Bank',
+    entreprise: 'Kolwezi Energy',
+    secteur: 'Énergie',
+    encours: 210000000,
+    statut: 'En défaut',
+    rating: 'C',
+    incidents: 2
+  },
+  {
+    id: '10',
+    institution: 'Standard Bank Congo',
+    entreprise: 'Mbuji-Mayi Commerce',
+    secteur: 'Commerce',
+    encours: 85000000,
+    statut: 'Actif',
+    rating: 'A',
+    incidents: 0
+  },
+  {
+    id: '11',
+    institution: 'Ecobank RDC',
+    entreprise: 'Mbandaka Fisheries',
+    secteur: 'Pêche',
+    encours: 55000000,
+    statut: 'Actif',
+    rating: 'B',
+    incidents: 0
+  },
+  {
+    id: '12',
+    institution: 'Advans Banque Congo',
+    entreprise: 'Tshikapa Logistics',
+    secteur: 'Logistique',
+    encours: 140000000,
+    statut: 'En défaut',
+    rating: 'C',
+    incidents: 3
   }
 ];
 
@@ -48,6 +140,7 @@ export default function CentralRisque() {
   const [filterStatut, setFilterStatut] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(5); // Nombre d'éléments par page
   const [form, setForm] = useState({
     id: '',
     institution: institution?.name || '',
@@ -69,6 +162,12 @@ export default function CentralRisque() {
       row.institution.toLowerCase().includes(search.toLowerCase())) &&
     (filterStatut ? row.statut === filterStatut : true)
   );
+
+  // Pagination des données filtrées
+  const { currentPage, setCurrentPage, totalPages, paginatedItems } = usePagination({
+    items: filtered,
+    itemsPerPage: itemsPerPage 
+  });
 
   // Export handlers (à implémenter avec SheetJS ou autre lib)
   const handleExport = (type: string) => {
@@ -311,21 +410,62 @@ export default function CentralRisque() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filtered.map(row => (
-                  <TableRow key={row.id}>
-                    <TableCell>{row.institution}</TableCell>
-                    <TableCell>{row.entreprise}</TableCell>
-                    <TableCell>{row.secteur}</TableCell>
-                    <TableCell>{row.encours.toLocaleString('fr-CD')}</TableCell>
-                    <TableCell>{row.statut}</TableCell>
-                    <TableCell>{row.rating}</TableCell>
-                    <TableCell>{row.incidents}</TableCell>
+                {paginatedItems.length > 0 ? (
+                  paginatedItems.map(row => (
+                    <TableRow key={row.id}>
+                      <TableCell>{row.institution}</TableCell>
+                      <TableCell>{row.entreprise}</TableCell>
+                      <TableCell>{row.secteur}</TableCell>
+                      <TableCell>{row.encours.toLocaleString('fr-CD')}</TableCell>
+                      <TableCell>{row.statut}</TableCell>
+                      <TableCell>{row.rating}</TableCell>
+                      <TableCell>{row.incidents}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      Aucun résultat ne correspond à votre recherche
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
         </div>
+      </div>
+
+      {/* Pagination avec informations */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Affichage de <span className="font-medium">{Math.min(filtered.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filtered.length, currentPage * itemsPerPage)}</span> sur <span className="font-medium">{filtered.length}</span> entrées
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Éléments par page:</span>
+            <select 
+              value={itemsPerPage} 
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1); // Retourner à la première page lors du changement
+              }}
+              className="border rounded px-2 py-1"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        </div>
+        
+        {totalPages > 1 && (
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={(page) => setCurrentPage(page)} 
+          />
+        )}
       </div>
     </div>
   );

@@ -27,6 +27,10 @@ export interface Company {
     environmental_rating: 'A' | 'B' | 'C' | 'D';
     social_rating: 'A' | 'B' | 'C' | 'D';
     governance_rating: 'A' | 'B' | 'C' | 'D';
+    gender_ratio?: {
+      male: number;
+      female: number;
+    };
   };
   created_at: string;
   updated_at: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Download } from 'lucide-react';
 import { FormField, Input, Select } from '../ui/Form';
 import { Button } from '../ui/Button';
 
@@ -22,25 +22,33 @@ export function CompanyFilters({ onSearch, onFilterChange }: CompanyFiltersProps
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-4">
-      <div className="flex space-x-4">
-        <div className="flex-1">
+      <div className="flex flex-col md:flex-row gap-4 md:items-center">
+        <div className="md:flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
               placeholder="Rechercher une entreprise..."
               onChange={(e) => onSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          icon={<Filter className="h-4 w-4" />}
-        >
-          Filtres avancés
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            icon={<Filter className="h-4 w-4" />}
+          >
+            Filtres avancés
+          </Button>
+          <Button
+            variant="outline"
+            icon={<Download className="h-4 w-4" />}
+          >
+            Exporter
+          </Button>
+        </div>
       </div>
 
       {showAdvanced && (

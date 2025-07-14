@@ -78,21 +78,28 @@ export default function Prospection() {
   }
 
   return (
-    <div className="space-y-6 flex flex-col items-center justify-start">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Prospection
-        </h1>
-        <div className="flex items-center space-x-4">
+    <div className="space-y-6 flex flex-col">
+      <div className="flex flex-wrap justify-between items-center w-full">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Prospection
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Gérez et analysez vos opportunités d'investissement
+          </p>
+        </div>
+        <div className="flex items-center space-x-4 mt-2 md:mt-0">
           {/* On ne propose plus que la vue liste et map */}
           <ViewToggle view={view} onViewChange={v => setView(v as 'list' | 'map')} />
         </div>
       </div>
 
-      <CompanyFilters
-        onSearch={setSearchTerm}
-        onFilterChange={() => {}}
-      />
+      <div className="w-full">
+        <CompanyFilters
+          onSearch={setSearchTerm}
+          onFilterChange={() => {}}
+        />
+      </div>
 
       {view === 'map' ? (
         <CompanyMap

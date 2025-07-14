@@ -16,12 +16,28 @@ export const mockCompanyDetails = {
     email: 'contact@techinnovate.sn',
     phone: '+221 33 123 45 67'
   },
+  socialMedia: {
+    website: 'https://www.techinnovate.sn',
+    facebook: 'https://www.facebook.com/techinnovate.sn',
+    linkedin: 'https://www.linkedin.com/company/techinnovate-senegal',
+    twitter: 'https://twitter.com/techinnovateSN',
+    youtube: 'https://www.youtube.com/channel/techinnovateSN'
+  },
+  presentation_video: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+  ceo: {
+    name: 'Fatou Diop',
+    gender: 'female',
+    title: 'Directrice Générale & Co-fondatrice',
+    linkedin: 'https://www.linkedin.com/in/fatou-diop-ceo',
+    bio: 'Fatou Diop est une entrepreneure de renom dans le secteur technologique au Sénégal avec plus de 15 ans d\'expérience. Diplômée de l\'École Polytechnique de Dakar et de HEC Paris, elle a fondé TechInnovate Sénégal en 2017 après un parcours réussi chez Google et Orange. Elle est régulièrement invitée comme conférencière sur les sujets d\'innovation et d\'entrepreneuriat féminin en Afrique.',
+    photo: 'https://randomuser.me/api/portraits/women/45.jpg'
+  },
   capital: {
     amount: 5000000,
     currency: 'XOF',
     isApplicable: true
   },
-  logo: 'https://techinnovate.sn/logo.png',
+  logo: 'https://placehold.co/400x400/2563eb/ffffff?text=TI',
   country: 'Sénégal',
   status: 'active',
   founded: 2017,
