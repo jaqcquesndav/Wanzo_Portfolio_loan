@@ -1,6 +1,7 @@
 // src/config/portfolioTypes.ts
 import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
 import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
+import { CreditContractsTable } from '../components/portfolio/traditional/CreditContractsTable';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
@@ -36,10 +37,11 @@ export const portfolioTypeConfig = {
     tabs: [
       { key: 'products', label: 'Produits', component: FinancialProductsList },
       { key: 'requests', label: 'Demandes', component: FundingRequestsTable },
+      { key: 'contracts', label: 'Contrats', component: CreditContractsTable },
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
-      { key: 'repayments', label: 'Remb.', component: RepaymentsTable },
+      { key: 'repayments', label: 'Remboursements', component: RepaymentsTable },
       { key: 'guarantees', label: 'Garanties', component: GuaranteesTable },
-      { key: 'settings', label: 'Param.', component: PortfolioSettingsDisplay },
+      { key: 'settings', label: 'Paramètres', component: PortfolioSettingsDisplay },
     ],
     mockData: {
       products: 'mockFinancialProducts',

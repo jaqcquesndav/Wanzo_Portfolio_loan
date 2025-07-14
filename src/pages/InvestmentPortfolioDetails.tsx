@@ -6,6 +6,8 @@ import { usePortfolio } from '../hooks/usePortfolio';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { Breadcrumb } from '../components/common/Breadcrumb';
+import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
+import { openPaymentOrder } from '../utils/openPaymentOrder';
 // import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
 import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
 import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
@@ -28,6 +30,7 @@ export default function InvestmentPortfolioDetails() {
   // Forcer le type à 'investment' pour ce composant spécifique
   const portfolioType = 'investment';
   const { portfolio, loading, addOrUpdate } = usePortfolio(id || '', portfolioType);
+  const { showPaymentOrderModal } = usePaymentOrder();
   const [tab, setTab] = useState('market');
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -91,31 +94,32 @@ export default function InvestmentPortfolioDetails() {
   }
 
   const handlePurchase = (security: MarketSecurity, quantity: number) => {
-    // Logique d'achat
-    console.log(`Achat de ${quantity} de ${security.name}`);
-    // Mettre à jour le portefeuille (ajouter un actif)
-    const newAsset: InvestmentAsset = {
-      id: `ASSET-${Date.now()}`,
-      name: security.name,
-      companyId: security.companyId || '', // Provide a default value if it might be undefined
-      type: 'share', // Default to 'share' as MarketSecurity type might not match InvestmentAsset type
-      acquiredDate: new Date().toISOString(),
-      initialValue: security.unitPrice * quantity,
-      currentValue: security.unitPrice * quantity,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    // Ouvrir le modal d'ordre de paiement
+    openPaymentOrder({
+      action: 'buy_security',
+      portfolioId: id || '',
+      portfolioName: portfolio?.name,
+      itemId: security.id,
+      reference: security.reference || security.id,
+      amount: security.unitPrice * quantity,
+      company: security.companyName || security.issuer || '',
+      product: security.name,
+      additionalInfo: {
+        securityType: security.type,
+        quantity: quantity,
+        unitPrice: security.unitPrice
+      }
+    }, showPaymentOrderModal);
     
-    // Type assertion to InvestmentPortfolio
-    const investmentPortfolio = portfolio as InvestmentPortfolio;
-    const updatedAssets = [...(investmentPortfolio.assets || []), newAsset];
+    // Note: Idéalement, nous devrions créer un système de callback pour créer l'actif
+    // uniquement après la confirmation du paiement. Pour l'instant, l'actif sera créé 
+    // immédiatement pour la démonstration.
     
-    // Use type assertion for addOrUpdate to accept assets property
-    addOrUpdate({ 
-      ...investmentPortfolio, 
-      assets: updatedAssets 
-    } as unknown as Partial<InvestmentPortfolio>);
+    console.log(`Ouverture du modal de paiement pour l'achat de ${quantity} de ${security.name}`);
+    
+    // La création de l'actif devrait être faite après confirmation du paiement
+    // Cela nécessiterait un système d'écouteurs d'événements ou de callbacks
+    // dans le PaymentOrderContext
   };
 
   const handleSell = (assetId: string, quantity: number) => {

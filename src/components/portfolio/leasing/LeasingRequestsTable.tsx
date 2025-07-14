@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { LeasingRequest } from '../../../types/leasing-request';
 import type { Equipment } from '../../../types/leasing';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
+import { Button } from '../../ui/Button';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
 import { formatCurrency } from '../../../utils/formatters';
@@ -121,8 +122,30 @@ export function LeasingRequestsTable({
       }
     },
     {
+      header: 'Paiement',
+      // Utiliser une propriété existante mais ne pas l'afficher, juste pour la structure
+      accessorKey: 'id',
+      cell: (request: LeasingRequest) => (
+        <div className="flex justify-center">
+          {request.status === 'pending' && (
+            <Button 
+              size="sm"
+              variant="outline"
+              onClick={() => onApprove && onApprove(request)}
+              className="bg-green-50 hover:bg-green-100 border-green-500 text-green-600 hover:text-green-700"
+            >
+              Paiement
+            </Button>
+          )}
+          {request.status !== 'pending' && (
+            <span className="text-gray-400">—</span>
+          )}
+        </div>
+      )
+    },
+    {
       header: 'Actions',
-      accessorKey: (() => '') as unknown as keyof LeasingRequest,
+      accessorKey: 'id',  // Utiliser une propriété existante pour éviter les erreurs de type
       cell: (request: LeasingRequest) => (
         <div className="actions-dropdown inline-block">
           <ActionsDropdown
@@ -132,14 +155,10 @@ export function LeasingRequestsTable({
                 onClick: () => onViewDetails && onViewDetails(request)
               },
               { 
-                label: 'Approuver', 
-                onClick: () => onApprove && onApprove(request),
-                disabled: request.status !== 'pending'
-              },
-              { 
                 label: 'Rejeter', 
                 onClick: () => onReject && onReject(request),
-                disabled: request.status !== 'pending'
+                disabled: request.status !== 'pending',
+                className: 'text-red-600 hover:text-red-700'
               },
               {
                 label: 'Fiche technique',

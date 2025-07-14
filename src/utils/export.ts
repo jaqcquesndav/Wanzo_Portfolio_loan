@@ -37,3 +37,35 @@ export const exportToPDF = ({ title, headers, data, filename }: ExportToPDFProps
 
   doc.save(filename);
 };
+
+/**
+ * Exporte un ordre de paiement au format PDF
+ */
+// Importer le type depuis le composant PaymentOrderModal pour assurer la cohérence
+import { PaymentOrderData } from '../components/payment/PaymentOrderModal';
+
+// Type pour les ordres de paiement à exporter, étend PaymentOrderData
+type PaymentOrderExport = PaymentOrderData;
+
+export const exportPaymentOrderToPDF = (data: PaymentOrderExport) => {
+  // TODO: Implement specialized PDF export for payment orders
+  console.log('Export payment order to PDF', data);
+  
+  // Cette fonction sera implémentée avec une bibliothèque comme jsPDF ou PDF.js
+  // pour générer un PDF bien formaté qui ressemble exactement au design du modal
+  
+  // Exemple de logique:
+  // 1. Créer un nouveau document PDF
+  // 2. Ajouter l'en-tête Wanzo et le titre "ORDRE DE PAIEMENT"
+  // 3. Ajouter les informations du gestionnaire
+  // 4. Ajouter les informations du bénéficiaire
+  // 5. Ajouter les montants, motifs et références
+  // 6. Ajouter les avertissements et zones de signature
+  // 7. Générer le QR code et l'ajouter
+  // 8. Enregistrer ou ouvrir le PDF
+  
+  // Simuler un téléchargement après 1 seconde
+  setTimeout(() => {
+    alert(`Le PDF "${data.orderNumber}" serait téléchargé ici dans la version finale.`);
+  }, 1000);
+};

@@ -1,6 +1,7 @@
 import React from 'react';
-// import { Button } from '../../ui/Button';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
+import { Badge } from '../../ui/Badge';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 
 export interface Repayment {
   id: string;
@@ -19,50 +20,67 @@ interface RepaymentsTableProps {
   onView: (id: string) => void;
 }
 
+// Configuration pour l'affichage des statuts
+const statusConfig = {
+  'à venir': { label: 'À venir', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
+  'payé': { label: 'Payé', variant: 'success', color: 'bg-green-100 text-green-700' },
+  'retard': { label: 'En retard', variant: 'error', color: 'bg-red-100 text-red-700' },
+};
+
 export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({ repayments, onMarkPaid, onView }) => {
   return (
-    <div className="overflow-x-auto overflow-visible rounded-lg shadow border border-gray-200 dark:border-gray-700">
-      <table className="min-w-full bg-white dark:bg-gray-800">
-        <thead>
-          <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-            <th className="px-4 py-2 text-left">Entreprise</th>
-            <th className="px-4 py-2 text-left">Produit</th>
-            <th className="px-4 py-2 text-left">Échéance</th>
-            <th className="px-4 py-2 text-left">Montant</th>
-            <th className="px-4 py-2 text-left">Statut</th>
-            <th className="px-4 py-2 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {repayments.length === 0 ? (
+    <div className="bg-white dark:bg-gray-800 shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHead>
             <tr>
-              <td colSpan={6} className="text-center py-8 text-gray-400">Aucun remboursement</td>
+              <TableHeader>Entreprise</TableHeader>
+              <TableHeader>Produit</TableHeader>
+              <TableHeader>Échéance</TableHeader>
+              <TableHeader>Montant</TableHeader>
+              <TableHeader>Statut</TableHeader>
+              <TableHeader align="center">Actions</TableHeader>
             </tr>
-          ) : (
-            repayments.map((r) => (
-              <tr
-                key={r.id}
-                className="hover:bg-primary-light/10 cursor-pointer"
-                onClick={() => onView(r.id)}
-              >
-                <td className="px-4 py-2">{r.company}</td>
-                <td className="px-4 py-2">{r.product}</td>
-                <td className="px-4 py-2">{r.dueDate}</td>
-                <td className="px-4 py-2">{r.amount}</td>
-                <td className="px-4 py-2">{r.status}</td>
-                <td className="px-4 py-2 text-center">
-                  <ActionsDropdown
-                    actions={[
-                      { label: 'Voir', onClick: () => onView(r.id) },
-                      { label: 'Marquer comme payé', onClick: () => onMarkPaid(r.id), disabled: r.status !== 'à venir' }
-                    ]}
-                  />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+          </TableHead>
+          <TableBody>
+            {repayments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                  Aucun remboursement
+                </TableCell>
+              </TableRow>
+            ) : (
+              repayments.map((r) => (
+                <TableRow
+                  key={r.id}
+                  onClick={() => onView(r.id)}
+                  className="cursor-pointer"
+                >
+                  <TableCell className="font-medium">{r.company}</TableCell>
+                  <TableCell>{r.product}</TableCell>
+                  <TableCell>{r.dueDate}</TableCell>
+                  <TableCell>{r.amount.toLocaleString()} FCFA</TableCell>
+                  <TableCell>
+                    <Badge variant={statusConfig[r.status].variant as "warning" | "success" | "error" | "secondary" | "primary" | "danger"}>
+                      {statusConfig[r.status].label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center overflow-visible relative">
+                    <div className="inline-block">
+                      <ActionsDropdown
+                        actions={[
+                          { label: 'Voir', onClick: () => onView(r.id) },
+                          { label: 'Marquer comme payé', onClick: () => onMarkPaid(r.id), disabled: r.status !== 'à venir' }
+                        ]}
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

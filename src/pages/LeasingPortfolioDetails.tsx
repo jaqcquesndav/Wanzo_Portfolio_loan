@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // Removed unused ArrowLeft and Button imports
@@ -7,6 +6,8 @@ import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { useLeasingPortfolio } from '../hooks/useLeasingPortfolio';
 import { useInitMockData } from '../hooks/useInitMockData';
+import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
+import { openPaymentOrder } from '../utils/openPaymentOrder';
 
 import { EquipmentsTable } from '../components/portfolio/leasing/EquipmentsTable';
 import { LeasingRequestsTable } from '../components/portfolio/leasing/LeasingRequestsTable';
@@ -27,6 +28,7 @@ export default function LeasingPortfolioDetails() {
   const { isInitialized, loading: initLoading } = useInitMockData();
   // Utiliser toujours le type spécifique pour ce composant
   const { portfolio, loading: portfolioLoading } = useLeasingPortfolio(id || '');
+  const { showPaymentOrderModal } = usePaymentOrder();
   // Combiner les états de chargement
   const loading = portfolioLoading || initLoading || !isInitialized;
   const config = portfolioTypeConfig[portfolioType];
@@ -138,7 +140,29 @@ export default function LeasingPortfolioDetails() {
             }}
             onApprove={(request) => {
               console.log('Approuver la demande:', request);
-              // Implémenter la logique d'approbation
+              
+              // Récupérer les détails de l'équipement
+              const equipment = portfolio.type === 'leasing' 
+                ? (portfolio as unknown as LeasingPortfolio).equipment_catalog.find(eq => eq.id === request.equipment_id)
+                : undefined;
+              
+              // Ouvrir le modal d'ordre de paiement
+              openPaymentOrder({
+                action: 'approve_leasing',
+                portfolioId: id || '',
+                portfolioName: portfolio?.name,
+                itemId: request.id,
+                reference: request.id,
+                amount: request.monthly_budget * request.requested_duration,
+                company: request.client_name,
+                product: equipment?.name || 'Équipement de leasing',
+                additionalInfo: {
+                  equipmentId: request.equipment_id,
+                  equipmentName: equipment?.name,
+                  equipmentCategory: equipment?.category,
+                  contractId: request.id
+                }
+              }, showPaymentOrderModal);
             }}
             onReject={(request) => {
               console.log('Rejeter la demande:', request);

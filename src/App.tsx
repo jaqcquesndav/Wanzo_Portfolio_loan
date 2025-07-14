@@ -6,6 +6,8 @@ import { PortfolioProvider } from './contexts/PortfolioContext';
 import { useInitMockData } from './hooks/useInitMockData';
 import { syncService } from './services/sync/syncService';
 import { SYNC_ENABLED } from './config/sync';
+import { PaymentOrderProvider } from './contexts/PaymentOrderContext';
+import { GlobalPaymentOrderModal } from './components/payment/GlobalPaymentOrderModal';
 
 export default function App() {
   // Utilisation du nouveau hook pour initialiser les données mock
@@ -57,7 +59,11 @@ export default function App() {
   return (
     <PortfolioProvider>
       <NotificationProvider>
-        <RouterProvider router={router} />
+        <PaymentOrderProvider>
+          <RouterProvider router={router} />
+          {/* Rendre le modal d'ordre de paiement disponible globalement */}
+          <GlobalPaymentOrderModal />
+        </PaymentOrderProvider>
       </NotificationProvider>
     </PortfolioProvider>
   );

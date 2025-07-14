@@ -28,6 +28,8 @@ export interface MarketSecurity {
   currency: string;
   sector: string;
   country: string;
+  reference?: string; // Référence unique pour le titre
+  issuer?: string; // Émetteur du titre
   listed: boolean;
   marketCap?: number; // Pour les entreprises cotées
   enterpriseValue?: number; // Valeur de l'entreprise

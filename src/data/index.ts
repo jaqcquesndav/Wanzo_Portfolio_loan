@@ -8,6 +8,7 @@ export * from './mockCompanyDetails';
 export * from './mockDisbursements';
 export * from './mockFundingOffers';
 export * from './mockFundingRequests';
+export * from './mockCreditContracts';
 export * from './mockGuarantees';
 
 // Primary export for investment data - note that this file also exports:

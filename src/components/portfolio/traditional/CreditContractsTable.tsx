@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Filter, ArrowUpDown, Download, FileText } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Filter, ArrowUpDown, Download } from 'lucide-react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Input } from '../../ui/Input';
 import { Button } from '../../ui/Button';
@@ -10,109 +10,108 @@ import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import { exportToExcel, exportToPDF } from '../../../utils/exports';
 
-// Type amélioré pour une demande de financement PME
-export interface FundingRequest {
+// Type pour un contrat de crédit
+export interface CreditContract {
   id: string;
+  reference: string;
   company: string;
   product: string;
   amount: number;
-  status: 'en attente' | 'validée' | 'refusée' | 'décaissée';
-  created_at: string;
+  status: 'actif' | 'clôturé' | 'en défaut' | 'suspendu';
+  startDate: string;
+  endDate: string;
+  interestRate: number;
+  remainingAmount?: number;
+  createdAt: string;
   portfolioId: string;
-  maturity?: string; // Échéance
-  dueDate?: string; // Date d'échéance
-  projectFile?: string; // Lien vers le fichier du projet
-  attachments?: Array<{id: string, name: string, url: string}>; // Pièces jointes
-  productDetails?: {
-    type: string;
-    rate: number;
-    term: string;
-  }; // Détails du produit sollicité
+  documentUrl?: string;
+  lastPaymentDate?: string;
+  nextPaymentDate?: string;
 }
 
-interface FundingRequestsTableProps {
-  requests: FundingRequest[];
-  onValidate: (id: string) => void;
-  onRefuse: (id: string) => void;
-  onDisburse: (id: string) => void;
-  onView: (id: string) => void;
+interface CreditContractsTableProps {
+  contracts: CreditContract[];
+  onViewDetails: (id: string) => void;
+  onDownloadContract?: (id: string) => void;
+  onModify?: (id: string) => void;
+  onTerminate?: (id: string) => void;
   loading?: boolean;
 }
 
-// Status map pour l'affichage cohérent
+// Status map pour l'affichage cohérent des statuts
 const statusConfig = {
-  'en attente': { label: 'En attente', variant: 'warning' as const, color: 'bg-yellow-100 text-yellow-700' },
-  'validée': { label: 'Validée', variant: 'success' as const, color: 'bg-green-100 text-green-700' },
-  'refusée': { label: 'Refusée', variant: 'error' as const, color: 'bg-red-100 text-red-700' },
-  'décaissée': { label: 'Décaissée', variant: 'primary' as const, color: 'bg-blue-100 text-blue-700' }
+  'actif': { label: 'Actif', variant: 'success' as const, color: 'bg-green-100 text-green-700' },
+  'clôturé': { label: 'Clôturé', variant: 'secondary' as const, color: 'bg-gray-100 text-gray-700' },
+  'en défaut': { label: 'En défaut', variant: 'error' as const, color: 'bg-red-100 text-red-700' },
+  'suspendu': { label: 'Suspendu', variant: 'warning' as const, color: 'bg-yellow-100 text-yellow-700' }
 };
 
-export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({ 
-  requests, 
-  onValidate, 
-  onRefuse, 
-  onDisburse, 
-  onView,
+export function CreditContractsTable({
+  contracts,
+  onViewDetails,
+  onDownloadContract,
+  onModify,
+  onTerminate,
   loading = false
-}) => {
+}: CreditContractsTableProps) {
   // États pour les filtres et la pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
-  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<keyof CreditContract | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const pageSize = 10;
 
-  // Compter les demandes par statut
+  // Compter les contrats par statut
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {
-      'en attente': 0,
-      'validée': 0,
-      'refusée': 0,
-      'décaissée': 0,
+      'actif': 0,
+      'clôturé': 0,
+      'en défaut': 0,
+      'suspendu': 0,
       'total': 0
     };
     
-    requests.forEach(request => {
+    contracts.forEach(contract => {
       counts.total++;
-      if (counts[request.status] !== undefined) {
-        counts[request.status]++;
+      if (counts[contract.status] !== undefined) {
+        counts[contract.status]++;
       }
     });
     
     return counts;
-  }, [requests]);
+  }, [contracts]);
   
   // Filtrer et trier les données
   const filteredAndSortedData = useMemo(() => {
-    let filtered = [...requests];
+    let filtered = [...contracts];
     
     // Appliquer le filtre de recherche
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(req => 
-        req.company.toLowerCase().includes(term) || 
-        req.product.toLowerCase().includes(term) ||
-        req.id.toLowerCase().includes(term)
+      filtered = filtered.filter(contract => 
+        contract.company.toLowerCase().includes(term) || 
+        contract.product.toLowerCase().includes(term) ||
+        contract.reference.toLowerCase().includes(term)
       );
     }
     
     // Appliquer le filtre de statut
     if (statusFilter) {
-      filtered = filtered.filter(req => req.status === statusFilter);
+      filtered = filtered.filter(contract => contract.status === statusFilter);
     }
     
     // Appliquer le tri
     if (sortField) {
       filtered.sort((a, b) => {
-        const aValue = a[sortField as keyof FundingRequest];
-        const bValue = b[sortField as keyof FundingRequest];
+        const aValue = a[sortField];
+        const bValue = b[sortField];
         
-        // Convertir les dates pour le tri
-        if (sortField === 'created_at') {
-          const aDate = new Date(a.created_at).getTime();
-          const bDate = new Date(b.created_at).getTime();
+        // Pour les dates
+        if (typeof aValue === 'string' && (sortField === 'startDate' || sortField === 'endDate' || sortField === 'createdAt')) {
+          const aDate = new Date(aValue).getTime();
+          const bDate = new Date(bValue as string).getTime();
           return sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
         }
         
@@ -126,7 +125,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
     }
     
     return filtered;
-  }, [requests, searchTerm, statusFilter, sortField, sortDirection]);
+  }, [contracts, searchTerm, statusFilter, sortField, sortDirection]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
@@ -136,7 +135,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
   );
   
   // Trier
-  const handleSort = (field: string) => {
+  const handleSort = (field: keyof CreditContract) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -147,34 +146,37 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
   
   // Export Excel
   const handleExportExcel = () => {
-    const dataToExport = filteredAndSortedData.map(req => ({
-      'Référence': req.id,
-      'Entreprise': req.company,
-      'Produit': req.product,
-      'Montant': req.amount.toLocaleString() + ' FCFA',
-      'Statut': statusConfig[req.status].label,
-      'Date': new Date(req.created_at).toLocaleDateString(),
-      'Échéance': req.maturity || 'N/A',
-      'Date Échéance': req.dueDate ? new Date(req.dueDate).toLocaleDateString() : 'N/A',
+    const dataToExport = filteredAndSortedData.map(contract => ({
+      'Référence': contract.reference,
+      'Entreprise': contract.company,
+      'Produit': contract.product,
+      'Montant': contract.amount.toLocaleString() + ' FCFA',
+      'Statut': statusConfig[contract.status].label,
+      'Taux d\'intérêt': contract.interestRate + '%',
+      'Date début': new Date(contract.startDate).toLocaleDateString(),
+      'Date fin': new Date(contract.endDate).toLocaleDateString(),
+      'Montant restant': contract.remainingAmount ? contract.remainingAmount.toLocaleString() + ' FCFA' : 'N/A',
+      'Prochain paiement': contract.nextPaymentDate ? new Date(contract.nextPaymentDate).toLocaleDateString() : 'N/A',
     }));
     
-    exportToExcel(dataToExport, 'Demandes_Financement');
+    exportToExcel(dataToExport, 'Contrats');
   };
   
   // Export PDF
   const handleExportPDF = () => {
     exportToPDF({
-      title: 'Demandes de Financement',
-      headers: ['Référence', 'Entreprise', 'Produit', 'Montant', 'Statut', 'Date'],
-      data: filteredAndSortedData.map(req => [
-        req.id,
-        req.company,
-        req.product,
-        req.amount.toLocaleString() + ' FCFA',
-        statusConfig[req.status].label,
-        new Date(req.created_at).toLocaleDateString(),
+      title: 'Contrats',
+      headers: ['Référence', 'Entreprise', 'Produit', 'Montant', 'Statut', 'Date début', 'Date fin'],
+      data: filteredAndSortedData.map(contract => [
+        contract.reference,
+        contract.company,
+        contract.product,
+        contract.amount.toLocaleString() + ' FCFA',
+        statusConfig[contract.status].label,
+        new Date(contract.startDate).toLocaleDateString(),
+        new Date(contract.endDate).toLocaleDateString(),
       ]),
-      filename: 'Demandes_Financement.pdf'
+      filename: 'Contrats.pdf'
     });
   };
   
@@ -182,7 +184,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-        <TableSkeleton columns={6} rows={5} />
+        <TableSkeleton columns={7} rows={5} />
       </div>
     );
   }
@@ -192,19 +194,19 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
       {/* En-tête avec résumé et statistiques */}
       <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 rounded-t-lg mb-0">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold">Demandes de Financement</h3>
+          <h3 className="text-lg font-bold">Contrats</h3>
           <div className="flex items-center space-x-6">
             <div>
               <span className="text-xs block text-gray-200">Total</span>
               <span className="font-semibold">{statusCounts.total}</span>
             </div>
             <div>
-              <span className="text-xs block text-gray-200">En attente</span>
-              <span className="font-semibold text-yellow-300">{statusCounts['en attente']}</span>
+              <span className="text-xs block text-gray-200">Actifs</span>
+              <span className="font-semibold text-green-300">{statusCounts['actif']}</span>
             </div>
             <div>
-              <span className="text-xs block text-gray-200">Validées</span>
-              <span className="font-semibold text-green-300">{statusCounts['validée']}</span>
+              <span className="text-xs block text-gray-200">En défaut</span>
+              <span className="font-semibold text-red-300">{statusCounts['en défaut']}</span>
             </div>
           </div>
         </div>
@@ -217,7 +219,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
             <div className="relative">
               <Input
                 type="search"
-                placeholder="Rechercher une demande..."
+                placeholder="Rechercher un contrat..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 w-[250px]"
@@ -272,10 +274,10 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="">Tous les statuts</option>
-                  <option value="en attente">En attente</option>
-                  <option value="validée">Validée</option>
-                  <option value="refusée">Refusée</option>
-                  <option value="décaissée">Décaissée</option>
+                  <option value="actif">Actif</option>
+                  <option value="clôturé">Clôturé</option>
+                  <option value="en défaut">En défaut</option>
+                  <option value="suspendu">Suspendu</option>
                 </Select>
               </div>
               
@@ -303,6 +305,14 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
             <TableHead>
               <tr>
                 <TableHeader className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <div onClick={() => handleSort('reference')} className="flex items-center">
+                    Référence
+                    {sortField === 'reference' && (
+                      <ArrowUpDown className={`inline ml-1 h-4 w-4 ${sortDirection === 'asc' ? 'transform rotate-180' : ''}`} />
+                    )}
+                  </div>
+                </TableHeader>
+                <TableHeader className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
                   <div onClick={() => handleSort('company')} className="flex items-center">
                     Entreprise
                     {sortField === 'company' && (
@@ -328,16 +338,21 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                   </div>
                 </TableHeader>
                 <TableHeader className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
-                  <div onClick={() => handleSort('created_at')} className="flex items-center">
-                    Date
-                    {sortField === 'created_at' && (
+                  <div onClick={() => handleSort('startDate')} className="flex items-center">
+                    Date début
+                    {sortField === 'startDate' && (
                       <ArrowUpDown className={`inline ml-1 h-4 w-4 ${sortDirection === 'asc' ? 'transform rotate-180' : ''}`} />
                     )}
                   </div>
                 </TableHeader>
-                <TableHeader>Échéance</TableHeader>
-                <TableHeader>Documents</TableHeader>
-                <TableHeader>Paiement</TableHeader>
+                <TableHeader className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <div onClick={() => handleSort('endDate')} className="flex items-center">
+                    Date fin
+                    {sortField === 'endDate' && (
+                      <ArrowUpDown className={`inline ml-1 h-4 w-4 ${sortDirection === 'asc' ? 'transform rotate-180' : ''}`} />
+                    )}
+                  </div>
+                </TableHeader>
                 <TableHeader align="center">Actions</TableHeader>
               </tr>
             </TableHead>
@@ -345,94 +360,56 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
               {currentPageData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-gray-400">
-                    Aucune demande ne correspond aux critères de recherche
+                    Aucun contrat ne correspond aux critères de recherche
                   </TableCell>
                 </TableRow>
               ) : (
-                currentPageData.map((req) => (
+                currentPageData.map((contract) => (
                   <TableRow
-                    key={req.id}
+                    key={contract.id}
                     onClick={e => {
                       if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                      onView(req.id);
+                      onViewDetails(contract.id);
                     }}
                     tabIndex={0}
-                    aria-label={`Voir la demande de crédit ${req.company}`}
+                    aria-label={`Voir le contrat de ${contract.company}`}
                     style={{ outline: 'none' }}
                     onKeyDown={e => {
                       if (e.key === 'Enter' || e.key === ' ') {
-                        onView(req.id);
+                        onViewDetails(contract.id);
                       }
                     }}
                     className="cursor-pointer"
                   >
-                    <TableCell className="font-medium">{req.company}</TableCell>
-                    <TableCell>{req.product}</TableCell>
-                    <TableCell>{req.amount.toLocaleString()} FCFA</TableCell>
+                    <TableCell className="font-mono">{contract.reference}</TableCell>
+                    <TableCell className="font-medium">{contract.company}</TableCell>
+                    <TableCell>{contract.product}</TableCell>
+                    <TableCell>{contract.amount.toLocaleString()} FCFA</TableCell>
                     <TableCell>
-                      <Badge variant={statusConfig[req.status].variant}>
-                        {statusConfig[req.status].label}
+                      <Badge variant={statusConfig[contract.status].variant}>
+                        {statusConfig[contract.status].label}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(req.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{req.maturity || 'N/A'}</TableCell>
-                    <TableCell>
-                      {req.projectFile && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(req.projectFile, '_blank');
-                          }}
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          Projet
-                        </Button>
-                      )}
-                      {req.attachments && req.attachments.length > 0 && (
-                        <Badge variant="secondary">{req.attachments.length} pièce(s)</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right pr-4">
-                      {req.status === 'en attente' && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onValidate(req.id);
-                          }}
-                          className="mr-2 bg-green-50 hover:bg-green-100 border-green-500 text-green-600 hover:text-green-700"
-                        >
-                          Paiement
-                        </Button>
-                      )}
-                      {req.status === 'validée' && (
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDisburse(req.id);
-                          }}
-                          className="mr-2 bg-green-50 hover:bg-green-100 border-green-500 text-green-600 hover:text-green-700"
-                        >
-                          Paiement
-                        </Button>
-                      )}
-                    </TableCell>
+                    <TableCell>{new Date(contract.startDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(contract.endDate).toLocaleDateString()}</TableCell>
                     <TableCell className="text-center overflow-visible">
                       <div className="actions-dropdown inline-block">
                         <ActionsDropdown
                           actions={[
-                            { label: 'Voir détails', onClick: () => onView(req.id) },
-                            req.status === 'en attente' ? { 
-                              label: 'Refuser', 
-                              onClick: () => onRefuse(req.id),
-                              className: 'text-red-600 hover:text-red-700'
+                            { label: 'Voir détails', onClick: () => onViewDetails(contract.id) },
+                            onDownloadContract ? { 
+                              label: 'Télécharger', 
+                              onClick: () => onDownloadContract(contract.id) 
                             } : null,
-                          ].filter(Boolean) as { label: string; onClick: () => void; className?: string }[]}
+                            contract.status === 'actif' && onModify ? { 
+                              label: 'Modifier', 
+                              onClick: () => onModify(contract.id) 
+                            } : null,
+                            contract.status === 'actif' && onTerminate ? { 
+                              label: 'Clôturer', 
+                              onClick: () => onTerminate(contract.id) 
+                            } : null,
+                          ].filter(Boolean) as { label: string; onClick: () => void }[]}
                         />
                       </div>
                     </TableCell>
@@ -456,4 +433,4 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
       )}
     </>
   );
-};
+}

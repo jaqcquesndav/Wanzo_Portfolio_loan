@@ -54,3 +54,88 @@ export const generateTransactionId = (prefix: string, sequenceNumber: number): s
   
   return `${prefix}-${year}${month}${day}${String(sequenceNumber).padStart(5, '0')}`;
 };
+
+/**
+ * Convertit un nombre en texte (en français)
+ * Exemple: 1234 -> "mille deux cent trente-quatre"
+ * 
+ * @param num Le nombre à convertir en texte
+ * @returns Le nombre écrit en toutes lettres en français
+ */
+export function convertNumberToWords(num: number): string {
+  if (num === 0) return 'zéro';
+
+  const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+  const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingt', 'quatre-vingt-dix'];
+
+  // Fonction pour convertir un nombre inférieur à 1000
+  function convertLessThanOneThousand(n: number): string {
+    if (n < 20) return units[n];
+    
+    const unit = n % 10;
+    const ten = Math.floor(n / 10) % 10;
+    const hundred = Math.floor(n / 100) % 10;
+    
+    let result = '';
+    
+    if (hundred > 0) {
+      if (hundred === 1) {
+        result = 'cent ';
+      } else {
+        result = units[hundred] + ' cents ';
+      }
+    }
+    
+    if (ten > 0 || unit > 0) {
+      if (ten === 1) {
+        result += units[10 + unit];
+      } else if (ten === 7 || ten === 9) {
+        result += tens[ten - 1] + '-' + (unit === 1 ? 'et-' : '') + units[10 + unit];
+      } else {
+        result += tens[ten];
+        if (unit === 1 && ten > 0) {
+          result += '-et-un';
+        } else if (unit > 0) {
+          result += '-' + units[unit];
+        }
+      }
+    }
+    
+    return result.trim();
+  }
+
+  if (num < 1000) {
+    return convertLessThanOneThousand(num);
+  }
+
+  let result = '';
+  let remainder = num;
+
+  if (remainder >= 1000000000) {
+    const billions = Math.floor(remainder / 1000000000);
+    result += (billions === 1 ? 'un milliard ' : convertLessThanOneThousand(billions) + ' milliards ');
+    remainder %= 1000000000;
+  }
+
+  if (remainder >= 1000000) {
+    const millions = Math.floor(remainder / 1000000);
+    result += (millions === 1 ? 'un million ' : convertLessThanOneThousand(millions) + ' millions ');
+    remainder %= 1000000;
+  }
+
+  if (remainder >= 1000) {
+    const thousands = Math.floor(remainder / 1000);
+    if (thousands === 1) {
+      result += 'mille ';
+    } else {
+      result += convertLessThanOneThousand(thousands) + ' mille ';
+    }
+    remainder %= 1000;
+  }
+
+  if (remainder > 0) {
+    result += convertLessThanOneThousand(remainder);
+  }
+
+  return result.trim();
+}

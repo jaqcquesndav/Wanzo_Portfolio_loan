@@ -15,13 +15,17 @@ import { FundingRequestsTable } from '../components/portfolio/traditional/Fundin
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
+import { CreditContractsTable } from '../components/portfolio/traditional/CreditContractsTable';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockFundingRequests } from '../data/mockFundingRequests';
 import { mockDisbursements } from '../data/mockDisbursements';
 import { mockRepayments } from '../data/mockRepayments';
 import { mockGuarantees } from '../data/mockGuarantees';
+import { mockCreditContracts } from '../data/mockCreditContracts';
 import { useNotification } from '../contexts/NotificationContext';
+import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
+import { openPaymentOrder } from '../utils/openPaymentOrder';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
@@ -42,6 +46,7 @@ export default function TraditionalPortfolioDetails() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { setCurrentPortfolioId } = usePortfolioContext();
+  const { showPaymentOrderModal } = usePaymentOrder();
   const [showProductForm, setShowProductForm] = useState(false);
 // const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | null>(null);
   const [tab, setTab] = useState('products');
@@ -152,7 +157,7 @@ export default function TraditionalPortfolioDetails() {
   const config = portfolioTypeConfig[portfolioType as keyof typeof portfolioTypeConfig] || portfolioTypeConfig['traditional'];
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Breadcrumb sécurisé */}
       <Breadcrumb
         items={[
@@ -263,15 +268,58 @@ export default function TraditionalPortfolioDetails() {
                 value={tabConfig.key}
                 currentValue={tab}
               >
-                <div className="mb-4 flex justify-end">
-                  <Button size="sm" onClick={() => {}} aria-label="Créer une nouvelle demande">Nouvelle demande</Button>
-                </div>
                 <FundingRequestsTable
                   requests={mockFundingRequests}
-                  onValidate={() => {}}
-                  onRefuse={() => {}}
-                  onDisburse={() => {}}
-                  onView={(requestId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)}
+                  onValidate={(requestId) => {
+                    // Chercher la demande concernée
+                    const request = mockFundingRequests.find(req => req.id === requestId);
+                    if (!request) {
+                      showNotification('Demande non trouvée', 'error');
+                      return;
+                    }
+                    
+                    // Ouvrir le modal d'ordre de paiement pour la validation
+                    openPaymentOrder({
+                      action: 'validate_funding',
+                      portfolioId: id || '',
+                      portfolioName: portfolio?.name,
+                      itemId: request.id,
+                      reference: request.id,
+                      amount: request.amount,
+                      company: request.company,
+                      product: request.product
+                    }, showPaymentOrderModal);
+                    
+                    // Note: Pour une démo, on affiche quand même la notification
+                    // Dans une vraie app, cela serait fait après confirmation du paiement
+                    showNotification(`Demande ${requestId} validée`, 'success');
+                  }}
+                  onRefuse={(requestId) => {
+                    showNotification(`Demande ${requestId} refusée`, 'info');
+                  }}
+                  onDisburse={(requestId) => {
+                    // Chercher la demande concernée pour le décaissement
+                    const request = mockFundingRequests.find(req => req.id === requestId);
+                    if (!request) {
+                      showNotification('Demande non trouvée', 'error');
+                      return;
+                    }
+                    
+                    // Ouvrir le modal d'ordre de paiement pour le décaissement
+                    openPaymentOrder({
+                      action: 'validate_funding',
+                      portfolioId: id || '',
+                      portfolioName: portfolio?.name,
+                      itemId: request.id,
+                      reference: request.id,
+                      amount: request.amount,
+                      company: request.company,
+                      product: request.product
+                    }, showPaymentOrderModal);
+                    
+                    showNotification(`Fonds débloqués pour la demande ${requestId}`, 'success');
+                  }}
+                  onView={(requestId) => navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)}
                 />
               </TabsContent>
             );
@@ -318,6 +366,29 @@ export default function TraditionalPortfolioDetails() {
                   onRelease={() => {}}
                   onSeize={() => {}}
                   onView={(guaranteeId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/guarantees/${guaranteeId}`)}
+                />
+              </TabsContent>
+            );
+          }
+          if (tabConfig.key === 'contracts') {
+            return (
+              <TabsContent
+                key={tabConfig.key}
+                value={tabConfig.key}
+                currentValue={tab}
+              >
+                <CreditContractsTable
+                  contracts={mockCreditContracts}
+                  onViewDetails={(contractId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/contracts/${contractId}`)}
+                  onDownloadContract={(contractId: string) => {
+                    showNotification(`Téléchargement du contrat ${contractId} en cours...`, 'info');
+                  }}
+                  onModify={(contractId: string) => {
+                    showNotification(`Modification du contrat ${contractId}`, 'info');
+                  }}
+                  onTerminate={(contractId: string) => {
+                    showNotification(`Clôture du contrat ${contractId}`, 'info');
+                  }}
                 />
               </TabsContent>
             );
