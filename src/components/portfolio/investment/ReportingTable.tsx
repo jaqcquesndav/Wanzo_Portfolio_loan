@@ -1,11 +1,11 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import type { InvestmentPortfolio } from '../../../types/investment-portfolio';
 import { usePortfolio } from '../../../hooks/usePortfolio';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
+import { toast } from 'react-hot-toast';
 
 export function ReportingTable({ loading, onDelete, onExport }: { loading?: boolean; onDelete?: (id: string) => void; onExport?: (id: string) => void }) {
-  const { id: portfolioId } = useParams();
-  const navigate = useNavigate();
+  // Navigation désactivée
+  const portfolioId = "current";
   const { portfolio } = usePortfolio(portfolioId, 'investment');
   const reports = (portfolio && portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).reports)) ? (portfolio as InvestmentPortfolio).reports! : [];
   return (
@@ -31,14 +31,15 @@ export function ReportingTable({ loading, onDelete, onExport }: { loading?: bool
                 key={r.id}
                 onClick={e => {
                   if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                  navigate(`/app/investment/${portfolioId}/reporting/${r.id}`);
+                  // Navigation désactivée
+                  toast.success(`Reporting ${r.period} sélectionné`);
                 }}
                 tabIndex={0}
                 aria-label={`Voir le reporting ${r.id}`}
                 style={{ outline: 'none' }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    navigate(`/app/investment/${portfolioId}/reporting/${r.id}`);
+                    toast.success(`Reporting ${r.period} sélectionné`);
                   }
                 }}
               >
@@ -48,7 +49,6 @@ export function ReportingTable({ loading, onDelete, onExport }: { loading?: bool
                   <div className="actions-dropdown inline-block">
                     <ActionsDropdown
                       actions={[
-                        { label: 'Détail', onClick: () => navigate(`/app/investment/${portfolioId}/reporting/${r.id}`) },
                         { label: 'Exporter', onClick: () => onExport && onExport(r.id) },
                         { label: 'Supprimer', onClick: () => onDelete && onDelete(r.id) },
                       ]}

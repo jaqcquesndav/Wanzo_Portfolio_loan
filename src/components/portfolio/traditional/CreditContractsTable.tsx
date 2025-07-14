@@ -396,7 +396,7 @@ export function CreditContractsTable({
                       <div className="actions-dropdown inline-block">
                         <ActionsDropdown
                           actions={[
-                            { label: 'Voir détails', onClick: () => onViewDetails(contract.id) },
+
                             onDownloadContract ? { 
                               label: 'Télécharger', 
                               onClick: () => onDownloadContract(contract.id) 

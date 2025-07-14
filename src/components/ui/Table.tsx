@@ -57,9 +57,22 @@ export function TableRow({ children, onClick, onKeyDown, tabIndex, ariaLabel, st
   );
 }
 
-export function TableHeader({ children, align = 'left', className = '' }: { children: React.ReactNode; align?: 'left' | 'right' | 'center', className?: string }) {
+export function TableHeader({ 
+  children, 
+  align = 'left', 
+  className = '',
+  onClick
+}: { 
+  children: React.ReactNode; 
+  align?: 'left' | 'right' | 'center';
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
-    <th className={`px-6 py-3 text-${align} text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
+    <th 
+      className={`px-6 py-3 text-${align} text-xs font-medium text-gray-500 uppercase tracking-wider ${className} ${onClick ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+      onClick={onClick}
+    >
       {children}
     </th>
   );

@@ -127,7 +127,9 @@ export default function LeasingPortfolioDetails() {
           <EquipmentsTable
             equipments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).equipment_catalog : []}
             onRowClick={(equipment) => {
-              navigate(`/app/${portfolioType}/equipments/${equipment.id}`);
+              // Navigation désactivée
+              console.log(`Équipement ${equipment.name} sélectionné`);
+              // navigate(`/app/${portfolioType}/equipments/${equipment.id}`);
             }}
           />
         </TabsContent>
@@ -136,7 +138,9 @@ export default function LeasingPortfolioDetails() {
             requests={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).leasing_requests : []}
             equipments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).equipment_catalog : []}
             onViewDetails={(request) => {
-              navigate(`/app/${portfolioType}/requests/${request.id}`);
+              // Navigation désactivée
+              console.log(`Demande de leasing ${request.id} sélectionnée`);
+              // navigate(`/app/${portfolioType}/requests/${request.id}`);
             }}
             onApprove={(request) => {
               console.log('Approuver la demande:', request);
@@ -178,7 +182,9 @@ export default function LeasingPortfolioDetails() {
           <ContractsTable
             contracts={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).contracts : []}
             onRowClick={(contract) => {
-              navigate(`/app/${portfolioType}/contracts/${contract.id}`);
+              // Navigation désactivée
+              console.log(`Contrat de leasing ${contract.id} sélectionné`);
+              // navigate(`/app/${portfolioType}/contracts/${contract.id}`);
             }}
           />
         </TabsContent>
@@ -186,7 +192,9 @@ export default function LeasingPortfolioDetails() {
           <IncidentsTable
             incidents={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).incidents : []}
             onRowClick={(incident) => {
-              navigate(`/app/${portfolioType}/incidents/${incident.id}`);
+              // Navigation désactivée
+              console.log(`Incident ${incident.id} sélectionné`);
+              // navigate(`/app/${portfolioType}/incidents/${incident.id}`);
             }}
           />
         </TabsContent>
@@ -194,7 +202,9 @@ export default function LeasingPortfolioDetails() {
           <MaintenanceTable
             maintenance={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).maintenances : []}
             onRowClick={(maintenance) => {
-              navigate(`/app/${portfolioType}/maintenance/${maintenance.id}`);
+              // Navigation désactivée
+              console.log(`Maintenance ${maintenance.id} sélectionnée`);
+              // navigate(`/app/${portfolioType}/maintenance/${maintenance.id}`);
             }}
           />
         </TabsContent>
@@ -202,7 +212,9 @@ export default function LeasingPortfolioDetails() {
           <PaymentsTable
             payments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).payments : []}
             onRowClick={(payment) => {
-              navigate(`/app/${portfolioType}/payments/${payment.id}`);
+              // Navigation désactivée
+              console.log(`Paiement ${payment.id} sélectionné`);
+              // navigate(`/app/${portfolioType}/payments/${payment.id}`);
             }}
           />
         </TabsContent>

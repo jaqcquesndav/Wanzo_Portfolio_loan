@@ -85,10 +85,7 @@ export function PaymentsTable({ payments, loading = false, onRowClick }: Payment
         <div className="actions-dropdown inline-block">
           <ActionsDropdown
             actions={[
-              { 
-                label: 'Voir détails', 
-                onClick: () => onRowClick && onRowClick(payment)
-              },
+
               { 
                 label: 'Télécharger reçu', 
                 onClick: () => console.log('TODO: Download receipt for', payment.id),
@@ -105,7 +102,7 @@ export function PaymentsTable({ payments, loading = false, onRowClick }: Payment
       ),
       align: 'center' as const
     }
-  ], [onRowClick, statusMap, typeMap]);
+  ], [statusMap, typeMap]);
 
   // Options de filtrage
   const filterOptions = [

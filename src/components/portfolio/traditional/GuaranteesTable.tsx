@@ -483,7 +483,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
                       <div className="actions-dropdown inline-block">
                         <ActionsDropdown
                           actions={[
-                            { label: 'Voir détails', onClick: () => onView(g.id) },
+
                             g.status === 'active' ? { label: 'Mainlevée', onClick: () => onRelease(g.id) } : null,
                             g.status === 'active' ? { label: 'Saisir', onClick: () => onSeize(g.id) } : null,
                             g.details?.document_url ? { 

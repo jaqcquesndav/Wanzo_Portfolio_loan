@@ -426,7 +426,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                       <div className="actions-dropdown inline-block">
                         <ActionsDropdown
                           actions={[
-                            { label: 'Voir détails', onClick: () => onView(req.id) },
+
                             req.status === 'en attente' ? { 
                               label: 'Refuser', 
                               onClick: () => onRefuse(req.id),

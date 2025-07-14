@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import type { Equipment } from '../../../types/leasing';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
+import { toast } from 'react-hot-toast';
 
 interface EquipmentsTableProps {
   equipments: Equipment[];
@@ -11,13 +11,14 @@ interface EquipmentsTableProps {
 }
 
 export function EquipmentsTable({ equipments, loading, onRowClick }: EquipmentsTableProps) {
-  const navigate = useNavigate();
-  
+  // Navigation désactivée pour empêcher l'ouverture d'une nouvelle page
   const handleRowClick = (equipment: Equipment) => {
     if (onRowClick) {
       onRowClick(equipment);
     } else {
-      navigate(`/app/leasing/equipments/${equipment.id}`);
+      toast.success(`Équipement ${equipment.name} sélectionné`);
+      // La navigation est désactivée intentionnellement
+      // navigate(`/app/leasing/equipments/${equipment.id}`);
     }
   };
 
@@ -60,9 +61,8 @@ export function EquipmentsTable({ equipments, loading, onRowClick }: EquipmentsT
         <div className="actions-dropdown inline-block">
           <ActionsDropdown
             actions={[
-              { label: 'Détail', onClick: () => navigate(`/app/leasing/equipments/${equipment.id}`) },
-              { label: 'Réserver', onClick: () => navigate(`/app/leasing/reservations/new?equipment=${equipment.id}`) },
-              { label: 'Maintenance', onClick: () => navigate(`/app/leasing/maintenance/new?equipment=${equipment.id}`) }
+              { label: 'Réserver', onClick: () => toast.success(`Demande de réservation pour l'équipement ${equipment.name}`) },
+              { label: 'Maintenance', onClick: () => toast.success(`Demande de maintenance pour l'équipement ${equipment.name}`) }
             ]}
           />
         </div>

@@ -1,8 +1,8 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import type { InvestmentAsset } from '../../../types/investment-portfolio';
+import { toast } from 'react-hot-toast';
 
 interface AssetsTableProps {
   assets?: InvestmentAsset[];
@@ -12,8 +12,8 @@ interface AssetsTableProps {
 }
 
 export function AssetsTable({ assets, loading, onDelete, onExport }: AssetsTableProps) {
-  const navigate = useNavigate();
-  const { id: portfolioId } = useParams();
+  // Navigation désactivée
+  // const portfolioId = "current";
   return (
     <Table>
       <TableHead>
@@ -34,14 +34,15 @@ export function AssetsTable({ assets, loading, onDelete, onExport }: AssetsTable
                 onClick={(e) => {
                   // Ne pas ouvrir le détail si clic sur le menu actions
                   if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                  navigate(`/app/investment/${portfolioId}/assets/${asset.id}`);
+                  // Navigation désactivée
+                  toast.success(`Actif ${asset.name} sélectionné`);
                 }}
                 tabIndex={0}
                 ariaLabel={`Voir l'actif ${asset.name}`}
                 style={{ outline: 'none' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    navigate(`/app/investment/${portfolioId}/assets/${asset.id}`);
+                    toast.success(`Actif ${asset.name} sélectionné`);
                   }
                 }}
               >
@@ -51,7 +52,6 @@ export function AssetsTable({ assets, loading, onDelete, onExport }: AssetsTable
                   <div className="actions-dropdown inline-block">
                     <ActionsDropdown
                       actions={[
-                        { label: 'Détail', onClick: () => navigate(`/app/investment/${portfolioId}/assets/${asset.id}`) },
                         { label: 'Exporter', onClick: () => onExport && onExport(asset.id) },
                         { label: 'Supprimer', onClick: () => onDelete && onDelete(asset.id) },
                       ]}

@@ -1,4 +1,3 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { TableSkeleton } from '../../ui/TableSkeleton';
@@ -12,8 +11,9 @@ interface SubscriptionsTableProps {
 }
 
 export function SubscriptionsTable({ subscriptions, loading, onDelete, onExport }: SubscriptionsTableProps) {
-  const navigate = useNavigate();
-  const { id: portfolioId } = useParams();
+  // Navigation désactivée
+  // const navigate = useNavigate();
+  // const { id: portfolioId } = useParams();
   return (
     <Table>
       <TableHead>
@@ -35,14 +35,19 @@ export function SubscriptionsTable({ subscriptions, loading, onDelete, onExport 
                 key={s.id}
                 onClick={e => {
                   if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                  navigate(`/app/investment/${portfolioId}/subscriptions/${s.id}`);
+                  // Navigation désactivée
+                  console.log(`Souscription ${s.id} sélectionnée`);
+                  // navigate(`/app/investment/${portfolioId}/subscriptions/${s.id}`);
                 }}
                 tabIndex={0}
                 aria-label={`Voir la souscription ${s.id}`}
-                style={{ outline: 'none' }}
+                style={{ outline: 'none', cursor: 'pointer' }}
+                className="hover:bg-gray-50 dark:hover:bg-gray-800"
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    navigate(`/app/investment/${portfolioId}/subscriptions/${s.id}`);
+                    // Navigation désactivée
+                    console.log(`Souscription ${s.id} sélectionnée`);
+                    // navigate(`/app/investment/${portfolioId}/subscriptions/${s.id}`);
                   }
                 }}
               >
@@ -54,7 +59,6 @@ export function SubscriptionsTable({ subscriptions, loading, onDelete, onExport 
                   <div className="actions-dropdown inline-block">
                     <ActionsDropdown
                       actions={[
-                        { label: 'Détail', onClick: () => navigate(`/app/investment/${portfolioId}/subscriptions/${s.id}`) },
                         { label: 'Exporter', onClick: () => onExport && onExport(s.id) },
                         { label: 'Supprimer', onClick: () => onDelete && onDelete(s.id) },
                       ]}

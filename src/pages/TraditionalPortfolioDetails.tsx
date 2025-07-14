@@ -243,7 +243,10 @@ export default function TraditionalPortfolioDetails() {
                 {products && products.length > 0 ? (
                   <FinancialProductsList
                     products={products}
-                    onViewDetails={(product) => navigate(`/app/${portfolioType}/portfolio/${id}/products/${product.id}`)}
+                    onViewDetails={(product) => {
+                      showNotification(`Produit ${product.name} sélectionné`, 'info');
+                      // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/products/${product.id}`)
+                    }}
                   />
                 ) : (
                   <div className="text-center py-12 text-gray-500">
@@ -319,7 +322,10 @@ export default function TraditionalPortfolioDetails() {
                     
                     showNotification(`Fonds débloqués pour la demande ${requestId}`, 'success');
                   }}
-                  onView={(requestId) => navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)}
+                  onView={(requestId) => {
+                    showNotification(`Demande ${requestId} sélectionnée`, 'info');
+                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)
+                  }}
                 />
               </TabsContent>
             );
@@ -334,7 +340,10 @@ export default function TraditionalPortfolioDetails() {
                 <DisbursementsTable
                   disbursements={mockDisbursements}
                   onConfirm={() => {}}
-                  onView={(disbursementId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/disbursements/${disbursementId}`)}
+                  onView={(disbursementId: string) => {
+                    showNotification(`Décaissement ${disbursementId} sélectionné`, 'info');
+                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/disbursements/${disbursementId}`)
+                  }}
                 />
               </TabsContent>
             );
@@ -349,7 +358,10 @@ export default function TraditionalPortfolioDetails() {
                 <RepaymentsTable
                   repayments={mockRepayments}
                   onMarkPaid={() => {}}
-                  onView={(repaymentId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/repayments/${repaymentId}`)}
+                  onView={(repaymentId: string) => {
+                    showNotification(`Remboursement ${repaymentId} sélectionné`, 'info');
+                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/repayments/${repaymentId}`)
+                  }}
                 />
               </TabsContent>
             );
@@ -365,7 +377,10 @@ export default function TraditionalPortfolioDetails() {
                   guarantees={mockGuarantees}
                   onRelease={() => {}}
                   onSeize={() => {}}
-                  onView={(guaranteeId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/guarantees/${guaranteeId}`)}
+                  onView={(guaranteeId: string) => {
+                    showNotification(`Garantie ${guaranteeId} sélectionnée`, 'info');
+                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/guarantees/${guaranteeId}`)
+                  }}
                 />
               </TabsContent>
             );
@@ -379,7 +394,10 @@ export default function TraditionalPortfolioDetails() {
               >
                 <CreditContractsTable
                   contracts={mockCreditContracts}
-                  onViewDetails={(contractId: string) => navigate(`/app/${portfolioType}/portfolio/${id}/contracts/${contractId}`)}
+                  onViewDetails={(contractId: string) => {
+                    showNotification(`Contrat ${contractId} sélectionné`, 'info');
+                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/contracts/${contractId}`)
+                  }}
                   onDownloadContract={(contractId: string) => {
                     showNotification(`Téléchargement du contrat ${contractId} en cours...`, 'info');
                   }}

@@ -1,4 +1,3 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { TableSkeleton } from '../../ui/TableSkeleton';
@@ -12,8 +11,9 @@ interface ValuationsTableProps {
 }
 
 export function ValuationsTable({ valuations, loading, onDelete, onExport }: ValuationsTableProps) {
-  const navigate = useNavigate();
-  const { id: portfolioId } = useParams();
+  // Navigation désactivée
+  // const navigate = useNavigate();
+  // const { id: portfolioId } = useParams();
   return (
     <Table>
       <TableHead>
@@ -34,14 +34,19 @@ export function ValuationsTable({ valuations, loading, onDelete, onExport }: Val
                 key={v.id}
                 onClick={e => {
                   if ((e.target as HTMLElement).closest('.actions-dropdown')) return;
-                  navigate(`/app/investment/${portfolioId}/valuations/${v.id}`);
+                  // Navigation désactivée
+                  console.log(`Valorisation ${v.id} sélectionnée`);
+                  // navigate(`/app/investment/${portfolioId}/valuations/${v.id}`);
                 }}
                 tabIndex={0}
                 aria-label={`Voir la valorisation ${v.id}`}
-                style={{ outline: 'none' }}
+                style={{ outline: 'none', cursor: 'pointer' }}
+                className="hover:bg-gray-50 dark:hover:bg-gray-800"
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    navigate(`/app/investment/${portfolioId}/valuations/${v.id}`);
+                    // Navigation désactivée
+                    console.log(`Valorisation ${v.id} sélectionnée`);
+                    // navigate(`/app/investment/${portfolioId}/valuations/${v.id}`);
                   }
                 }}
               >
@@ -52,7 +57,6 @@ export function ValuationsTable({ valuations, loading, onDelete, onExport }: Val
                   <div className="actions-dropdown inline-block">
                     <ActionsDropdown
                       actions={[
-                        { label: 'Détail', onClick: () => navigate(`/app/investment/${portfolioId}/valuations/${v.id}`) },
                         { label: 'Exporter', onClick: () => onExport && onExport(v.id) },
                         { label: 'Supprimer', onClick: () => onDelete && onDelete(v.id) },
                       ]}

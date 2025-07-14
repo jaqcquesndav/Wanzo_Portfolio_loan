@@ -18,6 +18,7 @@ import { ActiveSecuritiesTable } from '../components/portfolio/investment/market
 import { mockMarketSecurities } from '../data/mockMarketSecurities';
 import { MarketSecurity } from '../types/market-securities';
 import { InvestmentPortfolio, InvestmentAsset } from '../types/investment-portfolio';
+import { exportToExcel } from '../utils/export';
 
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { portfolioTypeConfig } from '../config/portfolioTypes';
@@ -34,6 +35,7 @@ export default function InvestmentPortfolioDetails() {
   const [tab, setTab] = useState('market');
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteItemType, setDeleteItemType] = useState<'subscription' | 'valuation' | null>(null);
 
   // Gestion harmonisée des erreurs et du chargement (comme la page traditionnelle)
   if (!id) {
@@ -138,6 +140,81 @@ export default function InvestmentPortfolioDetails() {
     } as unknown as Partial<InvestmentPortfolio>);
   };
 
+  // Fonctions pour les actions des tableaux de souscriptions
+  const handleExportSubscription = (subscriptionId: string) => {
+    if (portfolio?.type !== 'investment') return;
+    
+    const subscription = (portfolio as InvestmentPortfolio).subscriptions?.find(s => s.id === subscriptionId);
+    if (!subscription) return;
+    
+    // Export en Excel ou PDF selon le besoin
+    const data = [{
+      'ID': subscription.id,
+      'Souscripteur': subscription.investorId,
+      'Montant': subscription.amount.toLocaleString() + ' €',
+      'Date': subscription.created_at,
+      'Statut': subscription.status
+    }];
+    
+    exportToExcel(data, `Souscription_${subscriptionId}`);
+    console.log(`Exportation de la souscription ${subscriptionId}`);
+  };
+
+  const handleDeleteSubscription = (subscriptionId: string) => {
+    setConfirmDeleteId(subscriptionId);
+    setDeleteItemType('subscription');
+  };
+
+  // Fonctions pour les actions des tableaux de valorisations
+  const handleExportValuation = (valuationId: string) => {
+    if (portfolio?.type !== 'investment') return;
+    
+    const valuation = (portfolio as InvestmentPortfolio).valuations?.find(v => v.id === valuationId);
+    if (!valuation) return;
+    
+    // Export en Excel ou PDF selon le besoin
+    const data = [{
+      'ID': valuation.id,
+      'Date': valuation.evaluationDate,
+      'Valeur Totale': valuation.totalValue.toLocaleString() + ' €',
+      'Méthode': valuation.method
+    }];
+    
+    exportToExcel(data, `Valorisation_${valuationId}`);
+    console.log(`Exportation de la valorisation ${valuationId}`);
+  };
+
+  const handleDeleteValuation = (valuationId: string) => {
+    setConfirmDeleteId(valuationId);
+    setDeleteItemType('valuation');
+  };
+
+  // Gestion de la confirmation de suppression
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    
+    if (deleteItemType === 'subscription') {
+      // Suppression d'une souscription
+      if (portfolio?.type === 'investment') {
+        const updatedPortfolio = { ...portfolio as InvestmentPortfolio };
+        updatedPortfolio.subscriptions = updatedPortfolio.subscriptions?.filter(s => s.id !== confirmDeleteId);
+        await addOrUpdate(updatedPortfolio as unknown as Partial<InvestmentPortfolio>);
+        console.log(`Souscription ${confirmDeleteId} supprimée`);
+      }
+    } else if (deleteItemType === 'valuation') {
+      // Suppression d'une valorisation
+      if (portfolio?.type === 'investment') {
+        const updatedPortfolio = { ...portfolio as InvestmentPortfolio };
+        updatedPortfolio.valuations = updatedPortfolio.valuations?.filter(v => v.id !== confirmDeleteId);
+        await addOrUpdate(updatedPortfolio as unknown as Partial<InvestmentPortfolio>);
+        console.log(`Valorisation ${confirmDeleteId} supprimée`);
+      }
+    }
+    
+    setConfirmDeleteId(null);
+    setDeleteItemType(null);
+  };
+
   // Config dynamique selon le type de portefeuille (sécurise l'affichage des tabs)
   const config = portfolioTypeConfig[portfolioType] || portfolioTypeConfig['investment'];
 
@@ -151,7 +228,7 @@ export default function InvestmentPortfolioDetails() {
         portfolioType={portfolioType}
       />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{portfolio.name}</h1>
+        <h1 className="text-2xl font-semibold">{portfolio?.name}</h1>
       </div>
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsOverflow
@@ -211,14 +288,18 @@ export default function InvestmentPortfolioDetails() {
         </TabsContent>
         <TabsContent value="subscriptions" currentValue={tab}>
           <SubscriptionsTable
-            subscriptions={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).subscriptions) ? (portfolio as InvestmentPortfolio).subscriptions! : []}
+            subscriptions={portfolio?.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).subscriptions) ? (portfolio as InvestmentPortfolio).subscriptions! : []}
             loading={loading}
+            onExport={handleExportSubscription}
+            onDelete={handleDeleteSubscription}
           />
         </TabsContent>
         <TabsContent value="valuations" currentValue={tab}>
           <ValuationsTable
-            valuations={portfolio.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).valuations) ? (portfolio as InvestmentPortfolio).valuations! : []}
+            valuations={portfolio?.type === 'investment' && Array.isArray((portfolio as InvestmentPortfolio).valuations) ? (portfolio as InvestmentPortfolio).valuations! : []}
             loading={loading}
+            onExport={handleExportValuation}
+            onDelete={handleDeleteValuation}
           />
         </TabsContent>
         <TabsContent value="settings" currentValue={tab}>
@@ -235,19 +316,18 @@ export default function InvestmentPortfolioDetails() {
           />
         </TabsContent>
       </Tabs>
-      {/* Confirm delete modal for investment request (à déplacer si besoin) */}
+      {/* Confirm delete modal for items */}
       <ConfirmModal
         open={!!confirmDeleteId}
         title="Confirmation"
-        message="Supprimer cette demande ?"
+        message={`Supprimer ${deleteItemType === 'subscription' ? 'cette souscription' : 'cette valorisation'} ?`}
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
-        onConfirm={async () => {
-          if (confirmDeleteId) {
-            setConfirmDeleteId(null);
-          }
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setConfirmDeleteId(null);
+          setDeleteItemType(null);
         }}
-        onCancel={() => setConfirmDeleteId(null)}
       />
     </div>
   );

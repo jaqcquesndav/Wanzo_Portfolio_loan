@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Badge } from '../../ui/Badge';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { usePaymentOrder } from '../../../hooks/usePaymentOrderContext';
 import { PaymentOrderData } from '../../payment/PaymentOrderModal';
 import { PortfolioType } from '../../../contexts/portfolioTypes';
+import { exportToExcel, exportToPDF } from '../../../utils/export';
 
 export interface Disbursement {
   id: string;
@@ -15,14 +19,39 @@ export interface Disbursement {
   date: string;
   requestId?: string;
   portfolioId: string;
-  // Informations pour l'ordre de paiement
-  beneficiary?: {
-    accountNumber?: string;
-    bank?: string;
-    branch?: string;
-    swiftCode?: string;
-    companyName?: string;
+  contractReference: string;  // Référence du contrat associé (obligatoire)
+  
+  // Informations bancaires de l'ordre de virement
+  transactionReference?: string;  // Référence de transaction bancaire
+  valueDate?: string;  // Date de valeur
+  executionDate?: string;  // Date d'exécution
+  
+  // Informations du compte débité (compte de l'institution)
+  debitAccount: {
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+    bankCode: string;
+    branchCode?: string;
   };
+  
+  // Informations du compte crédité (compte du bénéficiaire)
+  beneficiary: {
+    accountNumber: string;
+    accountName: string;  // Nom du titulaire du compte
+    bankName: string;
+    bankCode?: string;
+    branchCode?: string;
+    swiftCode?: string;
+    companyName: string;
+    address?: string;
+  };
+  
+  // Informations de paiement
+  paymentMethod?: 'virement' | 'transfert' | 'chèque' | 'espèces';
+  paymentReference?: string;
+  description?: string;  // Description ou motif du paiement
+  
   // Informations spécifiques selon le type de portefeuille
   investmentType?: 'prise de participation' | 'complément' | 'dividende' | 'cession';
   leasingEquipmentDetails?: {
@@ -68,6 +97,24 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   // Utiliser le contexte d'ordre de paiement
   const { showPaymentOrderModal } = usePaymentOrder();
   
+  // État pour la recherche et le filtrage
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'tous' | 'en attente' | 'effectué'>('tous');
+  const [sortBy, setSortBy] = useState<{ key: keyof Disbursement; direction: 'asc' | 'desc' } | null>(null);
+  
+  // État pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  
+  // Fonction de tri
+  const handleSort = (key: keyof Disbursement) => {
+    if (sortBy && sortBy.key === key) {
+      setSortBy({ key, direction: sortBy.direction === 'asc' ? 'desc' : 'asc' });
+    } else {
+      setSortBy({ key, direction: 'asc' });
+    }
+  };
+  
   // Adapter les libellés selon le type de portefeuille
   const labels = {
     traditional: {
@@ -93,6 +140,88 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   // Sélectionner les libellés appropriés
   const currentLabels = portfolioType ? labels[portfolioType] : labels.traditional;
   
+  // Filtrer et trier les déboursements
+  const filteredDisbursements = useMemo(() => {
+    let filtered = disbursements;
+    
+    // Filtre par recherche
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(d => 
+        d.company.toLowerCase().includes(term) || 
+        d.product.toLowerCase().includes(term) || 
+        d.contractReference.toLowerCase().includes(term)
+      );
+    }
+    
+    // Filtre par statut
+    if (statusFilter !== 'tous') {
+      filtered = filtered.filter(d => d.status === statusFilter);
+    }
+    
+    // Tri
+    if (sortBy) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = a[sortBy.key];
+        const bValue = b[sortBy.key];
+        
+        // Gestion des valeurs non comparables
+        if (typeof aValue === 'undefined' || typeof bValue === 'undefined') return 0;
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortBy.direction === 'asc' 
+            ? aValue.localeCompare(bValue) 
+            : bValue.localeCompare(aValue);
+        }
+        
+        // Pour les valeurs numériques ou dates
+        return sortBy.direction === 'asc' 
+          ? (aValue < bValue ? -1 : aValue > bValue ? 1 : 0)
+          : (bValue < aValue ? -1 : bValue > aValue ? 1 : 0);
+      });
+    }
+    
+    return filtered;
+  }, [disbursements, searchTerm, statusFilter, sortBy]);
+  
+  // Pagination
+  const totalPages = Math.ceil(filteredDisbursements.length / itemsPerPage);
+  const paginatedDisbursements = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredDisbursements.slice(start, start + itemsPerPage);
+  }, [filteredDisbursements, currentPage, itemsPerPage]);
+  
+  // Export des données
+  const handleExportExcel = () => {
+    const dataToExport = filteredDisbursements.map(d => ({
+      'Entreprise': d.company,
+      'Produit': d.product,
+      'Référence Contrat': d.contractReference,
+      'Montant': d.amount.toLocaleString() + ' FCFA',
+      'Statut': statusConfig[d.status].label,
+      'Date': new Date(d.date).toLocaleDateString(),
+      'Bénéficiaire': d.beneficiary?.accountName || d.company,
+      'Compte': d.beneficiary?.accountNumber || 'N/A',
+      'Banque': d.beneficiary?.bankName || 'N/A'
+    }));
+    exportToExcel(dataToExport, 'Virements');
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF({
+      title: 'Liste des Virements',
+      headers: ['Entreprise', 'Produit', 'Référence', 'Montant', 'Statut', 'Date'],
+      data: filteredDisbursements.map(d => [
+        d.company,
+        d.product,
+        d.contractReference,
+        d.amount.toLocaleString() + ' FCFA',
+        statusConfig[d.status].label,
+        new Date(d.date).toLocaleDateString()
+      ]),
+      filename: 'Virements'
+    });
+  };
+  
   // Gestionnaire d'événements pour la confirmation de paiement
   const handleConfirmPayment = (disbursement: Disbursement) => {
     // Information de base sur l'opération (sans préjuger du détail)
@@ -113,8 +242,9 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
       },
       beneficiary: {
         companyName: disbursement.company,
-        bank: disbursement.beneficiary?.bank || '',
-        branch: disbursement.beneficiary?.branch,
+        // Correction des propriétés de beneficiary
+        bank: disbursement.beneficiary?.bankName || '',
+        branch: disbursement.beneficiary?.branchCode || '',
         accountNumber: disbursement.beneficiary?.accountNumber || '',
         swiftCode: disbursement.beneficiary?.swiftCode
       },
@@ -134,35 +264,122 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   
   return (
     <div className="bg-white dark:bg-gray-800 shadow overflow-hidden">
+      {/* En-tête avec recherche, filtres et options d'export */}
+      <div className="p-4 flex flex-wrap items-center justify-between gap-4 border-b">
+        <h2 className="text-lg font-medium">{currentLabels.title}</h2>
+        <div className="flex flex-1 md:flex-none items-center gap-3 ml-auto">
+          {/* Recherche */}
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input 
+              type="search" 
+              placeholder={`Rechercher...`} 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 w-full"
+            />
+          </div>
+          
+          {/* Filtre de statut */}
+          <div className="relative">
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value as 'tous' | 'en attente' | 'effectué')}
+              className="border rounded-md px-2 py-1 pr-8 bg-white dark:bg-gray-700 appearance-none"
+            >
+              <option value="tous">Tous</option>
+              <option value="en attente">En attente</option>
+              <option value="effectué">Effectué</option>
+            </select>
+            <Filter className="absolute right-2 top-2 h-4 w-4 text-gray-500 pointer-events-none" />
+          </div>
+        </div>
+        
+        {/* Boutons d'export */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportExcel}
+            disabled={filteredDisbursements.length === 0}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Excel
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportPDF}
+            disabled={filteredDisbursements.length === 0}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            PDF
+          </Button>
+        </div>
+      </div>
+      
+      {/* Table */}
       <div className="overflow-x-auto">
         <Table>
           <TableHead>
             <tr>
-              <TableHeader>Entreprise</TableHeader>
-              <TableHeader>{currentLabels.product}</TableHeader>
-              <TableHeader>Montant</TableHeader>
-              <TableHeader>Statut</TableHeader>
-              <TableHeader>Date</TableHeader>
+              <TableHeader onClick={() => handleSort('company')} className="cursor-pointer">
+                Entreprise 
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('product')} className="cursor-pointer">
+                {currentLabels.product}
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('amount')} className="cursor-pointer">
+                Montant
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('contractReference')} className="cursor-pointer">
+                Référence Contrat
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
+              <TableHeader>Compte Bénéficiaire</TableHeader>
+              <TableHeader onClick={() => handleSort('status')} className="cursor-pointer">
+                Statut
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('date')} className="cursor-pointer">
+                Date
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
               <TableHeader align="center">Actions</TableHeader>
             </tr>
           </TableHead>
           <TableBody>
-            {disbursements.length === 0 ? (
+            {paginatedDisbursements.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-400">
-                  {currentLabels.emptyMessage}
+                <TableCell colSpan={8} className="text-center py-8 text-gray-400">
+                  {filteredDisbursements.length === 0 ? currentLabels.emptyMessage : 'Aucun résultat pour cette recherche'}
                 </TableCell>
               </TableRow>
             ) : (
-              disbursements.map((d) => (
+              paginatedDisbursements.map((d) => (
                 <TableRow
                   key={d.id}
                   onClick={() => onView(d.id)}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <TableCell className="font-medium">{d.company}</TableCell>
                   <TableCell>{d.product}</TableCell>
                   <TableCell>{d.amount.toLocaleString()} FCFA</TableCell>
+                  <TableCell>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                      {d.contractReference}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{d.beneficiary?.accountName || d.company}</span>
+                      <span className="text-xs text-gray-500">{d.beneficiary?.accountNumber}</span>
+                      <span className="text-xs text-gray-500">{d.beneficiary?.bankName}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={statusConfig[d.status].variant as "warning" | "success" | "error" | "secondary" | "primary" | "danger"}>
                       {statusConfig[d.status].label}
@@ -175,10 +392,12 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
                         actions={[
                           { label: 'Voir', onClick: () => onView(d.id) },
                           d.status === 'en attente' ? { 
-                            label: currentLabels.confirmAction, 
-                            onClick: () => handleConfirmPayment(d) 
+                            label: 'Paiement', 
+                            onClick: () => handleConfirmPayment(d),
+                            className: 'text-green-600 hover:text-green-800'
                           } : null,
-                        ].filter(Boolean) as { label: string; onClick: () => void }[]}
+
+                        ].filter(Boolean) as { label: string; onClick: () => void, className?: string }[]}
                       />
                     </div>
                   </TableCell>
@@ -188,6 +407,46 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
           </TableBody>
         </Table>
       </div>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="p-4 border-t flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Affichage de {Math.min(filteredDisbursements.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredDisbursements.length)} sur {filteredDisbursements.length} entrées
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Précédent
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i + 1}
+                variant={currentPage === i + 1 ? "primary" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(i + 1)}
+                className="w-10"
+              >
+                {i + 1}
+              </Button>
+            )).slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Suivant
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
