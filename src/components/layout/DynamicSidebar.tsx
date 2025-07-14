@@ -4,7 +4,7 @@ import { SidebarPortfolios } from './SidebarPortfolios';
 import { Button } from '../ui/Button';
 import { navigation } from '../../config/navigation';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
-// ...existing code...
+
 interface DynamicSidebarProps {
   onClose?: () => void;
 }
@@ -97,6 +97,10 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                   // Pour le Dashboard, utiliser directement le type de portefeuille actuel
                   if (item.href === '/dashboard' && currentPortfolio) {
                     to = `/app/${currentPortfolio}`;
+                  }
+                  // Pour la Prospection, Central de risque et Reporting, utiliser le type de portefeuille actuel
+                  else if ((item.href === '/prospection' || item.href === '/central-risque' || item.href === '/reports') && currentPortfolio) {
+                    to = `/app/${currentPortfolio}${item.href}`;
                   }
                   // Pour les liens de portefeuille
                   else if (item.href.startsWith('/portfolios/')) {
@@ -192,6 +196,10 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                     // Pour le Dashboard, utiliser directement le type de portefeuille actuel
                     if (item.href === '/dashboard' && currentPortfolio) {
                       to = `/app/${currentPortfolio}`;
+                    }
+                    // Pour la Prospection, Central de risque et Reporting, utiliser le type de portefeuille actuel
+                    else if ((item.href === '/prospection' || item.href === '/central-risque' || item.href === '/reports') && currentPortfolio) {
+                      to = `/app/${currentPortfolio}${item.href}`;
                     }
                     // Modern, type-safe navigation: if href is a portfolio root, link to current portfolio details if available
                     else if (item.href.startsWith('/portfolios/')) {

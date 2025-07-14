@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/Table';
 import { Button } from '../ui/Button';
 import { Eye, ArrowUpDown, TrendingUp, TrendingDown } from 'lucide-react';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import type { Company } from '../../types/company';
 import { Select } from '../ui/form/Select';
 
@@ -22,6 +22,8 @@ export function CompanyList({
   const [sortBy, setSortBy] = useState<{ key: keyof Company | string; direction: 'asc' | 'desc' } | null>(null);
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [sizeFilter, setSizeFilter] = useState<string>('all');
+  
+  const { formatCurrency } = useFormatCurrency();
   
   // Fonctions de tendance (simulées)
   const getTrendIcon = (trend: number) => {

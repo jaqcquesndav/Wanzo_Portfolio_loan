@@ -3,7 +3,8 @@ import type { LeasingPayment } from '../../../types/leasing-payment';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
-import { formatCurrency, generateTransactionId } from '../../../utils/formatters';
+import { generateTransactionId } from '../../../utils/formatters';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface PaymentsTableProps {
   payments: LeasingPayment[];
@@ -12,6 +13,8 @@ interface PaymentsTableProps {
 }
 
 export function PaymentsTable({ payments, loading = false, onRowClick }: PaymentsTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   // Map des statuts de paiement avec leurs variantes et labels
   const statusMap = useMemo(() => ({
     'paid': { label: 'Payé', variant: 'success' as const },
@@ -102,7 +105,7 @@ export function PaymentsTable({ payments, loading = false, onRowClick }: Payment
       ),
       align: 'center' as const
     }
-  ], [statusMap, typeMap]);
+  ], [statusMap, typeMap, formatCurrency]);
 
   // Options de filtrage
   const filterOptions = [

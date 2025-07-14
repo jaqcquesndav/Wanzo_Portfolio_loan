@@ -1,6 +1,7 @@
 // src/components/reports/InvestmentReportSummary.tsx
 import React from 'react';
 import { CalendarRange, CreditCard, TrendingUp, Briefcase, Users, BarChart3, Map, AlertCircle } from 'lucide-react';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 
 interface InvestmentReportSummaryProps {
   metrics: {
@@ -20,9 +21,7 @@ interface InvestmentReportSummaryProps {
 }
 
 export const InvestmentReportSummary: React.FC<InvestmentReportSummaryProps> = ({ metrics }) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(value);
-  };
+  const { formatCurrency } = useFormatCurrency();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

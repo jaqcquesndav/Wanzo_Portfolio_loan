@@ -1,9 +1,9 @@
-import React from 'react';
-import { Shield, Bell, DollarSign, Languages } from 'lucide-react';
+import * as React from 'react';
+import { Shield, Bell, Languages, DollarSign } from 'lucide-react';
 import { SecuritySettings } from './sections/SecuritySettings';
 import { NotificationSettings } from './sections/NotificationSettings';
-// import { SubscriptionSettings } from './sections/SubscriptionSettings';
 import { PreferencesSettings } from './sections/PreferencesSettings';
+import { CurrencyManagementSettings } from './sections/CurrencyManagementSettings';
 
 const TABS = [
   {
@@ -19,16 +19,16 @@ const TABS = [
     component: NotificationSettings
   },
   {
-    id: 'subscription',
-    label: 'Abonnement & Factures',
-    icon: DollarSign,
-    // component: SubscriptionSettings
-  },
-  {
-    id: 'languages',
-    label: 'Langues',
+    id: 'preferences',
+    label: 'Préférences',
     icon: Languages,
     component: PreferencesSettings
+  },
+  {
+    id: 'currency',
+    label: 'Devises',
+    icon: DollarSign,
+    component: CurrencyManagementSettings
   }
 ];
 

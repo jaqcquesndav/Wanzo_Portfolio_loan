@@ -8,6 +8,7 @@ import { syncService } from './services/sync/syncService';
 import { SYNC_ENABLED } from './config/sync';
 import { PaymentOrderProvider } from './contexts/PaymentOrderContext';
 import { GlobalPaymentOrderModal } from './components/payment/GlobalPaymentOrderModal';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
 
 export default function App() {
@@ -60,12 +61,14 @@ export default function App() {
   return (
     <PortfolioProvider>
       <NotificationProvider>
-        <PaymentOrderProvider>
-          <RouterProvider router={router} />
-          {/* Rendre le modal d'ordre de paiement disponible globalement */}
-          <GlobalPaymentOrderModal />
-          <Toaster position="top-right" />
-        </PaymentOrderProvider>
+        <CurrencyProvider>
+          <PaymentOrderProvider>
+            <RouterProvider router={router} />
+            {/* Modal d'ordre de paiement pour les portefeuilles */}
+            <GlobalPaymentOrderModal />
+            <Toaster position="top-right" />
+          </PaymentOrderProvider>
+        </CurrencyProvider>
       </NotificationProvider>
     </PortfolioProvider>
   );

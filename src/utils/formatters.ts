@@ -1,4 +1,22 @@
-export const formatCurrency = (amount: number, currency: 'CDF' | 'USD' | 'FCFA' = 'CDF'): string => {
+export const formatCurrency = (amount: number, currency?: 'CDF' | 'USD' | 'EUR' | 'FCFA'): string => {
+  // Si aucune devise n'est spécifiée, utiliser la devise par défaut de l'utilisateur
+  if (!currency) {
+    // Essayer d'obtenir la devise du contexte via le hook useCurrencyContext
+    // Mais comme nous ne pouvons pas utiliser des hooks dans ce fichier utilitaire,
+    // nous utiliserons localStorage comme fallback
+    try {
+      const savedPreferences = localStorage.getItem('userPreferences');
+      if (savedPreferences) {
+        const preferences = JSON.parse(savedPreferences);
+        currency = preferences.currency || 'CDF';
+      } else {
+        currency = 'CDF'; // Valeur par défaut
+      }
+    } catch {
+      currency = 'CDF'; // Fallback en cas d'erreur
+    }
+  }
+  
   if (currency === 'FCFA') {
     return new Intl.NumberFormat('fr-FR', {
       style: 'decimal',
@@ -7,7 +25,13 @@ export const formatCurrency = (amount: number, currency: 'CDF' | 'USD' | 'FCFA' 
     }).format(amount) + ' ' + currency;
   }
   
-  const formatter = new Intl.NumberFormat(currency === 'CDF' ? 'fr-CD' : 'en-US', {
+  const localeMap = {
+    'CDF': 'fr-CD',
+    'USD': 'en-US',
+    'EUR': 'fr-FR'
+  };
+  
+  const formatter = new Intl.NumberFormat(localeMap[currency as keyof typeof localeMap] || 'fr-CD', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,

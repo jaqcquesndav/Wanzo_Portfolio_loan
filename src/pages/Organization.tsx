@@ -1,33 +1,86 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Building2, Edit2, Plus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { OrganizationForm } from '../components/organization/OrganizationForm';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { useNotification } from '../contexts/NotificationContext';
 import { formatDate } from '../utils/formatters';
+
+// Définition d'un type adapté aux données d'organisation utilisées dans ce composant
+interface OrganizationData {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website?: string;
+  legalForm: 'sa' | 'sarl' | 'sas' | 'other';
+  capital: number;
+  employeeCount: number;
+  subsidiaryCount: number;
+  boardMembers: number;
+  executiveCommitteeMembers: number;
+  specializedCommittees: number;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  documents?: Array<{
+    name: string;
+    type: string;
+    url: string;
+  }>;
+}
 
 export default function Organization() {
   const { institution } = useAuth();
   const { showNotification } = useNotification();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [organizationData, setOrganizationData] = useState(institution);
+  
+  // Convertir l'institution en format attendu par ce composant
+  const [organizationData, setOrganizationData] = useState<OrganizationData | null>(() => {
+    if (institution) {
+      return {
+        id: institution.id,
+        name: institution.name,
+        address: institution.address,
+        phone: institution.phone,
+        email: institution.email,
+        website: institution.website,
+        legalForm: 'sa', // valeur par défaut
+        capital: 1000000,
+        employeeCount: 150,
+        subsidiaryCount: 3,
+        boardMembers: 7,
+        executiveCommitteeMembers: 5,
+        specializedCommittees: 3,
+        created_at: institution.created_at,
+        updated_at: institution.updated_at,
+        status: institution.status,
+        documents: institution.documents
+      };
+    }
+    return null;
+  });
 
-  const handleUpdateOrganization = async (data: any) => {
+  const handleUpdateOrganization = async (data: Partial<OrganizationData>) => {
     try {
       // API call would go here
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Update local state
-      setOrganizationData({
-        ...organizationData,
-        ...data,
-        updated_at: new Date().toISOString()
-      });
+      if (organizationData) {
+        setOrganizationData({
+          ...organizationData,
+          ...data,
+          updated_at: new Date().toISOString()
+        });
+      }
       
       showNotification('Organisation mise à jour avec succès', 'success');
       setShowEditModal(false);
-    } catch (error) {
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour:", err);
       showNotification('Erreur lors de la mise à jour', 'error');
     }
   };
@@ -113,7 +166,7 @@ export default function Organization() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Documents</h3>
               <div className="mt-2 space-y-2">
-                {organizationData.documents?.map((doc: any, index: number) => (
+                {organizationData.documents?.map((doc: {name: string, type: string, url: string}, index: number) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm text-gray-900 dark:text-white">{doc.name}</span>
                     <Button variant="ghost" size="sm">
