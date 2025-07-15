@@ -3,7 +3,7 @@ import { FundingRequest } from '../components/portfolio/traditional/FundingReque
 export const mockFundingRequests: FundingRequest[] = [
   {
     id: 'REQ-TRAD-20250701-0001', // Financial data engineering style
-    company: 'PME Agro Sarl',
+    company: 'Agro Kivu SARL',
     product: 'Crédit PME 12 mois',
     amount: 15000000,
     status: 'en attente',
@@ -12,7 +12,7 @@ export const mockFundingRequests: FundingRequest[] = [
   },
   {
     id: 'REQ-TRAD-20250628-0002',
-    company: 'TransLogistics',
+    company: 'TransLogistics Lubumbashi',
     product: 'Crédit Trésorerie',
     amount: 8000000,
     status: 'validée',
@@ -21,7 +21,7 @@ export const mockFundingRequests: FundingRequest[] = [
   },
   {
     id: 'REQ-TRAD-20250620-0003',
-    company: 'BTP Services',
+    company: 'BTP Goma Services',
     product: 'Crédit Equipement',
     amount: 25000000,
     status: 'décaissée',

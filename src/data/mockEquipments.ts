@@ -4,9 +4,9 @@ export const mockEquipments: Equipment[] = [
   {
     id: "EQP-001",
     name: "Tracteur agricole XT5000",
-    description: "Tracteur polyvalent idéal pour les grandes exploitations agricoles",
+    description: "Tracteur polyvalent idéal pour les grandes exploitations agricoles du Nord-Kivu",
     category: "Agricole",
-    manufacturer: "AgriTech",
+    manufacturer: "AgriTech Congo",
     model: "XT5000",
     year: 2024,
     price: 75000000,

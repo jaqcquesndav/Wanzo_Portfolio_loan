@@ -60,16 +60,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Simuler la récupération des données de l'institution
           const mockInstitution: Institution = {
             id: "123456",
-            name: "Banque Nationale de Développement",
+            name: "Banque Congolaise de Développement",
             type: "bank",
             status: "active",
             license_number: "BCC-20250101",
             license_type: "Full Banking License",
-            address: "123 Avenue des Finances, Kinshasa",
-            phone: "+243123456789",
-            email: "contact@banquedev.cd",
-            website: "https://www.banquedev.cd",
-            legal_representative: "Jean Dupont",
+            address: "25 Boulevard Nyiragongo, Goma",
+            phone: "+243970456789",
+            email: "contact@bancongo.cd",
+            website: "https://www.bancongo.cd",
+            legal_representative: "Patrice Lumumba",
             tax_id: "TX123456789",
             regulatory_status: "Approved",
             created_at: "2024-01-01T00:00:00Z",
@@ -115,9 +115,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const role: UserRole = email.toLowerCase().includes('admin') ? 'admin' : 
                              email.toLowerCase().includes('manager') ? 'manager' : 'user';
       
+      // Générer un nom congolais en fonction du rôle
+      let name = '';
+      if (role === 'admin') {
+        name = 'Joseph Kabila';
+      } else if (role === 'manager') {
+        name = 'Emmanuel Shadary';
+      } else {
+        name = 'Patrice Lumumba';
+      }
+      
       const mockUser: User = {
         id: '12345',
-        name: 'Utilisateur de démonstration',
+        name,
         email,
         role
       };

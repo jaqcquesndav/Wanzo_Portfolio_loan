@@ -3,12 +3,12 @@ import type { Company } from '../types/company';
 export const mockCompanies: Company[] = [
   {
     id: '1',
-    name: 'TechInnovate Sénégal',
+    name: 'TechInnovate Congo',
     sector: 'Technologies',
     size: 'small',
     annual_revenue: 150000000,
     employee_count: 25,
-    website_url: 'https://techinnovate.sn',
+    website_url: 'https://techinnovate.cd',
     pitch_deck_url: 'https://example.com/pitch.pdf',
     status: 'active',
     financial_metrics: {
@@ -35,12 +35,12 @@ export const mockCompanies: Company[] = [
   },
   {
     id: '2',
-    name: 'Green Energy Solutions',
+    name: 'Solutions Énergétiques du Kivu',
     sector: 'Industrie',
     size: 'medium',
     annual_revenue: 350000000,
     employee_count: 75,
-    website_url: 'https://greenenergy.sn',
+    website_url: 'https://energie-kivu.cd',
     status: 'active',
     financial_metrics: {
       revenue_growth: 18.3,
@@ -62,12 +62,12 @@ export const mockCompanies: Company[] = [
   },
   {
     id: '3',
-    name: 'AgroTech Africa',
+    name: 'AgroTech Lubumbashi',
     sector: 'Agriculture',
     size: 'medium',
     annual_revenue: 250000000,
     employee_count: 120,
-    website_url: 'https://agrotech.africa',
+    website_url: 'https://agrotech-lubumbashi.cd',
     status: 'active',
     financial_metrics: {
       revenue_growth: 22.1,

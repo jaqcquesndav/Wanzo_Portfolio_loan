@@ -1,82 +1,20 @@
 import { useState } from 'react';
-import { Building2, Edit2, Plus } from 'lucide-react';
+import { Building2, Edit2, Plus, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { OrganizationForm } from '../components/organization/OrganizationForm';
-import { useAuth } from '../contexts/useAuth';
 import { useNotification } from '../contexts/NotificationContext';
 import { formatDate } from '../utils/formatters';
-
-// Définition d'un type adapté aux données d'organisation utilisées dans ce composant
-interface OrganizationData {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  website?: string;
-  legalForm: 'sa' | 'sarl' | 'sas' | 'other';
-  capital: number;
-  employeeCount: number;
-  subsidiaryCount: number;
-  boardMembers: number;
-  executiveCommitteeMembers: number;
-  specializedCommittees: number;
-  created_at: string;
-  updated_at: string;
-  status: string;
-  documents?: Array<{
-    name: string;
-    type: string;
-    url: string;
-  }>;
-}
+import { useOrganization, OrganizationData } from '../hooks/useOrganization';
 
 export default function Organization() {
-  const { institution } = useAuth();
+  const { organizationData, isLoading, updateOrganization } = useOrganization();
   const { showNotification } = useNotification();
   const [showEditModal, setShowEditModal] = useState(false);
-  
-  // Convertir l'institution en format attendu par ce composant
-  const [organizationData, setOrganizationData] = useState<OrganizationData | null>(() => {
-    if (institution) {
-      return {
-        id: institution.id,
-        name: institution.name,
-        address: institution.address,
-        phone: institution.phone,
-        email: institution.email,
-        website: institution.website,
-        legalForm: 'sa', // valeur par défaut
-        capital: 1000000,
-        employeeCount: 150,
-        subsidiaryCount: 3,
-        boardMembers: 7,
-        executiveCommitteeMembers: 5,
-        specializedCommittees: 3,
-        created_at: institution.created_at,
-        updated_at: institution.updated_at,
-        status: institution.status,
-        documents: institution.documents
-      };
-    }
-    return null;
-  });
 
   const handleUpdateOrganization = async (data: Partial<OrganizationData>) => {
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update local state
-      if (organizationData) {
-        setOrganizationData({
-          ...organizationData,
-          ...data,
-          updated_at: new Date().toISOString()
-        });
-      }
-      
+      await updateOrganization(data);
       showNotification('Organisation mise à jour avec succès', 'success');
       setShowEditModal(false);
     } catch (err) {
@@ -85,6 +23,17 @@ export default function Organization() {
     }
   };
 
+  // Affichage du chargement
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-gray-600">Chargement des données de l'organisation...</span>
+      </div>
+    );
+  }
+  
+  // Affichage si aucune organisation n'est configurée
   if (!organizationData) {
     return (
       <div className="text-center py-12">

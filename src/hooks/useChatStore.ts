@@ -29,7 +29,7 @@ interface ChatStore {
   setActiveConversation: (id: string) => void;
   
   // Actions messages
-  addMessage: (content: string, type: 'user' | 'bot', attachment?: Message['attachment']) => void;
+  addMessage: (content: string, type: 'user' | 'bot', attachment?: Message['attachment'], mode?: 'chat' | 'analyse') => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
   toggleLike: (messageId: string) => void;
   toggleDislike: (messageId: string) => void;
@@ -117,7 +117,7 @@ export const useChatStore = create<ChatStore>()(
       },
 
       // Actions messages
-      addMessage: async (content, type, attachment) => {
+      addMessage: async (content, type, attachment, mode = 'chat') => {
         // Validation : garantir que le contenu est une string
         if (typeof content !== 'string') {
           content = String(content);
@@ -137,11 +137,12 @@ export const useChatStore = create<ChatStore>()(
 
         if (!activeConversation) return;
 
-        // Construire le contexte
+        // Construire le contexte avec le mode sélectionné
+        const modeInfo = mode === 'analyse' ? '[MODE ANALYSE]' : '[MODE CHAT]';
         const context = activeConversation.messages
           .slice(-5) // Prendre les 5 derniers messages
           .map(msg => `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-          .concat(`User: ${content}`);
+          .concat(`${modeInfo} User: ${content}`);
 
         const newMessage: Message = {
           id: Date.now().toString(),
@@ -227,10 +228,18 @@ export const useChatStore = create<ChatStore>()(
         set({ isTyping: true });
         try {
           await new Promise(resolve => setTimeout(resolve, 2000));
-          // Correction ici : passer le contenu du dernier message
+          // Récupérer le dernier message et le contexte
           const lastMessage = conversation.messages[conversation.messages.length - 1];
-          const response = generateResponse(lastMessage.content);
-          store.addMessage(response, 'bot');
+          
+          // Détecter le mode à partir du contexte
+          const isAnalyseMode = conversation.context.some(ctx => ctx.includes('[MODE ANALYSE]'));
+          
+          // Générer une réponse adaptée au mode
+          const currentMode = isAnalyseMode ? 'analyse' : 'chat';
+          const response = generateResponse(lastMessage.content, currentMode);
+          
+          // Ajouter la réponse dans le même mode
+          store.addMessage(response, 'bot', undefined, currentMode);
         } finally {
           set({ isTyping: false });
         }

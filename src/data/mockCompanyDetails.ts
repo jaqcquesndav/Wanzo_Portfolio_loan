@@ -1,44 +1,44 @@
 export const mockCompanyDetails = {
   sector: 'Technologie',
-  id: 'techinnovate-sn',
-  name: 'TechInnovate Sénégal',
+  id: 'techinnovate-cd',
+  name: 'TechInnovate Congo',
   industry: 'Technologie',
   legalForm: 'SARL',
-  rccm: 'SN-DKR-2020-B-12345',
-  taxId: 'SN123456789',
-  natId: 'SN987654321',
+  rccm: 'CD-GOM-2020-B-12345',
+  taxId: 'CD123456789',
+  natId: 'CD987654321',
   address: {
-    street: 'Avenue Cheikh Anta Diop',
-    city: 'Dakar',
-    country: 'Sénégal'
+    street: 'Avenue des Volcans 123',
+    city: 'Goma',
+    country: 'République Démocratique du Congo'
   },
   contacts: {
-    email: 'contact@techinnovate.sn',
-    phone: '+221 33 123 45 67'
+    email: 'contact@techinnovate.cd',
+    phone: '+243 970 123 456'
   },
   socialMedia: {
-    website: 'https://www.techinnovate.sn',
-    facebook: 'https://www.facebook.com/techinnovate.sn',
-    linkedin: 'https://www.linkedin.com/company/techinnovate-senegal',
-    twitter: 'https://twitter.com/techinnovateSN',
-    youtube: 'https://www.youtube.com/channel/techinnovateSN'
+    website: 'https://www.techinnovate.cd',
+    facebook: 'https://www.facebook.com/techinnovate.cd',
+    linkedin: 'https://www.linkedin.com/company/techinnovate-congo',
+    twitter: 'https://twitter.com/techinnovateCD',
+    youtube: 'https://www.youtube.com/channel/techinnovateCD'
   },
   presentation_video: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
   ceo: {
-    name: 'Fatou Diop',
+    name: 'Marie Kabanga',
     gender: 'female',
     title: 'Directrice Générale & Co-fondatrice',
-    linkedin: 'https://www.linkedin.com/in/fatou-diop-ceo',
-    bio: 'Fatou Diop est une entrepreneure de renom dans le secteur technologique au Sénégal avec plus de 15 ans d\'expérience. Diplômée de l\'École Polytechnique de Dakar et de HEC Paris, elle a fondé TechInnovate Sénégal en 2017 après un parcours réussi chez Google et Orange. Elle est régulièrement invitée comme conférencière sur les sujets d\'innovation et d\'entrepreneuriat féminin en Afrique.',
+    linkedin: 'https://www.linkedin.com/in/marie-kabanga-ceo',
+    bio: 'Marie Kabanga est une entrepreneure visionnaire dans le secteur technologique en RDC avec plus de 15 ans d\'expérience. Diplômée de l\'Université de Kinshasa et de HEC Paris, elle a fondé TechInnovate Congo en 2017 après un parcours réussi chez MTN et Airtel. Elle est régulièrement invitée comme conférencière sur les sujets d\'innovation et d\'entrepreneuriat féminin en Afrique centrale.',
     photo: 'https://randomuser.me/api/portraits/women/45.jpg'
   },
   capital: {
     amount: 5000000,
-    currency: 'XOF',
+    currency: 'CDF',
     isApplicable: true
   },
   logo: 'https://placehold.co/400x400/2563eb/ffffff?text=TI',
-  country: 'Sénégal',
+  country: 'République Démocratique du Congo',
   status: 'active',
   founded: 2017,
   employee_count: 120,

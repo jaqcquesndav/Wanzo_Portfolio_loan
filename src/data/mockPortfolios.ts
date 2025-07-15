@@ -3,7 +3,7 @@ import type { Portfolio } from '../types/portfolio';
 export const mockPortfolios: Portfolio[] = [
   {
     id: 'trad-1',
-    name: 'Portefeuille PME',
+    name: 'Portefeuille PME Nord-Kivu',
     type: 'traditional',
     status: 'active',
     target_amount: 500000000,
@@ -41,7 +41,7 @@ export const mockPortfolios: Portfolio[] = [
   },
   {
     id: 'trad-2',
-    name: 'Portefeuille Microfinance',
+    name: 'Portefeuille Microfinance Kinshasa',
     type: 'traditional',
     status: 'active',
     target_amount: 200000000,
@@ -78,7 +78,8 @@ export const mockPortfolios: Portfolio[] = [
 ];
 
 // Les portefeuilles investment sont désormais créés dynamiquement et accèdent à leurs données via IndexedDB, comme pour le type traditionnel.
-export const mockInvestmentPortfolios: import('../lib/indexedDbPortfolioService').InvestmentPortfolio[] = [];
+import { InvestmentPortfolio } from '../types/investment-portfolio';
+export const mockInvestmentPortfolios: InvestmentPortfolio[] = [];
 
 export const mockLeasingPortfolios: Portfolio[] = [
   {
