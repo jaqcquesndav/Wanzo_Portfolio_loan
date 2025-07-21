@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Filter, ArrowUpDown, Download } from 'lucide-react';
+import { Filter, ArrowUpDown, Download, BarChart2 } from 'lucide-react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Input } from '../../ui/Input';
 import { Button } from '../../ui/Button';
@@ -9,6 +9,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '.
 import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import { exportToExcel, exportToPDF } from '../../../utils/exports';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 // Type pour un contrat de crédit
 export interface CreditContract {
@@ -57,6 +58,7 @@ export function CreditContractsTable({
   // États pour les filtres et la pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const { showNotification } = useNotification();
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<keyof CreditContract | null>(null);
@@ -386,8 +388,14 @@ export function CreditContractsTable({
                     <TableCell>{contract.product}</TableCell>
                     <TableCell>{contract.amount.toLocaleString()} FCFA</TableCell>
                     <TableCell>
-                      <Badge variant={statusConfig[contract.status].variant}>
-                        {statusConfig[contract.status].label}
+                      <Badge variant={
+                        (statusConfig[contract.status] && statusConfig[contract.status].variant) 
+                          ? statusConfig[contract.status].variant 
+                          : "secondary"
+                      }>
+                        {(statusConfig[contract.status] && statusConfig[contract.status].label) 
+                          ? statusConfig[contract.status].label 
+                          : contract.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{new Date(contract.startDate).toLocaleDateString()}</TableCell>
@@ -396,20 +404,33 @@ export function CreditContractsTable({
                       <div className="actions-dropdown inline-block">
                         <ActionsDropdown
                           actions={[
-
-                            onDownloadContract ? { 
+                            { 
                               label: 'Télécharger', 
-                              onClick: () => onDownloadContract(contract.id) 
-                            } : null,
+                              onClick: () => onDownloadContract && onDownloadContract(contract.id),
+                              icon: <Download className="h-4 w-4 mr-2" />
+                            },
+                            { 
+                              label: 'Analyser', 
+                              onClick: () => {
+                                showNotification(`Analyse du contrat ${contract.reference} en cours...`, 'info');
+                              },
+                              icon: <BarChart2 className="h-4 w-4 mr-2" />
+                            },
                             contract.status === 'actif' && onModify ? { 
                               label: 'Modifier', 
-                              onClick: () => onModify(contract.id) 
+                              onClick: () => onModify(contract.id),
+                              icon: <svg className="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
                             } : null,
                             contract.status === 'actif' && onTerminate ? { 
                               label: 'Clôturer', 
-                              onClick: () => onTerminate(contract.id) 
+                              onClick: () => onTerminate(contract.id),
+                              icon: <svg className="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
                             } : null,
-                          ].filter(Boolean) as { label: string; onClick: () => void }[]}
+                          ].filter(Boolean) as Array<{ label: string; onClick: () => void; icon?: React.ReactNode }>}
                         />
                       </div>
                     </TableCell>

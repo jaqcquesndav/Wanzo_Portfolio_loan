@@ -18,6 +18,32 @@
 }
 
 .leaflet-popup-close-button {
+  top: 0.75rem !important;
+  right: 0.75rem !important;
+  color: #4b5563 !important;
+}
+
+/* Animations personnalisées */
+@keyframes highlight-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pulse-highlight {
+  animation: highlight-pulse 1.5s ease-in-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.leaflet-popup-content {
   padding: 8px !important;
 }
 
@@ -34,4 +60,127 @@
 
 .dark .leaflet-popup-close-button {
   color: #fff;
+}
+
+/* Styles pour les menus dropdown */
+.dropdown-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Style spécifique pour les dropdowns de table qui doivent flotter au-dessus du contenu */
+.table-action-dropdown {
+  position: fixed !important;
+  z-index: 99999 !important;
+  max-height: none !important;
+  width: 14rem; /* w-56 équivalent */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(229, 231, 235, 1);
+  overflow: visible !important;
+}
+
+/* Style pour augmenter la visibilité du dropdown */
+.radix-dropdown-content {
+  display: block !important;
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Important: Force le portail à afficher le contenu sur le dessus */
+[data-radix-popper-content-wrapper] {
+  position: absolute !important;
+  z-index: 9999999 !important;
+}
+
+.action-button {
+  border-radius: 9999px;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: rgba(229, 231, 235, 0.8);
+}
+
+/* Styles pour les lignes de tableau interactives */
+.interactive-table-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.interactive-table-row:hover {
+  background-color: rgba(243, 244, 246, 1);
+}
+
+.dark .interactive-table-row:hover {
+  background-color: rgba(55, 65, 81, 0.5);
+}
+
+/* Styles additionnels pour les menus dropdown */
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.dark .dropdown-menu-item {
+  color: #e5e7eb;
+}
+
+.dark .dropdown-menu-item:hover {
+  background-color: #374151;
+}
+
+/* Styles pour le menu dropdown personnalisé */
+.action-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.action-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin-top: -10px;
+  margin-left: 5px;
+  width: 200px;
+  background-color: white;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  z-index: 99999;
+  overflow: hidden;
+}
+
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu-item:hover {
+  background-color: #f3f4f6;
 }

@@ -10,6 +10,10 @@ export * from './mockFundingOffers';
 export * from './mockFundingRequests';
 export * from './mockCreditContracts';
 export * from './mockGuarantees';
+export * from './mockCreditRequests';
+export * from './mockMembers';
+export * from './mockCreditProducts';
+export * from './mockCreditManagers';
 
 // Primary export for investment data - note that this file also exports:
 // - mockInvestmentRequests

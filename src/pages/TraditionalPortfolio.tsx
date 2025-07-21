@@ -1,6 +1,5 @@
 // src/pages/TraditionalPortfolio.tsx
 import { useState } from 'react';
-import type { TraditionalPortfolio } from '../lib/indexedDbPortfolioService';
 import type { DefaultPortfolioFormData } from '../components/portfolio/DefaultPortfolioForm';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter } from 'lucide-react';
@@ -117,7 +116,7 @@ export default function TraditionalPortfolio() {
           <PortfolioCard
             key={portfolio.id}
             portfolio={portfolio}
-          onView={() => navigate(`/app/traditional/${portfolio.id}`)}
+            onView={() => navigate(`/app/traditional/view/${portfolio.id}`)}  // Route correcte pour la vue de crédit
           />
         ))}
       </div>

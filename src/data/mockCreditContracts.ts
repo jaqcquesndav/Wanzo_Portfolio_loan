@@ -1,5 +1,5 @@
 // src/data/mockCreditContracts.ts
-import { CreditContract } from '../components/portfolio/traditional/CreditContractsTable';
+import { CreditContract } from '../types/credit';
 import { mockFundingRequests } from './mockFundingRequests';
 
 // Générer des données de contrats de crédit réalistes basées sur les demandes de financement
@@ -24,27 +24,37 @@ export const mockCreditContracts: CreditContract[] = mockFundingRequests
     const remainingInstallments = Math.max(0, totalInstallments - elapsedMonths);
     const remainingAmount = (request.amount / totalInstallments) * remainingInstallments;
     
-    const statuses: Array<CreditContract['status']> = ['actif', 'clôturé', 'en défaut', 'suspendu'];
+    const statuses: Array<CreditContract['status']> = ['active', 'closed', 'defaulted', 'suspended'];
     const status = index < mockFundingRequests.length * 0.7 
-      ? 'actif' // 70% actifs 
+      ? 'active' // 70% actifs 
       : statuses[Math.floor(Math.random() * statuses.length)];
     
     return {
       id: `CONT-${request.id.substring(4)}`,
       reference: `CRDT-${100000 + index}`,
-      company: request.company,
-      product: request.product,
+      creditRequestId: `REQ-${100000 + index}`,
+      memberId: `MEM-${100000 + index}`,
+      memberName: request.company,
+      productId: `PROD-${index % 5 + 1}`,
+      productName: request.product,
+      portfolioId: request.portfolioId,
       amount: request.amount,
-      status: status,
+      disbursedAmount: request.amount,
+      remainingAmount: status === 'active' ? remainingAmount : 0,
+      interestRate: 5 + Math.random() * 10, // Taux entre 5% et 15%
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      interestRate: 5 + Math.random() * 10, // Taux entre 5% et 15%
-      remainingAmount: status === 'actif' ? remainingAmount : 0,
-      createdAt: startDate.toISOString(),
-      portfolioId: request.portfolioId,
+      lastPaymentDate: status === 'active' ? lastPaymentDate.toISOString() : undefined,
+      nextPaymentDate: status === 'active' ? nextPaymentDate.toISOString() : undefined,
+      status: status,
+      delinquencyDays: status === 'defaulted' ? 30 + Math.floor(Math.random() * 90) : 0,
+      riskClass: status === 'defaulted' ? 'doubtful' : status === 'suspended' ? 'watch' : 'standard',
+      guaranteesTotalValue: request.amount * (0.5 + Math.random() * 0.5),
+      scheduleId: `SCH-${100000 + index}`,
       documentUrl: `https://example.com/contracts/${100000 + index}.pdf`,
-      lastPaymentDate: status === 'actif' ? lastPaymentDate.toISOString() : undefined,
-      nextPaymentDate: status === 'actif' ? nextPaymentDate.toISOString() : undefined,
+      isConsolidated: false,
+      createdAt: startDate.toISOString(),
+      updatedAt: status !== 'active' ? new Date().toISOString() : undefined
     };
   });
 

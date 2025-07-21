@@ -15,14 +15,13 @@ import { FundingRequestsTable } from '../components/portfolio/traditional/Fundin
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
-import { CreditContractsTable } from '../components/portfolio/traditional/CreditContractsTable';
+import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockFundingRequests } from '../data/mockFundingRequests';
 import { mockDisbursements } from '../data/mockDisbursements';
 import { mockRepayments } from '../data/mockRepayments';
 import { mockGuarantees } from '../data/mockGuarantees';
-import { mockCreditContracts } from '../data/mockCreditContracts';
 import { useNotification } from '../contexts/NotificationContext';
 import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
 import { openPaymentOrder } from '../utils/openPaymentOrder';
@@ -392,22 +391,7 @@ export default function TraditionalPortfolioDetails() {
                 value={tabConfig.key}
                 currentValue={tab}
               >
-                <CreditContractsTable
-                  contracts={mockCreditContracts}
-                  onViewDetails={(contractId: string) => {
-                    showNotification(`Contrat ${contractId} sélectionné`, 'info');
-                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/contracts/${contractId}`)
-                  }}
-                  onDownloadContract={(contractId: string) => {
-                    showNotification(`Téléchargement du contrat ${contractId} en cours...`, 'info');
-                  }}
-                  onModify={(contractId: string) => {
-                    showNotification(`Modification du contrat ${contractId}`, 'info');
-                  }}
-                  onTerminate={(contractId: string) => {
-                    showNotification(`Clôture du contrat ${contractId}`, 'info');
-                  }}
-                />
+                <CreditContractsList portfolioId={id || 'default'} />
               </TabsContent>
             );
           }

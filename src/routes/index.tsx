@@ -14,6 +14,7 @@ import Dashboard from '../pages/Dashboard';
 import Prospection from '../pages/Prospection';
 import TraditionalPortfolio from '../pages/TraditionalPortfolio';
 import TraditionalPortfolioDetails from '../pages/TraditionalPortfolioDetails';
+import { TraditionalPortfolioView } from '../pages/TraditionalPortfolioView';
 import InvestmentPortfolio from '../pages/InvestmentPortfolio';
 import InvestmentPortfolioDetails from '../pages/InvestmentPortfolioDetails';
 import InvestmentAssetDetail from '../pages/InvestmentAssetDetail';
@@ -28,6 +29,7 @@ import LeasingIncidentsPage from '../pages/leasing/LeasingIncidentsPage';
 import LeasingMovementsPage from '../pages/leasing/LeasingMovementsPage';
 // Imports d'opérations supprimés
 import CreditRequestDetails from '../pages/CreditRequestDetails';
+import CreditContractDetail from '../pages/CreditContractDetail';
 import DisbursementDetails from '../pages/DisbursementDetails';
 import RepaymentDetails from '../pages/RepaymentDetails';
 import GuaranteeDetails from '../pages/GuaranteeDetails';
@@ -154,10 +156,14 @@ export const router = createBrowserRouter([
     children: [
       { path: '', element: <Dashboard /> },
       // Traditional
+      // Gérer le cas où "traditional" est répété dans l'URL (doit être avant les autres routes)
+      { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
+      { path: 'portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
       { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
       { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <RepaymentDetails /> },
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },

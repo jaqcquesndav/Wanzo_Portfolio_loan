@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 interface DialogProps {
   open: boolean;
@@ -8,6 +8,7 @@ interface DialogProps {
 
 interface DialogContentProps {
   children: ReactNode;
+  className?: string;
 }
 
 interface DialogHeaderProps {
