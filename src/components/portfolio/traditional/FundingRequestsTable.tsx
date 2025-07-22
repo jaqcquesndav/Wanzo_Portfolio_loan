@@ -337,14 +337,13 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                 </TableHeader>
                 <TableHeader>Échéance</TableHeader>
                 <TableHeader>Documents</TableHeader>
-                <TableHeader>Paiement</TableHeader>
                 <TableHeader align="center">Actions</TableHeader>
               </tr>
             </TableHead>
             <TableBody>
               {currentPageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-400">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-400">
                     Aucune demande ne correspond aux critères de recherche
                   </TableCell>
                 </TableRow>
@@ -394,39 +393,24 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                         <Badge variant="secondary">{req.attachments.length} pièce(s)</Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right pr-4">
-                      {req.status === 'en attente' && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onValidate(req.id);
-                          }}
-                          className="mr-2 bg-green-50 hover:bg-green-100 border-green-500 text-green-600 hover:text-green-700"
-                        >
-                          Paiement
-                        </Button>
-                      )}
-                      {req.status === 'validée' && (
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDisburse(req.id);
-                          }}
-                          className="mr-2 bg-green-50 hover:bg-green-100 border-green-500 text-green-600 hover:text-green-700"
-                        >
-                          Paiement
-                        </Button>
-                      )}
-                    </TableCell>
                     <TableCell className="text-center overflow-visible">
                       <div className="actions-dropdown inline-block">
                         <ActionsDropdown
                           actions={[
-
+                            { 
+                              label: 'Voir détails', 
+                              onClick: () => onView(req.id)
+                            },
+                            req.status === 'en attente' ? { 
+                              label: 'Valider', 
+                              onClick: () => onValidate(req.id),
+                              className: 'text-green-600 hover:text-green-700'
+                            } : null,
+                            req.status === 'validée' ? { 
+                              label: 'Créer Contrat', 
+                              onClick: () => onDisburse(req.id),
+                              className: 'text-blue-600 hover:text-blue-700'
+                            } : null,
                             req.status === 'en attente' ? { 
                               label: 'Refuser', 
                               onClick: () => onRefuse(req.id),

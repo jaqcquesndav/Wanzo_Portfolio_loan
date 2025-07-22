@@ -22,8 +22,6 @@ import { mockFundingRequests } from '../data/mockFundingRequests';
 import { mockDisbursements } from '../data/mockDisbursements';
 import { mockRepayments } from '../data/mockRepayments';
 import { useNotification } from '../contexts/NotificationContext';
-import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
-import { openPaymentOrder } from '../utils/openPaymentOrder';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
@@ -44,7 +42,6 @@ export default function TraditionalPortfolioDetails() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { setCurrentPortfolioId } = usePortfolioContext();
-  const { showPaymentOrderModal } = usePaymentOrder();
   const [showProductForm, setShowProductForm] = useState(false);
 // const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | null>(null);
   const [tab, setTab] = useState('products');
@@ -279,46 +276,39 @@ export default function TraditionalPortfolioDetails() {
                       return;
                     }
                     
-                    // Ouvrir le modal d'ordre de paiement pour la validation
-                    openPaymentOrder({
-                      action: 'validate_funding',
-                      portfolioId: id || '',
-                      portfolioName: portfolio?.name,
-                      itemId: request.id,
-                      reference: request.id,
-                      amount: request.amount,
-                      company: request.company,
-                      product: request.product
-                    }, showPaymentOrderModal);
+                    // Simplement marquer la demande comme validée
+                    // Dans une application réelle, cela mettrait à jour la base de données
+                    request.status = 'validée'; // Mettre à jour le statut de la demande
                     
-                    // Note: Pour une démo, on affiche quand même la notification
-                    // Dans une vraie app, cela serait fait après confirmation du paiement
-                    showNotification(`Demande ${requestId} validée`, 'success');
+                    showNotification(`Demande ${requestId} validée. Elle peut maintenant être transformée en contrat.`, 'success');
                   }}
                   onRefuse={(requestId) => {
                     showNotification(`Demande ${requestId} refusée`, 'info');
                   }}
                   onDisburse={(requestId) => {
-                    // Chercher la demande concernée pour le décaissement
+                    // Chercher la demande concernée pour la création du contrat
                     const request = mockFundingRequests.find(req => req.id === requestId);
                     if (!request) {
                       showNotification('Demande non trouvée', 'error');
                       return;
                     }
                     
-                    // Ouvrir le modal d'ordre de paiement pour le décaissement
-                    openPaymentOrder({
-                      action: 'validate_funding',
-                      portfolioId: id || '',
-                      portfolioName: portfolio?.name,
-                      itemId: request.id,
-                      reference: request.id,
-                      amount: request.amount,
-                      company: request.company,
-                      product: request.product
-                    }, showPaymentOrderModal);
+                    // Vérifier que la demande est validée
+                    if (request.status !== 'validée') {
+                      showNotification('Seules les demandes validées peuvent être transformées en contrat', 'error');
+                      return;
+                    }
                     
-                    showNotification(`Fonds débloqués pour la demande ${requestId}`, 'success');
+                    // Créer un contrat à partir de la demande validée
+                    // Dans une vraie application, cela créerait un nouveau contrat dans la base de données
+                    
+                    // Pour simuler la création du contrat, on change le statut de la demande à "décaissée"
+                    request.status = 'décaissée';
+                    
+                    // Naviguer vers l'onglet des contrats
+                    setTab('contracts');
+                    
+                    showNotification(`Contrat créé avec succès à partir de la demande ${requestId}`, 'success');
                   }}
                   onView={(requestId) => {
                     showNotification(`Demande ${requestId} sélectionnée`, 'info');
