@@ -14,14 +14,13 @@ import { Button } from '../components/ui/Button';
 import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
-import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
+import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockFundingRequests } from '../data/mockFundingRequests';
 import { mockDisbursements } from '../data/mockDisbursements';
 import { mockRepayments } from '../data/mockRepayments';
-import { mockGuarantees } from '../data/mockGuarantees';
 import { useNotification } from '../contexts/NotificationContext';
 import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
 import { openPaymentOrder } from '../utils/openPaymentOrder';
@@ -361,6 +360,10 @@ export default function TraditionalPortfolioDetails() {
                     showNotification(`Remboursement ${repaymentId} sélectionné`, 'info');
                     // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/repayments/${repaymentId}`)
                   }}
+                  onViewSchedule={(contractReference: string) => {
+                    // Naviguer vers l'échéancier du contrat associé
+                    navigate(`/app/portfolio/${id}/contracts/${contractReference}/schedule`);
+                  }}
                 />
               </TabsContent>
             );
@@ -372,15 +375,7 @@ export default function TraditionalPortfolioDetails() {
                 value={tabConfig.key}
                 currentValue={tab}
               >
-                <GuaranteesTable
-                  guarantees={mockGuarantees}
-                  onRelease={() => {}}
-                  onSeize={() => {}}
-                  onView={(guaranteeId: string) => {
-                    showNotification(`Garantie ${guaranteeId} sélectionnée`, 'info');
-                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/guarantees/${guaranteeId}`)
-                  }}
-                />
+                <GuaranteesList portfolioId={id || 'default'} />
               </TabsContent>
             );
           }

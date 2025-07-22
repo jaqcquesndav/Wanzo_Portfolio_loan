@@ -25,7 +25,7 @@ export interface Guarantee {
   created_at: string;
   expiry_date?: string; // Date d'expiration (pertinent pour les assurances, cautions)
   requestId?: string;
-  contractId?: string;
+  contractReference?: string; // Référence du contrat associé
   portfolioId: string;
   details?: {
     description?: string;

@@ -30,6 +30,7 @@ import LeasingMovementsPage from '../pages/leasing/LeasingMovementsPage';
 // Imports d'opérations supprimés
 import CreditRequestDetails from '../pages/CreditRequestDetails';
 import CreditContractDetail from '../pages/CreditContractDetail';
+import CreditContractSchedulePage from '../pages/CreditContractSchedulePage';
 import DisbursementDetails from '../pages/DisbursementDetails';
 import RepaymentDetails from '../pages/RepaymentDetails';
 import GuaranteeDetails from '../pages/GuaranteeDetails';
@@ -160,10 +161,14 @@ export const router = createBrowserRouter([
       { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/:id/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
       { path: 'portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
+      { path: 'traditional/portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
+      { path: 'portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage /> },
+      { path: 'traditional/portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage /> },
       { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
       { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <RepaymentDetails /> },
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },

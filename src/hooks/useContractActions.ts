@@ -66,6 +66,7 @@ export const useContractActions = (portfolioId: string) => {
   };
 
   const handleGeneratePDF = (contract: CreditContract) => {
+    // TODO: Implémenter la génération de PDF
     showNotification(`Génération du PDF pour le contrat ${contract.reference} en cours...`, 'info');
   };
 

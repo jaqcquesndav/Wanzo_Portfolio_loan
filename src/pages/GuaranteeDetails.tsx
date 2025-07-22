@@ -19,10 +19,21 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
   const [showSeize, setShowSeize] = useState(false);
 
   useEffect(() => {
-    // Recherche stricte : id + portfolioId
-    const found = mockGuarantees.find((g) => g.id === id && g.portfolioId === portfolioId);
-    setGuarantee(found || null);
-  }, [id, portfolioId]);
+    // Recherche stricte : id + portfolioId ou id uniquement si pas de portfolioId
+    const found = mockGuarantees.find((g) => {
+      if (portfolioId) {
+        return g.id === id && g.portfolioId === portfolioId;
+      }
+      return g.id === id;
+    });
+    
+    if (found) {
+      setGuarantee(found);
+    } else {
+      console.error(`Garantie non trouvée pour id=${id}, portfolioId=${portfolioId}`);
+      showNotification('Garantie introuvable', 'error');
+    }
+  }, [id, portfolioId, showNotification]);
 
   if (!guarantee) {
     return (
@@ -37,7 +48,8 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <Breadcrumb items={[
         { label: 'Dashboard', href: '/app/dashboard' },
-        { label: 'Garanties', href: '/app/traditional/guarantees' },
+        { label: 'Portefeuilles', href: '/app/traditional' },
+        { label: `Portefeuille ${portfolioId}`, href: `/app/traditional/${portfolioId}` },
         { label: `Garantie #${guarantee.id}` }
       ]} />
       <h1 className="text-2xl font-bold mb-2">Détail de la garantie</h1>
@@ -47,6 +59,17 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
         <div><b>Statut :</b> {guarantee.status}</div>
         <div><b>Date :</b> {guarantee.created_at}</div>
         <div><b>Entreprise :</b> {guarantee.company}</div>
+        {guarantee.contractReference && (
+          <div>
+            <b>Contrat associé :</b>{' '}
+            <button 
+              onClick={() => navigate(`/app/traditional/portfolio/${portfolioId}/contracts/${guarantee.contractReference}`)}
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+            >
+              {guarantee.contractReference}
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex gap-4">
         <Button onClick={() => setShowRelease(true)} disabled={guarantee.status !== 'active'}>Mainlevée</Button>

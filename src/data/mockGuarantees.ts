@@ -1,34 +1,40 @@
-import { Guarantee } from '../components/portfolio/traditional/GuaranteesTable';
+import { Guarantee } from '../types/guarantee.ts';
 
 export const mockGuarantees: Guarantee[] = [
   {
-    id: 'GUAR-TRAD-20250701-0001',
+    id: 'G001',
     company: 'PME Agro Sarl',
     type: 'Hypothèque',
     value: 20000000,
     status: 'active',
     created_at: '2025-07-01T10:00:00Z',
     requestId: 'REQ-TRAD-20250701-0001',
-    portfolioId: 'qf3081zdd',
+    portfolioId: 'trad-1',
+    contractId: 'CONT-20230509-0001',
+    contractReference: 'CRDT-100000',
   },
   {
-    id: 'GUAR-TRAD-20250628-0002',
+    id: 'G002',
     company: 'TransLogistics',
     type: 'Caution bancaire',
     value: 5000000,
     status: 'libérée',
     created_at: '2025-06-28T14:30:00Z',
     requestId: 'REQ-TRAD-20250628-0002',
-    portfolioId: 'qf3081zdd',
+    portfolioId: 'trad-1',
+    contractId: 'CONT-20230509-0002',
+    contractReference: 'CRDT-100001',
   },
   {
-    id: 'GUAR-TRAD-20250620-0003',
+    id: 'G003',
     company: 'BTP Services',
     type: 'Dépôt espèces',
     value: 2500000,
     status: 'saisie',
     created_at: '2025-06-20T09:15:00Z',
     requestId: 'REQ-TRAD-20250620-0003',
-    portfolioId: 'qf3081zdd',
+    portfolioId: 'trad-1',
+    contractId: 'CONT-20230509-0003',
+    contractReference: 'CRDT-100002',
   },
 ];

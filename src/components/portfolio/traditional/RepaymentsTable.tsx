@@ -57,6 +57,7 @@ interface RepaymentsTableProps {
   repayments: Repayment[];
   onMarkPaid: (id: string) => void;
   onView: (id: string) => void;
+  onViewSchedule?: (contractReference: string) => void; // Nouvelle prop pour naviguer vers l'échéancier
 }
 
 // Configuration pour l'affichage des statuts
@@ -66,7 +67,12 @@ const statusConfig = {
   'retard': { label: 'En retard', variant: 'error', color: 'bg-red-100 text-red-700' },
 };
 
-export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({ repayments, onMarkPaid, onView }) => {
+export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({ 
+  repayments, 
+  onMarkPaid, 
+  onView,
+  onViewSchedule 
+}) => {
   // État pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'tous' | 'à venir' | 'payé' | 'retard'>('tous');
@@ -274,7 +280,11 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({ repayments, on
                   <TableCell className="font-medium">{r.company}</TableCell>
                   <TableCell>{r.product}</TableCell>
                   <TableCell>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                    <div 
+                      className="text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline"
+                      onClick={() => onViewSchedule && onViewSchedule(r.contractReference)}
+                      title="Voir l'échéancier du contrat"
+                    >
                       {r.contractReference}
                     </div>
                   </TableCell>
