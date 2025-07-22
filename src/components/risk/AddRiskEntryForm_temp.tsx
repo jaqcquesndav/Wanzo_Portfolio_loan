@@ -33,7 +33,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
   const [companySearchTerm, setCompanySearchTerm] = useState('');
   const [institution, setInstitution] = useState('');
   const [institutionRef, setInstitutionRef] = useState('');
-  const [rating, setRating] = useState<'A' | 'B' | 'C' | 'D'>('A');
+  const [coteCredit, setCoteCredit] = useState<'A' | 'B' | 'C' | 'D'>('A');
   const [guaranteeId, setGuaranteeId] = useState('');
   
   // Credit specific fields
@@ -97,7 +97,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
     setCompanySearchTerm('');
     setInstitution('');
     setInstitutionRef('');
-    setRating('A');
+    setCoteCredit('A');
     setGuaranteeId('');
     
     setEncours('');
@@ -220,7 +220,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           institution: `${institutionRef} - ${institution}`,
           encours: parseFloat(encours),
           statut: creditStatus,
-          rating,
+          coteCredit,
           incidents: parseInt(incidents, 10),
           creditScore: parseFloat(creditScore),
           debtRatio: parseFloat(debtRatio),
@@ -245,7 +245,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           equipmentType,
           valeurFinancement: parseFloat(valeurFinancement),
           statut: leasingStatus,
-          rating,
+          coteCredit,
           incidents: parseInt(incidents, 10),
           lastUpdated: currentDate
         };
@@ -268,7 +268,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           montantInvesti: parseFloat(montantInvesti),
           valorisation: parseFloat(valorisation),
           statut: investmentStatus,
-          rating,
+          coteCredit,
           rendementActuel: parseFloat(rendementActuel),
           lastUpdated: currentDate
         };
@@ -492,11 +492,11 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Rating" error={errors.rating}>
+                    <FormField label="Cote crédit" error={errors.coteCredit}>
                       <Select 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value as 'A' | 'B' | 'C' | 'D')}
-                        error={!!errors.rating}
+                        value={coteCredit} 
+                        onChange={(e) => setCoteCredit(e.target.value as 'A' | 'B' | 'C' | 'D')}
+                        error={!!errors.coteCredit}
                       >
                         <option value="A">A</option>
                         <option value="B">B</option>
@@ -580,11 +580,11 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Rating" error={errors.rating}>
+                    <FormField label="Cote crédit" error={errors.coteCredit}>
                       <Select 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value as 'A' | 'B' | 'C' | 'D')}
-                        error={!!errors.rating}
+                        value={coteCredit} 
+                        onChange={(e) => setCoteCredit(e.target.value as 'A' | 'B' | 'C' | 'D')}
+                        error={!!errors.coteCredit}
                       >
                         <option value="A">A</option>
                         <option value="B">B</option>
@@ -669,11 +669,11 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField label="Rating" error={errors.rating}>
+                    <FormField label="Cote crédit" error={errors.coteCredit}>
                       <Select 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value as 'A' | 'B' | 'C' | 'D')}
-                        error={!!errors.rating}
+                        value={coteCredit} 
+                        onChange={(e) => setCoteCredit(e.target.value as 'A' | 'B' | 'C' | 'D')}
+                        error={!!errors.coteCredit}
                       >
                         <option value="A">A</option>
                         <option value="B">B</option>

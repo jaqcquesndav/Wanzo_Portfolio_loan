@@ -11,7 +11,7 @@ export interface CreditRiskEntry {
   institution: string;
   encours: number;
   statut: 'Actif' | 'En défaut' | 'Clôturé';
-  rating: string; // Note sur 100
+  coteCredit: string; // Note sur 100
   incidents: number;
   creditScore: number;
   debtRatio: number;
@@ -29,7 +29,7 @@ export interface LeasingRiskEntry {
   equipmentType: string;
   valeurFinancement: number;
   statut: 'Actif' | 'En défaut' | 'Clôturé';
-  rating: string; // Note sur 100
+  coteCredit: string; // Note sur 100
   incidents: number;
   lastUpdated: string;
   createdBy?: string; // Nom de l'utilisateur qui a créé l'entrée (pour traçabilité)
@@ -45,7 +45,7 @@ export interface InvestmentRiskEntry {
   montantInvesti: number;
   valorisation: number;
   statut: 'Performant' | 'En difficulté' | 'Clôturé';
-  rating: string; // Note sur 100
+  coteCredit: string; // Note sur 100
   rendementActuel: number;
   lastUpdated: string;
   createdBy?: string; // Nom de l'utilisateur qui a créé l'entrée (pour traçabilité)
@@ -65,7 +65,7 @@ export function generateCreditRiskData(companies: CompanyData[]): CreditRiskEntr
       institution: ['Banque Commerciale', 'COOPEC Financement', 'Microfinance Plus'][Math.floor(Math.random() * 3)],
       encours: Math.floor(Math.random() * 500000000),
       statut: Math.random() > 0.8 ? 'En défaut' : 'Actif',
-      rating: (financialMetrics.financial_rating as 'A' | 'B' | 'C' | 'D') || ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
+      coteCredit: (financialMetrics.financial_rating as 'A' | 'B' | 'C' | 'D') || ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
       incidents: Math.floor(Math.random() * 3),
       creditScore: (financialMetrics.credit_score as number) || Math.floor(Math.random() * 100),
       debtRatio: (financialMetrics.debt_ratio as number) || Math.random() * 0.7,
@@ -89,7 +89,7 @@ export function generateLeasingRiskData(companies: CompanyData[]): LeasingRiskEn
       equipmentType: ['Véhicules', 'Machines industrielles', 'Équipement informatique', 'Équipement médical'][Math.floor(Math.random() * 4)],
       valeurFinancement: Math.floor(Math.random() * 300000000),
       statut: Math.random() > 0.85 ? 'En défaut' : 'Actif',
-      rating: (financialMetrics.financial_rating as 'A' | 'B' | 'C' | 'D') || ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
+      coteCredit: (financialMetrics.financial_rating as 'A' | 'B' | 'C' | 'D') || ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
       incidents: Math.floor(Math.random() * 3),
       lastUpdated: new Date().toISOString()
     };
@@ -112,7 +112,7 @@ export function generateInvestmentRiskData(companies: CompanyData[]): Investment
       montantInvesti: Math.floor(Math.random() * 200000000),
       valorisation: Math.floor(Math.random() * 400000000),
       statut: Math.random() > 0.9 ? 'En difficulté' : 'Performant',
-      rating: (financialMetrics.financial_rating as 'A' | 'B' | 'C' | 'D') || ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
+      coteCredit: (financialMetrics.financial_rating as 'A' | 'B' | 'C' | 'D') || ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
       rendementActuel: Math.random() * 0.3,
       lastUpdated: new Date().toISOString()
     };

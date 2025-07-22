@@ -13,7 +13,7 @@ export interface CreditRiskData {
   institution: string;
   encours: number;
   statut: string;
-  rating: string;
+  coteCredit: string;
   incidents: number;
   creditScore: number;
   debtRatio: number;
@@ -29,7 +29,7 @@ export interface LeasingRiskData {
   equipment: string;
   valeurFinancement: number;
   statut: string;
-  rating: string;
+  coteCredit: string;
   incidents: number;
   creditScore: number;
   lastUpdated: string;
@@ -45,7 +45,7 @@ export interface InvestmentRiskData {
   montantInvesti: number;
   valorisation: number;
   statut: string;
-  rating: string;
+  coteCredit: string;
   ebitda: number;
   rendementActuel: number;
   lastUpdated: string;

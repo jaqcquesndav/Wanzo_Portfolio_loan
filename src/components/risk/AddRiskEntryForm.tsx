@@ -33,7 +33,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
   const [companySearchTerm, setCompanySearchTerm] = useState('');
   const [institution, setInstitution] = useState('');
   const [institutionRef, setInstitutionRef] = useState('');
-  const [rating, setRating] = useState('75'); // Note sur 100 au lieu de A,B,C,D
+  const [coteCredit, setCoteCredit] = useState('75'); // Note sur 100 au lieu de A,B,C,D
   const [guaranteeId, setGuaranteeId] = useState('');
   // Le nom de l'utilisateur est géré en interne pour la traçabilité uniquement
   const userName = 'Gestionnaire Portfolio'; // Valeur fixe pour la traçabilité
@@ -99,7 +99,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
     setCompanySearchTerm('');
     setInstitution('');
     setInstitutionRef('');
-    setRating('75');
+    setCoteCredit('75');
     setGuaranteeId('');
     // Conserver la valeur par défaut du userName
     
@@ -129,8 +129,8 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
     if (!companyId) newErrors.companyId = 'Veuillez sélectionner une entreprise';
     if (!institution) newErrors.institution = 'L\'institution est requise';
     if (!institutionRef) newErrors.institutionRef = 'La référence de l\'institution est requise';
-    if (!rating || isNaN(Number(rating)) || Number(rating) < 0 || Number(rating) > 100) {
-      newErrors.rating = 'Veuillez entrer une note de crédit valide (0-100)';
+    if (!coteCredit || isNaN(Number(coteCredit)) || Number(coteCredit) < 0 || Number(coteCredit) > 100) {
+      newErrors.coteCredit = 'Veuillez entrer une cote crédit valide (0-100)';
     }
     
     // Garantie validation pour crédit
@@ -226,7 +226,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           institution: `${institutionRef} - ${institution}`,
           encours: parseFloat(encours),
           statut: creditStatus,
-          rating,
+          coteCredit,
           incidents: parseInt(incidents, 10),
           creditScore: parseFloat(creditScore),
           debtRatio: parseFloat(debtRatio),
@@ -252,7 +252,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           equipmentType,
           valeurFinancement: parseFloat(valeurFinancement),
           statut: leasingStatus,
-          rating,
+          coteCredit,
           incidents: parseInt(incidents, 10),
           lastUpdated: currentDate,
           createdBy: userName // Métadonnée pour traçabilité
@@ -276,7 +276,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           montantInvesti: parseFloat(montantInvesti),
           valorisation: parseFloat(valorisation),
           statut: investmentStatus,
-          rating,
+          coteCredit,
           rendementActuel: parseFloat(rendementActuel),
           lastUpdated: currentDate,
           createdBy: userName // Métadonnée pour traçabilité
@@ -501,14 +501,14 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Rating (0-100)" error={errors.rating}>
+                    <FormField label="Cote crédit (0-100)" error={errors.coteCredit}>
                       <Input 
                         type="number" 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
+                        value={coteCredit} 
+                        onChange={(e) => setCoteCredit(e.target.value)}
                         min="0"
                         max="100"
-                        error={!!errors.rating}
+                        error={!!errors.coteCredit}
                         placeholder="75"
                       />
                     </FormField>
@@ -588,14 +588,14 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Rating (0-100)" error={errors.rating}>
+                    <FormField label="Cote crédit (0-100)" error={errors.coteCredit}>
                       <Input 
                         type="number" 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
+                        value={coteCredit} 
+                        onChange={(e) => setCoteCredit(e.target.value)}
                         min="0"
                         max="100"
-                        error={!!errors.rating}
+                        error={!!errors.coteCredit}
                         placeholder="75"
                       />
                     </FormField>
@@ -676,14 +676,14 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField label="Rating (0-100)" error={errors.rating}>
+                    <FormField label="Cote crédit (0-100)" error={errors.coteCredit}>
                       <Input 
                         type="number" 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
+                        value={coteCredit} 
+                        onChange={(e) => setCoteCredit(e.target.value)}
                         min="0"
                         max="100"
-                        error={!!errors.rating}
+                        error={!!errors.coteCredit}
                         placeholder="75"
                       />
                     </FormField>

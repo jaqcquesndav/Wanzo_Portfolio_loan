@@ -14,7 +14,7 @@ import { AddRiskEntryForm } from '../components/risk/AddRiskEntryForm';
 interface FilterState {
   institution?: string;
   statut?: string;
-  rating?: string;
+  coteCredit?: string;
   secteur?: string;
 }
 
@@ -269,13 +269,13 @@ export default function CentralRisque() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Rating</label>
+                  <label className="block text-sm font-medium mb-1">Cote crédit</label>
                   <select
                     className="w-full p-2 border rounded-md"
-                    value={filters.rating || 'Tous'}
-                    onChange={(e) => handleFilterChange('rating', e.target.value)}
+                    value={filters.coteCredit || 'Tous'}
+                    onChange={(e) => handleFilterChange('coteCredit', e.target.value)}
                   >
-                    {getUniqueOptions(creditData, 'rating').map(option => (
+                    {getUniqueOptions(creditData, 'coteCredit').map(option => (
                       <option key={option} value={option}>{option}</option>
                     ))}
                   </select>
@@ -318,7 +318,7 @@ export default function CentralRisque() {
                     <TableHeader>Secteur</TableHeader>
                     <TableHeader>Encours</TableHeader>
                     <TableHeader>Statut</TableHeader>
-                    <TableHeader>Rating</TableHeader>
+                    <TableHeader>Cote crédit</TableHeader>
                     <TableHeader>Incidents</TableHeader>
                   </TableRow>
                 </TableHead>
@@ -350,16 +350,16 @@ export default function CentralRisque() {
                         <TableCell>
                           <span 
                             className={`px-2 py-1 rounded-full text-xs ${
-                              item.rating === 'A' 
+                              item.coteCredit === 'A' 
                                 ? 'bg-green-100 text-green-800' 
-                                : item.rating === 'B'
+                                : item.coteCredit === 'B'
                                 ? 'bg-blue-100 text-blue-800'
-                                : item.rating === 'C'
+                                : item.coteCredit === 'C'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {item.rating}
+                            {item.coteCredit}
                           </span>
                         </TableCell>
                         <TableCell>{item.incidents}</TableCell>
@@ -396,7 +396,7 @@ export default function CentralRisque() {
                     <TableHeader>Équipement</TableHeader>
                     <TableHeader>Valeur</TableHeader>
                     <TableHeader>Statut</TableHeader>
-                    <TableHeader>Rating</TableHeader>
+                    <TableHeader>Cote crédit</TableHeader>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -428,16 +428,16 @@ export default function CentralRisque() {
                         <TableCell>
                           <span 
                             className={`px-2 py-1 rounded-full text-xs ${
-                              item.rating === 'A' 
+                              item.coteCredit === 'A' 
                                 ? 'bg-green-100 text-green-800' 
-                                : item.rating === 'B'
+                                : item.coteCredit === 'B'
                                 ? 'bg-blue-100 text-blue-800'
-                                : item.rating === 'C'
+                                : item.coteCredit === 'C'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {item.rating}
+                            {item.coteCredit}
                           </span>
                         </TableCell>
                       </TableRow>
