@@ -17,10 +17,12 @@ interface DialogHeaderProps {
 
 interface DialogTitleProps {
   children: ReactNode;
+  className?: string;
 }
 
 interface DialogFooterProps {
   children: ReactNode;
+  className?: string;
 }
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
@@ -40,10 +42,10 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   );
 }
 
-export function DialogContent({ children }: DialogContentProps) {
+export function DialogContent({ children, className }: DialogContentProps) {
   return (
     <div 
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto"
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto my-8 mx-auto ${className || ''}`}
       onClick={(e) => e.stopPropagation()}
     >
       {children}
@@ -59,17 +61,17 @@ export function DialogHeader({ children }: DialogHeaderProps) {
   );
 }
 
-export function DialogTitle({ children }: DialogTitleProps) {
+export function DialogTitle({ children, className }: DialogTitleProps) {
   return (
-    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+    <h2 className={`text-xl font-semibold text-gray-900 dark:text-gray-100 ${className || ''}`}>
       {children}
     </h2>
   );
 }
 
-export function DialogFooter({ children }: DialogFooterProps) {
+export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className="flex justify-end gap-3 p-6 pt-3 border-t border-gray-200 dark:border-gray-700">
+    <div className={`flex justify-end gap-3 p-6 pt-3 border-t border-gray-200 dark:border-gray-700 ${className || ''}`}>
       {children}
     </div>
   );

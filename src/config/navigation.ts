@@ -6,8 +6,7 @@ import {
   HelpCircle,
   Book,
   Shield,
-  Landmark,
-  BarChart3
+  Landmark
 } from 'lucide-react';
 
 export const navigation = {
@@ -30,12 +29,6 @@ export const navigation = {
         href: '/central-risque',
         icon: Shield,
         permissions: ['canViewRiskCentral']
-      },
-      {
-        name: 'Reporting',
-        href: '/reports',
-        icon: BarChart3,
-        permissions: ['canViewReports']
       }
     ]
   },

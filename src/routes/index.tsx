@@ -41,10 +41,6 @@ import Settings from '../pages/Settings';
 import Users from '../pages/Users';
 import InstitutionManagement from '../pages/InstitutionManagement';
 import CentralRisque from '../pages/CentralRisque';
-import ReportTypeRouter from '../pages/ReportTypeRouter';
-import FinancialReports from '../pages/reports/Financial';
-import InvestmentReports from '../pages/reports/Investment';
-import RiskReports from '../pages/reports/Risk';
 import PortfolioNotFound from '../pages/PortfolioNotFound';
 import PortfolioErrorBoundary from '../pages/PortfolioErrorBoundary';
 import { ChatPage } from '../pages/chat/ChatPage';
@@ -85,34 +81,6 @@ export const router = createBrowserRouter([
     element: <Navigate to={(() => {
       const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
       return `/app/${portfolioType}/help`;
-    })()} replace />
-  },
-  {
-    path: '/reports',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/reports`;
-    })()} replace />
-  },
-  {
-    path: '/reports/financial',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/reports/financial`;
-    })()} replace />
-  },
-  {
-    path: '/reports/investment',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/reports/investment`;
-    })()} replace />
-  },
-  {
-    path: '/reports/risk',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/reports/risk`;
     })()} replace />
   },
   {
@@ -162,6 +130,7 @@ export const router = createBrowserRouter([
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/:id/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
       { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
@@ -206,11 +175,6 @@ export const router = createBrowserRouter([
       // Help & Documentation
       { path: 'docs', element: <Documentation /> },
       { path: 'help', element: <Help /> },
-      // Rapports - Utilise le routeur de rapports qui sélectionne le bon composant selon le type de portefeuille
-      { path: 'reports', element: <ReportTypeRouter /> },
-      { path: 'reports/financial', element: <FinancialReports /> },
-      { path: 'reports/investment', element: <InvestmentReports /> },
-      { path: 'reports/risk', element: <RiskReports /> },
       // 404 Not Found pour les détails de portefeuille
       // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
       { path: 'traditional/*', element: <PortfolioNotFound /> },

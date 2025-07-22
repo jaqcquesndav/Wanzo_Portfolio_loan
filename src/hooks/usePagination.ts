@@ -1,14 +1,6 @@
 import { useState, useMemo } from 'react';
 
-interface UsePaginationProps<T> {
-  items: T[];
-  itemsPerPage?: number;
-}
-
-export function usePagination<T>({ 
-  items, 
-  itemsPerPage = 9 
-}: UsePaginationProps<T>) {
+export function usePagination<T>(items: T[], itemsPerPage = 9) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = useMemo(() => 
@@ -16,7 +8,7 @@ export function usePagination<T>({
     [items.length, itemsPerPage]
   );
 
-  const paginatedItems = useMemo(() => 
+  const pageItems = useMemo(() => 
     items.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
@@ -24,10 +16,14 @@ export function usePagination<T>({
     [items, currentPage, itemsPerPage]
   );
 
+  const setPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return {
     currentPage,
-    setCurrentPage,
     totalPages,
-    paginatedItems
+    pageItems,
+    setPage
   };
 }

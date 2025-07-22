@@ -14,23 +14,21 @@ import type { Company } from '../types/company';
 import { mockCompanies } from '../data/mockCompanies';
 import { mockCompanyDetails } from '../data/mockCompanyDetails';
 
-
-
 export default function Prospection() {
   // Suppression du mode card/grid, on ne garde que le tableau (list) et la map
   const [view, setView] = useState<'list' | 'map'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   // const [filters, setFilters] = useState({});
+  
+  // Utilisation du hook useProspection qui charge les données du localStorage
   const {
-  // companies,
-  loading,
-  selectedCompany,
-  setSelectedCompany,
-  showMeetingScheduler,
-  setShowMeetingScheduler,
-  // showNewCompanyModal,
-  // setShowNewCompanyModal,
-} = useProspection(mockCompanies); // Passez mockCompanies comme données initiales
+    companies,
+    loading,
+    selectedCompany,
+    setSelectedCompany,
+    showMeetingScheduler,
+    setShowMeetingScheduler,
+  } = useProspection(mockCompanies); // Fournir mockCompanies comme fallback
 
   // Merge enriched details if TechInnovate Sénégal is selected
 
@@ -58,7 +56,7 @@ export default function Prospection() {
     }
   };
 
-  const filteredCompanies = mockCompanies.filter(company => {
+  const filteredCompanies = companies.filter(company => {
     let matches = true;
 
     if (searchTerm) {

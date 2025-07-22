@@ -66,6 +66,7 @@ interface DisbursementsTableProps {
   disbursements: Disbursement[];
   onConfirm: (id: string) => void;
   onView: (id: string) => void;
+  onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
   portfolioType?: PortfolioType;
   // Informations sur le portfolio pour l'ordre de paiement
   portfolioInfo?: {
@@ -86,6 +87,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   disbursements, 
   onConfirm, 
   onView,
+  onViewCompany,
   portfolioType = 'traditional',
   portfolioInfo = {
     managerName: "Gestionnaire de portefeuille",
@@ -365,7 +367,19 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <TableCell className="font-medium">
-                    <div onClick={() => onView(d.id)}>{d.company}</div>
+                    <span 
+                      className="hover:text-blue-600 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onViewCompany) {
+                          onViewCompany(d.company);
+                        } else {
+                          onView(d.id);
+                        }
+                      }}
+                    >
+                      {d.company}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <div onClick={() => onView(d.id)}>{d.product}</div>

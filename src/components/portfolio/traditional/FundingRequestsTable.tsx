@@ -36,6 +36,7 @@ interface FundingRequestsTableProps {
   onRefuse: (id: string) => void;
   onDisburse: (id: string) => void;
   onView: (id: string) => void;
+  onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
   loading?: boolean;
 }
 
@@ -53,6 +54,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
   onRefuse, 
   onDisburse, 
   onView,
+  onViewCompany,
   loading = false
 }) => {
   // États pour les filtres et la pagination
@@ -365,7 +367,19 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                     }}
                     className="cursor-pointer"
                   >
-                    <TableCell className="font-medium">{req.company}</TableCell>
+                    <TableCell className="font-medium">
+                      <span 
+                        className="hover:text-blue-600 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onViewCompany) {
+                            onViewCompany(req.company);
+                          }
+                        }}
+                      >
+                        {req.company}
+                      </span>
+                    </TableCell>
                     <TableCell>{req.product}</TableCell>
                     <TableCell>{req.amount.toLocaleString()} FCFA</TableCell>
                     <TableCell>

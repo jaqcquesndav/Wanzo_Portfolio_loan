@@ -11,6 +11,8 @@ import { mockInvestmentPortfolios } from '../../data/mockInvestmentPortfolios';
 import { mockLeasingPortfolios } from '../../data/mockLeasingPortfolios';
 import type { PortfolioWithType } from '../../types/portfolio';
 import { guaranteesStorageService } from './guaranteesStorage';
+import { centraleRisqueStorageService } from './centraleRisqueStorage';
+import { initCompaniesData, STORAGE_KEYS } from '../../scripts/initLocalStorage';
 
 /**
  * Classe de service pour l'initialisation et la gestion des données mock
@@ -38,12 +40,24 @@ class MockDataInitializerService {
         // Initialiser les garanties
         await guaranteesStorageService.initializeDefaultData();
         
+        // Initialiser les données d'entreprises
+        initCompaniesData();
+        
+        // Initialiser les données de la centrale de risque
+        await centraleRisqueStorageService.initializeDefaultData();
+        
         // Marquer comme initialisé
         localStorage.setItem(this.MOCK_DATA_INITIALIZED_KEY, 'true');
         
         console.info('Initialisation des données mock terminée avec succès');
       } else {
         console.info('Les données mock sont déjà initialisées');
+        
+        // Vérifier si les données d'entreprises sont initialisées
+        if (!localStorage.getItem(STORAGE_KEYS.COMPANIES)) {
+          console.info('Initialisation des données d\'entreprises manquantes...');
+          initCompaniesData();
+        }
       }
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des données mock:', error);

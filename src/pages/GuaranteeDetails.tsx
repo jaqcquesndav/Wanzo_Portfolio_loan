@@ -10,7 +10,12 @@ import { mockGuarantees } from '../data/mockGuarantees';
 import type { Guarantee } from '../components/portfolio/traditional/GuaranteesTable';
 
 export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?: () => void }) {
-  const { guaranteeId, portfolioId } = useParams();
+  // The route can come in multiple formats:
+  // 1. /app/traditional/:id/guarantees/:guaranteeId
+  // 2. /app/portfolio/:portfolioId/guarantees/:guaranteeId
+  const params = useParams();
+  const guaranteeId = params.guaranteeId;
+  const portfolioId = params.portfolioId || params.id; // Handle both patterns
   const id = propId || guaranteeId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -19,15 +24,20 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
   const [showSeize, setShowSeize] = useState(false);
 
   useEffect(() => {
-    // Recherche stricte : id + portfolioId ou id uniquement si pas de portfolioId
+    console.log('Searching guarantee with params:', { id, portfolioId });
+    
+    // Recherche flexible pour trouver la garantie
     const found = mockGuarantees.find((g) => {
-      if (portfolioId) {
+      // Si on a un ID de garantie et de portefeuille, match sur les deux
+      if (id && portfolioId) {
         return g.id === id && g.portfolioId === portfolioId;
       }
+      // Sinon, match uniquement sur l'ID de garantie
       return g.id === id;
     });
     
     if (found) {
+      console.log('Guarantee found:', found);
       setGuarantee(found);
     } else {
       console.error(`Garantie non trouvée pour id=${id}, portfolioId=${portfolioId}`);
@@ -49,7 +59,7 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
       <Breadcrumb items={[
         { label: 'Dashboard', href: '/app/dashboard' },
         { label: 'Portefeuilles', href: '/app/traditional' },
-        { label: `Portefeuille ${portfolioId}`, href: `/app/traditional/${portfolioId}` },
+        { label: `Portefeuille ${portfolioId || 'N/A'}`, href: `/app/traditional/${portfolioId}` },
         { label: `Garantie #${guarantee.id}` }
       ]} />
       <h1 className="text-2xl font-bold mb-2">Détail de la garantie</h1>

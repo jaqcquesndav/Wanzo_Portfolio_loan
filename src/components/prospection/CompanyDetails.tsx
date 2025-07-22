@@ -16,7 +16,24 @@ interface Company extends BaseCompany {
   financialHighlights?: FinancialHighlights;
   securities?: SecurityOpportunity[];
   documents?: CompanyDocType[];
+  financial_documents?: {
+    id: string;
+    name: string;
+    type: string;
+    url: string;
+    date: string;
+  }[];
+  leadership_team?: {
+    id: string;
+    name: string;
+    title: string;
+    photo?: string;
+    linkedin?: string;
+    gender?: 'male' | 'female' | 'other';
+    bio?: string;
+  }[];
   logo?: string;
+  description?: string;
   creditRating?: string;
   esgScore?: string | number;
   industry?: string;
@@ -39,6 +56,13 @@ interface Company extends BaseCompany {
     linkedin?: string;
     twitter?: string;
     youtube?: string;
+  };
+  socialIcons?: {
+    website?: React.ComponentType<{className?: string, size?: number}>;
+    facebook?: React.ComponentType<{className?: string, size?: number}>;
+    linkedin?: React.ComponentType<{className?: string, size?: number}>;
+    twitter?: React.ComponentType<{className?: string, size?: number}>;
+    youtube?: React.ComponentType<{className?: string, size?: number}>;
   };
   capital?: {
     amount?: number;
@@ -138,7 +162,7 @@ export function CompanyDetails({
               {company.presentation_video && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-2">Présentation vidéo</h3>
-                  <div className="relative w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" style={{ paddingBottom: '56.25%' }}>
+                  <div className="relative w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 shadow-md" style={{ paddingBottom: '56.25%' }}>
                     <iframe
                       src={company.presentation_video}
                       title={`Présentation de ${company.name}`}
@@ -160,9 +184,12 @@ export function CompanyDetails({
                       href={company.socialMedia.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm"
+                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm transition-colors duration-200"
                     >
-                      <Globe className="h-4 w-4" /> Site web
+                      {company.socialIcons?.website ? 
+                        <company.socialIcons.website className="h-4 w-4" /> : 
+                        <Globe className="h-4 w-4" />} 
+                      Site web
                     </a>
                   )}
                   {company.socialMedia?.facebook && (
@@ -170,9 +197,12 @@ export function CompanyDetails({
                       href={company.socialMedia.facebook} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-sm text-blue-700 dark:text-blue-300"
+                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/60 dark:hover:bg-blue-800 text-sm text-blue-700 dark:text-blue-300 transition-colors duration-200"
                     >
-                      <Facebook className="h-4 w-4" /> Facebook
+                      {company.socialIcons?.facebook ? 
+                        <company.socialIcons.facebook className="h-4 w-4" /> : 
+                        <Facebook className="h-4 w-4" />} 
+                      Facebook
                     </a>
                   )}
                   {company.socialMedia?.linkedin && (
@@ -180,9 +210,12 @@ export function CompanyDetails({
                       href={company.socialMedia.linkedin} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-sm text-blue-700 dark:text-blue-300"
+                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/60 dark:hover:bg-blue-800 text-sm text-blue-700 dark:text-blue-300 transition-colors duration-200"
                     >
-                      <Linkedin className="h-4 w-4" /> LinkedIn
+                      {company.socialIcons?.linkedin ? 
+                        <company.socialIcons.linkedin className="h-4 w-4" /> : 
+                        <Linkedin className="h-4 w-4" />} 
+                      LinkedIn
                     </a>
                   )}
                   {company.socialMedia?.twitter && (
@@ -190,9 +223,12 @@ export function CompanyDetails({
                       href={company.socialMedia.twitter} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-sm text-blue-600 dark:text-blue-300"
+                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/60 dark:hover:bg-blue-800 text-sm text-blue-600 dark:text-blue-300 transition-colors duration-200"
                     >
-                      <Twitter className="h-4 w-4" /> Twitter
+                      {company.socialIcons?.twitter ? 
+                        <company.socialIcons.twitter className="h-4 w-4" /> : 
+                        <Twitter className="h-4 w-4" />} 
+                      Twitter
                     </a>
                   )}
                   {company.socialMedia?.youtube && (
@@ -200,9 +236,12 @@ export function CompanyDetails({
                       href={company.socialMedia.youtube} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-sm text-red-600 dark:text-red-300"
+                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-red-100 hover:bg-red-200 dark:bg-red-900/60 dark:hover:bg-red-800 text-sm text-red-600 dark:text-red-300 transition-colors duration-200"
                     >
-                      <Youtube className="h-4 w-4" /> YouTube
+                      {company.socialIcons?.youtube ? 
+                        <company.socialIcons.youtube className="h-4 w-4" /> : 
+                        <Youtube className="h-4 w-4" />} 
+                      YouTube
                     </a>
                   )}
                   {!company.socialMedia?.website && !company.socialMedia?.facebook && 
@@ -213,36 +252,55 @@ export function CompanyDetails({
                 </div>
               </div>
 
-              {/* Informations de l'entreprise */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                <div>
-                  <div className="mb-1"><span className="font-semibold">Identifiant :</span> <span className="text-gray-700 dark:text-gray-200">{company.id}</span></div>
-                  {company.legalForm && (
-                    <div className="mb-1"><span className="font-semibold">Forme juridique :</span> <span className="text-gray-700 dark:text-gray-200">{company.legalForm}</span></div>
-                  )}
-                  {company.rccm && (
-                    <div className="mb-1"><span className="font-semibold">RCCM :</span> <span className="text-gray-700 dark:text-gray-200">{company.rccm}</span></div>
-                  )}
-                  {company.taxId && (
-                    <div className="mb-1"><span className="font-semibold">Identifiant fiscal :</span> <span className="text-gray-700 dark:text-gray-200">{company.taxId}</span></div>
-                  )}
-                  {company.natId && (
-                    <div className="mb-1"><span className="font-semibold">Identifiant national :</span> <span className="text-gray-700 dark:text-gray-200">{company.natId}</span></div>
-                  )}
-                </div>
-                <div>
-                  <div className="mb-1"><span className="font-semibold">Adresse :</span> <span className="text-gray-700 dark:text-gray-200">{[company.address?.street, company.address?.city, company.address?.country].filter(Boolean).join(', ') || '-'}</span></div>
-                  <div className="mb-1"><span className="font-semibold">Contacts :</span> <span className="text-gray-700 dark:text-gray-200">{company.contacts?.email ? `Email : ${company.contacts.email}` : ''}{company.contacts?.email && company.contacts?.phone ? ' | ' : ''}{company.contacts?.phone ? `Téléphone : ${company.contacts.phone}` : ''}</span></div>
-                  <div className="mb-1"><span className="font-semibold">Capital :</span> <span className="text-gray-700 dark:text-gray-200">{company.capital?.amount ? `${company.capital.amount.toLocaleString()} ${company.capital.currency}` : '-'} {company.capital?.isApplicable ? '(Applicable)' : ''}</span></div>
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">À propos de l'entreprise</h3>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">{company.description}</p>
+                
+                {/* Informations clés */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-1">Année de fondation</h4>
+                    <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">{company.founded || '-'}</p>
+                  </div>
+                  
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-1">Employés</h4>
+                    <p className="text-2xl font-bold text-green-800 dark:text-green-200">{company.employee_count || company.employees || '-'}</p>
+                  </div>
+                  
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-1">Chiffre d'affaires</h4>
+                    <p className="text-2xl font-bold text-purple-800 dark:text-purple-200">{company.annual_revenue ? formatCurrency(company.annual_revenue) : '-'}</p>
+                  </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                <div><span className="font-semibold">Année de création :</span> <span className="text-gray-700 dark:text-gray-200">{company.founded || '-'}</span></div>
-                <div><span className="font-semibold">Nombre d'employés :</span> <span className="text-gray-700 dark:text-gray-200">{company.employee_count || company.employees || '-'}</span></div>
-                <div><span className="font-semibold">Chiffre d'affaires :</span> <span className="text-gray-700 dark:text-gray-200">{company.annual_revenue ? formatCurrency(company.annual_revenue) : '-'}</span></div>
-                <div><span className="font-semibold">Cote crédit :</span> <span className="text-gray-700 dark:text-gray-200">{company.creditRating || '-'}</span></div>
-                <div><span className="font-semibold">Note ESG :</span> <span className="text-gray-700 dark:text-gray-200">{company.esgScore !== undefined ? company.esgScore : '-'}</span></div>
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Informations juridiques et administratives</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
+                  <div>
+                    <div className="mb-1"><span className="font-semibold">Identifiant :</span> <span className="text-gray-700 dark:text-gray-200">{company.id}</span></div>
+                    {company.legalForm && (
+                      <div className="mb-1"><span className="font-semibold">Forme juridique :</span> <span className="text-gray-700 dark:text-gray-200">{company.legalForm}</span></div>
+                    )}
+                    {company.rccm && (
+                      <div className="mb-1"><span className="font-semibold">RCCM :</span> <span className="text-gray-700 dark:text-gray-200">{company.rccm}</span></div>
+                    )}
+                    {company.taxId && (
+                      <div className="mb-1"><span className="font-semibold">Identifiant fiscal :</span> <span className="text-gray-700 dark:text-gray-200">{company.taxId}</span></div>
+                    )}
+                    {company.natId && (
+                      <div className="mb-1"><span className="font-semibold">Identifiant national :</span> <span className="text-gray-700 dark:text-gray-200">{company.natId}</span></div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="mb-1"><span className="font-semibold">Adresse :</span> <span className="text-gray-700 dark:text-gray-200">{[company.address?.street, company.address?.city, company.address?.country].filter(Boolean).join(', ') || '-'}</span></div>
+                    <div className="mb-1"><span className="font-semibold">Contacts :</span> <span className="text-gray-700 dark:text-gray-200">{company.contacts?.email ? `Email : ${company.contacts.email}` : ''}{company.contacts?.email && company.contacts?.phone ? ' | ' : ''}{company.contacts?.phone ? `Téléphone : ${company.contacts.phone}` : ''}</span></div>
+                    <div className="mb-1"><span className="font-semibold">Capital :</span> <span className="text-gray-700 dark:text-gray-200">{company.capital?.amount ? `${company.capital.amount.toLocaleString()} ${company.capital.currency}` : '-'} {company.capital?.isApplicable ? '(Applicable)' : ''}</span></div>
+                    <div className="mb-1"><span className="font-semibold">Note ESG :</span> <span className="text-gray-700 dark:text-gray-200">{company.esgScore !== undefined ? company.esgScore : '-'}</span></div>
+                    <div className="mb-1"><span className="font-semibold">Cote crédit :</span> <span className="text-gray-700 dark:text-gray-200">{company.creditRating || '-'}</span></div>
+                  </div>
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -294,23 +352,113 @@ export function CompanyDetails({
             ) : (
               <p className="text-gray-500 dark:text-gray-400">Aucune information sur la direction n'est disponible.</p>
             )}
+            
+            {company.leadership_team && company.leadership_team.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-4">Équipe de direction</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {company.leadership_team.map(member => (
+                    <div key={member.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 flex gap-4">
+                      {member.photo && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={member.photo} 
+                            alt={member.name} 
+                            className="w-16 h-16 object-cover rounded-full border-2 border-gray-200 dark:border-gray-700"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-medium">{member.name}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{member.title}</p>
+                        {member.bio && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{member.bio}</p>
+                        )}
+                        {member.linkedin && (
+                          <a 
+                            href={member.linkedin} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 px-2 py-1 rounded text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300"
+                          >
+                            <Linkedin className="h-3 w-3" /> LinkedIn
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="documents" currentValue={activeTab} className="p-4">
-            {company.documents && company.documents.length > 0 ? (
-              <CompanyDocuments
-                documents={company.documents}
-                onView={(doc) => {
-                  window.open(doc.url, '_blank');
-                }}
-                onDownload={(doc) => {
-                  const link = document.createElement('a');
-                  link.href = doc.url;
-                  link.download = doc.title;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              />
+            {(company.documents && company.documents.length > 0) || 
+             (company.financial_documents && company.financial_documents.length > 0) ? (
+              <div>
+                {company.financial_documents && company.financial_documents.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-3">Documents financiers</h3>
+                    <div className="grid gap-3">
+                      {company.financial_documents.map(doc => (
+                        <div key={doc.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">{doc.name}</h4>
+                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                              <span className="uppercase bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded text-xs">
+                                {doc.type}
+                              </span>
+                              <span>{new Date(doc.date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(doc.url, '_blank')}
+                            >
+                              Voir
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.name;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                            >
+                              Télécharger
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {company.documents && company.documents.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Autres documents</h3>
+                    <CompanyDocuments
+                      documents={company.documents}
+                      onView={(doc) => {
+                        window.open(doc.url, '_blank');
+                      }}
+                      onDownload={(doc) => {
+                        const link = document.createElement('a');
+                        link.href = doc.url;
+                        link.download = doc.title;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-gray-500 dark:text-gray-400">Aucun document disponible.</p>
             )}

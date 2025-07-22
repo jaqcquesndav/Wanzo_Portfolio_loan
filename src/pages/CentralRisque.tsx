@@ -1,472 +1,529 @@
-import React, { useState } from 'react';
-import { mockCompanies } from '../data/mockCompanies';
-import type { Company } from '../types/company';
+import { useState } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/ui';
 import { Button } from '../components/ui/Button';
-import { Download, ChevronDown } from 'lucide-react';
+import { Download, ChevronDown, CreditCard, Truck, TrendingUp, Filter, Plus } from 'lucide-react';
 import { Pagination } from '../components/ui/Pagination';
 import { usePagination } from '../hooks/usePagination';
+import { useCentraleRisque } from '../hooks/useCentraleRisque';
+import type { CreditRiskEntry, LeasingRiskEntry, InvestmentRiskEntry } from '../data/mockCentraleRisque';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { formatCurrency } from '../utils/formatters';
+import { AddRiskEntryForm } from '../components/risk/AddRiskEntryForm';
 
-// Mock data
-const mockData = [
-  {
-    id: '1',
-    institution: 'Banque Commerciale du Congo',
-    entreprise: 'Kinshasa Digital',
-    secteur: 'Technologies',
-    encours: 120000000,
-    statut: 'Actif',
-    rating: 'A',
-    incidents: 0
-  },
-  {
-    id: '2',
-    institution: 'COOPEC Lumière',
-    entreprise: 'Congo Agro Business',
-    secteur: 'Agriculture',
-    encours: 80000000,
-    statut: 'Actif',
-    rating: 'B',
-    incidents: 1
-  },
-  {
-    id: '3',
-    institution: 'Microfinance RDC',
-    entreprise: 'Lubumbashi Mining Services',
-    secteur: 'Industrie',
-    encours: 250000000,
-    statut: 'En défaut',
-    rating: 'C',
-    incidents: 2
-  },
-  {
-    id: '4',
-    institution: 'Banque Centrale du Congo',
-    entreprise: 'Goma Construction',
-    secteur: 'Construction',
-    encours: 175000000,
-    statut: 'Actif',
-    rating: 'B',
-    incidents: 0
-  },
-  {
-    id: '5',
-    institution: 'Trust Merchant Bank',
-    entreprise: 'Bukavu Technologies',
-    secteur: 'Technologies',
-    encours: 95000000,
-    statut: 'Actif',
-    rating: 'A',
-    incidents: 0
-  },
-  {
-    id: '6',
-    institution: 'Equity Bank Congo',
-    entreprise: 'Katanga Mining Corp',
-    secteur: 'Industrie',
-    encours: 320000000,
-    statut: 'En défaut',
-    rating: 'C',
-    incidents: 3
-  },
-  {
-    id: '7',
-    institution: 'Rawbank',
-    entreprise: 'Matadi Transport',
-    secteur: 'Transport',
-    encours: 110000000,
-    statut: 'Actif',
-    rating: 'B',
-    incidents: 1
-  },
-  {
-    id: '8',
-    institution: 'FINCA RDC',
-    entreprise: 'Kisangani Food Processing',
-    secteur: 'Agroalimentaire',
-    encours: 65000000,
-    statut: 'Actif',
-    rating: 'B',
-    incidents: 0
-  },
-  {
-    id: '9',
-    institution: 'Afriland First Bank',
-    entreprise: 'Kolwezi Energy',
-    secteur: 'Énergie',
-    encours: 210000000,
-    statut: 'En défaut',
-    rating: 'C',
-    incidents: 2
-  },
-  {
-    id: '10',
-    institution: 'Standard Bank Congo',
-    entreprise: 'Mbuji-Mayi Commerce',
-    secteur: 'Commerce',
-    encours: 85000000,
-    statut: 'Actif',
-    rating: 'A',
-    incidents: 0
-  },
-  {
-    id: '11',
-    institution: 'Ecobank RDC',
-    entreprise: 'Mbandaka Fisheries',
-    secteur: 'Pêche',
-    encours: 55000000,
-    statut: 'Actif',
-    rating: 'B',
-    incidents: 0
-  },
-  {
-    id: '12',
-    institution: 'Advans Banque Congo',
-    entreprise: 'Tshikapa Logistics',
-    secteur: 'Logistique',
-    encours: 140000000,
-    statut: 'En défaut',
-    rating: 'C',
-    incidents: 3
-  }
-];
-
-// Ajout d'un user et institution minimum pour la démo
-const user = { id: 'demo', role: 'admin' };
-const institution = { name: 'Institution Démo' };
+// Type pour les filtres
+interface FilterState {
+  institution?: string;
+  statut?: string;
+  rating?: string;
+  secteur?: string;
+}
 
 export default function CentralRisque() {
-  const [search, setSearch] = useState('');
-  const [filterStatut, setFilterStatut] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
-  const [itemsPerPage, setItemsPerPage] = useState(5); // Nombre d'éléments par page
-  const [form, setForm] = useState({
-    id: '',
-    institution: institution?.name || '',
-    entreprise: '',
-    secteur: '',
-    encours: '',
-    statut: 'Actif',
-    rating: 'A',
-    incidents: 0
-  });
-  const [data, setData] = useState(mockData);
-  const [companyInput, setCompanyInput] = useState('');
-  const [showAddCompany, setShowAddCompany] = useState(false);
-  const [companies, setCompanies] = useState(mockCompanies);
-  const isAdmin = user && user.role === 'admin';
+  // État pour gérer le type de données de risque affiché
+  const [activeTab, setActiveTab] = useState<'credit' | 'leasing' | 'investment'>('credit');
+  
+  // État pour le modal d'ajout
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // Utiliser les hooks pour charger les données
+  const { 
+    data: creditData, 
+    loading: loadingCredit, 
+    error: errorCredit,
+    refresh: refreshCredit
+  } = useCentraleRisque<CreditRiskEntry>('credit');
+  
+  const { 
+    data: leasingData, 
+    loading: loadingLeasing, 
+    error: errorLeasing,
+    refresh: refreshLeasing
+  } = useCentraleRisque<LeasingRiskEntry>('leasing');
+  
+  const { 
+    data: investmentData, 
+    loading: loadingInvestment, 
+    error: errorInvestment,
+    refresh: refreshInvestment
+  } = useCentraleRisque<InvestmentRiskEntry>('investment');
+  
+  // États pour la recherche et le filtrage
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<FilterState>({});
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Utiliser la pagination
+  const {
+    currentPage: creditPage,
+    totalPages: creditTotalPages,
+    pageItems: creditPageItems,
+    setPage: setCreditPage
+  } = usePagination(creditData, 10);
+  
+  const {
+    currentPage: leasingPage,
+    totalPages: leasingTotalPages,
+    pageItems: leasingPageItems,
+    setPage: setLeasingPage
+  } = usePagination(leasingData, 10);
+  
+  const {
+    currentPage: investmentPage,
+    totalPages: investmentTotalPages,
+    pageItems: investmentPageItems,
+    setPage: setInvestmentPage
+  } = usePagination(investmentData, 10);
 
-  const filtered = data.filter(row =>
-    (row.entreprise.toLowerCase().includes(search.toLowerCase()) ||
-      row.institution.toLowerCase().includes(search.toLowerCase())) &&
-    (filterStatut ? row.statut === filterStatut : true)
-  );
-
-  // Pagination des données filtrées
-  const { currentPage, setCurrentPage, totalPages, paginatedItems } = usePagination({
-    items: filtered,
-    itemsPerPage: itemsPerPage 
-  });
-
-  // Export handlers (à implémenter avec SheetJS ou autre lib)
-  const handleExport = (type: string) => {
-    setExportOpen(false);
-    alert('Export ' + type + ' non implémenté (démo)');
-  };
-
-  // Fermer le menu export si clic en dehors
-  React.useEffect(() => {
-    if (!exportOpen) return;
-    const handler = (e: MouseEvent) => {
-      const menu = document.getElementById('export-menu');
-      if (menu && !menu.contains(e.target as Node)) setExportOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [exportOpen]);
-
-  // Gestion du formulaire Modal
-  const handleOpenModal = () => {
-    setForm({
-      id: '',
-      institution: institution?.name || '',
-      entreprise: '',
-      secteur: '',
-      encours: '',
-      statut: 'Actif',
-      rating: 'A',
-      incidents: 0
-    });
-    setCompanyInput('');
-    setShowAddCompany(false);
-    setModalOpen(true);
-  };
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    if (name === 'entreprise') {
-      setCompanyInput(value);
-      const company = companies.find(c => c.name.toLowerCase() === value.toLowerCase());
-      if (company) {
-        setForm(prev => ({ ...prev, secteur: company.sector }));
-        setShowAddCompany(false);
-      } else {
-        setShowAddCompany(value.length > 2);
-        setForm(prev => ({ ...prev, secteur: '' }));
-      }
-    }
-  };
-
-  const handleCompanyInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCompanyInput(e.target.value);
-    setForm(prev => ({ ...prev, entreprise: e.target.value }));
-    const company = companies.find(c => c.name.toLowerCase() === e.target.value.toLowerCase());
-    if (company) {
-      setForm(prev => ({ ...prev, secteur: company.sector }));
-      setShowAddCompany(false);
-    } else {
-      setShowAddCompany(e.target.value.length > 2);
-      setForm(prev => ({ ...prev, secteur: '' }));
-    }
-  };
-
-  const handleAddCompany = () => {
-    if (!companyInput.trim()) return;
-    const newCompany = {
-      id: (Math.random() * 100000).toFixed(0),
-      name: companyInput,
-      sector: form.secteur || 'Autre',
-      size: 'small' as const,
-      annual_revenue: 0,
-      employee_count: 0,
-      status: 'active' as const,
-      financial_metrics: {
-        revenue_growth: 0,
-        profit_margin: 0,
-        cash_flow: 0,
-        debt_ratio: 0,
-        working_capital: 0,
-        credit_score: 0,
-        financial_rating: 'C' as const
-      },
-      esg_metrics: {
-        carbon_footprint: 0,
-        environmental_rating: 'D' as const,
-        social_rating: 'D' as const,
-        governance_rating: 'D' as const
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    setCompanies(prev => [...prev, newCompany as Company]);
-    setForm(prev => ({ ...prev, entreprise: companyInput, secteur: newCompany.sector }));
-    setShowAddCompany(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setData(prev => [
+  // Fonction pour gérer le filtrage
+  const handleFilterChange = (key: keyof FilterState, value: string) => {
+    setFilters(prev => ({
       ...prev,
-      {
-        ...form,
-        id: (Math.random() * 100000).toFixed(0),
-        encours: Number(form.encours),
-        incidents: Number(form.incidents)
-      }
-    ]);
-    setModalOpen(false);
+      [key]: value === 'Tous' ? undefined : value
+    }));
   };
+
+  // Fonction pour réinitialiser les filtres
+  const resetFilters = () => {
+    setFilters({});
+    setSearchTerm('');
+  };
+
+  // Fonction pour exporter les données
+  const exportData = () => {
+    let dataToExport;
+    let filename;
+    
+    switch (activeTab) {
+      case 'credit':
+        dataToExport = creditData;
+        filename = 'centrale-risque-credit.json';
+        break;
+      case 'leasing':
+        dataToExport = leasingData;
+        filename = 'centrale-risque-leasing.json';
+        break;
+      case 'investment':
+        dataToExport = investmentData;
+        filename = 'centrale-risque-investment.json';
+        break;
+    }
+    
+    const jsonString = JSON.stringify(dataToExport, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Extraire les options uniques pour les filtres
+  const getUniqueOptions = (data: CreditRiskEntry[] | LeasingRiskEntry[] | InvestmentRiskEntry[], key: keyof CreditRiskEntry | keyof LeasingRiskEntry | keyof InvestmentRiskEntry): string[] => {
+    const options = Array.from(new Set(data.map(item => String(item[key as keyof typeof item]))));
+    return ['Tous', ...options];
+  };
+
+  // Afficher un message d'erreur si nécessaire
+  if (
+    (activeTab === 'credit' && errorCredit) ||
+    (activeTab === 'leasing' && errorLeasing) ||
+    (activeTab === 'investment' && errorInvestment)
+  ) {
+    return (
+      <div className="container mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Centrale de Risque</h1>
+        <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700">
+          Une erreur est survenue lors du chargement des données.
+          <button 
+            className="ml-4 underline" 
+            onClick={() => {
+              if (activeTab === 'credit') refreshCredit();
+              if (activeTab === 'leasing') refreshLeasing();
+              if (activeTab === 'investment') refreshInvestment();
+            }}
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Central de risque</h1>
-          <p className="text-gray-500 text-sm max-w-2xl">Partagé avec les institutions financières et acteurs du capital investissement. Visualisez l’exposition au risque du marché financier local.</p>
-          {isAdmin && (
-            <Button variant="primary" onClick={handleOpenModal} className="mt-4">Ajouter une exposition</Button>
-          )}
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Centrale de Risque</h1>
+        <div className="flex space-x-2">
+          <Button onClick={() => setIsAddModalOpen(true)} variant="primary" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Ajouter une exposition
+          </Button>
+          <Button onClick={exportData} variant="outline" className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Exporter
+          </Button>
         </div>
-        <div className="relative w-full md:w-auto flex justify-end items-end">
+      </div>
+      
+      {/* Modal form for adding risk entries */}
+      <AddRiskEntryForm 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={() => {
+          if (activeTab === 'credit') refreshCredit();
+          if (activeTab === 'leasing') refreshLeasing();
+          if (activeTab === 'investment') refreshInvestment();
+        }}
+        riskType={activeTab}
+      />
+
+      <Tabs 
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'credit' | 'leasing' | 'investment')}
+        className="mb-6"
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger 
+            value="credit" 
+            currentValue={activeTab}
+            onValueChange={(value) => setActiveTab(value as 'credit' | 'leasing' | 'investment')}
+            className="flex items-center gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            Crédit
+          </TabsTrigger>
+          <TabsTrigger 
+            value="leasing" 
+            currentValue={activeTab}
+            onValueChange={(value) => setActiveTab(value as 'credit' | 'leasing' | 'investment')}
+            className="flex items-center gap-2"
+          >
+            <Truck className="h-4 w-4" />
+            Leasing
+          </TabsTrigger>
+          <TabsTrigger 
+            value="investment" 
+            currentValue={activeTab}
+            onValueChange={(value) => setActiveTab(value as 'credit' | 'leasing' | 'investment')}
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Investissement
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Barre de recherche et filtres */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Rechercher une entreprise..."
+              className="w-full p-2 border rounded-md"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <Button
             variant="outline"
-            icon={<Download className="h-4 w-4" />}
-            onClick={() => setExportOpen(v => !v)}
-            className="w-full md:w-auto"
-            type="button"
-            aria-haspopup="listbox"
-            aria-expanded={exportOpen ? 'true' : 'false'}
-            aria-controls="export-menu"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
           >
-            Exporter <ChevronDown className="ml-2 h-4 w-4" />
+            <Filter className="h-4 w-4" />
+            Filtres
+            <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </Button>
-          {exportOpen && (
-            <div id="export-menu" className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-10">
-              <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleExport('xlsx')}>Exporter XLSX</button>
-              <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleExport('csv')}>Exporter CSV</button>
-              <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleExport('pdf')}>Exporter PDF</button>
-            </div>
-          )}
         </div>
-      </div>
-      <div className="flex flex-col md:flex-row gap-4">
-        <input
-          type="text"
-          placeholder="Recherche entreprise ou institution..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="border rounded px-3 py-2 w-full md:w-80"
-        />
-        <select
-          value={filterStatut}
-          onChange={e => setFilterStatut(e.target.value)}
-          className="border rounded px-3 py-2 w-full md:w-60"
-        >
-          <option value="">Tous statuts</option>
-          <option value="Actif">Actif</option>
-          <option value="En défaut">En défaut</option>
-        </select>
-      </div>
-      {/* Modal d'ajout */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-lg">
-            <h2 className="text-lg font-semibold mb-4">Ajouter une exposition</h2>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Institution</label>
-              <input name="institution" value={form.institution} readOnly className="border rounded px-3 py-2 w-full bg-gray-100" />
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Entreprise</label>
-              <input
-                name="entreprise"
-                value={companyInput}
-                onChange={handleCompanyInput}
-                required
-                className="border rounded px-3 py-2 w-full"
-                placeholder="Rechercher ou saisir une entreprise..."
-                autoComplete="off"
-                list="company-list"
-              />
-              <datalist id="company-list">
-                {companies.filter(c => c.name.toLowerCase().includes(companyInput.toLowerCase())).map(c => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
-              {showAddCompany && (
-                <button type="button" className="mt-2 text-blue-600 underline text-sm" onClick={handleAddCompany}>Ajouter « {companyInput} » comme nouvelle entreprise</button>
-              )}
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Secteur</label>
-              <input name="secteur" value={form.secteur} onChange={handleFormChange} className="border rounded px-3 py-2 w-full" placeholder="Secteur (si nouvelle entreprise)" />
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Encours (CDF)</label>
-              <input name="encours" type="number" value={form.encours} onChange={handleFormChange} required className="border rounded px-3 py-2 w-full" />
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Statut</label>
-              <select name="statut" value={form.statut} onChange={handleFormChange} className="border rounded px-3 py-2 w-full">
-                <option value="Actif">Actif</option>
-                <option value="En défaut">En défaut</option>
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Rating</label>
-              <select name="rating" value={form.rating} onChange={handleFormChange} className="border rounded px-3 py-2 w-full">
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Incidents</label>
-              <input name="incidents" type="number" value={form.incidents} onChange={handleFormChange} required className="border rounded px-3 py-2 w-full" />
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>Annuler</Button>
-              <Button variant="primary" type="submit">Publier</Button>
-            </div>
-          </form>
-        </div>
-      )}
 
-      <div className="w-full overflow-x-auto">
-        <div className="inline-block min-w-full align-middle">
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm min-w-[900px]">
-            <Table className="min-w-full">
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Institution</TableHeader>
-                  <TableHeader>Entreprise</TableHeader>
-                  <TableHeader>Secteur</TableHeader>
-                  <TableHeader>Encours (CDF)</TableHeader>
-                  <TableHeader>Statut</TableHeader>
-                  <TableHeader>Rating</TableHeader>
-                  <TableHeader>Incidents</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedItems.length > 0 ? (
-                  paginatedItems.map(row => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.institution}</TableCell>
-                      <TableCell>{row.entreprise}</TableCell>
-                      <TableCell>{row.secteur}</TableCell>
-                      <TableCell>{row.encours.toLocaleString('fr-CD')}</TableCell>
-                      <TableCell>{row.statut}</TableCell>
-                      <TableCell>{row.rating}</TableCell>
-                      <TableCell>{row.incidents}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      Aucun résultat ne correspond à votre recherche
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      </div>
+        {/* Panneau de filtres */}
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-md">
+            {/* Filtres spécifiques pour chaque type de risque */}
+            {activeTab === 'credit' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Institution</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={filters.institution || 'Tous'}
+                    onChange={(e) => handleFilterChange('institution', e.target.value)}
+                  >
+                    {getUniqueOptions(creditData, 'institution').map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Statut</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={filters.statut || 'Tous'}
+                    onChange={(e) => handleFilterChange('statut', e.target.value)}
+                  >
+                    {getUniqueOptions(creditData, 'statut').map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Rating</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={filters.rating || 'Tous'}
+                    onChange={(e) => handleFilterChange('rating', e.target.value)}
+                  >
+                    {getUniqueOptions(creditData, 'rating').map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Secteur</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={filters.secteur || 'Tous'}
+                    onChange={(e) => handleFilterChange('secteur', e.target.value)}
+                  >
+                    {getUniqueOptions(creditData, 'sector').map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
 
-      {/* Pagination avec informations */}
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
-            Affichage de <span className="font-medium">{Math.min(filtered.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filtered.length, currentPage * itemsPerPage)}</span> sur <span className="font-medium">{filtered.length}</span> entrées
+            {/* Bouton pour réinitialiser les filtres */}
+            <div className="col-span-1 md:col-span-4 flex justify-end">
+              <Button variant="outline" onClick={resetFilters}>
+                Réinitialiser les filtres
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700 dark:text-gray-300">Éléments par page:</span>
-            <select 
-              value={itemsPerPage} 
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1); // Retourner à la première page lors du changement
-              }}
-              className="border rounded px-2 py-1"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-        </div>
-        
-        {totalPages > 1 && (
-          <Pagination 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={(page) => setCurrentPage(page)} 
-          />
         )}
-      </div>
+
+        {/* Contenu des onglets */}
+        <TabsContent value="credit" currentValue={activeTab}>
+          {loadingCredit ? (
+            <div className="text-center py-8">Chargement des données...</div>
+          ) : (
+            <>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Institution</TableHeader>
+                    <TableHeader>Entreprise</TableHeader>
+                    <TableHeader>Secteur</TableHeader>
+                    <TableHeader>Encours</TableHeader>
+                    <TableHeader>Statut</TableHeader>
+                    <TableHeader>Rating</TableHeader>
+                    <TableHeader>Incidents</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {creditPageItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-4">
+                        Aucune donnée trouvée
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    creditPageItems.map((item: CreditRiskEntry) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.institution}</TableCell>
+                        <TableCell>{item.companyName}</TableCell>
+                        <TableCell>{item.sector}</TableCell>
+                        <TableCell>{formatCurrency(item.encours)}</TableCell>
+                        <TableCell>
+                          <span 
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              item.statut === 'Actif' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {item.statut}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span 
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              item.rating === 'A' 
+                                ? 'bg-green-100 text-green-800' 
+                                : item.rating === 'B'
+                                ? 'bg-blue-100 text-blue-800'
+                                : item.rating === 'C'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {item.rating}
+                          </span>
+                        </TableCell>
+                        <TableCell>{item.incidents}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              
+              {creditTotalPages > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination
+                    currentPage={creditPage}
+                    totalPages={creditTotalPages}
+                    onPageChange={setCreditPage}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="leasing" currentValue={activeTab}>
+          {loadingLeasing ? (
+            <div className="text-center py-8">Chargement des données...</div>
+          ) : (
+            <>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Institution</TableHeader>
+                    <TableHeader>Entreprise</TableHeader>
+                    <TableHeader>Secteur</TableHeader>
+                    <TableHeader>Équipement</TableHeader>
+                    <TableHeader>Valeur</TableHeader>
+                    <TableHeader>Statut</TableHeader>
+                    <TableHeader>Rating</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {leasingPageItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-4">
+                        Aucune donnée trouvée
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    leasingPageItems.map((item: LeasingRiskEntry) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.institution}</TableCell>
+                        <TableCell>{item.companyName}</TableCell>
+                        <TableCell>{item.sector}</TableCell>
+                        <TableCell>{item.equipmentType}</TableCell>
+                        <TableCell>{formatCurrency(item.valeurFinancement)}</TableCell>
+                        <TableCell>
+                          <span 
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              item.statut === 'Actif' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {item.statut}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span 
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              item.rating === 'A' 
+                                ? 'bg-green-100 text-green-800' 
+                                : item.rating === 'B'
+                                ? 'bg-blue-100 text-blue-800'
+                                : item.rating === 'C'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {item.rating}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              
+              {leasingTotalPages > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination
+                    currentPage={leasingPage}
+                    totalPages={leasingTotalPages}
+                    onPageChange={setLeasingPage}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="investment" currentValue={activeTab}>
+          {loadingInvestment ? (
+            <div className="text-center py-8">Chargement des données...</div>
+          ) : (
+            <>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Institution</TableHeader>
+                    <TableHeader>Entreprise</TableHeader>
+                    <TableHeader>Secteur</TableHeader>
+                    <TableHeader>Type</TableHeader>
+                    <TableHeader>Montant investi</TableHeader>
+                    <TableHeader>Valorisation</TableHeader>
+                    <TableHeader>Statut</TableHeader>
+                    <TableHeader>Rendement</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {investmentPageItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-4">
+                        Aucune donnée trouvée
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    investmentPageItems.map((item: InvestmentRiskEntry) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.institution}</TableCell>
+                        <TableCell>{item.companyName}</TableCell>
+                        <TableCell>{item.sector}</TableCell>
+                        <TableCell>{item.investmentType}</TableCell>
+                        <TableCell>{formatCurrency(item.montantInvesti)}</TableCell>
+                        <TableCell>{formatCurrency(item.valorisation)}</TableCell>
+                        <TableCell>
+                          <span 
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              item.statut === 'Performant' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {item.statut}
+                          </span>
+                        </TableCell>
+                        <TableCell>{(item.rendementActuel * 100).toFixed(2)}%</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              
+              {investmentTotalPages > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination
+                    currentPage={investmentPage}
+                    totalPages={investmentTotalPages}
+                    onPageChange={setInvestmentPage}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

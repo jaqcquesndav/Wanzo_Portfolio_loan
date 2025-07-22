@@ -16,11 +16,14 @@ import { DisbursementsTable } from '../components/portfolio/traditional/Disburse
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
+import { CompanyDetails } from '../components/prospection/CompanyDetails';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockFundingRequests } from '../data/mockFundingRequests';
 import { mockDisbursements } from '../data/mockDisbursements';
 import { mockRepayments } from '../data/mockRepayments';
+import { mockCompanies } from '../data/mockCompanies';
+import { mockCompanyDetails } from '../data/mockCompanyDetails';
 import { useNotification } from '../contexts/NotificationContext';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
@@ -43,12 +46,11 @@ export default function TraditionalPortfolioDetails() {
   const { showNotification } = useNotification();
   const { setCurrentPortfolioId } = usePortfolioContext();
   const [showProductForm, setShowProductForm] = useState(false);
-// const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | null>(null);
   const [tab, setTab] = useState('products');
-  // const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  // const [selectedDisbursementId, setSelectedDisbursementId] = useState<string | null>(null);
-  // const [selectedRepaymentId, setSelectedRepaymentId] = useState<string | null>(null);
-  // const [selectedGuaranteeId, setSelectedGuaranteeId] = useState<string | null>(null);
+  
+  // État pour le modal de détails de l'entreprise
+  const [companyDetailModalOpen, setCompanyDetailModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
 
   // Sync current portfolio id in context for sidebar navigation
   useEffect(() => {
@@ -75,6 +77,33 @@ export default function TraditionalPortfolioDetails() {
   function isTraditionalPortfolio(p: AnyPortfolio | undefined): p is TraditionalPortfolio {
     return !!p && p.type === 'traditional' && Array.isArray((p as TraditionalPortfolio).products);
   }
+
+  // Fonction pour gérer l'affichage des détails d'une entreprise
+  const handleViewCompany = (companyName: string) => {
+    // Chercher l'entreprise dans mockCompanies
+    const companyFound = mockCompanies.find(c => c.name === companyName);
+    
+    if (companyFound) {
+      setSelectedCompany(companyFound);
+    } else if (companyName === 'TechInnovate Congo') {
+      // Cas particulier pour TechInnovate Congo
+      setSelectedCompany(mockCompanyDetails);
+    } else {
+      // Créer une entreprise de base avec le nom fourni
+      setSelectedCompany({
+        id: 'unknown',
+        name: companyName,
+        sector: 'Non spécifié',
+        size: 'small',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }
+    
+    setCompanyDetailModalOpen(true);
+    showNotification(`Détails de l'entreprise ${companyName} affichés`, 'info');
+  };
 
   const handleCreateProduct = useCallback(async (data: ProductFormData) => {
     if (!data.name || !data.type) {
@@ -314,6 +343,7 @@ export default function TraditionalPortfolioDetails() {
                     showNotification(`Demande ${requestId} sélectionnée`, 'info');
                     // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)
                   }}
+                  onViewCompany={handleViewCompany}
                 />
               </TabsContent>
             );
@@ -332,6 +362,7 @@ export default function TraditionalPortfolioDetails() {
                     showNotification(`Décaissement ${disbursementId} sélectionné`, 'info');
                     // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/disbursements/${disbursementId}`)
                   }}
+                  onViewCompany={handleViewCompany}
                 />
               </TabsContent>
             );
@@ -354,6 +385,7 @@ export default function TraditionalPortfolioDetails() {
                     // Naviguer vers l'échéancier du contrat associé
                     navigate(`/app/portfolio/${id}/contracts/${contractReference}/schedule`);
                   }}
+                  onViewCompany={handleViewCompany}
                 />
               </TabsContent>
             );
@@ -402,6 +434,14 @@ export default function TraditionalPortfolioDetails() {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Modal de détails de l'entreprise */}
+      {selectedCompany && companyDetailModalOpen && (
+        <CompanyDetails
+          company={selectedCompany as any}
+          onClose={() => setCompanyDetailModalOpen(false)}
+        />
       )}
     </div>
   );

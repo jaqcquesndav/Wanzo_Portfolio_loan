@@ -57,6 +57,7 @@ interface RepaymentsTableProps {
   repayments: Repayment[];
   onMarkPaid: (id: string) => void;
   onView: (id: string) => void;
+  onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
   onViewSchedule?: (contractReference: string) => void; // Nouvelle prop pour naviguer vers l'échéancier
 }
 
@@ -71,6 +72,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
   repayments, 
   onMarkPaid, 
   onView,
+  onViewCompany,
   onViewSchedule 
 }) => {
   // État pour la recherche et le filtrage
@@ -277,7 +279,19 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                   onClick={() => onView(r.id)}
                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
-                  <TableCell className="font-medium">{r.company}</TableCell>
+                  <TableCell className="font-medium">
+                    <span 
+                      className="hover:text-blue-600 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onViewCompany) {
+                          onViewCompany(r.company);
+                        }
+                      }}
+                    >
+                      {r.company}
+                    </span>
+                  </TableCell>
                   <TableCell>{r.product}</TableCell>
                   <TableCell>
                     <div 
