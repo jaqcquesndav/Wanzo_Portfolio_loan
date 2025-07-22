@@ -1,8 +1,8 @@
 // src/scripts/initCentraleRisque.ts
 // Script d'initialisation des données de la centrale de risque dans le localStorage
 
-import { mockCompanies } from '../data/companies';
-import type { CompanyData } from '../data/companies';
+import { mockCompanies } from '../data/companies/index';
+import type { CompanyData } from '../data/companies/index';
 
 // Clés de stockage pour la centrale de risque
 export const CENTRALE_RISQUE_KEYS = {

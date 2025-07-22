@@ -130,6 +130,7 @@ export const router = createBrowserRouter([
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/:id/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
       { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
       // Métier detail routes (must be before :id and *)

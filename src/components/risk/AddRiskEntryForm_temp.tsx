@@ -33,10 +33,8 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
   const [companySearchTerm, setCompanySearchTerm] = useState('');
   const [institution, setInstitution] = useState('');
   const [institutionRef, setInstitutionRef] = useState('');
-  const [rating, setRating] = useState('75'); // Note sur 100 au lieu de A,B,C,D
+  const [rating, setRating] = useState<'A' | 'B' | 'C' | 'D'>('A');
   const [guaranteeId, setGuaranteeId] = useState('');
-  // Le nom de l'utilisateur est géré en interne pour la traçabilité uniquement
-  const userName = 'Gestionnaire Portfolio'; // Valeur fixe pour la traçabilité
   
   // Credit specific fields
   const [encours, setEncours] = useState('');
@@ -99,9 +97,8 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
     setCompanySearchTerm('');
     setInstitution('');
     setInstitutionRef('');
-    setRating('75');
+    setRating('A');
     setGuaranteeId('');
-    // Conserver la valeur par défaut du userName
     
     setEncours('');
     setIncidents('0');
@@ -129,9 +126,6 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
     if (!companyId) newErrors.companyId = 'Veuillez sélectionner une entreprise';
     if (!institution) newErrors.institution = 'L\'institution est requise';
     if (!institutionRef) newErrors.institutionRef = 'La référence de l\'institution est requise';
-    if (!rating || isNaN(Number(rating)) || Number(rating) < 0 || Number(rating) > 100) {
-      newErrors.rating = 'Veuillez entrer une note de crédit valide (0-100)';
-    }
     
     // Garantie validation pour crédit
     if (riskType === 'credit' && !guaranteeId) {
@@ -231,8 +225,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           creditScore: parseFloat(creditScore),
           debtRatio: parseFloat(debtRatio),
           lastUpdated: currentDate,
-          guaranteeId,
-          createdBy: userName // Métadonnée pour traçabilité
+          guaranteeId
         };
         
         // Get existing data and add new entry
@@ -254,8 +247,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           statut: leasingStatus,
           rating,
           incidents: parseInt(incidents, 10),
-          lastUpdated: currentDate,
-          createdBy: userName // Métadonnée pour traçabilité
+          lastUpdated: currentDate
         };
         
         // Get existing data and add new entry
@@ -278,8 +270,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
           statut: investmentStatus,
           rating,
           rendementActuel: parseFloat(rendementActuel),
-          lastUpdated: currentDate,
-          createdBy: userName // Métadonnée pour traçabilité
+          lastUpdated: currentDate
         };
         
         // Get existing data and add new entry
@@ -501,16 +492,17 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Rating (0-100)" error={errors.rating}>
-                      <Input 
-                        type="number" 
+                    <FormField label="Rating" error={errors.rating}>
+                      <Select 
                         value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
-                        min="0"
-                        max="100"
+                        onChange={(e) => setRating(e.target.value as 'A' | 'B' | 'C' | 'D')}
                         error={!!errors.rating}
-                        placeholder="75"
-                      />
+                      >
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                      </Select>
                     </FormField>
                     
                     <FormField label="Incidents de paiement" error={errors.incidents}>
@@ -588,16 +580,17 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Rating (0-100)" error={errors.rating}>
-                      <Input 
-                        type="number" 
+                    <FormField label="Rating" error={errors.rating}>
+                      <Select 
                         value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
-                        min="0"
-                        max="100"
+                        onChange={(e) => setRating(e.target.value as 'A' | 'B' | 'C' | 'D')}
                         error={!!errors.rating}
-                        placeholder="75"
-                      />
+                      >
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                      </Select>
                     </FormField>
                     
                     <FormField label="Incidents de paiement" error={errors.incidents}>
@@ -676,16 +669,17 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField label="Rating (0-100)" error={errors.rating}>
-                      <Input 
-                        type="number" 
+                    <FormField label="Rating" error={errors.rating}>
+                      <Select 
                         value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
-                        min="0"
-                        max="100"
+                        onChange={(e) => setRating(e.target.value as 'A' | 'B' | 'C' | 'D')}
                         error={!!errors.rating}
-                        placeholder="75"
-                      />
+                      >
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                      </Select>
                     </FormField>
                   </div>
                 </div>

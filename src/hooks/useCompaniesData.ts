@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { STORAGE_KEYS } from '../scripts/initLocalStorage';
-import { mockCompanies, companyScenarios as defaultScenarios, getCompanyById as getCompanyByIdOriginal } from '../data/companies';
-import { CompanyData, CompanyScenarioStatus } from '../data/companies';
+import { mockCompanies, companyScenarios as defaultScenarios, getCompanyById as getCompanyByIdOriginal } from '../data/companies/index';
+import { CompanyData, CompanyScenarioStatus } from '../data/companies/index';
 
 /**
  * Hook pour accéder à toutes les entreprises disponibles

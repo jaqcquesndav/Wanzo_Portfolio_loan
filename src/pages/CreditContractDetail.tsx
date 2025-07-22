@@ -5,6 +5,11 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { ConfigureContractForm } from '../components/portfolio/traditional/contract/ConfigureContractForm';
+import { creditContractsStorageService } from '../services/storage/creditContractsStorage';
+import { useNotification } from '../contexts/NotificationContext';
+import { CreditContract } from '../types/credit';
 
 // Fonction utilitaire pour le formatage des montants
 const formatAmount = (amount: number) => {
@@ -38,10 +43,26 @@ const statusConfig: Record<string, { label: string; variant: "success" | "second
 export default function CreditContractDetail() {
   const { portfolioId, contractId } = useParams();
   const navigate = useNavigate();
-  const { contracts, loading, error } = useCreditContracts(portfolioId || 'default');
+  const { contracts, loading, error, fetchContracts } = useCreditContracts(portfolioId || 'default');
+  const [isConfigureModalOpen, setIsConfigureModalOpen] = useState(false);
+  const { showNotification } = useNotification();
   
   // Trouver le contrat correspondant
   const contract = contracts.find(c => c.id === contractId);
+
+  // Gestionnaire pour mettre à jour le contrat
+  const handleUpdateContract = async (updatedData: Partial<CreditContract>) => {
+    try {
+      if (!contractId) return;
+      
+      await creditContractsStorageService.updateContract(contractId, updatedData);
+      showNotification('Contrat mis à jour avec succès', 'success');
+      fetchContracts(); // Rafraîchir les données pour afficher les modifications
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du contrat:', error);
+      showNotification('Erreur lors de la mise à jour du contrat', 'error');
+    }
+  };
 
   if (loading) {
     return (
@@ -71,7 +92,7 @@ export default function CreditContractDetail() {
           <Button 
             className="mt-4" 
             variant="outline" 
-            onClick={() => navigate(`/portfolio/traditional/${portfolioId || 'default'}`)}
+            onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}`)}
           >
             Retour au portefeuille
           </Button>
@@ -85,9 +106,9 @@ export default function CreditContractDetail() {
       <div className="container mx-auto p-6">
       <Breadcrumb 
         items={[
-          { label: 'Portefeuilles', href: '/portfolio' },
-          { label: 'Traditionnel', href: '/portfolio/traditional' },
-          { label: `Portefeuille ${portfolioId ? portfolioId.slice(0, 8) : 'default'}`, href: `/portfolio/traditional/${portfolioId || 'default'}` },
+          { label: 'Portefeuilles', href: '/app/traditional' },
+          { label: 'Traditionnel', href: '/app/traditional' },
+          { label: `Portefeuille ${portfolioId ? portfolioId.slice(0, 8) : 'default'}`, href: `/app/traditional/${portfolioId || 'default'}` },
           { label: 'Contrat introuvable', href: '#' }
         ]} 
       />        <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mt-4">
@@ -98,7 +119,7 @@ export default function CreditContractDetail() {
           <Button 
             className="mt-4" 
             variant="outline" 
-            onClick={() => navigate(`/app/portfolio/${portfolioId || 'default'}/contracts`)}
+            onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}?tab=contracts`)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour aux contrats
@@ -127,7 +148,7 @@ export default function CreditContractDetail() {
         <div className="flex space-x-2">
           <Button 
             variant="outline"
-            onClick={() => navigate(`/app/portfolio/${portfolioId || 'default'}/contracts/${contract.id}/schedule`)}
+            onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}/contracts/${contract.id}/schedule`)}
           >
             <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -221,6 +242,13 @@ export default function CreditContractDetail() {
             <div className="grid grid-cols-2 gap-2">
               {contract.status === 'active' && (
                 <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsConfigureModalOpen(true)}
+                  >
+                    Configurer
+                  </Button>
                   <Button variant="outline" size="sm">Suspendre</Button>
                   <Button variant="outline" size="sm">Clôturer</Button>
                   <Button variant="outline" size="sm" className="text-amber-600">Marquer en défaut</Button>
@@ -268,6 +296,16 @@ export default function CreditContractDetail() {
           </Card>
         </div>
       </Card>
+      
+      {/* Formulaire de configuration du contrat */}
+      {contract && (
+        <ConfigureContractForm 
+          isOpen={isConfigureModalOpen}
+          onClose={() => setIsConfigureModalOpen(false)}
+          onSave={handleUpdateContract}
+          contract={contract}
+        />
+      )}
     </div>
   );
 }

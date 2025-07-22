@@ -1,6 +1,7 @@
 // src/hooks/useInitMockData.ts
 import { useState, useEffect, useCallback } from 'react';
 import { mockDataInitializerService } from '../services/storage/mockDataInitializer';
+import { initializeAllStorageData, isStorageInitialized } from '../services/storage';
 
 /**
  * Hook pour initialiser et gérer les données mock
@@ -27,6 +28,11 @@ export function useInitMockData() {
           await mockDataInitializerService.initializeMockData();
         }
         
+        // Initialiser ou vérifier les données de stockage pour les formulaires de risque
+        if (!isStorageInitialized()) {
+          await initializeAllStorageData();
+        }
+        
         setIsInitialized(true);
       } catch (error) {
         console.error('Erreur lors de l\'initialisation des données mock:', error);
@@ -45,6 +51,8 @@ export function useInitMockData() {
     setError(null);
     try {
       await mockDataInitializerService.resetMockData();
+      // Réinitialiser également les données de stockage pour les formulaires de risque
+      await initializeAllStorageData();
       setIsInitialized(true);
       console.info('Données mock réinitialisées avec succès');
     } catch (error) {

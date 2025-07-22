@@ -393,11 +393,15 @@ export type CreditContract = {
   delinquencyDays: number;
   riskClass: 'standard' | 'watch' | 'substandard' | 'doubtful' | 'loss';
   guaranteesTotalValue: number;
+  guaranteeId?: string; // ID de la garantie principale associée au contrat
   scheduleId: string;
   documentUrl?: string;
   consolidatedFrom?: string[];
   isConsolidated: boolean;
   consolidatedTo?: string;
+  duration?: number; // Durée du crédit en mois
+  gracePeriod?: number; // Période de grâce en mois
   createdAt: string;
   updatedAt?: string;
+  lastUpdated?: string; // Dernière mise à jour du contrat
 };

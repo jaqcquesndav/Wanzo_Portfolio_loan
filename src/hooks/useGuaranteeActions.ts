@@ -65,8 +65,15 @@ export const useGuaranteeActions = (portfolioId: string) => {
   };
 
   const handleViewDetails = (guaranteeId: string) => {
+    // Log des détails pour faciliter le débogage
+    console.log(`Navigating to guarantee details with ID: ${guaranteeId}, portfolioId: ${portfolioId}`);
+    
     // Utiliser la route correcte pour les détails de garantie
-    navigate(`/app/traditional/${portfolioId}/guarantees/${guaranteeId}`);
+    if (portfolioId) {
+      navigate(`/app/traditional/${portfolioId}/guarantees/${guaranteeId}`);
+    } else {
+      navigate(`/app/traditional/guarantees/${guaranteeId}`);
+    }
   };
 
   const handleRelease = (guarantee: Guarantee) => {

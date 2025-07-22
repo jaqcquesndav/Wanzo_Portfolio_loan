@@ -13,21 +13,36 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
   // The route can come in multiple formats:
   // 1. /app/traditional/:id/guarantees/:guaranteeId
   // 2. /app/portfolio/:portfolioId/guarantees/:guaranteeId
+  // 3. /app/traditional/guarantees/:guaranteeId (nouvelle route)
   const params = useParams();
   const guaranteeId = params.guaranteeId;
   const portfolioId = params.portfolioId || params.id; // Handle both patterns
   const id = propId || guaranteeId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  
+  console.log('Initial params extracted:', { 
+    rawParams: params,
+    guaranteeId,
+    portfolioId,
+    propId,
+    id
+  });
   const [guarantee, setGuarantee] = useState<Guarantee | null>(null);
   const [showRelease, setShowRelease] = useState(false);
   const [showSeize, setShowSeize] = useState(false);
 
   useEffect(() => {
-    console.log('Searching guarantee with params:', { id, portfolioId });
+    console.log('Searching guarantee with params:', { 
+      id, 
+      portfolioId, 
+      routeParams: params 
+    });
     
     // Recherche flexible pour trouver la garantie
     const found = mockGuarantees.find((g) => {
+      console.log(`Comparing guarantee: ${g.id} (portfolio: ${g.portfolioId}) with params id=${id}, portfolioId=${portfolioId}`);
+      
       // Si on a un ID de garantie et de portefeuille, match sur les deux
       if (id && portfolioId) {
         return g.id === id && g.portfolioId === portfolioId;
@@ -43,7 +58,7 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
       console.error(`Garantie non trouvée pour id=${id}, portfolioId=${portfolioId}`);
       showNotification('Garantie introuvable', 'error');
     }
-  }, [id, portfolioId, showNotification]);
+  }, [id, portfolioId, params, showNotification]);
 
   if (!guarantee) {
     return (

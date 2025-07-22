@@ -13,6 +13,7 @@ interface DialogContentProps {
 
 interface DialogHeaderProps {
   children: ReactNode;
+  className?: string;
 }
 
 interface DialogTitleProps {
@@ -45,7 +46,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 export function DialogContent({ children, className }: DialogContentProps) {
   return (
     <div 
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto my-8 mx-auto ${className || ''}`}
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-y-auto my-8 mx-auto ${className || ''}`}
       onClick={(e) => e.stopPropagation()}
     >
       {children}
@@ -53,9 +54,9 @@ export function DialogContent({ children, className }: DialogContentProps) {
   );
 }
 
-export function DialogHeader({ children }: DialogHeaderProps) {
+export function DialogHeader({ children, className }: DialogHeaderProps) {
   return (
-    <div className="p-6 pb-3 border-b border-gray-200 dark:border-gray-700">
+    <div className={`p-6 pb-4 border-b border-gray-200 dark:border-gray-700 ${className || ''}`}>
       {children}
     </div>
   );

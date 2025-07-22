@@ -1,6 +1,6 @@
 // src/data/mockCentraleRisque.ts
-import { mockCompanies } from './companies';
-import type { CompanyData } from './companies';
+import { mockCompanies } from './companies/index';
+import type { CompanyData } from './companies/index';
 
 // Types pour la centrale de risque
 export interface CreditRiskEntry {
@@ -11,12 +11,13 @@ export interface CreditRiskEntry {
   institution: string;
   encours: number;
   statut: 'Actif' | 'En défaut' | 'Clôturé';
-  rating: 'A' | 'B' | 'C' | 'D';
+  rating: string; // Note sur 100
   incidents: number;
   creditScore: number;
   debtRatio: number;
   lastUpdated: string;
   guaranteeId?: string; // Référence à la garantie utilisée
+  createdBy?: string; // Nom de l'utilisateur qui a créé l'entrée (pour traçabilité)
 }
 
 export interface LeasingRiskEntry {
@@ -28,9 +29,10 @@ export interface LeasingRiskEntry {
   equipmentType: string;
   valeurFinancement: number;
   statut: 'Actif' | 'En défaut' | 'Clôturé';
-  rating: 'A' | 'B' | 'C' | 'D';
+  rating: string; // Note sur 100
   incidents: number;
   lastUpdated: string;
+  createdBy?: string; // Nom de l'utilisateur qui a créé l'entrée (pour traçabilité)
 }
 
 export interface InvestmentRiskEntry {
@@ -43,9 +45,10 @@ export interface InvestmentRiskEntry {
   montantInvesti: number;
   valorisation: number;
   statut: 'Performant' | 'En difficulté' | 'Clôturé';
-  rating: 'A' | 'B' | 'C' | 'D';
+  rating: string; // Note sur 100
   rendementActuel: number;
   lastUpdated: string;
+  createdBy?: string; // Nom de l'utilisateur qui a créé l'entrée (pour traçabilité)
 }
 
 // Fonction pour générer des données de risque de crédit
