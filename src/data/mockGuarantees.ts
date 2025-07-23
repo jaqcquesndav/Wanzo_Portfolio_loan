@@ -12,6 +12,12 @@ export const mockGuarantees: Guarantee[] = [
     portfolioId: 'trad-1',
     contractId: 'CONT-20230509-0001',
     contractReference: 'CRDT-100000',
+    details: {
+      description: 'Terrain agricole avec bâtiments d\'exploitation',
+      location: 'Zone industrielle Sud, Parcelle 24',
+      reference: 'HYPO-2025-001',
+      coverage: 100
+    }
   },
   {
     id: 'G002',
@@ -24,6 +30,12 @@ export const mockGuarantees: Guarantee[] = [
     portfolioId: 'trad-1',
     contractId: 'CONT-20230509-0002',
     contractReference: 'CRDT-100001',
+    details: {
+      provider: 'Banque Atlantique',
+      reference: 'CAUT-2025-102',
+      coverage: 80,
+      document_url: '#/documents/caution_123456'
+    }
   },
   {
     id: 'G003',
@@ -36,6 +48,11 @@ export const mockGuarantees: Guarantee[] = [
     portfolioId: 'trad-1',
     contractId: 'CONT-20230509-0003',
     contractReference: 'CRDT-100002',
+    details: {
+      description: 'Dépôt de garantie pour crédit d\'investissement',
+      reference: 'DEP-2025-035',
+      coverage: 10
+    }
   },
   {
     id: 'G004',
@@ -48,6 +65,12 @@ export const mockGuarantees: Guarantee[] = [
     portfolioId: 'trad-2',
     contractId: 'CONT-20230812-0004',
     contractReference: 'CRDT-100003',
+    details: {
+      description: 'Équipement de laboratoire et chaîne de production',
+      reference: 'NANT-2025-089',
+      coverage: 75,
+      document_url: '#/documents/nantissement_456789'
+    }
   },
   {
     id: 'G005',

@@ -13,7 +13,7 @@ export interface Guarantee {
   type: GuaranteeType | string;
   subType?: string; // Sous-type ou détail du type de garantie
   value: number; // Valeur en devise
-  status: 'active' | 'libérée' | 'saisie' | 'expirée';
+  status: 'active' | 'libérée' | 'saisie' | 'expirée' | 'pending';
   created_at: string;
   expiry_date?: string; // Date d'expiration (pertinent pour les assurances, cautions)
   requestId?: string;
@@ -27,5 +27,6 @@ export interface Guarantee {
     provider?: string; // Assureur, banque émettrice de caution, etc.
     coverage?: number; // Pourcentage de couverture
     document_url?: string; // Lien vers le document justificatif
+    guarantor?: string; // Personne physique garantissant la dette
   };
 }

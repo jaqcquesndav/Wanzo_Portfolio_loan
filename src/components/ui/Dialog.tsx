@@ -21,6 +21,11 @@ interface DialogTitleProps {
   className?: string;
 }
 
+interface DialogDescriptionProps {
+  children: ReactNode;
+  className?: string;
+}
+
 interface DialogFooterProps {
   children: ReactNode;
   className?: string;
@@ -67,6 +72,14 @@ export function DialogTitle({ children, className }: DialogTitleProps) {
     <h2 className={`text-xl font-semibold text-gray-900 dark:text-gray-100 ${className || ''}`}>
       {children}
     </h2>
+  );
+}
+
+export function DialogDescription({ children, className }: DialogDescriptionProps) {
+  return (
+    <div className={`mt-2 text-sm text-gray-600 dark:text-gray-400 ${className || ''}`}>
+      {children}
+    </div>
   );
 }
 

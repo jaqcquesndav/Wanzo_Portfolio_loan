@@ -2,23 +2,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+// import { HistoryTimeline } from '../components/common/HistoryTimeline';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { useNotification } from '../contexts/NotificationContext';
 import { guaranteeStorageService } from '../services/storage/guaranteeStorageUnified';
 import type { Guarantee } from '../types/guarantee';
-import { logGuaranteeEvent, ensureG001Exists } from '../scripts/guaranteeInitializer';
 
 export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?: () => void }) {
   // The route can come in multiple formats:
   // 1. /app/traditional/:id/guarantees/:guaranteeId
   // 2. /app/portfolio/:portfolioId/guarantees/:guaranteeId
-  // 3. /app/traditional/guarantees/:guaranteeId
-  // 4. /app/traditional/:portfolioId/guarantees/:guaranteeId (nouvelle route)
-  // 5. /app/traditional/trad-1/guarantees/G001 (route explicite)
+  // 3. /app/traditional/guarantees/:guaranteeId (nouvelle route)
   const params = useParams();
   const guaranteeId = params.guaranteeId;
-  // Accepter portfolioId ou id comme paramètre pour une meilleure compatibilité
-  const portfolioId = params.portfolioId || params.id; 
+  const portfolioId = params.portfolioId || params.id; // Handle both patterns
   const id = propId || guaranteeId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -28,24 +25,8 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
     guaranteeId,
     portfolioId,
     propId,
-    id,
-    path: window.location.pathname
+    id
   });
-  
-  // Journaliser l'accès à la page de détails
-  useEffect(() => {
-    if (id) {
-      // Enregistrer l'événement d'accès
-      logGuaranteeEvent('access', id, portfolioId || 'unknown');
-      
-      // Si c'est la garantie G001, s'assurer qu'elle existe
-      if (id === 'G001' && (portfolioId === 'trad-1' || params.id === 'trad-1')) {
-        console.log('🔍 Accès à la garantie spéciale G001 dans trad-1, vérification de son existence...');
-        ensureG001Exists();
-      }
-    }
-  }, [id, portfolioId, params.id]);
-  
   const [guarantee, setGuarantee] = useState<Guarantee | null>(null);
   const [showRelease, setShowRelease] = useState(false);
   const [showSeize, setShowSeize] = useState(false);
@@ -59,59 +40,17 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
       });
       
       try {
-        // Essayons d'abord d'initialiser les données si elles ne sont pas déjà présentes
-        await guaranteeStorageService.initializeDefaultData();
-        
         let foundGuarantee: Guarantee | null = null;
         
-        // Cas spécial pour le G001 dans trad-1 (pour le débogage)
-        if (id === 'G001' && (portfolioId === 'trad-1' || params.id === 'trad-1')) {
-          console.log('🔍 Recherche de la garantie spéciale G001 dans trad-1');
-          let allGuarantees = await guaranteeStorageService.getAllGuarantees();
-          console.log('📊 Toutes les garanties:', allGuarantees);
-          foundGuarantee = allGuarantees.find(g => g.id === 'G001' && g.portfolioId === 'trad-1') || null;
-          console.log('🔍 Résultat de la recherche spéciale:', foundGuarantee);
-          
-          // Si la garantie n'est pas trouvée, tenter de l'ajouter
-          if (!foundGuarantee) {
-            console.warn('⚠️ Garantie G001 non trouvée, tentative d\'ajout...');
-            ensureG001Exists();
-            // Nouvelle tentative après ajout
-            allGuarantees = await guaranteeStorageService.getAllGuarantees();
-            foundGuarantee = allGuarantees.find(g => g.id === 'G001' && g.portfolioId === 'trad-1') || null;
-            console.log('🔍 Après tentative d\'ajout:', foundGuarantee);
-          }
-          
-          // Journaliser l'événement
-          logGuaranteeEvent(
-            foundGuarantee ? 'access' : 'error', 
-            'G001', 
-            'trad-1', 
-            foundGuarantee ? undefined : 'Garantie non trouvée après tentative d\'ajout'
-          );
-        }
-        
         // Si on a un ID de garantie, chercher directement par ID
-        if (!foundGuarantee && id) {
+        if (id) {
           foundGuarantee = await guaranteeStorageService.getGuaranteeById(id);
-          console.log('Guarantee search by ID result:', foundGuarantee);
         }
         
         // Si on n'a pas trouvé la garantie, mais qu'on a un portfolioId, chercher parmi les garanties de ce portfolio
         if (!foundGuarantee && portfolioId) {
           const portfolioGuarantees = await guaranteeStorageService.getGuaranteesByPortfolio(portfolioId);
-          console.log('Portfolio guarantees:', portfolioGuarantees);
           foundGuarantee = portfolioGuarantees.find(g => g.id === id) || null;
-        }
-        
-        // Dernier recours: si on ne trouve toujours pas, prendre la première garantie disponible
-        if (!foundGuarantee) {
-          console.log('No guarantee found with provided parameters, trying to get any guarantee as fallback');
-          const allGuarantees = await guaranteeStorageService.getAllGuarantees();
-          if (allGuarantees.length > 0) {
-            foundGuarantee = allGuarantees[0];
-            console.log('Using fallback guarantee:', foundGuarantee);
-          }
         }
         
         if (foundGuarantee) {
@@ -132,38 +71,9 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
 
   if (!guarantee) {
     return (
-      <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4 text-red-600">Garantie introuvable</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            La garantie demandée n'a pas pu être trouvée. Cela peut être dû à plusieurs raisons:
-          </p>
-          <ul className="text-left text-gray-600 dark:text-gray-400 mb-6 ml-8 list-disc">
-            <li className="mb-2">L'identifiant de la garantie est incorrect</li>
-            <li className="mb-2">La garantie a été supprimée</li>
-            <li className="mb-2">Vous n'avez pas les droits d'accès nécessaires</li>
-            <li className="mb-2">Une erreur de chargement des données s'est produite</li>
-          </ul>
-          <div className="flex justify-center space-x-4">
-            <Button onClick={() => navigate(-1)} variant="primary">
-              Retour
-            </Button>
-            <Button 
-              onClick={() => navigate("/app/traditional")} 
-              variant="outline"
-            >
-              Aller au tableau de bord
-            </Button>
-          </div>
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded text-xs text-left">
-            <p className="text-gray-500 dark:text-gray-400">
-              <strong>Informations techniques (pour le support):</strong><br />
-              ID: {id}<br />
-              Portfolio ID: {portfolioId}<br />
-              Path: {window.location.pathname}
-            </p>
-          </div>
-        </div>
+      <div className="p-8 text-center text-gray-500">
+        Garantie introuvable.
+        <Button className="ml-4" onClick={() => navigate(-1)}>Retour</Button>
       </div>
     );
   }

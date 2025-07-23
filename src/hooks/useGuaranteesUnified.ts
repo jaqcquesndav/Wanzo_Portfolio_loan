@@ -16,26 +16,20 @@ export function useGuarantees(portfolioId: string) {
       // Récupérer les données depuis le localStorage
       const allGuarantees = await guaranteeStorageService.getAllGuarantees();
       console.log(`[useGuarantees] Loaded ${allGuarantees.length} guarantees from storage`);
-      console.log(`[useGuarantees] Using portfolioId: "${portfolioId}" for filtering`);
       
-      // Vérifier si le portfolioId existe dans les garanties
-      const portfolioIds = [...new Set(allGuarantees.map((g: Guarantee) => g.portfolioId))];
-      console.log(`[useGuarantees] Available portfolioIds in guarantees:`, portfolioIds);
-      
-      const hasGuaranteesForPortfolio = allGuarantees.some((guarantee: Guarantee) => guarantee.portfolioId === portfolioId);
-      
-      // Si le portfolioId spécifié n'existe pas dans les garanties, utiliser toutes les garanties
-      // sinon, filtrer par portfolioId
+      // Filtrer par portfolioId
       let filtered: Guarantee[];
-      if (!hasGuaranteesForPortfolio && portfolioId !== 'default') {
-        console.warn(`[useGuarantees] No guarantees found for portfolioId "${portfolioId}", using all guarantees`);
-        filtered = allGuarantees;
-      } else if (portfolioId === 'default') {
+      if (portfolioId === 'default') {
         console.log(`[useGuarantees] Using all guarantees (default portfolioId)`);
         filtered = allGuarantees;
       } else {
         console.log(`[useGuarantees] Filtering guarantees for portfolioId "${portfolioId}"`);
-        filtered = allGuarantees.filter((guarantee: Guarantee) => guarantee.portfolioId === portfolioId);
+        filtered = await guaranteeStorageService.getGuaranteesByPortfolio(portfolioId);
+        
+        if (filtered.length === 0) {
+          console.warn(`[useGuarantees] No guarantees found for portfolioId "${portfolioId}", using all guarantees`);
+          filtered = allGuarantees;
+        }
       }
       
       setGuarantees(filtered);

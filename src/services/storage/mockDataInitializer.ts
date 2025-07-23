@@ -10,9 +10,10 @@ import { mockTraditionalPortfolios } from '../../data/mockTraditionalPortfolios'
 import { mockInvestmentPortfolios } from '../../data/mockInvestmentPortfolios';
 import { mockLeasingPortfolios } from '../../data/mockLeasingPortfolios';
 import type { PortfolioWithType } from '../../types/portfolio';
-import { guaranteesStorageService } from './guaranteesStorage';
+import { guaranteeStorageService } from './guaranteeStorageUnified';
 import { centraleRisqueStorageService } from './centraleRisqueStorage';
 import { initCompaniesData, STORAGE_KEYS } from '../../scripts/initLocalStorage';
+import { dataValidationService } from '../validation/dataValidationService';
 
 /**
  * Classe de service pour l'initialisation et la gestion des données mock
@@ -38,7 +39,7 @@ class MockDataInitializerService {
         await this.initializePortfolios();
         
         // Initialiser les garanties
-        await guaranteesStorageService.initializeDefaultData();
+        await guaranteeStorageService.initializeDefaultData();
         
         // Initialiser les données d'entreprises
         initCompaniesData();
@@ -59,6 +60,10 @@ class MockDataInitializerService {
           initCompaniesData();
         }
       }
+      
+      // Valider l'intégrité des données
+      await this.validateDataIntegrity();
+      
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des données mock:', error);
       throw error;
@@ -101,6 +106,35 @@ class MockDataInitializerService {
     
     // Sauvegarder dans localStorage
     localStorage.setItem(this.PORTFOLIOS_KEY, JSON.stringify(allPortfolios));
+  }
+  
+  /**
+   * Valide l'intégrité des données critiques et tente de les réparer si nécessaire
+   * 
+   * @returns {Promise<void>}
+   * @private
+   */
+  private async validateDataIntegrity(): Promise<void> {
+    console.info('Validation de l\'intégrité des données critiques...');
+    
+    // Valider les données de garanties
+    const guaranteeValidation = await dataValidationService.validateGuaranteeData();
+    
+    if (!guaranteeValidation.valid) {
+      console.warn('Problèmes détectés dans les données de garanties:', guaranteeValidation.issues);
+      
+      // Tenter de réparer les données
+      console.info('Tentative de réparation des données de garanties...');
+      const repairResult = await dataValidationService.repairGuaranteeData();
+      
+      if (repairResult.success) {
+        console.info('Réparation réussie:', repairResult.message);
+      } else {
+        console.error('Échec de la réparation:', repairResult.message);
+      }
+    } else {
+      console.info('Les données de garanties sont valides.');
+    }
   }
 
   /**

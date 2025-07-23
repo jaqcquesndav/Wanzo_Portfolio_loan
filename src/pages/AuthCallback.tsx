@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AppLoading } from '../components/ui/AppLoading';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function handleAuth() {
@@ -11,15 +13,26 @@ export default function AuthCallback() {
       const state = params.get('state');
       const storedState = localStorage.getItem('auth0_state');
       const codeVerifier = localStorage.getItem('auth0_code_verifier');
+      
       if (!code || !state || state !== storedState || !codeVerifier) {
-        alert('Erreur d\'authentification.');
+        console.error('Erreur d\'authentification: paramètres manquants ou invalides', {
+          codeExists: !!code,
+          stateExists: !!state,
+          storedStateExists: !!storedState,
+          stateMatch: state === storedState,
+          codeVerifierExists: !!codeVerifier
+        });
+        setErrorMessage('Erreur d\'authentification: paramètres manquants ou invalides');
         return;
       }
+      
       // Exchange code for tokens
       const domain = import.meta.env.VITE_AUTH0_DOMAIN;
       const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
       const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI;
+      
       try {
+        console.log('Échange du code contre des tokens...');
         const res = await fetch(`https://${domain}/oauth/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -32,39 +45,81 @@ export default function AuthCallback() {
             audience: import.meta.env.VITE_AUTH0_AUDIENCE
           })
         });
+        
         const data = await res.json();
+        
         if (data.access_token) {
+          console.log('Token récupéré avec succès!');
+          
+          // Stocker le token avec plusieurs clés pour assurer la compatibilité
           localStorage.setItem('token', data.access_token);
+          localStorage.setItem('auth0_token', data.access_token);
+          localStorage.setItem('accessToken', data.access_token);
+          
           if (data.id_token) localStorage.setItem('id_token', data.id_token);
           if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+          
           // Récupérer le profil utilisateur Auth0
           try {
+            console.log('Récupération du profil utilisateur...');
             const userRes = await fetch(`https://${domain}/userinfo`, {
               headers: { Authorization: `Bearer ${data.access_token}` }
             });
+            
             if (userRes.ok) {
               const user = await userRes.json();
               localStorage.setItem('auth0_user', JSON.stringify(user));
+              localStorage.setItem('user', JSON.stringify({
+                id: user.sub,
+                name: user.name,
+                email: user.email,
+                role: 'manager',
+                picture: user.picture
+              }));
+              console.log('Profil utilisateur récupéré avec succès!');
             }
-          } catch {
-            // ignore userinfo fetch error
+          } catch (error) {
+            console.error('Erreur lors de la récupération du profil utilisateur:', error);
+            // Continue despite userinfo fetch error
           }
+          
+          // Nettoyer les données d'authentification temporaires
+          localStorage.removeItem('auth0_state');
+          localStorage.removeItem('auth0_code_verifier');
+          
           // Redirect to app
           const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
+          console.log(`Redirection vers /app/${portfolioType}...`);
           navigate(`/app/${portfolioType}`);
         } else {
-          alert('Erreur lors de la récupération du token.');
+          console.error('Erreur lors de la récupération du token:', data);
+          setErrorMessage('Erreur lors de la récupération du token.');
         }
-      } catch {
-        alert('Erreur lors de la connexion à Auth0.');
+      } catch (error) {
+        console.error('Erreur lors de la connexion à Auth0:', error);
+        setErrorMessage('Erreur lors de la connexion à Auth0.');
       }
     }
+    
     handleAuth();
   }, [navigate]);
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="text-lg">Connexion en cours...</div>
-    </div>
-  );
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-red-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+          <h1 className="text-xl font-bold text-red-700 mb-4">Erreur d'authentification</h1>
+          <p className="text-gray-700 mb-6">{errorMessage}</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <AppLoading message="Finalisation de votre connexion..." />;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { router } from './routes';
+import { optimizedRouter } from './routes/optimizedRouter';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { useInitMockData } from './hooks/useInitMockData';
 import { syncService } from './services/sync/syncService';
@@ -10,17 +10,27 @@ import { PaymentOrderProvider } from './contexts/PaymentOrderContext';
 import { GlobalPaymentOrderModal } from './components/payment/GlobalPaymentOrderModal';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { AppLoading } from './components/ui/AppLoading';
 
 export default function App() {
-  // Utilisation du nouveau hook pour initialiser les données mock
-  const { loading, error, resetMockData } = useInitMockData();
+  // Utilisation du hook pour initialiser les données mock
+  const { loading, error, resetMockData, validationIssues } = useInitMockData();
 
   // Démarrer le service de synchronisation si activée
   React.useEffect(() => {
     if (SYNC_ENABLED) {
-      const token = localStorage.getItem('token');
+      // Récupérer le token de manière consistante
+      const token = localStorage.getItem('token') || 
+                   localStorage.getItem('auth0_token') || 
+                   localStorage.getItem('accessToken');
+                   
       if (token) {
+        // Log pour déboguer
+        console.log('Token trouvé, démarrage de la synchronisation');
         syncService.startSync();
+      } else {
+        console.warn('Aucun token trouvé, la synchronisation ne démarrera pas');
       }
     } else {
       console.info('Synchronisation réseau désactivée (mode offline)');
@@ -49,6 +59,11 @@ export default function App() {
     );
   }
 
+  // Afficher l'écran de chargement pendant l'initialisation
+  if (loading) {
+    return <AppLoading message="Préparation de votre environnement..." />;
+  }
+
   // Afficher un indicateur de chargement si nécessaire
   if (loading) {
     return (
@@ -58,12 +73,33 @@ export default function App() {
     );
   }
 
+  // Si des problèmes de validation sont détectés, afficher un avertissement discret
+  const hasValidationIssues = validationIssues && validationIssues.length > 0;
+
   return (
     <PortfolioProvider>
       <NotificationProvider>
         <CurrencyProvider>
           <PaymentOrderProvider>
-            <RouterProvider router={router} />
+            {hasValidationIssues && (
+              <div className="fixed top-0 left-0 right-0 bg-amber-50 border-b border-amber-200 p-2 z-50">
+                <div className="container mx-auto flex items-center justify-between">
+                  <div className="flex items-center">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mr-2" />
+                    <span className="text-amber-800 text-sm">
+                      {validationIssues.length} problème(s) de données détecté(s). 
+                    </span>
+                  </div>
+                  <button 
+                    onClick={resetMockData}
+                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded"
+                  >
+                    Réinitialiser les données
+                  </button>
+                </div>
+              </div>
+            )}
+            <RouterProvider router={optimizedRouter} />
             {/* Modal d'ordre de paiement pour les portefeuilles */}
             <GlobalPaymentOrderModal />
             <Toaster position="top-right" />

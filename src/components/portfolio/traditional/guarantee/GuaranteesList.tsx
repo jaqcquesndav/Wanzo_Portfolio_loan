@@ -11,10 +11,11 @@ import { TableSkeleton } from '../../../ui/TableSkeleton';
 import { ConfirmDialog } from '../../../ui/ConfirmDialog';
 import { exportToExcel, exportToPDF } from '../../../../utils/export';
 // Importation explicitement utilisée pour le typage
-import type { Guarantee } from '../GuaranteesTable';
+import type { Guarantee } from '../../../../types/guarantee';
 import { ActionMenu } from './ActionMenu';
 import { useGuarantees } from '../../../../hooks/useGuarantees';
 import { useGuaranteeActions } from '../../../../hooks/useGuaranteeActions';
+import { trackGuaranteeClick } from '../../../../scripts/guaranteeInitializer';
 
 // Configuration pour l'affichage des types de garanties
 const guaranteeTypeConfig: Record<string, { label: string; color: string }> = {
@@ -277,7 +278,12 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
                   <TableRow 
                     key={g.id} 
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                    onClick={() => handleViewDetails(g.id)}
+                    onClick={() => {
+                      // Tracker le clic sur la garantie
+                      trackGuaranteeClick(g.id, portfolioId);
+                      // Appeler la fonction de navigation
+                      handleViewDetails(g.id);
+                    }}
                   >
                     <TableCell className="font-medium">{g.company}</TableCell>
                     <TableCell>
@@ -314,7 +320,12 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
                       <div className="actions-dropdown inline-block" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <ActionMenu
                           guarantee={g}
-                          onView={handleViewDetails}
+                          onView={(id) => {
+                            // Tracker le clic sur la garantie via le menu d'action
+                            trackGuaranteeClick(id, portfolioId);
+                            // Appeler la fonction de navigation
+                            handleViewDetails(id);
+                          }}
                           onRelease={handleRelease}
                           onSeize={handleSeize}
                           onDelete={handleDeleteGuarantee}

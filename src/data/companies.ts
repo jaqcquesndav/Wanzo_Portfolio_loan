@@ -23,6 +23,46 @@ export interface CompanyData {
   pitch_deck_url?: string;
 }
 
+// Structure pour les scénarios d'entreprises
+export interface CompanyScenario {
+  id: string;
+  companyId: string;
+  name: string;
+  description: string;
+  financialProjections: {
+    year: number;
+    revenue: number;
+    expenses: number;
+    profit: number;
+  }[];
+}
+
+// Données mock pour les scénarios d'entreprises
+export const companyScenarios: CompanyScenario[] = [
+  {
+    id: 'SCN-001',
+    companyId: 'COMP-0001',
+    name: 'Croissance 2025-2027',
+    description: 'Scénario de croissance pour PME Agro Sarl',
+    financialProjections: [
+      { year: 2025, revenue: 500000, expenses: 350000, profit: 150000 },
+      { year: 2026, revenue: 650000, expenses: 400000, profit: 250000 },
+      { year: 2027, revenue: 800000, expenses: 500000, profit: 300000 }
+    ]
+  },
+  {
+    id: 'SCN-002',
+    companyId: 'COMP-0002',
+    name: 'Expansion régionale',
+    description: 'Scénario d\'expansion pour Tech Solutions',
+    financialProjections: [
+      { year: 2025, revenue: 2000000, expenses: 1600000, profit: 400000 },
+      { year: 2026, revenue: 3000000, expenses: 2200000, profit: 800000 },
+      { year: 2027, revenue: 4500000, expenses: 3200000, profit: 1300000 }
+    ]
+  }
+];
+
 export const mockCompanies: CompanyData[] = [
   {
     id: 'COMP-0001',

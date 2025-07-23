@@ -9,33 +9,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '.
 import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import { exportToExcel, exportToPDF } from '../../../utils/exports';
-
-// Types de garanties disponibles
-export type GuaranteeType = 
-  'materiel' | 'immobilier' | 'caution_bancaire' | 'fonds_garantie' |
-  'assurance_credit' | 'nantissement' | 'gage' | 'hypotheque' | 'depot_especes' | 'autre';
-
-export interface Guarantee {
-  id: string;
-  company: string;
-  type: GuaranteeType | string;
-  subType?: string; // Sous-type ou détail du type de garantie
-  value: number; // Valeur en devise
-  status: 'active' | 'libérée' | 'saisie' | 'expirée';
-  created_at: string;
-  expiry_date?: string; // Date d'expiration (pertinent pour les assurances, cautions)
-  requestId?: string;
-  contractReference?: string; // Référence du contrat associé
-  portfolioId: string;
-  details?: {
-    description?: string;
-    location?: string; // Pour les biens immobiliers
-    reference?: string; // Numéro de référence externe (police d'assurance, etc.)
-    provider?: string; // Assureur, banque émettrice de caution, etc.
-    coverage?: number; // Pourcentage de couverture
-    document_url?: string; // Lien vers le document justificatif
-  };
-}
+import { Guarantee } from '../../../types/guarantee';
 
 interface GuaranteesTableProps {
   guarantees: Guarantee[];
@@ -66,6 +40,7 @@ const guaranteeTypeConfig: Record<string, { label: string; color: string; icon?:
 // Configuration pour l'affichage des statuts
 const statusConfig = {
   'active': { label: 'Active', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
+  'pending': { label: 'En attente', variant: 'warning', color: 'bg-amber-100 text-amber-700' },
   'libérée': { label: 'Libérée', variant: 'success', color: 'bg-green-100 text-green-700' },
   'saisie': { label: 'Saisie', variant: 'error', color: 'bg-red-100 text-red-700' },
   'expirée': { label: 'Expirée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },

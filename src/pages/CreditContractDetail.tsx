@@ -7,6 +7,7 @@ import { Breadcrumb } from '../components/common/Breadcrumb';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { ConfigureContractForm } from '../components/portfolio/traditional/contract/ConfigureContractForm';
+import { ContractDocuments } from '../components/portfolio/traditional/contract/ContractDocuments';
 import { creditContractsStorageService } from '../services/storage/creditContractsStorage';
 import { useNotification } from '../contexts/NotificationContext';
 import { CreditContract } from '../types/credit';
@@ -276,24 +277,7 @@ export default function CreditContractDetail() {
             </div>
           </Card>
           
-          <Card className="p-4 bg-gray-50">
-            <h3 className="text-lg font-medium mb-4">Documents associés</h3>
-            <p className="text-gray-500 text-sm mb-4">Documents relatifs au contrat</p>
-            <div className="space-y-2">
-              <Button variant="outline" size="sm" className="w-full flex justify-between">
-                Contrat original
-                <span className="text-blue-600">Télécharger</span>
-              </Button>
-              <Button variant="outline" size="sm" className="w-full flex justify-between">
-                Échéancier de remboursement
-                <span className="text-blue-600">Télécharger</span>
-              </Button>
-              <Button variant="outline" size="sm" className="w-full flex justify-between">
-                Historique des paiements
-                <span className="text-blue-600">Télécharger</span>
-              </Button>
-            </div>
-          </Card>
+          <ContractDocuments contractId={contract.id} />
         </div>
       </Card>
       

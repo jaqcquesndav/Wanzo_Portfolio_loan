@@ -1,40 +1,21 @@
-import LeasingEquipmentDetail from '../pages/leasing/LeasingEquipmentDetail';
-import LeasingContractDetail from '../pages/leasing/LeasingContractDetail';
-import LeasingIncidentDetail from '../pages/leasing/LeasingIncidentDetail';
-import LeasingMaintenanceDetail from '../pages/leasing/LeasingMaintenanceDetail';
-import LeasingPaymentDetail from '../pages/leasing/LeasingPaymentDetail';
-import LeasingReportingDetail from '../pages/leasing/LeasingReportingDetail';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import Layout from '../components/layout/Layout';
+import { createBrowserRouter } from 'react-router-dom';
 import PortfolioTypeSelector from '../pages/PortfolioTypeSelector';
-import AuthCallback from '../pages/AuthCallback';
-// import LoginForm from '../components/auth/LoginForm';
-import InstitutionValidation from '../pages/InstitutionValidation';
+import Layout from '../components/layout/Layout';
 import Dashboard from '../pages/Dashboard';
-import Prospection from '../pages/Prospection';
 import TraditionalPortfolio from '../pages/TraditionalPortfolio';
 import TraditionalPortfolioDetails from '../pages/TraditionalPortfolioDetails';
 import { TraditionalPortfolioView } from '../pages/TraditionalPortfolioView';
 import InvestmentPortfolio from '../pages/InvestmentPortfolio';
 import InvestmentPortfolioDetails from '../pages/InvestmentPortfolioDetails';
-import InvestmentAssetDetail from '../pages/InvestmentAssetDetail';
-import InvestmentSubscriptionDetail from '../pages/InvestmentSubscriptionDetail';
-import InvestmentValuationDetail from '../pages/InvestmentValuationDetail';
-import InvestmentReportingDetail from '../pages/InvestmentReportingDetail';
 import LeasingPortfolio from '../pages/LeasingPortfolio';
 import LeasingPortfolioDetails from '../pages/LeasingPortfolioDetails';
-import LeasingReservationsPage from '../pages/leasing/LeasingReservationsPage';
-import LeasingMaintenancePage from '../pages/leasing/LeasingMaintenancePage';
-import LeasingIncidentsPage from '../pages/leasing/LeasingIncidentsPage';
-import LeasingMovementsPage from '../pages/leasing/LeasingMovementsPage';
-// Imports d'opérations supprimés
+import GuaranteeDetails from '../pages/GuaranteeDetails';
+import PortfolioErrorBoundary from '../pages/PortfolioErrorBoundary';
 import CreditRequestDetails from '../pages/CreditRequestDetails';
 import CreditContractDetail from '../pages/CreditContractDetail';
 import CreditContractSchedulePage from '../pages/CreditContractSchedulePage';
 import DisbursementDetails from '../pages/DisbursementDetails';
 import RepaymentDetails from '../pages/RepaymentDetails';
-import GuaranteeDetails from '../pages/GuaranteeDetails';
-
 import Documentation from '../pages/Documentation';
 import Help from '../pages/Help';
 import Settings from '../pages/Settings';
@@ -42,103 +23,117 @@ import Users from '../pages/Users';
 import InstitutionManagement from '../pages/InstitutionManagement';
 import CentralRisque from '../pages/CentralRisque';
 import PortfolioNotFound from '../pages/PortfolioNotFound';
-import PortfolioErrorBoundary from '../pages/PortfolioErrorBoundary';
 import { ChatPage } from '../pages/chat/ChatPage';
+import Prospection from '../pages/Prospection';
+import { Navigate } from 'react-router-dom';
 
+// Importations spécifiques au leasing
+import LeasingEquipmentDetail from '../pages/leasing/LeasingEquipmentDetail';
+import LeasingContractDetail from '../pages/leasing/LeasingContractDetail';
+import LeasingIncidentDetail from '../pages/leasing/LeasingIncidentDetail';
+import LeasingMaintenanceDetail from '../pages/leasing/LeasingMaintenanceDetail';
+import LeasingPaymentDetail from '../pages/leasing/LeasingPaymentDetail';
+import LeasingReportingDetail from '../pages/leasing/LeasingReportingDetail';
+import LeasingReservationsPage from '../pages/leasing/LeasingReservationsPage';
+import LeasingMaintenancePage from '../pages/leasing/LeasingMaintenancePage';
+import LeasingIncidentsPage from '../pages/leasing/LeasingIncidentsPage';
+import LeasingMovementsPage from '../pages/leasing/LeasingMovementsPage';
 
+// Importations spécifiques à l'investissement
+import InvestmentAssetDetail from '../pages/InvestmentAssetDetail';
+import InvestmentSubscriptionDetail from '../pages/InvestmentSubscriptionDetail';
+import InvestmentValuationDetail from '../pages/InvestmentValuationDetail';
+import InvestmentReportingDetail from '../pages/InvestmentReportingDetail';
+
+// Autres importations
+import AuthCallback from '../pages/AuthCallback';
+import InstitutionValidation from '../pages/InstitutionValidation';
+
+// Définition du routeur avec les routes
 export const router = createBrowserRouter([
-  // Redirections pour accès direct aux menus globaux (settings, users, institution, docs, help)
-  {
-    path: '/settings',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/settings`;
-    })()} replace />
-  },
-  {
-    path: '/users',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/users`;
-    })()} replace />
-  },
-  {
-    path: '/institution',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/institution`;
-    })()} replace />
-  },
-  {
-    path: '/docs',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/docs`;
-    })()} replace />
-  },
-  {
-    path: '/help',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/help`;
-    })()} replace />
-  },
+  // Route de base et page d'accueil
   {
     path: '/',
     element: <PortfolioTypeSelector />
   },
+  
+  // Route spécifique pour tester et résoudre le problème 404
+  {
+    path: '/guarantee-test',
+    element: <GuaranteeDetails />
+  },
+  
+  // Routes d'authentification et validation
   {
     path: '/auth/callback',
     element: <AuthCallback />
   },
   {
-    path: '/institution/validation',
+    path: '/institution-validation',
     element: <InstitutionValidation />
   },
-  // Redirection dynamique pour /dashboard
+  
+  // Redirections vers les sections de l'application
+  {
+    path: '/settings',
+    element: <Navigate to="/app/traditional/settings" replace />
+  },
+  {
+    path: '/users',
+    element: <Navigate to="/app/traditional/users" replace />
+  },
+  {
+    path: '/institution',
+    element: <Navigate to="/app/traditional/institution" replace />
+  },
+  {
+    path: '/docs',
+    element: <Navigate to="/app/traditional/docs" replace />
+  },
+  {
+    path: '/help',
+    element: <Navigate to="/app/traditional/help" replace />
+  },
   {
     path: '/dashboard',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}`;
-    })()} replace />
+    element: <Navigate to="/app/traditional" replace />
   },
-  // Route partagée pour la prospection
   {
     path: '/prospection',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/prospection`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/prospection" replace />
   },
-  // Route partagée pour la centrale de risque
   {
     path: '/central-risque',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/central-risque`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/central-risque" replace />
   },
+  
+  // Principales routes de l'application avec Layout
   {
     path: '/app/:portfolioType',
-    element: <Layout />, 
+    element: <Layout />,
+    errorElement: <div>Une erreur est survenue dans l'application</div>,
     children: [
+      // Dashboard
       { path: '', element: <Dashboard /> },
-      // Traditional
-      // Gérer le cas où "traditional" est répété dans l'URL (doit être avant les autres routes)
+      
+      // Routes pour le portefeuille traditionnel
       { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Route spécifique pour le cas particulier de trad-1/guarantees/G001
-      { path: 'traditional/trad-1/guarantees/G001', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Routes génériques pour les garanties
+      
+      // Routes pour les garanties - avec routes explicites pour le débogage
       { path: 'traditional/:id/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Route additionnelle pour correspondre au format exact utilisé dans useGuaranteeActions
+      { path: 'traditional/trad-1/guarantees/G001', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/trad-1/guarantees/G002', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/trad-1/guarantees/G003', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      
+      // Routes pour les vues des portefeuilles traditionnels
       { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
       { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
-      // Métier detail routes (must be before :id and *)
+      
+      // Routes pour les détails métier
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
       { path: 'portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
       { path: 'traditional/portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
@@ -146,17 +141,17 @@ export const router = createBrowserRouter([
       { path: 'traditional/portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage /> },
       { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
       { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <RepaymentDetails /> },
-      { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Route de fallback garantie pour compatibilité
-      { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Investment
+      { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails /> },
+      
+      // Routes pour l'investissement
       { path: 'investment', element: <InvestmentPortfolio /> },
       { path: 'investment/:id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'assets/:assetId', element: <InvestmentAssetDetail />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'subscriptions/:subscriptionId', element: <InvestmentSubscriptionDetail /> },
       { path: 'valuations/:valuationId', element: <InvestmentValuationDetail /> },
       { path: 'reporting/:reportId', element: <InvestmentReportingDetail /> },
-      // Leasing
+      
+      // Routes pour le leasing
       { path: 'leasing', element: <LeasingPortfolio /> },
       { path: 'leasing/:id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'equipments/:equipmentId', element: <LeasingEquipmentDetail />, errorElement: <PortfolioErrorBoundary /> },
@@ -169,22 +164,20 @@ export const router = createBrowserRouter([
       { path: 'maintenance', element: <LeasingMaintenancePage /> },
       { path: 'incidents', element: <LeasingIncidentsPage /> },
       { path: 'movements', element: <LeasingMovementsPage /> },
-      // Operations - Supprimées
-      // Settings
+      
+      // Pages de paramètres et administration
       { path: 'settings', element: <Settings /> },
-      // Administration
       { path: 'users', element: <Users /> },
       { path: 'institution', element: <InstitutionManagement /> },
       { path: 'central-risque', element: <CentralRisque /> },
-      // Prospection partagé
+      
+      // Autres pages
       { path: 'prospection', element: <Prospection /> },
-      // Chat page
       { path: 'chat', element: <ChatPage /> },
-      // Help & Documentation
       { path: 'docs', element: <Documentation /> },
       { path: 'help', element: <Help /> },
-      // 404 Not Found pour les détails de portefeuille
-      // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
+      
+      // Pages d'erreur 404
       { path: 'traditional/*', element: <PortfolioNotFound /> },
       { path: 'investment/*', element: <PortfolioNotFound /> },
       { path: 'leasing/*', element: <PortfolioNotFound /> }

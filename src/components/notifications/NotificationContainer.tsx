@@ -1,5 +1,4 @@
-import React from 'react';
-import { AlertCircle, CheckCircle, Info, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, X, AlertTriangle } from 'lucide-react';
 import { Notification } from '../../types/notifications';
 import { useNotification } from '../../contexts/NotificationContext';
 
@@ -34,6 +33,8 @@ function NotificationItem({ notification, onRemove }: NotificationItemProps) {
         return 'bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-100';
       case 'error':
         return 'bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-100';
+      case 'warning':
+        return 'bg-amber-50 text-amber-800 dark:bg-amber-900 dark:text-amber-100';
       default:
         return 'bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
     }
@@ -45,6 +46,8 @@ function NotificationItem({ notification, onRemove }: NotificationItemProps) {
         return <CheckCircle className="h-5 w-5 mr-3" />;
       case 'error':
         return <AlertCircle className="h-5 w-5 mr-3" />;
+      case 'warning':
+        return <AlertTriangle className="h-5 w-5 mr-3" />;
       default:
         return <Info className="h-5 w-5 mr-3" />;
     }
