@@ -7,6 +7,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { NotificationsPopover } from '../notifications/NotificationsPopover';
 import { AIChat } from '../chat/AIChat';
 import { ResetMockDataButton } from '../ResetMockDataButton';
+import { CurrencyDisplay } from './CurrencyDisplay';
 
 interface DynamicHeaderProps {
   onMenuClick: () => void;
@@ -53,6 +54,9 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
 
           {/* Actions rapides */}
           <div className="flex items-center space-x-4">
+            {/* Affichage de la devise et du taux de change */}
+            <CurrencyDisplay />
+            
             {/* Bouton de chat toujours visible */}
             <Button
               variant="ghost"

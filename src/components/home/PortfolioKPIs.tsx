@@ -1,6 +1,5 @@
-import React from 'react';
 import { DollarSign, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import type { PortfolioMetrics } from '../../types/portfolio';
 
 interface KPICardProps {
@@ -12,6 +11,8 @@ interface KPICardProps {
 }
 
 function KPICard({ title, value, change, icon, onClick }: KPICardProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   return (
     <button
       onClick={onClick}
@@ -24,7 +25,7 @@ function KPICard({ title, value, change, icon, onClick }: KPICardProps) {
         <div className="ml-4">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</h3>
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {typeof value === 'number' ? formatCurrency(value) : value}
+            {typeof value === 'number' ? formatCurrency(value, undefined, 'USD') : value}
           </p>
           {change !== undefined && (
             <p className={`text-sm font-medium ${

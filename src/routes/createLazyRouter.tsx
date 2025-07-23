@@ -26,13 +26,6 @@ export function createLazyRouter() {
       })()} replace />
     },
     {
-      path: '/institution',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/institution`;
-      })()} replace />
-    },
-    {
       path: '/docs',
       element: <Navigate to={(() => {
         const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
@@ -124,15 +117,11 @@ export function createLazyRouter() {
         { path: 'maintenance/:maintenanceId', element: React.createElement(withSuspense(components.LeasingMaintenanceDetail)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'payments/:paymentId', element: React.createElement(withSuspense(components.LeasingPaymentDetail)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'reporting/:reportId', element: React.createElement(withSuspense(components.LeasingReportingDetail)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
-        { path: 'reservations', element: React.createElement(withSuspense(components.LeasingReservationsPage)) },
-        { path: 'maintenance', element: React.createElement(withSuspense(components.LeasingMaintenancePage)) },
-        { path: 'incidents', element: React.createElement(withSuspense(components.LeasingIncidentsPage)) },
-        { path: 'movements', element: React.createElement(withSuspense(components.LeasingMovementsPage)) },
         // Settings
         { path: 'settings', element: React.createElement(withSuspense(components.Settings)) },
         // Administration
         { path: 'users', element: React.createElement(withSuspense(components.Users)) },
-        { path: 'institution', element: React.createElement(withSuspense(components.InstitutionManagement)) },
+        // { path: 'institution', element: React.createElement(withSuspense(components.InstitutionManagement)) },
         { path: 'central-risque', element: React.createElement(withSuspense(components.CentralRisque)) },
         // Prospection partagé
         { path: 'prospection', element: React.createElement(withSuspense(components.Prospection)) },

@@ -270,7 +270,7 @@ export function CompanyDetails({
                   
                   <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-1">Chiffre d'affaires</h4>
-                    <p className="text-2xl font-bold text-purple-800 dark:text-purple-200">{company.annual_revenue ? formatCurrency(company.annual_revenue) : '-'}</p>
+                    <p className="text-2xl font-bold text-purple-800 dark:text-purple-200">{company.annual_revenue ? formatCurrency(company.annual_revenue, undefined, 'USD') : '-'}</p>
                   </div>
                 </div>
               </div>

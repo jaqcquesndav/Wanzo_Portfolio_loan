@@ -93,7 +93,7 @@ export function CompanyCard({
           {/* Métriques financières */}
           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
             <TrendingUp className="h-4 w-4 mr-2" />
-            CA: {formatCurrency(company.annual_revenue)}
+            CA: {formatCurrency(company.annual_revenue, undefined, 'USD')}
             <span className="mx-2">•</span>
             Croissance: {company.financial_metrics.revenue_growth}%
           </div>

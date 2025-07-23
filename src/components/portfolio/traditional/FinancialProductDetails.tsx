@@ -3,7 +3,7 @@ import { X, Edit2, Tag, Calendar, TrendingUp, Users } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { FinancialProductForm } from './FinancialProductForm';
-import { formatCurrency } from '../../../utils/formatters';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import type { Portfolio } from '../../../types/portfolio';
 
@@ -93,7 +93,7 @@ export function FinancialProductDetails({
                 <div className="flex items-center text-sm text-gray-500">
                   <Tag className="h-4 w-4 mr-2" />
                   <span>
-                    {formatCurrency(product.minAmount)} - {formatCurrency(product.maxAmount)}
+                    {formatCurrency(product.minAmount, undefined, 'USD')} - {formatCurrency(product.maxAmount, undefined, 'USD')}
                   </span>
                 </div>
                 <div className="flex items-center text-sm text-gray-500">

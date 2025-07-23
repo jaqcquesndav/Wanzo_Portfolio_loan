@@ -2,7 +2,7 @@
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { LeasingRiskEntry } from '../../data/mockCentraleRisque';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import { convertScoreToRating, getCreditRatingClass } from '../../utils/creditScoreConverter';
 
 interface LeasingRiskTableProps {
@@ -10,6 +10,8 @@ interface LeasingRiskTableProps {
 }
 
 export function LeasingRiskTable({ data }: LeasingRiskTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   const columns: Column<LeasingRiskEntry>[] = [
     {
       header: 'Institution',
@@ -29,7 +31,7 @@ export function LeasingRiskTable({ data }: LeasingRiskTableProps) {
     },
     {
       header: 'Valeur',
-      accessor: (item) => formatCurrency(item.valeurFinancement)
+      accessor: (item) => formatCurrency(item.valeurFinancement, undefined, 'USD')
     },
     {
       header: 'Statut',

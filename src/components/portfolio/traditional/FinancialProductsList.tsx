@@ -3,7 +3,7 @@ import React from 'react';
 import { Eye, TrendingUp, Users, Tag } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
-import { formatCurrency } from '../../../utils/formatters';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
 
 interface FinancialProductsListProps {
@@ -12,6 +12,7 @@ interface FinancialProductsListProps {
 }
 
 export function FinancialProductsList({ products, onViewDetails }: FinancialProductsListProps) {
+  const { formatCurrency } = useFormatCurrency();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {products.map((product) => (
@@ -32,7 +33,7 @@ export function FinancialProductsList({ products, onViewDetails }: FinancialProd
             <div className="flex items-center text-sm text-gray-500">
               <Tag className="h-4 w-4 mr-2" />
               <span>
-                {formatCurrency(product.minAmount)} - {formatCurrency(product.maxAmount)}
+                                {formatCurrency(product.minAmount, undefined, 'USD')} - {formatCurrency(product.maxAmount, undefined, 'USD')}
               </span>
             </div>
             <div className="flex items-center text-sm text-gray-500">

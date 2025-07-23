@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Company } from '../../types/company';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 
 // Position de Goma
 const GOMA_POSITION: [number, number] = [-1.6777, 29.2285];
@@ -32,6 +32,8 @@ interface CompanyMapProps {
 }
 
 export function CompanyMap({ companies, onSelectCompany }: CompanyMapProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   useEffect(() => {
     // Fix for default marker icons in production build
     // @ts-ignore
@@ -67,7 +69,7 @@ export function CompanyMap({ companies, onSelectCompany }: CompanyMapProps) {
                 <h3 className="font-medium text-lg mb-2">{company.name}</h3>
                 <div className="space-y-1 text-sm">
                   <p><span className="font-medium">Secteur:</span> {company.sector}</p>
-                  <p><span className="font-medium">CA Annuel:</span> {formatCurrency(company.annual_revenue)}</p>
+                  <p><span className="font-medium">CA Annuel:</span> {formatCurrency(company.annual_revenue, undefined, 'USD')}</p>
                   <p><span className="font-medium">Employés:</span> {company.employee_count}</p>
                   <p><span className="font-medium">Croissance:</span> {company.financial_metrics.revenue_growth}%</p>
                 </div>

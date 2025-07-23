@@ -2,7 +2,7 @@ import React from 'react';
 import { X, Wrench, Calendar, Tag, Check, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import type { Equipment } from '../../types/leasing';
 
 interface LeasingEquipmentModalProps {
@@ -12,6 +12,8 @@ interface LeasingEquipmentModalProps {
 }
 
 export function LeasingEquipmentModal({ equipment, onClose, onSelect }: LeasingEquipmentModalProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -40,13 +42,13 @@ export function LeasingEquipmentModal({ equipment, onClose, onSelect }: LeasingE
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Prix mensuel estimé</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {formatCurrency(equipment.price / 36)}
+                    {formatCurrency(equipment.price / 36, undefined, 'USD')}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Valeur totale</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {formatCurrency(equipment.price)}
+                    {formatCurrency(equipment.price, undefined, 'USD')}
                   </p>
                 </div>
               </div>

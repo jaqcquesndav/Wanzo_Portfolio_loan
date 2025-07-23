@@ -38,15 +38,30 @@ export interface Equipment {
   imageUrl: string;
 }
 
+export type LeasingContractStatus = 'draft' | 'pending' | 'active' | 'completed' | 'terminated';
+
 export interface LeasingContract {
   id: string;
   equipment_id: string;
   client_id: string;
+  client_name: string;
+  request_id?: string; // ID de la demande associée
   start_date: string;
   end_date: string;
   monthly_payment: number;
   interest_rate: number;
   maintenance_included: boolean;
   insurance_included: boolean;
-  status: 'active' | 'pending' | 'completed';
+  status: LeasingContractStatus;
+  activationDate?: string;
+  terminationDate?: string;
+  terminationReason?: string;
+  nextInvoiceDate?: string;
+  amortization_schedule?: {
+    date: string;
+    amount: number;
+    principal: number;
+    interest: number;
+    balance: number;
+  }[];
 }

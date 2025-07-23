@@ -30,10 +30,6 @@ export const LeasingIncidentDetail = lazy(() => import('../pages/leasing/Leasing
 export const LeasingMaintenanceDetail = lazy(() => import('../pages/leasing/LeasingMaintenanceDetail'));
 export const LeasingPaymentDetail = lazy(() => import('../pages/leasing/LeasingPaymentDetail'));
 export const LeasingReportingDetail = lazy(() => import('../pages/leasing/LeasingReportingDetail'));
-export const LeasingReservationsPage = lazy(() => import('../pages/leasing/LeasingReservationsPage'));
-export const LeasingMaintenancePage = lazy(() => import('../pages/leasing/LeasingMaintenancePage'));
-export const LeasingIncidentsPage = lazy(() => import('../pages/leasing/LeasingIncidentsPage'));
-export const LeasingMovementsPage = lazy(() => import('../pages/leasing/LeasingMovementsPage'));
 
 // Détails des opérations
 export const CreditRequestDetails = lazy(() => import('../pages/CreditRequestDetails'));
@@ -47,6 +43,7 @@ export const GuaranteeDetails = lazy(() => import('../pages/GuaranteeDetails'));
 export const Documentation = lazy(() => import('../pages/Documentation'));
 export const Help = lazy(() => import('../pages/Help'));
 export const Settings = lazy(() => import('../pages/Settings'));
+export const CurrencySettings = lazy(() => import('../pages/CurrencySettings'));
 export const Users = lazy(() => import('../pages/Users'));
 export const Organization = lazy(() => import('../pages/Organization'));
 export const InstitutionValidation = lazy(() => import('../pages/InstitutionValidation'));

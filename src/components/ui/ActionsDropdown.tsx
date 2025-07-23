@@ -7,6 +7,7 @@ export interface DropdownAction {
   onClick: () => void;
   disabled?: boolean;
   className?: string;
+  tooltip?: string; // Ajout d'une propriété tooltip pour les infobulles
 }
 
 interface ActionsDropdownProps {
@@ -87,6 +88,8 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ actions }) => 
               <button
                 key={idx}
                 className={`w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''} ${action.className || ''}`}
+                title={action.tooltip}
+                aria-label={action.tooltip}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent propagation to parent elements
                   e.preventDefault(); // Empêcher tout comportement par défaut

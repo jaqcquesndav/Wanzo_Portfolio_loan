@@ -102,8 +102,8 @@ export default function LeasingPortfolioDetails() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" aria-label="Chargement..." />
+      <div className="flex justify-center items-center h-64">
+        <div className="w-6 h-6 border-t-2 border-gray-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -180,30 +180,14 @@ export default function LeasingPortfolioDetails() {
             }}
             onViewCompany={handleViewCompany}
             onApprove={(request) => {
-              console.log('Approuver la demande:', request);
+              console.log('Approuver la demande et créer un contrat:', request);
               
-              // Récupérer les détails de l'équipement
-              const equipment = portfolio.type === 'leasing' 
-                ? (portfolio as unknown as LeasingPortfolio).equipment_catalog.find(eq => eq.id === request.equipment_id)
-                : undefined;
+              // Marquer la demande comme approuvée et créer un contrat
+              // Note: Dans une implémentation réelle, nous utiliserions useLeasingRequestActions().approveRequest()
+              // Ici, nous simulons juste l'approbation avec un message
+              showNotification(`Demande de leasing ${request.id} approuvée et contrat créé`, 'success');
               
-              // Ouvrir le modal d'ordre de paiement
-              openPaymentOrder({
-                action: 'approve_leasing',
-                portfolioId: id || '',
-                portfolioName: portfolio?.name,
-                itemId: request.id,
-                reference: request.id,
-                amount: request.monthly_budget * request.requested_duration,
-                company: request.client_name,
-                product: equipment?.name || 'Équipement de leasing',
-                additionalInfo: {
-                  equipmentId: request.equipment_id,
-                  equipmentName: equipment?.name,
-                  equipmentCategory: equipment?.category,
-                  contractId: request.id
-                }
-              }, showPaymentOrderModal);
+              // Nous ne lançons plus l'ordre de paiement ici - ce sera fait lors de la commande d'équipement
             }}
             onReject={(request) => {
               console.log('Rejeter la demande:', request);
@@ -223,6 +207,31 @@ export default function LeasingPortfolioDetails() {
               navigate(`/app/leasing/${id}/contracts/${contract.id}`);
             }}
             onViewCompany={handleViewCompany}
+            orderEquipment={(contract) => {
+              console.log('Commander équipement pour le contrat:', contract);
+              
+              // Récupérer les détails de l'équipement
+              const equipment = portfolio.type === 'leasing' 
+                ? (portfolio as unknown as LeasingPortfolio).equipment_catalog.find(eq => eq.id === contract.equipment_id)
+                : undefined;
+              
+              // Ouvrir le modal d'ordre de paiement
+              openPaymentOrder({
+                action: 'order_equipment',
+                portfolioId: id || '',
+                portfolioName: portfolio?.name,
+                itemId: contract.id,
+                reference: contract.id,
+                amount: contract.monthly_payment * 6, // Exemple: paiement initial de 6 mois
+                company: contract.client_name,
+                product: equipment?.name || 'Équipement de leasing',
+                additionalInfo: {
+                  equipmentId: contract.equipment_id,
+                  equipmentName: equipment?.name,
+                  contractId: contract.id
+                }
+              }, showPaymentOrderModal);
+            }}
           />
         </TabsContent>
         <TabsContent value="incidents" currentValue={tab}>

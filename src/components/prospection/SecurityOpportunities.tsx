@@ -33,12 +33,12 @@ export function SecurityOpportunities({ opportunities, onViewDetails }: Security
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Montant total</span>
-                <span className="font-medium">{formatCurrency(opportunity.details.totalAmount)}</span>
+                <span className="font-medium">{formatCurrency(opportunity.details.totalAmount, undefined, 'USD')}</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Prix unitaire</span>
-                <span className="font-medium">{formatCurrency(opportunity.details.unitPrice)}</span>
+                <span className="font-medium">{formatCurrency(opportunity.details.unitPrice, undefined, 'USD')}</span>
               </div>
 
               {opportunity.type === 'bond' && (

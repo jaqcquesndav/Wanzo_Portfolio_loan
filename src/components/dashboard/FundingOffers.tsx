@@ -5,7 +5,7 @@ import { Button, Badge, Table, TableHead, TableBody, TableRow, TableHeader, Tabl
 import { PortfolioPerformanceChart } from './PortfolioPerformanceChart';
 import { PerformanceIndicatorCard } from './PerformanceIndicatorCard';
 import { PerformanceComparisonScroller } from './PerformanceComparisonScroller';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import type { Company } from '../../types/company';
 import type { Portfolio } from '../../types/portfolio';
 // Utiliser les entreprises partagées pour toutes les opportunités
@@ -26,6 +26,7 @@ export type Indicator = {
 const FundingOffers = () => {
   const navigate = useNavigate();
   const portfolioType = usePortfolioType();
+  const { formatCurrency } = useFormatCurrency();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -322,14 +323,14 @@ const FundingOffers = () => {
                     <TableCell>{company.employee_count}</TableCell>
                     <TableCell>
                       <span className="flex items-center">
-                        {formatCurrency(company.annual_revenue)}
+                        {formatCurrency(company.annual_revenue, undefined, 'USD')}
                         {getTrendIcon(caTrend)}
                       </span>
                     </TableCell>
                     <TableCell>{company.financial_metrics.revenue_growth}%</TableCell>
                     <TableCell>
                       <span className="flex items-center">
-                        {company.financial_metrics.ebitda ? formatCurrency(company.financial_metrics.ebitda) : '-'}
+                        {company.financial_metrics.ebitda ? formatCurrency(company.financial_metrics.ebitda, undefined, 'USD') : '-'}
                         {getTrendIcon(mbeTrend)}
                       </span>
                     </TableCell>

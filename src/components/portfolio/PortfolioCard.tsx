@@ -48,7 +48,7 @@ export function PortfolioCard({ portfolio, onView }: PortfolioCardProps) {
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Montant cible</p>
             <p className="text-lg font-medium text-gray-900 dark:text-white">
-              {formatCurrency(portfolio.target_amount)}
+              {formatCurrency(portfolio.target_amount, undefined, 'USD')}
             </p>
           </div>
           <div>

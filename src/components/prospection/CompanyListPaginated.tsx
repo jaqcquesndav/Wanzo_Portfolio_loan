@@ -19,7 +19,7 @@ export function CompanyListPaginated({
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [sizeFilter, setSizeFilter] = useState<string>('all');
   
-  const { formatCurrency } = useFormatCurrency();
+  const { formatCurrency, currentCurrency } = useFormatCurrency();
   
   // Fonctions de tendance (simulées)
   const getTrendIcon = (trend: number) => {
@@ -122,14 +122,14 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {formatCurrency(c.annual_revenue)}
+            {formatCurrency(c.annual_revenue, undefined, 'USD')}
             {getTrendIcon(trend)}
           </span>
         );
       }
     },
     {
-      header: 'Croissance',
+      header: `Croissance`,
       accessor: (c: Company) => `${c.financial_metrics.revenue_growth}%`
     },
     {
@@ -138,7 +138,7 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {c.financial_metrics.ebitda ? formatCurrency(c.financial_metrics.ebitda) : '-'}
+            {c.financial_metrics.ebitda ? formatCurrency(c.financial_metrics.ebitda, undefined, 'USD') : '-'}
             {getTrendIcon(trend)}
           </span>
         );
@@ -211,7 +211,7 @@ export function CompanyListPaginated({
                 </div>
                 <div>
                   <span className="text-xs block text-gray-200">Taille du marché</span>
-                  <span className="font-semibold">{formatCurrency(marketSummary.marketSize)}</span>
+                  <span className="font-semibold">{formatCurrency(marketSummary.marketSize, undefined, 'USD')}</span>
                 </div>
                 <div>
                   <span className="text-xs block text-gray-200">Employés</span>

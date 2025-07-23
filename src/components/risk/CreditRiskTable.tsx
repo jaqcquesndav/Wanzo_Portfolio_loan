@@ -2,7 +2,7 @@
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { CreditRiskEntry } from '../../data/mockCentraleRisque';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import { convertScoreToRating, getCreditRatingClass } from '../../utils/creditScoreConverter';
 
 interface CreditRiskTableProps {
@@ -10,6 +10,8 @@ interface CreditRiskTableProps {
 }
 
 export function CreditRiskTable({ data }: CreditRiskTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   const columns: Column<CreditRiskEntry>[] = [
     {
       header: 'Institution',
@@ -25,7 +27,7 @@ export function CreditRiskTable({ data }: CreditRiskTableProps) {
     },
     {
       header: 'Encours',
-      accessor: (item) => formatCurrency(item.encours)
+      accessor: (item) => formatCurrency(item.encours, undefined, 'USD')
     },
     {
       header: 'Statut',

@@ -4,7 +4,7 @@ import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageContent } from './MessageContent';
-import { ModelSelector } from './ModelSelector';
+import { SourceSelector } from './SourceSelector';
 import { ConversationList } from './ConversationList';
 
 interface ChatContainerProps {
@@ -24,8 +24,12 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     updateMessage,
     toggleLike,
     toggleDislike,
-    selectedModel,
-    setSelectedModel,
+    currentPortfolioType,
+    currentPortfolioId,
+    selectedTask,
+    setPortfolioType,
+    setSelectedTask,
+    setCurrentPortfolioId,
     createNewConversation,
     deleteConversation,
     setActiveConversation
@@ -35,7 +39,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
 
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showModelSelector, setShowModelSelector] = useState(false);
+  const [showSourceSelector, setShowSourceSelector] = useState(false);
   const [showSidebar, setShowSidebar] = useState(mode === 'fullscreen');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,10 +133,10 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
               )}
               <MessageSquare className="h-5 w-5 text-primary" />
               <button
-                onClick={() => setShowModelSelector(true)}
+                onClick={() => setShowSourceSelector(true)}
                 className="flex items-center space-x-2 hover:text-primary"
               >
-                <h3 className="font-medium">{selectedModel.name}</h3>
+                <h3 className="font-medium">{selectedTask?.name || 'Assistant général'}</h3>
                 <Sparkles className="h-4 w-4" />
               </button>
             </div>
@@ -309,11 +313,21 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
         </div>
       </div>
 
-      <ModelSelector
-        isOpen={showModelSelector}
-        onClose={() => setShowModelSelector(false)}
-        selectedModel={selectedModel}
-        onSelect={setSelectedModel}
+      <SourceSelector
+        isOpen={showSourceSelector}
+        onClose={() => setShowSourceSelector(false)}
+        currentPortfolioType={currentPortfolioType}
+        selectedTask={selectedTask}
+        selectedPortfolioId={currentPortfolioId}
+        onSelect={(task, portfolioType, portfolioId) => {
+          if (portfolioType) {
+            setPortfolioType(portfolioType);
+          }
+          if (portfolioId) {
+            setCurrentPortfolioId(portfolioId);
+          }
+          setSelectedTask(task);
+        }}
       />
     </div>
   );

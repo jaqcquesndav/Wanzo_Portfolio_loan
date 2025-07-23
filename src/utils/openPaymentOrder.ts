@@ -11,6 +11,7 @@ export type PaymentTriggerAction =
   | 'buy_security'  // Achat de valeurs mobilières (marché)
   | 'validate_funding'  // Validation de financement (portefeuille traditionnel)
   | 'approve_leasing'  // Approbation de demande de leasing
+  | 'order_equipment'  // Commander l'équipement pour un contrat de leasing
   | 'equipment_maintenance'  // Maintenance d'équipement
   | 'equipment_incident'  // Incident d'équipement
   | 'payment_schedule';  // Échéancier de paiement

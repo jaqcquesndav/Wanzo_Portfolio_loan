@@ -4,6 +4,16 @@ import type { Message, Conversation, AIModel } from '../types/chat';
 import { AI_MODELS } from '../types/chat';
 import { generateResponse } from '../data/mockChatResponses';
 
+// Définition du type Task
+export interface Task {
+  id: string;
+  name: string;
+  description: string;
+  icon?: JSX.Element;
+  context: string[];
+}
+
+// Mise à jour des types pour inclure le portefeuille et la tâche
 interface ChatStore {
   // État UI
   isFloating: boolean;
@@ -16,12 +26,22 @@ interface ChatStore {
   activeConversationId: string | null;
   selectedModel: AIModel;
   
+  // Contexte de travail
+  currentPortfolioType: 'traditional' | 'leasing' | 'investment';
+  selectedTask: Task | null;
+  currentPortfolioId: string | null;
+  
   // Actions UI
   setFloating: (floating: boolean) => void;
   setOpen: (open: boolean) => void;
   setTyping: (typing: boolean) => void;
   setRecording: (recording: boolean) => void;
   setSelectedModel: (model: AIModel) => void;
+  
+  // Actions contexte
+  setPortfolioType: (type: 'traditional' | 'leasing' | 'investment') => void;
+  setSelectedTask: (task: Task) => void;
+  setCurrentPortfolioId: (id: string | null) => void;
   
   // Actions conversations
   createNewConversation: () => void;
@@ -47,6 +67,14 @@ export const useChatStore = create<ChatStore>()(
       isTyping: false,
       isRecording: false,
       selectedModel: AI_MODELS[0],
+      currentPortfolioType: 'traditional',
+      currentPortfolioId: null,
+      selectedTask: {
+        id: 'general',
+        name: 'Assistant général',
+        description: 'Aide générale sur tous les sujets',
+        context: ['general']
+      },
       conversations: [{
         id: '1',
         title: 'Nouvelle conversation',
@@ -71,6 +99,11 @@ export const useChatStore = create<ChatStore>()(
       setTyping: (typing) => set({ isTyping: typing }),
       setRecording: (recording) => set({ isRecording: recording }),
       setSelectedModel: (model) => set({ selectedModel: model }),
+      
+      // Actions contexte
+      setPortfolioType: (type) => set({ currentPortfolioType: type }),
+      setSelectedTask: (task) => set({ selectedTask: task }),
+      setCurrentPortfolioId: (id) => set({ currentPortfolioId: id }),
 
       // Actions conversations
       createNewConversation: () => {

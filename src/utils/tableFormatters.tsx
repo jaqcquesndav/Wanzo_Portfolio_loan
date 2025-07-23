@@ -1,12 +1,37 @@
 // Helpers pour formater les données de manière uniforme
-import React from 'react';
+
 
 export const formatters = {
   // Format currency with custom options
   currency: (value: number, options: Intl.NumberFormatOptions = {}) => {
+    // Déterminer la devise à utiliser (préférence utilisateur ou XOF par défaut)
+    let currency = 'XOF';
+    try {
+      const savedPreferences = localStorage.getItem('userPreferences');
+      if (savedPreferences) {
+        const preferences = JSON.parse(savedPreferences);
+        if (preferences.currency) {
+          currency = preferences.currency;
+        }
+      }
+    } catch {
+      // Fallback en cas d'erreur
+    }
+    
+    // Pour FCFA, format spécial car non standard dans Intl
+    if (currency === 'FCFA' || currency === 'XOF') {
+      const formatted = new Intl.NumberFormat('fr-FR', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        ...options,
+      }).format(value);
+      return `${formatted} FCFA`;
+    }
+    
+    // Pour les autres devises, utiliser le format standard
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'XOF',
+      currency,
       minimumFractionDigits: 0,
       ...options,
     }).format(value);

@@ -99,7 +99,7 @@ export function MaintenanceTable({ maintenance, loading = false, onRowClick }: M
     {
       header: 'Coût',
       accessorKey: 'cost',
-      cell: (item) => item.cost ? formatCurrency(item.cost) : '-',
+      cell: (item) => item.cost ? formatCurrency(item.cost, undefined, 'USD') : '-',
       align: 'right' as const
     },
     {
@@ -178,7 +178,7 @@ export function MaintenanceTable({ maintenance, loading = false, onRowClick }: M
     },
     {
       label: 'Coût total',
-      value: formatCurrency(totalCost)
+      value: formatCurrency(totalCost, undefined, 'USD')
     }
   ];
 

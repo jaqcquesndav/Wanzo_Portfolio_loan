@@ -51,7 +51,7 @@ export function EquipmentCard({ equipment, onView, onEdit, onDelete }: Equipment
           </div>
           <div className="flex items-center text-sm text-gray-500">
             <Tag className="h-4 w-4 mr-2" />
-            {formatCurrency(equipment.price)}
+            {formatCurrency(equipment.price, undefined, 'USD')}
           </div>
         </div>
 

@@ -2,13 +2,15 @@
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { InvestmentRiskEntry } from '../../data/mockCentraleRisque';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 
 interface InvestmentRiskTableProps {
   data: InvestmentRiskEntry[];
 }
 
 export function InvestmentRiskTable({ data }: InvestmentRiskTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   const columns: Column<InvestmentRiskEntry>[] = [
     {
       header: 'Institution',
@@ -28,11 +30,11 @@ export function InvestmentRiskTable({ data }: InvestmentRiskTableProps) {
     },
     {
       header: 'Montant investi',
-      accessor: (item) => formatCurrency(item.montantInvesti)
+      accessor: (item) => formatCurrency(item.montantInvesti, undefined, 'USD')
     },
     {
       header: 'Valorisation',
-      accessor: (item) => formatCurrency(item.valorisation)
+      accessor: (item) => formatCurrency(item.valorisation, undefined, 'USD')
     },
     {
       header: 'Statut',

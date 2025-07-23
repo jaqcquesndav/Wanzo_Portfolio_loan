@@ -1,6 +1,5 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 
 const mockData = {
   totalValue: 250000000,
@@ -13,6 +12,8 @@ const mockData = {
 };
 
 export function PortfolioSummary() {
+  const { formatCurrency, currentCurrency } = useFormatCurrency();
+  
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-6">
@@ -26,21 +27,21 @@ export function PortfolioSummary() {
               <div>
                 <p className="text-sm text-gray-500">Valeur totale</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(mockData.totalValue)}
+                  {formatCurrency(mockData.totalValue, undefined, 'USD')}
                 </p>
               </div>
               
               <div>
                 <p className="text-sm text-gray-500">Capital investi</p>
                 <p className="text-xl font-medium text-gray-900">
-                  {formatCurrency(mockData.invested)}
+                  {formatCurrency(mockData.invested, undefined, 'USD')}
                 </p>
               </div>
               
               <div>
                 <p className="text-sm text-gray-500">Disponible</p>
                 <p className="text-xl font-medium text-gray-900">
-                  {formatCurrency(mockData.available)}
+                  {formatCurrency(mockData.available, undefined, 'USD')}
                 </p>
               </div>
             </div>
@@ -52,7 +53,7 @@ export function PortfolioSummary() {
               <div className="flex items-center justify-center space-x-2">
                 <DollarSign className="h-6 w-6 text-green-500" />
                 <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(mockData.returns.total)}
+                  {formatCurrency(mockData.returns.total, undefined, 'USD')}
                 </p>
               </div>
               <div className="mt-2 flex items-center justify-center">

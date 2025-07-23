@@ -6,7 +6,7 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Button } from '../../ui/Button';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
-import { formatCurrency } from '../../../utils/formatters';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface LeasingRequestsTableProps {
   requests: LeasingRequest[];
@@ -29,6 +29,8 @@ export function LeasingRequestsTable({
   onViewCompany,
   loading = false
 }: LeasingRequestsTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   // Map des statuts de demande avec leurs variantes et labels
   const statusMap = useMemo(() => ({
     'pending': { label: 'En attente', variant: 'warning' as const },

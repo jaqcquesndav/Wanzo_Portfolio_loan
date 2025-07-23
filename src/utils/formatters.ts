@@ -1,42 +1,44 @@
-export const formatCurrency = (amount: number, currency?: 'CDF' | 'USD' | 'EUR' | 'FCFA'): string => {
-  // Si aucune devise n'est spécifiée, utiliser la devise par défaut de l'utilisateur
-  if (!currency) {
-    // Essayer d'obtenir la devise du contexte via le hook useCurrencyContext
-    // Mais comme nous ne pouvons pas utiliser des hooks dans ce fichier utilitaire,
-    // nous utiliserons localStorage comme fallback
-    try {
-      const savedPreferences = localStorage.getItem('userPreferences');
-      if (savedPreferences) {
-        const preferences = JSON.parse(savedPreferences);
-        currency = preferences.currency || 'CDF';
-      } else {
-        currency = 'CDF'; // Valeur par défaut
-      }
-    } catch {
-      currency = 'CDF'; // Fallback en cas d'erreur
+export const formatCurrency = (amount: number, includeCurrency: boolean = true): string => {
+  // Obtenir la devise des préférences utilisateur
+  let currency: 'CDF' | 'USD' | 'EUR' | 'FCFA' = 'FCFA';
+  
+  try {
+    const savedPreferences = localStorage.getItem('userPreferences');
+    if (savedPreferences) {
+      const preferences = JSON.parse(savedPreferences);
+      currency = preferences.currency || 'FCFA';
     }
+  } catch {
+    // Fallback en cas d'erreur
   }
   
-  if (currency === 'FCFA') {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' ' + currency;
-  }
-  
+  // Mapper les devises à leurs locales et symboles
   const localeMap = {
     'CDF': 'fr-CD',
     'USD': 'en-US',
-    'EUR': 'fr-FR'
+    'EUR': 'fr-FR',
+    'FCFA': 'fr-FR'
   };
   
+  // Si c'est FCFA, format personnalisé car non standard dans Intl
+  if (currency === 'FCFA') {
+    const formatted = new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+    
+    return includeCurrency ? `${formatted} FCFA` : formatted;
+  }
+  
+  // Pour les autres devises, utiliser Intl.NumberFormat avec style currency
   const formatter = new Intl.NumberFormat(localeMap[currency as keyof typeof localeMap] || 'fr-CD', {
-    style: 'currency',
-    currency: currency,
+    style: includeCurrency ? 'currency' : 'decimal',
+    currency: includeCurrency ? currency : undefined,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   });
+  
   return formatter.format(amount);
 };
 

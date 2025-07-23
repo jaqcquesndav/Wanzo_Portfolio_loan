@@ -1,6 +1,6 @@
 import type { Equipment } from './leasing';
 
-export type LeasingRequestStatus = 'pending' | 'approved' | 'rejected';
+export type LeasingRequestStatus = 'pending' | 'approved' | 'rejected' | 'contract_created';
 
 export interface LeasingRequest {
   id: string; // Format WL-XXXXXXXX
@@ -18,6 +18,8 @@ export interface LeasingRequest {
   notes?: string;
   technical_sheet_url?: string;
   transaction_id?: string; // Numéro de transaction financière
+  rejectionReason?: string;
+  contract_id?: string; // ID du contrat créé à partir de cette demande
 }
 
 export interface LeasingRequestWithEquipment extends LeasingRequest {

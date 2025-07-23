@@ -3,16 +3,31 @@ import type { LeasingContract } from '../../../types/leasing';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
-import { formatCurrency, generateTransactionId } from '../../../utils/formatters';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface ContractsTableProps {
   contracts: LeasingContract[];
   loading?: boolean;
   onRowClick?: (contract: LeasingContract) => void;
-  onViewCompany?: (companyId: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
+  onViewCompany?: (companyId: string) => void;
+  onGenerateInvoice?: (contract: LeasingContract) => void;
+  onActivate?: (contract: LeasingContract) => void;
+  onTerminate?: (contract: LeasingContract) => void;
+  orderEquipment?: (contract: LeasingContract) => void;
 }
 
-export function ContractsTable({ contracts, loading = false, onRowClick, onViewCompany }: ContractsTableProps) {
+export function ContractsTable({ 
+  contracts, 
+  loading = false, 
+  onRowClick, 
+  onViewCompany,
+  onGenerateInvoice,
+  onActivate,
+  onTerminate,
+  orderEquipment
+}: ContractsTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   // Calculer le montant total des contrats
   const totalAmount = useMemo(() => {
     return contracts.reduce((sum, contract) => {
@@ -31,13 +46,12 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
       header: 'Référence',
       accessorKey: 'id',
       cell: (contract) => {
-        const contractId = generateTransactionId('CONT', parseInt(contract.id.replace('cont-', '')));
-        return <span className="font-mono">{contractId}</span>;
+        return <span className="font-mono">{contract.id}</span>;
       }
     },
     {
       header: 'Client',
-      accessorKey: 'client_id',
+      accessorKey: 'client_name',
       cell: (contract) => (
         <span 
           className="hover:text-blue-600 hover:underline cursor-pointer"
@@ -48,7 +62,7 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
             }
           }}
         >
-          {contract.client_id}
+          {contract.client_name}
         </span>
       )
     },
@@ -69,7 +83,7 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
     {
       header: 'Mensualité',
       accessorKey: 'monthly_payment',
-      cell: (contract) => formatCurrency(contract.monthly_payment),
+      cell: (contract) => formatCurrency(contract.monthly_payment, undefined, 'USD'),
       align: 'right' as const
     },
     {
@@ -86,11 +100,20 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
         : formatters.badge('excluded', 'default', 'Non incluse')
     },
     {
-      header: 'Assurance',
-      accessorKey: 'insurance_included',
-      cell: (contract) => contract.insurance_included
-        ? formatters.badge('included', 'success', 'Incluse')
-        : formatters.badge('excluded', 'default', 'Non incluse')
+      header: 'Status',
+      accessorKey: 'status',
+      cell: (contract) => {
+        const statusMap = {
+          'draft': { label: 'Brouillon', variant: 'default' as const },
+          'pending': { label: 'En attente', variant: 'warning' as const },
+          'active': { label: 'Actif', variant: 'success' as const },
+          'completed': { label: 'Terminé', variant: 'info' as const },
+          'terminated': { label: 'Résilié', variant: 'error' as const }
+        };
+        const status = contract.status;
+        const config = statusMap[status] || { label: status, variant: 'default' as const };
+        return formatters.badge(status, config.variant, config.label);
+      }
     },
     {
       header: 'Actions',
@@ -104,12 +127,27 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
                 onClick: () => onRowClick && onRowClick(contract)
               },
               { 
-                label: 'Générer facture', 
-                onClick: () => console.log('TODO: Générer facture pour', contract.id) 
+                label: 'Commander équipement', 
+                onClick: () => orderEquipment && orderEquipment(contract),
+                disabled: contract.status !== 'pending' && contract.status !== 'draft',
+                className: 'text-blue-600 hover:text-blue-700',
+                tooltip: 'Commander l\'équipement et initier le paiement'
               },
               { 
-                label: 'Modifier contrat', 
-                onClick: () => console.log('TODO: Modifier contrat', contract.id) 
+                label: 'Générer facture', 
+                onClick: () => onGenerateInvoice && onGenerateInvoice(contract),
+                disabled: contract.status !== 'active'
+              },
+              { 
+                label: 'Activer contrat', 
+                onClick: () => onActivate && onActivate(contract),
+                disabled: contract.status !== 'pending' && contract.status !== 'draft'
+              },
+              { 
+                label: 'Résilier contrat', 
+                onClick: () => onTerminate && onTerminate(contract),
+                disabled: contract.status !== 'active',
+                className: 'text-red-600 hover:text-red-700'
               }
             ]}
           />
@@ -117,10 +155,21 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
       ),
       align: 'center' as const
     }
-  ], [onRowClick, onViewCompany]);
+  ], [onRowClick, onViewCompany, onGenerateInvoice, onActivate, onTerminate, orderEquipment, formatCurrency]);
 
   // Options de filtrage
   const filterOptions = [
+    {
+      id: 'status',
+      label: 'Statut',
+      options: [
+        { value: 'draft', label: 'Brouillon' },
+        { value: 'pending', label: 'En attente' },
+        { value: 'active', label: 'Actif' },
+        { value: 'completed', label: 'Terminé' },
+        { value: 'terminated', label: 'Résilié' }
+      ]
+    },
     {
       id: 'maintenance_included',
       label: 'Maintenance',
@@ -162,7 +211,7 @@ export function ContractsTable({ contracts, loading = false, onRowClick, onViewC
     },
     { 
       label: 'Valeur totale', 
-      value: formatCurrency(totalAmount)
+      value: formatCurrency(totalAmount, undefined, 'USD')
     },
     {
       label: 'Durée moyenne',

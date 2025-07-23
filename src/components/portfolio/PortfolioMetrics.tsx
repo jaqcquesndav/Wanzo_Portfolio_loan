@@ -19,7 +19,7 @@ export function PortfolioMetrics({ portfolio }: PortfolioMetricsProps) {
         <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-sm text-gray-500">Valeur nette</p>
           <p className="text-xl font-semibold text-gray-900">
-            {formatCurrency(portfolio.metrics.net_value)}
+            {formatCurrency(portfolio.metrics.net_value, undefined, 'USD')}
           </p>
         </div>
 

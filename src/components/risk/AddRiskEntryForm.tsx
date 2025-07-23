@@ -13,7 +13,7 @@ import { CompanyData } from '../../data/companies/index';
 import { Guarantee } from '../../types/guarantee';
 import { Search } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { formatCurrency } from '../../utils/formatters';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 
 interface AddRiskEntryFormProps {
   isOpen: boolean;
@@ -23,6 +23,8 @@ interface AddRiskEntryFormProps {
 }
 
 export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRiskEntryFormProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   // State pour le chargement des données
   const [isLoading, setIsLoading] = useState(true);
   const [companies, setCompanies] = useState<CompanyData[]>([]);
@@ -440,7 +442,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                         {getAvailableGuarantees().length > 0 ? (
                           getAvailableGuarantees().map(guarantee => (
                             <option key={guarantee.id} value={guarantee.id}>
-                              {guarantee.id} - {guarantee.type} ({formatCurrency(guarantee.value)})
+                              {guarantee.id} - {guarantee.type} ({formatCurrency(guarantee.value, undefined, 'USD')})
                               {guarantee.contractReference ? ` | Contrat: ${guarantee.contractReference}` : ''}
                             </option>
                           ))
@@ -464,7 +466,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                               <>
                                 <div className="font-medium">{selectedGuarantee.type}</div>
                                 <div className="flex justify-between mt-1">
-                                  <span>Valeur: {formatCurrency(selectedGuarantee.value)}</span>
+                                  <span>Valeur: {formatCurrency(selectedGuarantee.value, undefined, 'USD')}</span>
                                   <span>ID: {selectedGuarantee.id}</span>
                                 </div>
                                 {selectedGuarantee.contractReference && (

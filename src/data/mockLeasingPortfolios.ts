@@ -14,7 +14,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     leasing_requests: [
       {
         id: "WL-00000001",
-        equipment_id: "EQP-001",
+        equipment_id: "WL-00000001",
         client_id: "CLI-001",
         client_name: "Entreprise Alpha SARL",
         request_date: "2025-05-15T10:30:00Z",
@@ -31,7 +31,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
       },
       {
         id: "WL-00000002",
-        equipment_id: "EQP-002",
+        equipment_id: "WL-00000002",
         client_id: "CLI-002",
         client_name: "Compagnie Beta Inc.",
         request_date: "2025-05-16T14:45:00Z",
@@ -65,7 +65,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     ],
     equipment_catalog: [
       {
-        id: 'EQP-001',
+        id: 'WL-00000001',
         name: 'Tracteur agricole XT5000',
         description: 'Tracteur polyvalent idéal pour les grandes exploitations agricoles',
         category: 'Agricole',
@@ -87,7 +87,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
         imageUrl: '/images/equipments/tracteur-xt5000.jpg'
       },
       {
-        id: 'EQP-002',
+        id: 'WL-00000002',
         name: 'Excavatrice BTP Pro X1',
         description: 'Excavatrice haute performance pour chantiers de grande envergure',
         category: 'Construction',
@@ -109,7 +109,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
         imageUrl: '/images/equipments/excavatrice-prox1.jpg'
       },
       {
-        id: 'EQP-003',
+        id: 'WL-00000003',
         name: 'Camion Benne TD-200',
         description: 'Camion benne robuste pour transport de matériaux lourds',
         category: 'Transport',
@@ -158,50 +158,68 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     },
     contracts: [
       {
-        id: 'contr-1',
-        equipment_id: 'eq-1',
-        client_id: 'cli-1',
-        start_date: '2024-01-15',
+        id: 'EQ-000001',
+        equipment_id: 'WL-00000001',
+        client_id: 'CLI-001',
+        client_name: 'Entreprise Alpha SARL',
+        request_id: 'WL-00000001',
+        start_date: '2025-01-15',
         end_date: '2027-01-15',
         monthly_payment: 3200000,
         interest_rate: 6.5,
         maintenance_included: true,
         insurance_included: true,
-        status: 'active'
+        status: 'active',
+        nextInvoiceDate: '2025-08-15'
+      },
+      {
+        id: 'EQ-000002',
+        equipment_id: 'WL-00000002',
+        client_id: 'CLI-002',
+        client_name: 'Compagnie Beta Inc.',
+        request_id: 'WL-00000002',
+        start_date: '2025-02-10',
+        end_date: '2027-02-10',
+        monthly_payment: 2800000,
+        interest_rate: 5.8,
+        maintenance_included: true,
+        insurance_included: true,
+        status: 'pending',
+        nextInvoiceDate: '2025-08-10'
       }
     ],
     incidents: [
       {
-        id: 'inc-1',
-        equipment_id: 'eq-1',
-        reported_by: 'cli-1',
-        date_reported: '2024-04-10',
+        id: 'INC-001',
+        equipment_id: 'WL-00000001',
+        reported_by: 'CLI-001',
+        date_reported: '2025-04-10',
         description: 'Fuite hydraulique détectée sur le bras principal.',
         status: 'open',
-        created_at: '2024-04-10',
-        updated_at: '2024-04-10'
+        created_at: '2025-04-10',
+        updated_at: '2025-04-10'
       }
     ],
     maintenances: [
       {
-        id: 'mnt-1',
-        equipment_id: 'eq-1',
+        id: 'MNT-001',
+        equipment_id: 'WL-00000001',
         type: 'curative',
         description: 'Réparation de la fuite hydraulique.',
-        scheduled_date: '2024-04-12',
-        completed_date: '2024-04-13',
+        scheduled_date: '2025-04-12',
+        completed_date: '2025-04-13',
         status: 'completed',
         cost: 250000,
         provider: 'HydroServices',
-        created_at: '2024-04-12',
-        updated_at: '2024-04-13'
+        created_at: '2025-04-12',
+        updated_at: '2025-04-13'
       }
     ],
     payments: [
       {
-        id: 'pay-1',
+        id: 'PAY-20250201001',
         portfolio_id: 'lease-1',
-        contract_id: 'contr-1',
+        contract_id: 'EQ-000001',
         date: '2024-02-01',
         amount: 3200000,
         type: 'rent',
