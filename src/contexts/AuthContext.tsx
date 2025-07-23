@@ -1,17 +1,24 @@
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
 import { Institution } from '../types/institution';
 import { auth0Service } from '../services/auth/auth0Service';
+import { UserRole, UserType } from '../types/users';
 
-// Types pour l'utilisateur
-export type UserRole = 'admin' | 'manager' | 'user';
-
+// Interface pour l'utilisateur adapté avec les nouveaux types
 export interface User {
   id: string;
-  name: string;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
   email: string;
-  role: UserRole;
+  role?: UserRole;
   institutionId?: string;
-  picture?: string; // Ajout du champ picture pour les avatars
+  financialInstitutionId?: string;
+  companyId?: string;
+  userType?: UserType;
+  isCompanyOwner?: boolean;
+  picture?: string;
+  permissions?: string[];
+  language?: 'fr' | 'en';
 }
 
 // Interface pour le contexte d'authentification
@@ -115,25 +122,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Dans une implémentation réelle, nous utiliserions le mot de passe ici
       console.log(`Tentative de connexion avec le mot de passe: ${password.substring(0, 1)}${'*'.repeat(password.length - 1)}`);
       
-      // Pour la démo, nous créons un utilisateur admin si l'email contient 'admin'
-      const role: UserRole = email.toLowerCase().includes('admin') ? 'admin' : 
-                             email.toLowerCase().includes('manager') ? 'manager' : 'user';
+      // Pour la démo, nous créons un utilisateur avec le rôle Admin par défaut
+      // comme vous l'avez demandé, le superadmin aura le rôle Admin s'il n'a pas de rôle
+      let role: UserRole = 'Admin'; // Rôle par défaut
       
-      // Générer un nom congolais en fonction du rôle
-      let name = '';
-      if (role === 'admin') {
-        name = 'Joseph Kabila';
-      } else if (role === 'manager') {
-        name = 'Emmanuel Shadary';
-      } else {
-        name = 'Patrice Lumumba';
+      // Détermination du rôle basée sur l'email pour la démonstration
+      if (email.toLowerCase().includes('portfolio')) {
+        role = 'Portfolio_Manager';
+      } else if (email.toLowerCase().includes('audit')) {
+        role = 'Auditor';
+      } else if (email.toLowerCase().includes('user')) {
+        role = 'User';
+      }
+      
+      // Générer un nom pour la démonstration
+      let fullName = 'Joseph Kabila';
+      let givenName = 'Joseph';
+      let familyName = 'Kabila';
+      
+      if (role === 'Portfolio_Manager') {
+        fullName = 'Emmanuel Shadary';
+        givenName = 'Emmanuel';
+        familyName = 'Shadary';
+      } else if (role === 'Auditor') {
+        fullName = 'Félix Tshisekedi';
+        givenName = 'Félix';
+        familyName = 'Tshisekedi';
+      } else if (role === 'User') {
+        fullName = 'Patrice Lumumba';
+        givenName = 'Patrice';
+        familyName = 'Lumumba';
       }
       
       const mockUser: User = {
         id: '12345',
-        name,
+        name: fullName,
+        givenName: givenName,
+        familyName: familyName,
         email,
-        role
+        role,
+        institutionId: '123456',
+        financialInstitutionId: 'fin-001',
+        userType: 'financial_institution',
+        isCompanyOwner: role === 'Admin', // L'admin est propriétaire par défaut
+        picture: '/avatars/profile.jpg',
+        permissions: ['manage_users', 'view_reports', 'edit_settings'],
+        language: 'fr'
       };
       
       // Simuler la récupération des données de l'institution

@@ -1,7 +1,8 @@
+// @ts-expect-error -- React is used for JSX
 import React from 'react';
 import { Search } from 'lucide-react';
 import { FormField, Input, Select } from '../ui/Form';
-import type { UserRole } from '../../types/users';
+import { UserRole } from '../../types/users';
 
 interface UserFiltersProps {
   searchTerm: string;
@@ -17,7 +18,7 @@ export function UserFilters({
   onRoleChange
 }: UserFiltersProps) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow space-y-4">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField label="Rechercher">
           <div className="relative">
@@ -38,9 +39,10 @@ export function UserFilters({
             onChange={(e) => onRoleChange(e.target.value as UserRole | 'all')}
           >
             <option value="all">Tous les rôles</option>
-            <option value="admin">Administrateur</option>
-            <option value="manager">Manager</option>
-            <option value="user">Utilisateur</option>
+            <option value="Admin">Administrateur</option>
+            <option value="Portfolio_Manager">Gestionnaire de Portefeuille</option>
+            <option value="Auditor">Auditeur</option>
+            <option value="User">Utilisateur</option>
           </Select>
         </FormField>
       </div>

@@ -1,5 +1,6 @@
 // src/services/auth/auth0Service.ts
-import { User, UserRole } from '../../contexts/AuthContext';
+import { User } from '../../contexts/AuthContext';
+import { UserRole, UserType } from '../../types/users';
 
 // Clés de stockage centralisées pour l'authentification
 const STORAGE_KEYS = {
@@ -13,11 +14,17 @@ const STORAGE_KEYS = {
 
 interface Auth0User {
   sub: string;
-  name: string;
+  name?: string;
   email: string;
   picture?: string;
   nickname?: string;
+  given_name?: string;
+  family_name?: string;
   role?: string;
+  user_type?: string;
+  institution_id?: string;
+  company_id?: string;
+  is_company_owner?: boolean;
   [key: string]: string | number | boolean | undefined;
 }
 
@@ -137,24 +144,42 @@ class Auth0Service {
     // Valider le rôle pour s'assurer qu'il est l'un des types acceptés
     const userRole = this.validateUserRole(auth0User.role);
     
+    // Construire un utilisateur avec les nouveaux champs
     return {
       id: auth0User.sub,
-      name: auth0User.name || auth0User.nickname || 'Utilisateur',
+      name: auth0User.name || auth0User.nickname || `${auth0User.given_name || ''} ${auth0User.family_name || ''}`.trim() || 'Utilisateur',
+      givenName: auth0User.given_name,
+      familyName: auth0User.family_name,
       email: auth0User.email || '',
       role: userRole,
-      picture: auth0User.picture
+      picture: auth0User.picture,
+      userType: (auth0User.user_type as UserType) || 'financial_institution',
+      financialInstitutionId: auth0User.institution_id,
+      companyId: auth0User.company_id,
+      isCompanyOwner: auth0User.is_company_owner || userRole === 'Admin',
+      // Ajouter d'autres champs selon les besoins
+      permissions: ['manage_users', 'view_reports', 'edit_settings'] // Permissions par défaut
     };
   }
   
   /**
    * Valide que le rôle est l'un des rôles autorisés
+   * Si le rôle n'est pas valide ou non défini, le rôle Admin est attribué par défaut
    */
   private validateUserRole(role?: string): UserRole {
-    if (role === 'admin' || role === 'manager' || role === 'user') {
-      return role;
+    // Conversion des anciens rôles vers les nouveaux formats
+    if (role === 'admin') return 'Admin';
+    if (role === 'manager') return 'Portfolio_Manager';
+    if (role === 'user') return 'User';
+    
+    // Vérification des nouveaux formats de rôle
+    if (role === 'Admin' || role === 'Portfolio_Manager' || role === 'Auditor' || role === 'User') {
+      return role as UserRole;
     }
-    // Rôle par défaut si le rôle n'est pas valide
-    return 'manager';
+    
+    // Rôle Admin par défaut si le rôle n'est pas valide ou n'est pas spécifié
+    // Comme demandé, nous définissons l'utilisateur comme Admin par défaut
+    return 'Admin';
   }
 
   /**
