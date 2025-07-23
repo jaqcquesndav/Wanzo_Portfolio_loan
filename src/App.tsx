@@ -12,6 +12,7 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { AppLoading } from './components/ui/AppLoading';
+import { auth0Service } from './services/auth/auth0Service';
 
 export default function App() {
   // Utilisation du hook pour initialiser les données mock
@@ -20,10 +21,8 @@ export default function App() {
   // Démarrer le service de synchronisation si activée
   React.useEffect(() => {
     if (SYNC_ENABLED) {
-      // Récupérer le token de manière consistante
-      const token = localStorage.getItem('token') || 
-                   localStorage.getItem('auth0_token') || 
-                   localStorage.getItem('accessToken');
+      // Utiliser auth0Service pour récupérer le token
+      const token = auth0Service.getAccessToken();
                    
       if (token) {
         // Log pour déboguer

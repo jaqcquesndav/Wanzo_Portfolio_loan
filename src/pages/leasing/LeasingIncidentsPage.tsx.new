@@ -1,0 +1,36 @@
+import React from 'react';
+import { mockLeasingIncidents } from '../../data/mockLeasing';
+import { PaginatedTable } from '../../components/ui/PaginatedTable';
+
+export default function LeasingIncidentsPage() {
+  // Définir les colonnes du tableau
+  const columns = [
+    { header: 'Équipement', accessor: 'equipment_id' },
+    { header: 'Signalé par', accessor: 'reported_by' },
+    { 
+      header: 'Date', 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      accessor: (inc: any) => new Date(inc.date_reported).toLocaleString() 
+    },
+    { header: 'Description', accessor: 'description' },
+    { header: 'Statut', accessor: 'status' },
+    { 
+      header: 'Résolution', 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      accessor: (inc: any) => inc.resolution_notes || '-'
+    }
+  ];
+
+  return (
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">Incidents signalés</h2>
+      
+      <PaginatedTable
+        data={mockLeasingIncidents}
+        columns={columns}
+        keyField="id"
+        itemsPerPage={10}
+      />
+    </div>
+  );
+}

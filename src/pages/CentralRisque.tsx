@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/ui';
 import { Button } from '../components/ui/Button';
 import { Download, ChevronDown, CreditCard, Truck, TrendingUp, Filter, Plus } from 'lucide-react';
-import { Pagination } from '../components/ui/Pagination';
-import { usePagination } from '../hooks/usePagination';
 import { useCentraleRisque } from '../hooks/useCentraleRisque';
 import type { CreditRiskEntry, LeasingRiskEntry, InvestmentRiskEntry } from '../data/mockCentraleRisque';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { formatCurrency } from '../utils/formatters';
 import { AddRiskEntryForm } from '../components/risk/AddRiskEntryForm';
+import { CreditRiskTable } from '../components/risk/CreditRiskTable';
+import { LeasingRiskTable } from '../components/risk/LeasingRiskTable';
+import { InvestmentRiskTable } from '../components/risk/InvestmentRiskTable';
 
 // Type pour les filtres
 interface FilterState {
@@ -51,28 +50,36 @@ export default function CentralRisque() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterState>({});
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Utiliser la pagination
-  const {
-    currentPage: creditPage,
-    totalPages: creditTotalPages,
-    pageItems: creditPageItems,
-    setPage: setCreditPage
-  } = usePagination(creditData, 10);
-  
-  const {
-    currentPage: leasingPage,
-    totalPages: leasingTotalPages,
-    pageItems: leasingPageItems,
-    setPage: setLeasingPage
-  } = usePagination(leasingData, 10);
-  
-  const {
-    currentPage: investmentPage,
-    totalPages: investmentTotalPages,
-    pageItems: investmentPageItems,
-    setPage: setInvestmentPage
-  } = usePagination(investmentData, 10);
+
+  // Fonction pour filtrer les données
+  const filterData = <T extends { companyName: string; sector: string; institution?: string; statut?: string; coteCredit?: string }>(
+    data: T[],
+    searchTerm: string,
+    filters: FilterState
+  ): T[] => {
+    return data.filter(item => {
+      // Filtre par recherche
+      const matchesSearch = !searchTerm || 
+        item.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.sector.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Filtre par critères
+      const matchesInstitution = !filters.institution || 
+        item.institution === filters.institution;
+      
+      const matchesStatut = !filters.statut || 
+        item.statut === filters.statut;
+      
+      const matchesCoteCredit = !filters.coteCredit || 
+        item.coteCredit === filters.coteCredit;
+      
+      const matchesSecteur = !filters.secteur || 
+        item.sector === filters.secteur;
+
+      return matchesSearch && matchesInstitution && matchesStatut && 
+             matchesCoteCredit && matchesSecteur;
+    });
+  };
 
   // Fonction pour gérer le filtrage
   const handleFilterChange = (key: keyof FilterState, value: string) => {
@@ -309,76 +316,7 @@ export default function CentralRisque() {
           {loadingCredit ? (
             <div className="text-center py-8">Chargement des données...</div>
           ) : (
-            <>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Institution</TableHeader>
-                    <TableHeader>Entreprise</TableHeader>
-                    <TableHeader>Secteur</TableHeader>
-                    <TableHeader>Encours</TableHeader>
-                    <TableHeader>Statut</TableHeader>
-                    <TableHeader>Cote crédit</TableHeader>
-                    <TableHeader>Incidents</TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {creditPageItems.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4">
-                        Aucune donnée trouvée
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    creditPageItems.map((item: CreditRiskEntry) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.institution}</TableCell>
-                        <TableCell>{item.companyName}</TableCell>
-                        <TableCell>{item.sector}</TableCell>
-                        <TableCell>{formatCurrency(item.encours)}</TableCell>
-                        <TableCell>
-                          <span 
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              item.statut === 'Actif' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {item.statut}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span 
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              item.coteCredit === 'A' 
-                                ? 'bg-green-100 text-green-800' 
-                                : item.coteCredit === 'B'
-                                ? 'bg-blue-100 text-blue-800'
-                                : item.coteCredit === 'C'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {item.coteCredit}
-                          </span>
-                        </TableCell>
-                        <TableCell>{item.incidents}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              
-              {creditTotalPages > 1 && (
-                <div className="mt-4 flex justify-center">
-                  <Pagination
-                    currentPage={creditPage}
-                    totalPages={creditTotalPages}
-                    onPageChange={setCreditPage}
-                  />
-                </div>
-              )}
-            </>
+            <CreditRiskTable data={filterData(creditData, searchTerm, filters)} />
           )}
         </TabsContent>
 
@@ -386,76 +324,7 @@ export default function CentralRisque() {
           {loadingLeasing ? (
             <div className="text-center py-8">Chargement des données...</div>
           ) : (
-            <>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Institution</TableHeader>
-                    <TableHeader>Entreprise</TableHeader>
-                    <TableHeader>Secteur</TableHeader>
-                    <TableHeader>Équipement</TableHeader>
-                    <TableHeader>Valeur</TableHeader>
-                    <TableHeader>Statut</TableHeader>
-                    <TableHeader>Cote crédit</TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {leasingPageItems.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4">
-                        Aucune donnée trouvée
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    leasingPageItems.map((item: LeasingRiskEntry) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.institution}</TableCell>
-                        <TableCell>{item.companyName}</TableCell>
-                        <TableCell>{item.sector}</TableCell>
-                        <TableCell>{item.equipmentType}</TableCell>
-                        <TableCell>{formatCurrency(item.valeurFinancement)}</TableCell>
-                        <TableCell>
-                          <span 
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              item.statut === 'Actif' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {item.statut}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span 
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              item.coteCredit === 'A' 
-                                ? 'bg-green-100 text-green-800' 
-                                : item.coteCredit === 'B'
-                                ? 'bg-blue-100 text-blue-800'
-                                : item.coteCredit === 'C'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {item.coteCredit}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              
-              {leasingTotalPages > 1 && (
-                <div className="mt-4 flex justify-center">
-                  <Pagination
-                    currentPage={leasingPage}
-                    totalPages={leasingTotalPages}
-                    onPageChange={setLeasingPage}
-                  />
-                </div>
-              )}
-            </>
+            <LeasingRiskTable data={filterData(leasingData, searchTerm, filters)} />
           )}
         </TabsContent>
 
@@ -463,64 +332,7 @@ export default function CentralRisque() {
           {loadingInvestment ? (
             <div className="text-center py-8">Chargement des données...</div>
           ) : (
-            <>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Institution</TableHeader>
-                    <TableHeader>Entreprise</TableHeader>
-                    <TableHeader>Secteur</TableHeader>
-                    <TableHeader>Type</TableHeader>
-                    <TableHeader>Montant investi</TableHeader>
-                    <TableHeader>Valorisation</TableHeader>
-                    <TableHeader>Statut</TableHeader>
-                    <TableHeader>Rendement</TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {investmentPageItems.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-4">
-                        Aucune donnée trouvée
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    investmentPageItems.map((item: InvestmentRiskEntry) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.institution}</TableCell>
-                        <TableCell>{item.companyName}</TableCell>
-                        <TableCell>{item.sector}</TableCell>
-                        <TableCell>{item.investmentType}</TableCell>
-                        <TableCell>{formatCurrency(item.montantInvesti)}</TableCell>
-                        <TableCell>{formatCurrency(item.valorisation)}</TableCell>
-                        <TableCell>
-                          <span 
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              item.statut === 'Performant' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {item.statut}
-                          </span>
-                        </TableCell>
-                        <TableCell>{(item.rendementActuel * 100).toFixed(2)}%</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              
-              {investmentTotalPages > 1 && (
-                <div className="mt-4 flex justify-center">
-                  <Pagination
-                    currentPage={investmentPage}
-                    totalPages={investmentTotalPages}
-                    onPageChange={setInvestmentPage}
-                  />
-                </div>
-              )}
-            </>
+            <InvestmentRiskTable data={filterData(investmentData, searchTerm, filters)} />
           )}
         </TabsContent>
       </Tabs>

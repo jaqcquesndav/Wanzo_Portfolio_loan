@@ -5,80 +5,29 @@ import { useTheme } from '../../hooks/useTheme';
 // import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
+import { auth0Service } from '../../services/auth/auth0Service';
 
 export function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
 
-  // Récupérer l'utilisateur connecté depuis le localStorage (stocké par Auth0)
+  // Récupérer l'utilisateur connecté via le service Auth0
   let user = { name: 'Utilisateur', email: '', picture: '' };
-  try {
-    const stored = localStorage.getItem('auth0_user');
-    console.log('[Auth0] Lecture du localStorage :', stored);
-    const isLikelyJson = (str: string) => str && str.trim().startsWith('{');
-    if (!stored) {
-      // Fallback : essayer d'autres clés connues
-      const altToken = localStorage.getItem('auth0_token') || localStorage.getItem('accessToken') || localStorage.getItem('token');
-      console.warn('[Auth0] auth0_user absent, tentative avec autres clés :', altToken);
-      if (altToken) {
-        if (isLikelyJson(altToken)) {
-          try {
-            const altParsed = JSON.parse(altToken);
-            console.log('[Auth0] Objet alternatif parsé :', altParsed);
-            if (altParsed.access_token || altParsed.id_token) {
-              user = {
-                name: altParsed.name || altParsed.nickname || 'Utilisateur',
-                email: altParsed.email || '',
-                picture: altParsed.picture || '',
-              };
-              if (altParsed.id_token) {
-                console.log('[Auth0] id_token reçu (alt) :', altParsed.id_token);
-              } else {
-                console.warn('[Auth0] Pas de id_token trouvé dans le token alternatif.');
-              }
-              if (altParsed.access_token) {
-                console.log('[Auth0] access_token reçu (alt) :', altParsed.access_token);
-              } else {
-                console.warn('[Auth0] Pas de access_token trouvé dans le token alternatif.');
-              }
-            }
-          } catch (e) {
-            console.error('[Auth0] Erreur parsing token alternatif :', e);
-          }
-        } else {
-          // altToken est probablement un JWT (string), pas un objet JSON
-          console.warn('[Auth0] Token alternatif trouvé, mais ce n\'est pas un objet JSON (probablement un JWT).');
-          // Ici, tu pourrais décoder le JWT si tu veux lire le payload (optionnel)
-        }
-      } else {
-        console.warn('[Auth0] Aucun token trouvé dans le localStorage.');
-      }
-    } else {
-      const parsed = JSON.parse(stored);
-      console.log('[Auth0] Objet user parsé :', parsed);
-      user = {
-        name: parsed.name || parsed.nickname || 'Utilisateur',
-        email: parsed.email || '',
-        picture: parsed.picture || '',
-      };
-      if (parsed.id_token) {
-        console.log('[Auth0] id_token reçu :', parsed.id_token);
-      } else {
-        console.warn('[Auth0] Pas de id_token trouvé dans le user.');
-      }
-      if (parsed.access_token) {
-        console.log('[Auth0] access_token reçu :', parsed.access_token);
-      } else {
-        console.warn('[Auth0] Pas de access_token trouvé dans le user.');
-      }
-    }
-  } catch (e) {
-    console.error('[Auth0] Erreur lors de la lecture du user Auth0 :', e);
+  const storedUser = auth0Service.getUser();
+  
+  if (storedUser) {
+    user = {
+      name: storedUser.name || 'Utilisateur',
+      email: storedUser.email || '',
+      picture: storedUser.picture || ''
+    };
+  } else {
+    console.warn('[Auth0] Aucun utilisateur trouvé via auth0Service');
   }
   const logout = () => {
-    // Nettoyer le localStorage et rediriger
-    localStorage.removeItem('auth0_user');
+    // Nettoyer l'authentification et rediriger
+    auth0Service.clearAuth();
     window.location.href = '/';
   };
   const navigate = useNavigate();

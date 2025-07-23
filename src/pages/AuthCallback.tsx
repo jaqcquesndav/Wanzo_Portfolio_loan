@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLoading } from '../components/ui/AppLoading';
+import { auth0Service } from '../services/auth/auth0Service';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -11,8 +12,8 @@ export default function AuthCallback() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const state = params.get('state');
-      const storedState = localStorage.getItem('auth0_state');
-      const codeVerifier = localStorage.getItem('auth0_code_verifier');
+      const storedState = auth0Service.getState();
+      const codeVerifier = auth0Service.getCodeVerifier();
       
       if (!code || !state || state !== storedState || !codeVerifier) {
         console.error('Erreur d\'authentification: paramètres manquants ou invalides', {
@@ -51,13 +52,12 @@ export default function AuthCallback() {
         if (data.access_token) {
           console.log('Token récupéré avec succès!');
           
-          // Stocker le token avec plusieurs clés pour assurer la compatibilité
-          localStorage.setItem('token', data.access_token);
-          localStorage.setItem('auth0_token', data.access_token);
-          localStorage.setItem('accessToken', data.access_token);
-          
-          if (data.id_token) localStorage.setItem('id_token', data.id_token);
-          if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+          // Stocker les tokens avec le service Auth0
+          auth0Service.saveTokens(
+            data.access_token,
+            data.id_token,
+            data.refresh_token
+          );
           
           // Récupérer le profil utilisateur Auth0
           try {
@@ -68,14 +68,8 @@ export default function AuthCallback() {
             
             if (userRes.ok) {
               const user = await userRes.json();
-              localStorage.setItem('auth0_user', JSON.stringify(user));
-              localStorage.setItem('user', JSON.stringify({
-                id: user.sub,
-                name: user.name,
-                email: user.email,
-                role: 'manager',
-                picture: user.picture
-              }));
+              // Sauvegarder les informations utilisateur avec le service Auth0
+              auth0Service.saveUser(user);
               console.log('Profil utilisateur récupéré avec succès!');
             }
           } catch (error) {
@@ -84,8 +78,7 @@ export default function AuthCallback() {
           }
           
           // Nettoyer les données d'authentification temporaires
-          localStorage.removeItem('auth0_state');
-          localStorage.removeItem('auth0_code_verifier');
+          auth0Service.clearAuthTemp();
           
           // Redirect to app
           const portfolioType = localStorage.getItem('portfolioType') || 'leasing';

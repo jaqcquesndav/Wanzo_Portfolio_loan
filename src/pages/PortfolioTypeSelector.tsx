@@ -1,5 +1,6 @@
 
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
+import { auth0Service } from '../services/auth/auth0Service';
 
 
 const choices = [
@@ -35,14 +36,14 @@ export default function PortfolioTypeSelector() {
     // PKCE
     const codeVerifier = base64URLEncode(window.crypto.getRandomValues(new Uint8Array(32)));
     const codeChallenge = base64URLEncode(await sha256(codeVerifier));
-    localStorage.setItem('auth0_code_verifier', codeVerifier);
+    auth0Service.saveCodeVerifier(codeVerifier);
 
     const domain = import.meta.env.VITE_AUTH0_DOMAIN;
     const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
     const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
     const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI;
     const state = Math.random().toString(36).substring(2);
-    localStorage.setItem('auth0_state', state);
+    auth0Service.saveState(state);
 
     const params = new URLSearchParams({
       client_id: clientId,

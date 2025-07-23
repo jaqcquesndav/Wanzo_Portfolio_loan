@@ -2,7 +2,7 @@ import { useState } from 'react';
 // import { Plus } from 'lucide-react';
 import { CompanyFilters } from '../components/prospection/CompanyFilters';
 // import { CompanyCard } from '../components/prospection/CompanyCard';
-import { CompanyList } from '../components/prospection/CompanyList';
+import { CompanyListPaginated } from '../components/prospection/CompanyListPaginated';
 import { CompanyMap } from '../components/prospection/CompanyMap';
 import { ViewToggle } from '../components/prospection/ViewToggle';
 import { CompanyDetails } from '../components/prospection/CompanyDetails';
@@ -105,7 +105,7 @@ export default function Prospection() {
           onSelectCompany={handleViewDetails}
         />
       ) : (
-        <CompanyList
+        <CompanyListPaginated
           companies={filteredCompanies}
           onViewDetails={handleViewDetails}
         />

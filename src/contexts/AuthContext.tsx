@@ -1,5 +1,6 @@
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
 import { Institution } from '../types/institution';
+import { auth0Service } from '../services/auth/auth0Service';
 
 // Types pour l'utilisateur
 export type UserRole = 'admin' | 'manager' | 'user';
@@ -10,6 +11,7 @@ export interface User {
   email: string;
   role: UserRole;
   institutionId?: string;
+  picture?: string; // Ajout du champ picture pour les avatars
 }
 
 // Interface pour le contexte d'authentification
@@ -48,47 +50,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Effet pour vérifier si l'utilisateur est déjà connecté au chargement de l'application
   useEffect(() => {
-    // Simuler la vérification de l'authentification depuis localStorage
+    // Vérifier si l'utilisateur est déjà authentifié via Auth0
     const checkAuth = async () => {
       try {
-        // Récupérer l'utilisateur
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
+        // Vérifier s'il y a un utilisateur authentifié via Auth0
+        if (auth0Service.isAuthenticated()) {
+          const storedUser = auth0Service.getUser();
           
-          // Simuler la récupération des données de l'institution
-          const mockInstitution: Institution = {
-            id: "123456",
-            name: "Banque Congolaise de Développement",
-            type: "bank",
-            status: "active",
-            license_number: "BCC-20250101",
-            license_type: "Full Banking License",
-            address: "25 Boulevard Nyiragongo, Goma",
-            phone: "+243970456789",
-            email: "contact@bancongo.cd",
-            website: "https://www.bancongo.cd",
-            legal_representative: "Patrice Lumumba",
-            tax_id: "TX123456789",
-            regulatory_status: "Approved",
-            created_at: "2024-01-01T00:00:00Z",
-            updated_at: "2025-01-01T00:00:00Z",
-            documents: [
-              {
-                name: "Licence bancaire",
-                type: "pdf",
-                url: "/documents/licence.pdf"
-              },
-              {
-                name: "Statuts",
-                type: "pdf",
-                url: "/documents/statuts.pdf"
-              }
-            ]
-          };
-          
-          setInstitution(mockInstitution);
+          if (storedUser) {
+            setUser(storedUser);
+            
+            // Simuler la récupération des données de l'institution
+            const mockInstitution: Institution = {
+              id: "123456",
+              name: "Banque Congolaise de Développement",
+              type: "bank",
+              status: "active",
+              license_number: "BCC-20250101",
+              license_type: "Full Banking License",
+              address: "25 Boulevard Nyiragongo, Goma",
+              phone: "+243970456789",
+              email: "contact@bancongo.cd",
+              website: "https://www.bancongo.cd",
+              legal_representative: "Patrice Lumumba",
+              tax_id: "TX123456789",
+              regulatory_status: "Approved",
+              created_at: "2024-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+              documents: [
+                {
+                  name: "Licence bancaire",
+                  type: "pdf",
+                  url: "/documents/licence.pdf"
+                },
+                {
+                  name: "Statuts",
+                  type: "pdf",
+                  url: "/documents/statuts.pdf"
+                }
+              ]
+            };
+            
+            setInstitution(mockInstitution);
+          }
         }
       } catch (err) {
         console.error('Erreur lors de la vérification de l\'authentification:', err);
@@ -180,7 +184,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setInstitution(null);
-    localStorage.removeItem('user');
+    auth0Service.clearAuth();
   };
 
   // Valeur du contexte

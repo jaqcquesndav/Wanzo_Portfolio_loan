@@ -1,36 +1,45 @@
-import React from 'react';
 import { mockLeasingMovements } from '../../data/mockLeasing';
+import { PaginatedTable } from '../../components/ui/PaginatedTable';
+import { EquipmentMovement } from '../../types/leasing-asset';
+import { Column } from '../../components/ui/TableTypes';
 
 export default function LeasingMovementsPage() {
+  // Définir les colonnes du tableau
+  const columns: Column<EquipmentMovement>[] = [
+    { header: 'Équipement', accessor: 'equipment_id' as keyof EquipmentMovement },
+    { header: 'Type', accessor: 'type' as keyof EquipmentMovement },
+    { 
+      header: 'Date', 
+      accessor: (mov: EquipmentMovement) => new Date(mov.date).toLocaleString() 
+    },
+    { 
+      header: 'De', 
+      accessor: (mov: EquipmentMovement) => mov.from_location || '-' 
+    },
+    { 
+      header: 'Vers', 
+      accessor: (mov: EquipmentMovement) => mov.to_location || '-' 
+    },
+    { 
+      header: 'Utilisateur', 
+      accessor: (mov: EquipmentMovement) => mov.user_id || '-' 
+    },
+    { 
+      header: 'Notes', 
+      accessor: (mov: EquipmentMovement) => mov.notes || '-' 
+    }
+  ];
+
   return (
     <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Mouvements d’équipements</h2>
-      <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Équipement</th>
-            <th className="px-4 py-2">Type</th>
-            <th className="px-4 py-2">Date</th>
-            <th className="px-4 py-2">De</th>
-            <th className="px-4 py-2">Vers</th>
-            <th className="px-4 py-2">Utilisateur</th>
-            <th className="px-4 py-2">Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {mockLeasingMovements.map(mov => (
-            <tr key={mov.id} className="border-t">
-              <td className="px-4 py-2">{mov.equipment_id}</td>
-              <td className="px-4 py-2">{mov.type}</td>
-              <td className="px-4 py-2">{new Date(mov.date).toLocaleString()}</td>
-              <td className="px-4 py-2">{mov.from_location || '-'}</td>
-              <td className="px-4 py-2">{mov.to_location || '-'}</td>
-              <td className="px-4 py-2">{mov.user_id || '-'}</td>
-              <td className="px-4 py-2">{mov.notes || '-'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h2 className="text-xl font-bold mb-4">Mouvements d'équipements</h2>
+      
+      <PaginatedTable
+        data={mockLeasingMovements}
+        columns={columns}
+        keyField="id"
+        itemsPerPage={10}
+      />
     </div>
   );
 }

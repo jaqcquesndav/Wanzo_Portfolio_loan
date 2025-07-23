@@ -1,34 +1,35 @@
-import React from 'react';
 import { mockLeasingIncidents } from '../../data/mockLeasing';
+import { PaginatedTable } from '../../components/ui/PaginatedTable';
+import { Incident } from '../../types/leasing-asset';
+import { Column } from '../../components/ui/TableTypes';
 
 export default function LeasingIncidentsPage() {
+  // Définir les colonnes du tableau
+  const columns: Column<Incident>[] = [
+    { header: 'Équipement', accessor: 'equipment_id' as keyof Incident },
+    { header: 'Signalé par', accessor: 'reported_by' as keyof Incident },
+    { 
+      header: 'Date', 
+      accessor: (inc: Incident) => new Date(inc.date_reported).toLocaleString() 
+    },
+    { header: 'Description', accessor: 'description' as keyof Incident },
+    { header: 'Statut', accessor: 'status' as keyof Incident },
+    { 
+      header: 'Résolution', 
+      accessor: (inc: Incident) => inc.resolution_notes || '-'
+    }
+  ];
+
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold mb-4">Incidents signalés</h2>
-      <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Équipement</th>
-            <th className="px-4 py-2">Signalé par</th>
-            <th className="px-4 py-2">Date</th>
-            <th className="px-4 py-2">Description</th>
-            <th className="px-4 py-2">Statut</th>
-            <th className="px-4 py-2">Résolution</th>
-          </tr>
-        </thead>
-        <tbody>
-          {mockLeasingIncidents.map(inc => (
-            <tr key={inc.id} className="border-t">
-              <td className="px-4 py-2">{inc.equipment_id}</td>
-              <td className="px-4 py-2">{inc.reported_by}</td>
-              <td className="px-4 py-2">{new Date(inc.date_reported).toLocaleString()}</td>
-              <td className="px-4 py-2">{inc.description}</td>
-              <td className="px-4 py-2">{inc.status}</td>
-              <td className="px-4 py-2">{inc.resolution_notes || '-'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      
+      <PaginatedTable
+        data={mockLeasingIncidents}
+        columns={columns}
+        keyField="id"
+        itemsPerPage={10}
+      />
     </div>
   );
 }
