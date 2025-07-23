@@ -6,6 +6,7 @@ import type { InvestmentPortfolio } from '../../../types/investment-portfolio';
 import { ConfirmModal } from '../../ui/ConfirmModal';
 import { BankAccountsDisplay } from '../../portfolio/shared/BankAccountsDisplay';
 import { PortfolioManagementDisplay } from '../../portfolio/shared/PortfolioManagementDisplay';
+import { PortfolioDocumentsSection } from '../../portfolio/shared/PortfolioDocumentsSection';
 
 interface InvestmentPortfolioSettingsDisplayProps {
   portfolio: InvestmentPortfolio;
@@ -65,6 +66,11 @@ export function InvestmentPortfolioSettingsDisplay({ portfolio, onEdit, onDelete
                 <div><span className="font-semibold">Objectif de rendement :</span> {portfolio.target_return}%</div>
                 <div><span className="font-semibold">Secteurs visés :</span> {portfolio.target_sectors?.length ? portfolio.target_sectors.join(', ') : <span className="italic text-gray-400">Aucun</span>}</div>
               </div>
+            </div>
+            
+            {/* Section des documents */}
+            <div className="col-span-1 md:col-span-2 mt-4">
+              <PortfolioDocumentsSection portfolioId={portfolio.id} />
             </div>
           </div>
         </TabsContent>

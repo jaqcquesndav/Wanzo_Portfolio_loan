@@ -25,7 +25,7 @@ export const InvestmentReportingDetail = lazy(() => import('../pages/InvestmentR
 export const LeasingPortfolio = lazy(() => import('../pages/LeasingPortfolio'));
 export const LeasingPortfolioDetails = lazy(() => import('../pages/LeasingPortfolioDetails'));
 export const LeasingEquipmentDetail = lazy(() => import('../pages/leasing/LeasingEquipmentDetail'));
-export const LeasingContractDetail = lazy(() => import('../pages/leasing/LeasingContractDetail'));
+export const LeasingContractDetail = lazy(() => import('../pages/LeasingContractDetail'));
 export const LeasingIncidentDetail = lazy(() => import('../pages/leasing/LeasingIncidentDetail'));
 export const LeasingMaintenanceDetail = lazy(() => import('../pages/leasing/LeasingMaintenanceDetail'));
 export const LeasingPaymentDetail = lazy(() => import('../pages/leasing/LeasingPaymentDetail'));

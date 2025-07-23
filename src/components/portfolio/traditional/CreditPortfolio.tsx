@@ -2,12 +2,12 @@ import { useState, useCallback } from 'react';
 import { Tab } from '../../../components/ui/Tab';
 import { CreditRequestsList } from './credit-request/CreditRequestsList';
 import { CreditContractsList } from './credit-contract/CreditContractsList';
-import { AmortizationSchedulesList } from './amortization/AmortizationSchedulesList';
 import { GuaranteeTypesList } from './guarantees/GuaranteeTypesList';
 import { FileText, File, Calendar, Shield, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useCreditRequests } from '../../../hooks/useCreditRequests';
 import { useCreditContracts } from '../../../hooks/useCreditContracts';
+import { ScheduleManagementList } from './amortization/ScheduleManagementList';
 
 interface CreditPortfolioProps {
   portfolioId: string;
@@ -71,7 +71,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
       case 'contracts':
         return <CreditContractsList key={`contracts-${refreshKey}`} portfolioId={portfolioId} />;
       case 'amortization':
-        return <AmortizationSchedulesList key={`amortization-${refreshKey}`} portfolioId={portfolioId} />;
+        return <ScheduleManagementList key={`amortization-${refreshKey}`} portfolioId={portfolioId} />;
       case 'guarantees':
         return <GuaranteeTypesList key={`guarantees-${refreshKey}`} portfolioId={portfolioId} />;
       default:

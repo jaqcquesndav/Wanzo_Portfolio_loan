@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // Removed unused ArrowLeft and Button imports
 import { Breadcrumb } from '../components/common/Breadcrumb';
@@ -8,6 +8,8 @@ import { useLeasingPortfolio } from '../hooks/useLeasingPortfolio';
 import { useInitMockData } from '../hooks/useInitMockData';
 import { usePaymentOrder } from '../hooks/usePaymentOrderContext';
 import { openPaymentOrder } from '../utils/openPaymentOrder';
+import { CompanyDetails } from '../components/prospection/CompanyDetails';
+import { useNotification } from '../contexts/NotificationContext';
 
 import { EquipmentsTable } from '../components/portfolio/leasing/EquipmentsTable';
 import { LeasingRequestsTable } from '../components/portfolio/leasing/LeasingRequestsTable';
@@ -17,7 +19,9 @@ import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTab
 import { PaymentsTable } from '../components/portfolio/leasing/PaymentsTable';
 import { LeasingPortfolioSettingsDisplay } from '../components/portfolio/leasing/LeasingPortfolioSettingsDisplay';
 import { portfolioTypeConfig } from '../config/portfolioTypes';
+import { mockCompanies } from '../data/mockCompanies';
 import type { LeasingPortfolio } from '../types/leasing';
+import type { Company } from '../types/company';
 
 
 export default function LeasingPortfolioDetails() {
@@ -29,25 +33,57 @@ export default function LeasingPortfolioDetails() {
   // Utiliser toujours le type spécifique pour ce composant
   const { portfolio, loading: portfolioLoading } = useLeasingPortfolio(id || '');
   const { showPaymentOrderModal } = usePaymentOrder();
+  const { showNotification } = useNotification();
   // Combiner les états de chargement
   const loading = portfolioLoading || initLoading || !isInitialized;
   const config = portfolioTypeConfig[portfolioType];
   const [tab, setTab] = useState(config.tabs[0]?.key || 'equipments');
+  
+  // État pour le modal de détails de l'entreprise
+  const [companyDetailModalOpen, setCompanyDetailModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
-  // Log pour debug
-  useEffect(() => {
-    if (portfolio) {
-      const leasingPortfolio = portfolio as unknown as LeasingPortfolio;
-      console.log(`LeasingPortfolioDetails: Portfolio ${id} loaded:`, {
-        name: portfolio.name,
-        type: portfolio.type,
-        hasEquipments: Array.isArray(leasingPortfolio.equipment_catalog) && leasingPortfolio.equipment_catalog.length > 0,
-        hasContracts: Array.isArray(leasingPortfolio.contracts) && leasingPortfolio.contracts.length > 0,
-        hasIncidents: Array.isArray(leasingPortfolio.incidents) && leasingPortfolio.incidents.length > 0,
-        hasMaintenances: Array.isArray(leasingPortfolio.maintenances) && leasingPortfolio.maintenances.length > 0,
-      });
+  // Fonction pour gérer l'affichage des détails d'une entreprise
+  const handleViewCompany = (companyId: string) => {
+    // Chercher l'entreprise dans mockCompanies
+    const companyFound = mockCompanies.find(c => c.id === companyId);
+    
+    if (companyFound) {
+      setSelectedCompany(companyFound);
+      setCompanyDetailModalOpen(true);
+      showNotification(`Affichage des détails de l'entreprise: ${companyFound.name}`, 'info');
+    } else {
+      // Créer une entreprise de base avec l'ID fourni
+      const basicCompany: Company = {
+        id: companyId,
+        name: `Client #${companyId}`,
+        sector: 'Non spécifié',
+        size: 'small',
+        status: 'active',
+        annual_revenue: 0,
+        employee_count: 0,
+        financial_metrics: {
+          revenue_growth: 0,
+          profit_margin: 0,
+          cash_flow: 0,
+          debt_ratio: 0,
+          working_capital: 0,
+          credit_score: 0,
+          financial_rating: 'C'
+        },
+        esg_metrics: {
+          carbon_footprint: 0,
+          environmental_rating: 'B',
+          social_rating: 'B',
+          governance_rating: 'B'
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setSelectedCompany(basicCompany);
+      setCompanyDetailModalOpen(true);
     }
-  }, [portfolio, id]);
+  };
 
   // Harmonized error/loading/guard logic (like InvestmentPortfolioDetails)
   if (!id) {
@@ -142,6 +178,7 @@ export default function LeasingPortfolioDetails() {
               console.log(`Demande de leasing ${request.id} sélectionnée`);
               // navigate(`/app/${portfolioType}/requests/${request.id}`);
             }}
+            onViewCompany={handleViewCompany}
             onApprove={(request) => {
               console.log('Approuver la demande:', request);
               
@@ -182,10 +219,10 @@ export default function LeasingPortfolioDetails() {
           <ContractsTable
             contracts={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).contracts : []}
             onRowClick={(contract) => {
-              // Navigation désactivée
-              console.log(`Contrat de leasing ${contract.id} sélectionné`);
-              // navigate(`/app/${portfolioType}/contracts/${contract.id}`);
+              // Naviguer vers la page de détail du contrat
+              navigate(`/app/leasing/${id}/contracts/${contract.id}`);
             }}
+            onViewCompany={handleViewCompany}
           />
         </TabsContent>
         <TabsContent value="incidents" currentValue={tab}>
@@ -233,6 +270,14 @@ export default function LeasingPortfolioDetails() {
           />
         </TabsContent>
       </Tabs>
+      
+      {/* Modal de détails de l'entreprise */}
+      {selectedCompany && companyDetailModalOpen && (
+        <CompanyDetails
+          company={selectedCompany}
+          onClose={() => setCompanyDetailModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

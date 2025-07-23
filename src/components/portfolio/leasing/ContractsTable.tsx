@@ -9,9 +9,10 @@ interface ContractsTableProps {
   contracts: LeasingContract[];
   loading?: boolean;
   onRowClick?: (contract: LeasingContract) => void;
+  onViewCompany?: (companyId: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
 }
 
-export function ContractsTable({ contracts, loading = false, onRowClick }: ContractsTableProps) {
+export function ContractsTable({ contracts, loading = false, onRowClick, onViewCompany }: ContractsTableProps) {
   // Calculer le montant total des contrats
   const totalAmount = useMemo(() => {
     return contracts.reduce((sum, contract) => {
@@ -36,7 +37,20 @@ export function ContractsTable({ contracts, loading = false, onRowClick }: Contr
     },
     {
       header: 'Client',
-      accessorKey: 'client_id'
+      accessorKey: 'client_id',
+      cell: (contract) => (
+        <span 
+          className="hover:text-blue-600 hover:underline cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onViewCompany) {
+              onViewCompany(contract.client_id);
+            }
+          }}
+        >
+          {contract.client_id}
+        </span>
+      )
     },
     {
       header: 'Équipement',
@@ -103,7 +117,7 @@ export function ContractsTable({ contracts, loading = false, onRowClick }: Contr
       ),
       align: 'center' as const
     }
-  ], [onRowClick]);
+  ], [onRowClick, onViewCompany]);
 
   // Options de filtrage
   const filterOptions = [

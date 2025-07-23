@@ -178,7 +178,8 @@ export default function TraditionalPortfolioDetails() {
         id: crypto.randomUUID(),
         status: 'active',
         created_at: now,
-        updated_at: now
+        updated_at: now,
+        type: data.type as 'credit' | 'savings' | 'investment'
       };
       const products: FinancialProduct[] = [...portfolio.products, newProduct];
       await addOrUpdate({ products });
@@ -281,6 +282,7 @@ export default function TraditionalPortfolioDetails() {
                     <PortfolioSettingsDisplay
                       portfolio={portfolio as TraditionalPortfolio}
                       onEdit={() => setShowEditModal(true)}
+                      onAddProduct={() => setShowProductForm(true)}
                       onDelete={() => {
                         // TODO: brancher la suppression réelle ici
                         showNotification('Portefeuille supprimé (simulation)', 'success');
@@ -487,7 +489,6 @@ export default function TraditionalPortfolioDetails() {
             </div>
             <div className="p-6">
               <FinancialProductForm
-                portfolio={portfolio as TraditionalPortfolio}
                 onSubmit={handleCreateProduct}
                 onCancel={() => setShowProductForm(false)}
               />

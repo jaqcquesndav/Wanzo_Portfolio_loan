@@ -1,5 +1,4 @@
 // components/portfolio/traditional/contract/ContractOverview.tsx
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../../ui/Button';
 import { StatusBadge } from '../../../ui/StatusBadge';
 import { CreditContract } from '../../../../types/credit';
@@ -15,10 +14,9 @@ const formatAmount = (amount: number) => {
 
 interface ContractOverviewProps {
   contract: CreditContract;
-  onBack: () => void;
 }
 
-export function ContractOverview({ contract, onBack }: ContractOverviewProps) {
+export function ContractOverview({ contract }: ContractOverviewProps) {
   // Calculer le pourcentage restant à payer
   const remainingPercentage = contract.remainingAmount 
     ? Math.round((contract.remainingAmount / contract.amount) * 100) 
@@ -33,15 +31,6 @@ export function ContractOverview({ contract, onBack }: ContractOverviewProps) {
     <div className="mt-4">
       <div className="flex justify-between items-start">
         <div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onBack}
-            className="mb-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux contrats
-          </Button>
           <h1 className="text-2xl font-bold">Contrat {contract.reference}</h1>
           <div className="flex items-center space-x-2 mt-1">
             <span className="text-gray-500">{contract.memberName}</span>

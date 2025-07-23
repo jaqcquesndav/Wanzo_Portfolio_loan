@@ -1,9 +1,11 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormField, Input, Select, TextArea } from '../../ui/Form';
 import { Button } from '../../ui/Button';
+import { getMainSectors } from '../../../constants/sectors';
+import { TagInput } from '../../ui/TagInput';
 
 const leasingPortfolioSchema = z.object({
   name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
@@ -24,14 +26,7 @@ const leasingPortfolioSchema = z.object({
 
 export type LeasingPortfolioFormData = z.infer<typeof leasingPortfolioSchema>;
 
-const SECTORS = [
-  'Industrie',
-  'BTP',
-  'Transport',
-  'Logistique',
-  'Agriculture',
-  'Santé'
-];
+// Nous utilisons maintenant la liste unifiée des secteurs
 
 interface CreateLeasingPortfolioFormProps {
   onSubmit: (data: LeasingPortfolioFormData) => Promise<void>;
@@ -39,7 +34,7 @@ interface CreateLeasingPortfolioFormProps {
 }
 
 export function CreateLeasingPortfolioForm({ onSubmit, onCancel }: CreateLeasingPortfolioFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<LeasingPortfolioFormData>({
+  const { register, handleSubmit, formState: { errors }, control } = useForm<LeasingPortfolioFormData>({
     resolver: zodResolver(leasingPortfolioSchema)
   });
 
@@ -135,19 +130,21 @@ export function CreateLeasingPortfolioForm({ onSubmit, onCancel }: CreateLeasing
 
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Secteurs cibles</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {SECTORS.map(sector => (
-            <label key={sector} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                value={sector}
-                {...register('target_sectors')}
-                className="rounded border-gray-300"
+        <FormField label="" error={errors.target_sectors?.message}>
+          <Controller
+            control={control}
+            name="target_sectors"
+            render={({ field }) => (
+              <TagInput
+                tags={getMainSectors()}
+                selectedTags={field.value || []}
+                onChange={field.onChange}
+                placeholder="Rechercher et sélectionner des secteurs..."
+                error={errors.target_sectors?.message}
               />
-              <span>{sector}</span>
-            </label>
-          ))}
-        </div>
+            )}
+          />
+        </FormField>
       </div>
 
       <div className="flex justify-end space-x-4">

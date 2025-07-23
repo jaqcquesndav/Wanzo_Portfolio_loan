@@ -6,6 +6,7 @@ import type { LeasingPortfolio } from '../../../types/leasing';
 import { ConfirmModal } from '../../ui/ConfirmModal';
 import { BankAccountsDisplay } from '../../portfolio/shared/BankAccountsDisplay';
 import { PortfolioManagementDisplay } from '../../portfolio/shared/PortfolioManagementDisplay';
+import { PortfolioDocumentsSection } from '../../portfolio/shared/PortfolioDocumentsSection';
 
 interface LeasingPortfolioSettingsDisplayProps {
   portfolio: LeasingPortfolio;
@@ -74,6 +75,11 @@ export function LeasingPortfolioSettingsDisplay({ portfolio, onEdit, onDelete }:
                   )}
                 </div>
               </div>
+            </div>
+            
+            {/* Section des documents */}
+            <div className="col-span-1 md:col-span-2 mt-4">
+              <PortfolioDocumentsSection portfolioId={portfolio.id} />
             </div>
           </div>
         </TabsContent>

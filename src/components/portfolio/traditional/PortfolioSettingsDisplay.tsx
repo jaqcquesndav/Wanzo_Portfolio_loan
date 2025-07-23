@@ -5,22 +5,51 @@ import { ConfirmModal } from '../../ui/ConfirmModal';
 import { BankAccountsPanel } from '../shared/BankAccountsPanel';
 import { PortfolioManagementPanel } from '../shared/PortfolioManagementPanel';
 import { ExportPortfolioData } from '../shared/ExportPortfolioData';
+import { ProductList } from './ProductList';
+import { PortfolioDocumentsSection } from '../shared/PortfolioDocumentsSection';
 import type { Portfolio } from '../../../types/portfolio';
+import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
 
 interface PortfolioSettingsDisplayProps {
   portfolio: Portfolio;
   onEdit: () => void;
   onDelete: () => void;
+  onAddProduct?: () => void; // Nouvelle prop optionnelle pour ajouter un produit
 }
 
-export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: PortfolioSettingsDisplayProps) {
+export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddProduct }: PortfolioSettingsDisplayProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   
   const handleExport = (format: string, dataType: string) => {
     console.log(`Exporting portfolio data in ${format} format, data type: ${dataType}`);
     // Implement actual export functionality here
+  };
+  
+  const handleAddProduct = () => {
+    if (onAddProduct) {
+      onAddProduct();
+    } else {
+      console.log("Ajouter un nouveau produit financier");
+      // Fallback si onAddProduct n'est pas fourni
+      onEdit();
+    }
+  };
+  
+  const handleProductEdit = (product: FinancialProduct) => {
+    console.log("Éditer le produit:", product);
+    // Implémenter la fonction d'édition de produit
+  };
+  
+  const handleProductDelete = (productId: string) => {
+    console.log("Supprimer le produit:", productId);
+    // Implémenter la fonction de suppression de produit
+  };
+  
+  const handleProductView = (product: FinancialProduct) => {
+    console.log("Voir les détails du produit:", product);
+    // Implémenter la fonction de visualisation détaillée du produit
   };
   
   return (
@@ -38,6 +67,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Général</TabsTrigger>
+          <TabsTrigger value="products" currentValue={activeTab} onValueChange={setActiveTab}>Produits</TabsTrigger>
           <TabsTrigger value="accounts" currentValue={activeTab} onValueChange={setActiveTab}>Comptes bancaires</TabsTrigger>
           <TabsTrigger value="management" currentValue={activeTab} onValueChange={setActiveTab}>Gestion</TabsTrigger>
         </TabsList>
@@ -67,6 +97,11 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
                 <div><span className="font-semibold">Secteurs visés :</span> {portfolio.target_sectors?.length ? portfolio.target_sectors.join(', ') : <span className="italic text-gray-400">Aucun</span>}</div>
               </div>
             </div>
+            
+            {/* Section des documents */}
+            <div className="col-span-1 md:col-span-2 mt-4">
+              <PortfolioDocumentsSection portfolioId={portfolio.id} />
+            </div>
           </div>
           
           {/* Card suppression */}
@@ -78,6 +113,40 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
                 Supprimer définitivement
               </Button>
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="products" currentValue={activeTab}>
+          <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-primary">Produits financiers</h3>
+              <Button 
+                variant="primary" 
+                onClick={handleAddProduct}
+              >
+                Ajouter un produit
+              </Button>
+            </div>
+            
+            {portfolio.products && portfolio.products.length > 0 ? (
+              <ProductList 
+                products={portfolio.products} 
+                onEdit={handleProductEdit}
+                onDelete={handleProductDelete}
+                onView={handleProductView}
+              />
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <p>Aucun produit financier n'a encore été créé dans ce portefeuille.</p>
+                <Button
+                  variant="outline"
+                  onClick={handleAddProduct}
+                  className="mt-4"
+                >
+                  Créer un produit
+                </Button>
+              </div>
+            )}
           </div>
         </TabsContent>
 

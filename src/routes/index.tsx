@@ -1,5 +1,5 @@
 import LeasingEquipmentDetail from '../pages/leasing/LeasingEquipmentDetail';
-import LeasingContractDetail from '../pages/leasing/LeasingContractDetail';
+import LeasingContractDetail from '../pages/LeasingContractDetail';
 import LeasingIncidentDetail from '../pages/leasing/LeasingIncidentDetail';
 import LeasingMaintenanceDetail from '../pages/leasing/LeasingMaintenanceDetail';
 import LeasingPaymentDetail from '../pages/leasing/LeasingPaymentDetail';
@@ -159,12 +159,12 @@ export const router = createBrowserRouter([
       // Leasing
       { path: 'leasing', element: <LeasingPortfolio /> },
       { path: 'leasing/:id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'equipments/:equipmentId', element: <LeasingEquipmentDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'contracts/:contractId', element: <LeasingContractDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'incidents/:incidentId', element: <LeasingIncidentDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'maintenance/:maintenanceId', element: <LeasingMaintenanceDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'payments/:paymentId', element: <LeasingPaymentDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'reporting/:reportId', element: <LeasingReportingDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id/equipments/:equipmentId', element: <LeasingEquipmentDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id/contracts/:contractId', element: <LeasingContractDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id/incidents/:incidentId', element: <LeasingIncidentDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id/maintenance/:maintenanceId', element: <LeasingMaintenanceDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id/payments/:paymentId', element: <LeasingPaymentDetail />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'leasing/:id/reporting/:reportId', element: <LeasingReportingDetail />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'reservations', element: <LeasingReservationsPage /> },
       { path: 'maintenance', element: <LeasingMaintenancePage /> },
       { path: 'incidents', element: <LeasingIncidentsPage /> },

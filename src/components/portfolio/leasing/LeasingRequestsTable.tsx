@@ -15,6 +15,7 @@ interface LeasingRequestsTableProps {
   onApprove?: (request: LeasingRequest) => void;
   onReject?: (request: LeasingRequest) => void;
   onDownloadTechnicalSheet?: (request: LeasingRequest) => void;
+  onViewCompany?: (companyId: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
   loading?: boolean;
 }
 
@@ -25,6 +26,7 @@ export function LeasingRequestsTable({
   onApprove,
   onReject,
   onDownloadTechnicalSheet,
+  onViewCompany,
   loading = false
 }: LeasingRequestsTableProps) {
   // Map des statuts de demande avec leurs variantes et labels
@@ -76,6 +78,19 @@ export function LeasingRequestsTable({
       {
         header: 'Client',
         accessorKey: 'client_name',
+        cell: (request: LeasingRequest) => (
+          <span 
+            className="hover:text-blue-600 hover:underline cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onViewCompany) {
+                onViewCompany(request.client_id);
+              }
+            }}
+          >
+            {request.client_name}
+          </span>
+        )
       },
       {
         header: 'Équipement',
@@ -172,7 +187,7 @@ export function LeasingRequestsTable({
       align: 'center' as const
     }
     ];
-  }, [onViewDetails, onApprove, onReject, onDownloadTechnicalSheet, equipments, statusMap, contractTypeMap]);
+  }, [onViewDetails, onApprove, onReject, onDownloadTechnicalSheet, equipments, statusMap, contractTypeMap, onViewCompany]);
 
   // Options de filtrage
   const filterOptions = [

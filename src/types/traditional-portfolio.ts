@@ -19,6 +19,7 @@ export interface FinancialProduct {
     max?: number;
   };
   requirements: string[];
+  acceptedGuarantees?: string[]; // Types de garanties acceptées pour ce produit
   isPublic: boolean;
   status: 'active' | 'inactive';
   created_at: string;

@@ -1,10 +1,11 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormField, Input, Select, TextArea } from '../../ui/Form';
 import { Button } from '../../ui/Button';
-import type { Portfolio } from '../../../types/portfolio';
+import { TagInput } from '../../ui/TagInput';
+import { businessSectors, acceptedGuarantees } from '../../../constants/sectors';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
 
 const productSchema = z.object({
@@ -32,33 +33,43 @@ const productSchema = z.object({
     message: "Les taux d'intérêt sont requis selon le type choisi"
   }),
   requirements: z.array(z.string()).min(1, 'Sélectionnez au moins un secteur'),
+  acceptedGuarantees: z.array(z.string()).optional(),
   isPublic: z.boolean()
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
 
 interface FinancialProductFormProps {
-  portfolio: Portfolio;
   onSubmit: (data: ProductFormData) => Promise<void>;
   onCancel: () => void;
   initialData?: FinancialProduct;
 }
 
-export function FinancialProductForm({ portfolio, onSubmit, onCancel, initialData }: FinancialProductFormProps) {
+export function FinancialProductForm({ onSubmit, onCancel, initialData }: FinancialProductFormProps) {
   const {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isSubmitting }
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData || {
+      name: '',
       type: 'credit',
+      description: '',
+      minAmount: 0,
+      maxAmount: 0,
+      duration: {
+        min: 1,
+        max: 12
+      },
       interestRate: {
         type: 'fixed'
       },
       isPublic: false,
-      requirements: []
+      requirements: [],
+      acceptedGuarantees: []
     }
   });
 
@@ -142,7 +153,7 @@ export function FinancialProductForm({ portfolio, onSubmit, onCancel, initialDat
         </FormField>
       </div>
 
-      <FormField label="Type de taux" error={errors.interestRate?.type?.message}>
+      <FormField label="Type de taux" error={errors.interestRate?.message}>
         <Select {...register('interestRate.type')}>
           <option value="fixed">Fixe</option>
           <option value="variable">Variable</option>
@@ -176,25 +187,37 @@ export function FinancialProductForm({ portfolio, onSubmit, onCancel, initialDat
         </div>
       )}
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Secteurs cibles</label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {portfolio.target_sectors.map(sector => (
-            <label key={sector} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                value={sector}
-                {...register('requirements')}
-                className="rounded border-gray-300"
-              />
-              <span>{sector}</span>
-            </label>
-          ))}
-        </div>
-        {errors.requirements && (
-          <p className="text-sm text-red-600">{errors.requirements.message}</p>
-        )}
-      </div>
+      <FormField label="Secteurs cibles" error={errors.requirements?.message}>
+        <Controller
+          name="requirements"
+          control={control}
+          render={({ field }) => (
+            <TagInput
+              tags={businessSectors}
+              selectedTags={field.value || []}
+              onChange={field.onChange}
+              placeholder="Rechercher un secteur..."
+              error={errors.requirements?.message}
+            />
+          )}
+        />
+      </FormField>
+      
+      <FormField label="Garanties acceptées" error={errors.acceptedGuarantees?.message}>
+        <Controller
+          name="acceptedGuarantees"
+          control={control}
+          render={({ field }) => (
+            <TagInput
+              tags={acceptedGuarantees}
+              selectedTags={field.value || []}
+              onChange={field.onChange}
+              placeholder="Rechercher une garantie..."
+              error={errors.acceptedGuarantees?.message}
+            />
+          )}
+        />
+      </FormField>
 
       <FormField label="Produit public">
         <input

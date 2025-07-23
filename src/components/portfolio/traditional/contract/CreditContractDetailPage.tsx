@@ -13,7 +13,7 @@ import { useNotification } from '../../../../contexts/NotificationContext';
 import { ContractOverview } from './ContractOverview';
 // Import direct avec chemin relatif complet au cas où
 import { ContractDetails } from '../../../../components/portfolio/traditional/contract/ContractDetails';
-import { ContractSchedule } from './ContractSchedule';
+import { EditableAmortizationSchedule } from './EditableAmortizationSchedule';
 import { ContractRepayments } from './ContractRepayments';
 import { ContractGuarantees } from './ContractGuarantees';
 import { ContractDocuments } from './ContractDocuments';
@@ -130,7 +130,6 @@ export default function CreditContractDetailPage() {
       {/* Aperçu du contrat */}
       <ContractOverview 
         contract={contract} 
-        onBack={() => navigate(`/app/traditional/${portfolioId || 'default'}?tab=contracts`)}
       />
       
       <Separator className="my-6" />
@@ -158,7 +157,17 @@ export default function CreditContractDetailPage() {
           </TabsContent>
           
           <TabsContent value="schedule" currentValue={activeTab} className="p-4 bg-white rounded-md shadow">
-            <ContractSchedule contractId={contract.id} />
+            <EditableAmortizationSchedule 
+              contractId={contract.id}
+              amount={contract.amount}
+              interestRate={contract.interestRate}
+              startDate={contract.startDate || new Date().toISOString()}
+              endDate={contract.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString()}
+              onEditSchedule={async (updatedSchedule) => {
+                console.log('Échéancier mis à jour:', updatedSchedule);
+                showNotification('Échéancier mis à jour avec succès', 'success');
+              }}
+            />
           </TabsContent>
           
           <TabsContent value="repayments" currentValue={activeTab} className="p-4 bg-white rounded-md shadow">

@@ -1,5 +1,4 @@
 // src/config/portfolioTypes.ts
-import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
 import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
@@ -35,7 +34,6 @@ export const portfolioTypeConfig = {
   traditional: {
     label: 'Portefeuille traditionnel',
     tabs: [
-      { key: 'products', label: 'Produits', component: FinancialProductsList },
       { key: 'requests', label: 'Demandes', component: FundingRequestsTable },
       { key: 'contracts', label: 'Contrats', component: CreditContractsList },
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
