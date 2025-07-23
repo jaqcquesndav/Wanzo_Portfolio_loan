@@ -39,7 +39,7 @@ import Documentation from '../pages/Documentation';
 import Help from '../pages/Help';
 import Settings from '../pages/Settings';
 import Users from '../pages/Users';
-import InstitutionManagement from '../pages/InstitutionManagement';
+import Organization from '../pages/Organization';
 import CentralRisque from '../pages/CentralRisque';
 import PortfolioNotFound from '../pages/PortfolioNotFound';
 import PortfolioErrorBoundary from '../pages/PortfolioErrorBoundary';
@@ -174,7 +174,7 @@ export const router = createBrowserRouter([
       { path: 'settings', element: <Settings /> },
       // Administration
       { path: 'users', element: <Users /> },
-      { path: 'institution', element: <InstitutionManagement /> },
+      { path: 'institution', element: <Organization /> },
       { path: 'central-risque', element: <CentralRisque /> },
       // Prospection partagé
       { path: 'prospection', element: <Prospection /> },

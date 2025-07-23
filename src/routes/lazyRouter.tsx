@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { LazySuspendedComponents } from '../utils/lazySuspense';
 import { Layout, PortfolioTypeSelector, AuthCallback, Dashboard } from './lazyRoutes';
+import Organization from '../pages/Organization';
 
 export const lazyRouter = createBrowserRouter([
   // Redirections pour accès direct aux menus globaux (settings, users, institution, docs, help)
@@ -125,7 +126,7 @@ export const lazyRouter = createBrowserRouter([
       { path: 'settings', element: <LazySuspendedComponents.Settings /> },
       // Administration
       { path: 'users', element: <LazySuspendedComponents.Users /> },
-      { path: 'institution', element: <LazySuspendedComponents.InstitutionManagement /> },
+      { path: 'institution', element: <Organization /> },
       { path: 'central-risque', element: <LazySuspendedComponents.CentralRisque /> },
       // Prospection partagé
       { path: 'prospection', element: <LazySuspendedComponents.Prospection /> },

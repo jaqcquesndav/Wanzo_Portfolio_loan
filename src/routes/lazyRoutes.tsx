@@ -48,7 +48,7 @@ export const Documentation = lazy(() => import('../pages/Documentation'));
 export const Help = lazy(() => import('../pages/Help'));
 export const Settings = lazy(() => import('../pages/Settings'));
 export const Users = lazy(() => import('../pages/Users'));
-export const InstitutionManagement = lazy(() => import('../pages/InstitutionManagement'));
+export const Organization = lazy(() => import('../pages/Organization'));
 export const InstitutionValidation = lazy(() => import('../pages/InstitutionValidation'));
 export const CentralRisque = lazy(() => import('../pages/CentralRisque'));
 export const PortfolioNotFound = lazy(() => import('../pages/PortfolioNotFound'));

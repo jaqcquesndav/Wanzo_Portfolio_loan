@@ -1,6 +1,7 @@
 // src/routes/optimizedRouter.tsx
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import * as components from './suspenseComponents';
+import Organization from '../pages/Organization';
 
 // Création du routeur avec les composants optimisés (lazy loading avec Suspense)
 export function createOptimizedRouter() {
@@ -127,7 +128,7 @@ export function createOptimizedRouter() {
         { path: 'settings', element: <components.Settings /> },
         // Administration
         { path: 'users', element: <components.Users /> },
-        { path: 'institution', element: <components.InstitutionManagement /> },
+        { path: 'institution', element: <Organization /> },
         { path: 'central-risque', element: <components.CentralRisque /> },
         // Prospection partagé
         { path: 'prospection', element: <components.Prospection /> },
