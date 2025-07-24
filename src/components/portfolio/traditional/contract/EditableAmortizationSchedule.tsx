@@ -10,23 +10,8 @@ import { Tabs, TabsList, TabsTrigger } from '../../../ui/Tabs';
 import { Save, Edit, Download, Printer, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import useAmortizationSchedules from '../../../../hooks/useAmortizationSchedules';
-import { AmortizationScheduleItem } from '../../../../data/mockAmortizationSchedules';
 import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
-
-// Types pour les éléments d'échéancier
-interface ScheduleItem {
-  id: string;
-  number: number;
-  dueDate: string;
-  principal: number;
-  interest: number;
-  totalPayment: number;
-  remainingBalance: number;
-  status: 'paid' | 'due' | 'overdue' | 'pending' | 'rescheduled';
-  paymentDate?: string;
-  paymentAmount?: number;
-  comments?: string;
-}
+import { AmortizationScheduleItem } from '../../../../types/amortization';
 
 interface EditableAmortizationScheduleProps {
   contractId: string;
@@ -34,7 +19,7 @@ interface EditableAmortizationScheduleProps {
   interestRate: number;
   startDate: string;
   endDate: string;
-  onEditSchedule?: (updatedSchedule: ScheduleItem[]) => Promise<void>;
+  onEditSchedule?: (updatedSchedule: AmortizationScheduleItem[]) => Promise<void>;
 }
 
 // Fonction utilitaire pour le formatage des montants
@@ -65,12 +50,12 @@ export function EditableAmortizationSchedule({
   endDate,
   onEditSchedule
 }: EditableAmortizationScheduleProps) {
-  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [scheduleItems, setScheduleItems] = useState<AmortizationScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
+  const [editingItem, setEditingItem] = useState<AmortizationScheduleItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newItem, setNewItem] = useState<Partial<ScheduleItem>>({
+  const [newItem, setNewItem] = useState<Partial<AmortizationScheduleItem>>({
     status: 'pending',
     dueDate: new Date().toISOString().split('T')[0],
     principal: 0,
@@ -108,7 +93,7 @@ export function EditableAmortizationSchedule({
         // Utiliser les données provenant du hook useAmortizationSchedules
         if (!amortizationSchedules.isLoading) {
           console.log('Données chargées depuis le hook:', amortizationSchedules.items.length, 'éléments');
-          setScheduleItems(amortizationSchedules.items as ScheduleItem[]);
+          setScheduleItems(amortizationSchedules.items as AmortizationScheduleItem[]);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des échéanciers:', error);
@@ -143,7 +128,7 @@ export function EditableAmortizationSchedule({
   };
 
   // Gestionnaire pour ouvrir le modal d'édition
-  const handleEditItem = (item: ScheduleItem) => {
+  const handleEditItem = (item: AmortizationScheduleItem) => {
     setEditingItem({...item});
     setIsEditModalOpen(true);
   };
@@ -187,7 +172,7 @@ export function EditableAmortizationSchedule({
   };
 
   // Gestionnaire pour marquer une échéance comme payée
-  const handleMarkAsPaid = async (item: ScheduleItem) => {
+  const handleMarkAsPaid = async (item: AmortizationScheduleItem) => {
     try {
       // Utiliser le hook pour marquer l'échéance comme payée
       const success = await amortizationSchedules.markAsPaid(item.id);
@@ -262,7 +247,7 @@ export function EditableAmortizationSchedule({
       };
       
       // Ajouter l'item à la liste locale
-      const updatedItems = [...scheduleItems, completeNewItem as ScheduleItem];
+      const updatedItems = [...scheduleItems, completeNewItem as AmortizationScheduleItem];
       setScheduleItems(updatedItems);
       
       // Mettre à jour le localStorage via le hook

@@ -1,18 +1,5 @@
 // src/data/mockAmortizationSchedules.ts
-export interface AmortizationScheduleItem {
-  id: string;
-  contractId: string;
-  number: number;
-  dueDate: string;
-  principal: number;
-  interest: number;
-  totalPayment: number;
-  remainingBalance: number;
-  status: 'paid' | 'due' | 'overdue' | 'pending' | 'rescheduled';
-  paymentDate?: string;
-  paymentAmount?: number;
-  comments?: string;
-}
+import { AmortizationScheduleItem, AmortizationScheduleStatus } from '../types/amortization';
 
 // Fonction pour générer des données d'échéancier simulées
 export const generateAmortizationSchedule = (
@@ -45,7 +32,7 @@ export const generateAmortizationSchedule = (
     
     // Déterminer le statut en fonction de la date d'échéance
     const now = new Date();
-    let status: 'paid' | 'due' | 'overdue' | 'pending' | 'rescheduled' = 'pending';
+    let status: AmortizationScheduleStatus = 'pending';
     
     if (dueDate < now) {
       // Simuler que les premières échéances sont payées
@@ -93,21 +80,18 @@ export const saveAmortizationSchedulesToLocalStorage = (schedules: Record<string
 
 // Fonction pour récupérer les données du localStorage
 export const getAmortizationSchedulesFromLocalStorage = (): Record<string, AmortizationScheduleItem[]> => {
-  const storedData = localStorage.getItem('amortizationSchedules');
-  if (storedData) {
-    return JSON.parse(storedData);
-  }
-  
-  // Si aucune donnée n'est trouvée, sauvegarder et retourner les données mock
-  saveAmortizationSchedulesToLocalStorage(mockAmortizationSchedules);
-  return mockAmortizationSchedules;
-};
-
-// Initialiser le localStorage si nécessaire
-try {
-  if (!localStorage.getItem('amortizationSchedules')) {
+  try {
+    const storedData = localStorage.getItem('amortizationSchedules');
+    if (storedData) {
+      return JSON.parse(storedData);
+    }
+    
+    // Si aucune donnée n'est trouvée, initialiser avec les données mock
+    console.warn('Aucune donnée d\'échéanciers trouvée dans le localStorage, initialisation avec les données mock');
     saveAmortizationSchedulesToLocalStorage(mockAmortizationSchedules);
+    return mockAmortizationSchedules;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données d\'échéanciers:', error);
+    return {};
   }
-} catch (error) {
-  console.error('Erreur lors de l\'initialisation des données d\'échéanciers:', error);
-}
+};

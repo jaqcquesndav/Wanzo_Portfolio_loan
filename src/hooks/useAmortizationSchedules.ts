@@ -1,23 +1,16 @@
 // src/hooks/useAmortizationSchedules.ts
 import { useState, useEffect, useCallback } from 'react';
 import {
-  AmortizationScheduleItem,
   getAmortizationSchedulesFromLocalStorage,
   saveAmortizationSchedulesToLocalStorage,
   generateAmortizationSchedule
 } from '../data/mockAmortizationSchedules';
+import {
+  AmortizationScheduleItem,
+  UseAmortizationSchedulesOptions
+} from '../types/amortization';
 
-interface UseAmortizationSchedulesOptions {
-  contractId: string;
-  amount: number;
-  interestRate: number;
-  startDate: string;
-  endDate: string;
-  page?: number;
-  pageSize?: number;
-  filter?: string;
-}
-
+// Complétez l'interface avec les propriétés supplémentaires
 interface AmortizationSchedulesState {
   items: AmortizationScheduleItem[];
   isLoading: boolean;
@@ -69,14 +62,15 @@ const useAmortizationSchedules = ({
     setState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Récupérer les données du localStorage
+      // Récupérer les données du localStorage (ne devrait jamais être vide grâce à l'initialisation)
       const allSchedules = getAmortizationSchedulesFromLocalStorage();
       
       // Vérifier si le contrat existe déjà dans les données
       let contractSchedules = allSchedules[contractId];
       
-      // Si non, générer les données pour ce contrat
+      // Si non, générer les données pour ce contrat et les sauvegarder dans localStorage
       if (!contractSchedules) {
+        console.info(`Création d'un nouvel échéancier pour le contrat ${contractId}`);
         contractSchedules = generateAmortizationSchedule(
           contractId,
           amount,
@@ -85,7 +79,7 @@ const useAmortizationSchedules = ({
           endDate
         );
         
-        // Mettre à jour le localStorage
+        // Mettre à jour le localStorage avec le nouvel échéancier
         allSchedules[contractId] = contractSchedules;
         saveAmortizationSchedulesToLocalStorage(allSchedules);
       }
@@ -155,11 +149,12 @@ const useAmortizationSchedules = ({
       
       // Mettre à jour l'item dans le tableau
       if (allSchedules[contractId]) {
+        // Créer une copie pour éviter les références
         allSchedules[contractId] = allSchedules[contractId].map(item => 
-          item.id === updatedItem.id ? updatedItem : item
+          item.id === updatedItem.id ? { ...updatedItem } : item
         );
         
-        // Sauvegarder les changements
+        // Sauvegarder les changements dans localStorage
         saveAmortizationSchedulesToLocalStorage(allSchedules);
         
         // Recharger les données
@@ -182,15 +177,16 @@ const useAmortizationSchedules = ({
       const allSchedules = getAmortizationSchedulesFromLocalStorage();
       
       // Créer un map pour un accès rapide aux items mis à jour
-      const updatedItemsMap = new Map(updatedItems.map(item => [item.id, item]));
+      const updatedItemsMap = new Map(updatedItems.map(item => [item.id, { ...item }]));
       
       // Mettre à jour les items dans le tableau
       if (allSchedules[contractId]) {
+        // Créer une copie pour éviter les références
         allSchedules[contractId] = allSchedules[contractId].map(item => 
           updatedItemsMap.has(item.id) ? updatedItemsMap.get(item.id)! : item
         );
         
-        // Sauvegarder les changements
+        // Sauvegarder les changements dans localStorage
         saveAmortizationSchedulesToLocalStorage(allSchedules);
         
         // Recharger les données

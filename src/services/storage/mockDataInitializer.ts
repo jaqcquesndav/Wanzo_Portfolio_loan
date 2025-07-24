@@ -9,6 +9,7 @@
 import { mockTraditionalPortfolios } from '../../data/mockTraditionalPortfolios';
 import { mockInvestmentPortfolios } from '../../data/mockInvestmentPortfolios';
 import { mockLeasingPortfolios } from '../../data/mockLeasingPortfolios';
+import { mockAmortizationSchedules, saveAmortizationSchedulesToLocalStorage } from '../../data/mockAmortizationSchedules';
 import type { PortfolioWithType } from '../../types/portfolio';
 import { guaranteeStorageService } from './guaranteeStorageUnified';
 import { centraleRisqueStorageService } from './centraleRisqueStorage';
@@ -37,6 +38,9 @@ class MockDataInitializerService {
 
         // Initialiser les portefeuilles
         await this.initializePortfolios();
+        
+        // Initialiser les échéanciers d'amortissement
+        this.initializeAmortizationSchedules();
         
         // Initialiser les garanties
         await guaranteeStorageService.initializeDefaultData();
@@ -67,6 +71,29 @@ class MockDataInitializerService {
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des données mock:', error);
       throw error;
+    }
+  }
+  
+  /**
+   * Initialise les données d'échéanciers d'amortissement
+   * 
+   * @returns {void}
+   * @private
+   */
+  private initializeAmortizationSchedules(): void {
+    try {
+      // Vérifier si les données d'échéanciers existent déjà
+      const existingData = localStorage.getItem('amortizationSchedules');
+      
+      if (!existingData) {
+        console.info('Initialisation des données d\'échéanciers d\'amortissement...');
+        saveAmortizationSchedulesToLocalStorage(mockAmortizationSchedules);
+        console.info('Données d\'échéanciers d\'amortissement initialisées avec succès');
+      } else {
+        console.info('Les données d\'échéanciers d\'amortissement sont déjà initialisées');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'initialisation des données d\'échéanciers:', error);
     }
   }
   
