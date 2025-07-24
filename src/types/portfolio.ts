@@ -1,30 +1,19 @@
-// Exported for unified DB typing
-export interface PortfolioWithType extends Portfolio {
-  // Investment
-  assets?: unknown[];
-  subscriptions?: import('./securities').SecuritySubscription[];
-  valuations?: import('./securities').CompanyValuation[];
-  requests?: import('./investment-portfolio').InvestmentRequest[];
-  transactions?: import('./investment-portfolio').InvestmentTransaction[];
-  reports?: import('./investment-portfolio').PortfolioCompanyReport[];
-  exitEvents?: import('./investment-portfolio').ExitEvent[];
-  // Leasing
-  equipment_catalog?: import('./leasing').Equipment[];
-  contracts?: import('./leasing').LeasingContract[];
-  incidents?: import('./leasing-asset').Incident[];
-  maintenances?: import('./leasing-asset').Maintenance[];
-  payments?: import('./leasing-payment').LeasingPayment[];
-  // Optionals for compatibility
-  [key: string]: unknown;
-}
+// Import explicites pour une meilleure maintenabilité
 import type { FinancialProduct } from './traditional-portfolio';
+import type { BankAccount } from './bankAccount';
+// Autres types importés à la demande
 
 export type PortfolioStatus = 'active' | 'inactive' | 'pending' | 'archived';
+export type PortfolioType = 'traditional' | 'investment' | 'leasing';
 
+/**
+ * Interface de base pour tous les types de portefeuilles
+ * @description Définit les propriétés communes à tous les portefeuilles
+ */
 export interface Portfolio {
   id: string;
   name: string;
-  type: 'traditional' | 'investment' | 'leasing';
+  type: PortfolioType;
   status: PortfolioStatus;
   target_amount: number;
   target_return: number;
@@ -32,7 +21,7 @@ export interface Portfolio {
   risk_profile: 'conservative' | 'moderate' | 'aggressive';
   products: FinancialProduct[]; // Maintenant obligatoire et non optionnel
   investment_stage?: string;
-  bank_accounts?: import('./bankAccount').BankAccount[];
+  bank_accounts?: BankAccount[];
   manager?: {
     id: string;
     name: string;

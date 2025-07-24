@@ -10,7 +10,7 @@ import { mockTraditionalPortfolios } from '../../data/mockTraditionalPortfolios'
 import { mockInvestmentPortfolios } from '../../data/mockInvestmentPortfolios';
 import { mockLeasingPortfolios } from '../../data/mockLeasingPortfolios';
 import { mockAmortizationSchedules, saveAmortizationSchedulesToLocalStorage } from '../../data/mockAmortizationSchedules';
-import type { PortfolioWithType } from '../../types/portfolio';
+import type { PortfolioWithType } from '../../types/portfolioWithType';
 import { guaranteeStorageService } from './guaranteeStorageUnified';
 import { centraleRisqueStorageService } from './centraleRisqueStorage';
 import { initCompaniesData, STORAGE_KEYS } from '../../scripts/initLocalStorage';

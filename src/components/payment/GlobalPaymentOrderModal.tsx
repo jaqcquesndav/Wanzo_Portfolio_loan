@@ -1,4 +1,5 @@
 import React from 'react';
+// Importation directe du composant et de l'interface
 import { PaymentOrderModal, PaymentOrderData } from './PaymentOrderModal';
 import { usePaymentOrder } from '../../hooks/usePaymentOrderContext';
 import { exportPaymentOrderToPDF } from '../../utils/export';

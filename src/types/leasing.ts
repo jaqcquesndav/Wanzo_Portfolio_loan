@@ -1,14 +1,16 @@
-import type { PortfolioWithType } from './portfolio';
+import type { PortfolioWithType } from './portfolioWithType';
 import type { LeasingRequest } from './leasing-request';
-import type { MaintenanceOption, InsuranceOption } from '../services/api/leasing/portfolio-settings.api';
+import type { MaintenanceOption, InsuranceOption } from './leasing-settings';
+import type { Incident, Maintenance } from './leasing-asset';
+import type { LeasingPayment } from './leasing-payment';
 
 export interface LeasingPortfolio extends PortfolioWithType {
   equipment_catalog: Equipment[];
   leasing_requests: LeasingRequest[];
   contracts: LeasingContract[];
-  incidents: import('./leasing-asset').Incident[];
-  maintenances: import('./leasing-asset').Maintenance[];
-  payments: import('./leasing-payment').LeasingPayment[];
+  incidents: Incident[];
+  maintenances: Maintenance[];
+  payments: LeasingPayment[];
   leasing_terms: {
     min_duration: number;
     max_duration: number;

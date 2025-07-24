@@ -1,5 +1,5 @@
 // src/services/storage/localStorage.ts
-import type { PortfolioWithType } from '../../types/portfolio';
+import type { PortfolioWithType } from '../../types/portfolioWithType';
 
 // Normalization helpers for all portfolio types
 function normalizeLeasingPortfolio(portfolio: PortfolioWithType): PortfolioWithType {
@@ -102,7 +102,13 @@ export const portfolioStorageService = {
     }
   },
   
-  async addOrUpdatePortfolio(portfolio: PortfolioWithType): Promise<void> {
+  /**
+   * Ajoute ou met à jour un portefeuille dans le stockage local
+   * @template T Type de portefeuille étendu de PortfolioWithType
+   * @param portfolio Le portefeuille à ajouter ou mettre à jour
+   * @returns Promise<void>
+   */
+  async addOrUpdatePortfolio<T extends PortfolioWithType>(portfolio: T): Promise<void> {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
       const portfolios: PortfolioWithType[] = stored ? JSON.parse(stored) : [];

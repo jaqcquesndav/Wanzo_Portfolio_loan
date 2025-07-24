@@ -1,4 +1,4 @@
-import type { PortfolioWithType } from './portfolio';
+import type { PortfolioWithType } from './portfolioWithType';
 
 export interface InvestmentAsset {
   id: string;

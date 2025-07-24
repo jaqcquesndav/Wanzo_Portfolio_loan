@@ -21,6 +21,28 @@ const STORAGE_KEYS = {
  */
 export const leasingDataService = {
   /**
+   * Vérifie si les données de leasing sont déjà initialisées
+   * @returns Promise<boolean> - True si les données sont initialisées, false sinon
+   */
+  checkDataInitialized: async (): Promise<boolean> => {
+    return Boolean(
+      localStorage.getItem(STORAGE_KEYS.REQUESTS) &&
+      localStorage.getItem(STORAGE_KEYS.CONTRACTS) &&
+      localStorage.getItem(STORAGE_KEYS.EQUIPMENTS) &&
+      localStorage.getItem(STORAGE_KEYS.PORTFOLIOS)
+    );
+  },
+
+  /**
+   * Initialise toutes les données de leasing
+   * @returns Promise<void>
+   */
+  initializeData: async (): Promise<void> => {
+    leasingDataService.initData();
+    return Promise.resolve();
+  },
+
+  /**
    * Initialise les données dans le localStorage si elles n'existent pas déjà
    */
   initData: (): void => {

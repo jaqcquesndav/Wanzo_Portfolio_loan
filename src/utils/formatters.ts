@@ -1,15 +1,15 @@
-export const formatCurrency = (amount: number, includeCurrency: boolean = true): string => {
-  // Obtenir la devise des préférences utilisateur
-  let currency: 'CDF' | 'USD' | 'EUR' | 'FCFA' = 'FCFA';
-  
-  try {
-    const savedPreferences = localStorage.getItem('userPreferences');
-    if (savedPreferences) {
-      const preferences = JSON.parse(savedPreferences);
-      currency = preferences.currency || 'FCFA';
-    }
-  } catch {
-    // Fallback en cas d'erreur
+export const formatCurrency = (amount: number, currency: string = 'FCFA', asText: boolean = false): string => {
+  if (asText) {
+    // Conversion en texte pour les montants (en français)
+    // Cette implémentation est simplifiée et pourrait être améliorée
+    const formatter = new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+    
+    const amountStr = formatter.format(amount);
+    return `${amountStr} ${currency} (montant en lettres)`;
   }
   
   // Mapper les devises à leurs locales et symboles
@@ -17,24 +17,25 @@ export const formatCurrency = (amount: number, includeCurrency: boolean = true):
     'CDF': 'fr-CD',
     'USD': 'en-US',
     'EUR': 'fr-FR',
-    'FCFA': 'fr-FR'
+    'FCFA': 'fr-FR',
+    'XOF': 'fr-FR'
   };
   
-  // Si c'est FCFA, format personnalisé car non standard dans Intl
-  if (currency === 'FCFA') {
+  // Si c'est FCFA ou XOF, format personnalisé car non standard dans Intl
+  if (currency === 'FCFA' || currency === 'XOF') {
     const formatted = new Intl.NumberFormat('fr-FR', {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
     
-    return includeCurrency ? `${formatted} FCFA` : formatted;
+    return `${formatted} ${currency}`;
   }
   
   // Pour les autres devises, utiliser Intl.NumberFormat avec style currency
   const formatter = new Intl.NumberFormat(localeMap[currency as keyof typeof localeMap] || 'fr-CD', {
-    style: includeCurrency ? 'currency' : 'decimal',
-    currency: includeCurrency ? currency : undefined,
+    style: 'currency',
+    currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   });
