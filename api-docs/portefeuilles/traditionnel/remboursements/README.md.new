@@ -1,0 +1,580 @@
+# Remboursements - Portefeuille Traditionnel
+
+Ce document décrit les endpoints pour la gestion des remboursements dans le cadre des portefeuilles traditionnels.
+
+## Liste des remboursements
+
+Récupère la liste des remboursements pour un portefeuille traditionnel spécifique.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/repayments`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Paramètres de requête** :
+- `page` (optionnel) : Numéro de la page (défaut : 1)
+- `limit` (optionnel) : Nombre d'éléments par page (défaut : 10, max : 100)
+- `status` (optionnel) : Filtre par statut (pending, processed, cancelled, failed)
+- `contractId` (optionnel) : Filtre par identifiant du contrat
+- `clientId` (optionnel) : Filtre par identifiant du client
+- `dateFrom` (optionnel) : Filtre par date de création (début)
+- `dateTo` (optionnel) : Filtre par date de création (fin)
+- `paymentMethod` (optionnel) : Filtre par méthode de paiement (bank_transfer, cash, mobile_money, check)
+- `search` (optionnel) : Recherche textuelle (référence, nom du client)
+- `sortBy` (optionnel) : Trier par (created_at, amount, client_name)
+- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "repayment123",
+      "reference": "REP-2025-0123",
+      "portfolio_id": "portfolio123",
+      "contract_id": "contract456",
+      "client": {
+        "id": "client789",
+        "name": "Entreprise ABC"
+      },
+      "amount": 2302.08,
+      "currency": "XOF",
+      "status": "processed",
+      "payment_method": "bank_transfer",
+      "transaction_reference": "TRX-87654321",
+      "installment_number": 1,
+      "processed_date": "2025-02-15T09:00:00.000Z",
+      "created_at": "2025-02-15T08:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 35,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 4
+  }
+}
+```
+
+## Création d'un remboursement
+
+Enregistre un nouveau remboursement pour un contrat dans un portefeuille traditionnel.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "contract_id": "contract456",
+  "amount": 2302.08,
+  "currency": "XOF",
+  "payment_method": "bank_transfer",
+  "payment_date": "2025-02-15T00:00:00.000Z",
+  "transaction_reference": "TRX-87654321",
+  "installment_number": 1,
+  "payer_details": {
+    "name": "Entreprise ABC",
+    "account_info": "Banque XYZ - Compte 12345678"
+  },
+  "payment_proof_document_id": "doc123",
+  "notes": "Paiement de la première échéance"
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "repayment123",
+    "reference": "REP-2025-0123",
+    "status": "pending",
+    "message": "Remboursement enregistré avec succès",
+    "allocation": {
+      "principal": 2083.33,
+      "interest": 218.75,
+      "fees": 0,
+      "penalties": 0,
+      "total": 2302.08
+    }
+  }
+}
+```
+
+## Détails d'un remboursement
+
+Récupère les détails complets d'un remboursement spécifique.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/{repaymentId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `repaymentId` : Identifiant unique du remboursement
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "repayment123",
+    "reference": "REP-2025-0123",
+    "portfolio_id": "portfolio123",
+    "contract": {
+      "id": "contract456",
+      "reference": "CONT-2025-0456",
+      "status": "active"
+    },
+    "client": {
+      "id": "client789",
+      "name": "Entreprise ABC",
+      "type": "company",
+      "contact": {
+        "name": "Pierre Durand",
+        "phone": "+22500000000",
+        "email": "pierre@entrepriseabc.com"
+      }
+    },
+    "amount": 2302.08,
+    "currency": "XOF",
+    "status": "processed",
+    "status_history": [
+      {
+        "status": "pending",
+        "timestamp": "2025-02-15T08:00:00.000Z",
+        "user_id": "user123"
+      },
+      {
+        "status": "processing",
+        "timestamp": "2025-02-15T08:30:00.000Z",
+        "user_id": "user123"
+      },
+      {
+        "status": "processed",
+        "timestamp": "2025-02-15T09:00:00.000Z",
+        "user_id": "user123"
+      }
+    ],
+    "payment_method": "bank_transfer",
+    "payment_date": "2025-02-15T00:00:00.000Z",
+    "processed_date": "2025-02-15T09:00:00.000Z",
+    "transaction_reference": "TRX-87654321",
+    "installment_number": 1,
+    "payer_details": {
+      "name": "Entreprise ABC",
+      "account_info": "Banque XYZ - Compte 12345678"
+    },
+    "allocation": {
+      "principal": 2083.33,
+      "interest": 218.75,
+      "fees": 0,
+      "penalties": 0,
+      "total": 2302.08
+    },
+    "documents": [
+      {
+        "id": "doc123",
+        "type": "payment_receipt",
+        "name": "Reçu_Paiement.pdf",
+        "uploaded_at": "2025-02-15T08:00:00.000Z"
+      }
+    ],
+    "notes": "Paiement de la première échéance",
+    "created_at": "2025-02-15T08:00:00.000Z",
+    "created_by": {
+      "id": "user123",
+      "name": "Jean Dupont"
+    },
+    "updated_at": "2025-02-15T09:00:00.000Z"
+  }
+}
+```
+
+## Mettre à jour un remboursement
+
+Modifie un remboursement existant (uniquement possible à l'état "pending").
+
+**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/{repaymentId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `repaymentId` : Identifiant unique du remboursement
+
+**Corps de la requête** :
+
+```json
+{
+  "amount": 2350.00,
+  "payment_method": "mobile_money",
+  "payment_date": "2025-02-15T10:00:00.000Z",
+  "transaction_reference": "MM-87654321",
+  "payer_details": {
+    "name": "Pierre Durand",
+    "phone": "+22500000000"
+  },
+  "notes": "Paiement de la première échéance avec supplément pour frais de retard"
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Remboursement mis à jour avec succès",
+  "data": {
+    "allocation": {
+      "principal": 2083.33,
+      "interest": 218.75,
+      "fees": 0,
+      "penalties": 47.92,
+      "total": 2350.00
+    }
+  }
+}
+```
+
+## Traiter un remboursement
+
+Marque un remboursement comme traité/validé et l'applique au contrat.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/{repaymentId}/process`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `repaymentId` : Identifiant unique du remboursement
+
+**Corps de la requête** :
+
+```json
+{
+  "processed_date": "2025-02-15T09:00:00.000Z",
+  "processing_notes": "Paiement vérifié et confirmé dans le relevé bancaire.",
+  "receipt_document_id": "doc124",
+  "custom_allocation": {
+    "principal": 2083.33,
+    "interest": 218.75,
+    "fees": 0,
+    "penalties": 47.92
+  }
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Remboursement traité avec succès",
+  "data": {
+    "repayment_id": "repayment123",
+    "new_status": "processed",
+    "contract_status": "active",
+    "installment_status": "paid",
+    "next_installment": {
+      "number": 2,
+      "due_date": "2025-03-15T00:00:00.000Z",
+      "amount": 2283.85
+    }
+  }
+}
+```
+
+## Annuler un remboursement
+
+Annule un remboursement en attente.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/{repaymentId}/cancel`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `repaymentId` : Identifiant unique du remboursement
+
+**Corps de la requête** :
+
+```json
+{
+  "cancellation_reason": "duplicate_entry",
+  "notes": "Paiement enregistré en double.",
+  "cancellation_date": "2025-02-15T10:30:00.000Z"
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Remboursement annulé avec succès",
+  "data": {
+    "repayment_id": "repayment123",
+    "new_status": "cancelled"
+  }
+}
+```
+
+## Marquer un remboursement comme échoué
+
+Marque un remboursement comme ayant échoué lors du traitement.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/{repaymentId}/fail`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `repaymentId` : Identifiant unique du remboursement
+
+**Corps de la requête** :
+
+```json
+{
+  "failure_reason": "insufficient_funds",
+  "failure_details": "Chèque rejeté pour provision insuffisante.",
+  "failure_date": "2025-02-16T09:00:00.000Z",
+  "notify_client": true
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Remboursement marqué comme échoué",
+  "data": {
+    "repayment_id": "repayment123",
+    "new_status": "failed",
+    "notification_sent": true,
+    "penalties_applied": {
+      "amount": 100.00,
+      "penalty_id": "penalty123"
+    }
+  }
+}
+```
+
+## Remboursement anticipé
+
+Enregistre un remboursement anticipé partiel ou total.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/early`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "contract_id": "contract456",
+  "amount": 12000.00,
+  "currency": "XOF",
+  "payment_method": "bank_transfer",
+  "payment_date": "2025-04-01T00:00:00.000Z",
+  "transaction_reference": "TRX-98765432",
+  "payer_details": {
+    "name": "Entreprise ABC",
+    "account_info": "Banque XYZ - Compte 12345678"
+  },
+  "early_payment_type": "partial", // partial ou total
+  "apply_penalty": true,
+  "payment_proof_document_id": "doc125",
+  "notes": "Remboursement anticipé partiel"
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "repayment124",
+    "reference": "REP-2025-0124",
+    "status": "pending",
+    "message": "Remboursement anticipé enregistré avec succès",
+    "allocation": {
+      "principal": 11450.00,
+      "interest": 320.00,
+      "fees": 0,
+      "penalties": 230.00,
+      "total": 12000.00
+    },
+    "updated_schedule_url": "/portfolio_inst/portfolios/traditional/portfolio123/contracts/contract456/schedule"
+  }
+}
+```
+
+## Création de remboursements groupés
+
+Enregistre plusieurs remboursements en une seule opération.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/batch`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "batch_reference": "BATCH-REP-2025-001",
+  "payment_date": "2025-02-15T00:00:00.000Z",
+  "description": "Remboursements groupés de février 2025",
+  "repayments": [
+    {
+      "contract_id": "contract456",
+      "amount": 2302.08,
+      "currency": "XOF",
+      "payment_method": "bank_transfer",
+      "transaction_reference": "TRX-87654321",
+      "installment_number": 1,
+      "payer_details": {
+        "name": "Entreprise ABC",
+        "account_info": "Banque XYZ - Compte 12345678"
+      }
+    },
+    {
+      "contract_id": "contract457",
+      "amount": 1500.00,
+      "currency": "XOF",
+      "payment_method": "mobile_money",
+      "transaction_reference": "MM-87654322",
+      "installment_number": 1,
+      "payer_details": {
+        "name": "Pierre Durand",
+        "phone": "+22500000000"
+      }
+    }
+  ]
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "message": "Lot de remboursements créé avec succès",
+  "data": {
+    "batch_id": "batch123",
+    "batch_reference": "BATCH-REP-2025-001",
+    "repayments": [
+      {
+        "id": "repayment123",
+        "reference": "REP-2025-0123",
+        "contract_id": "contract456",
+        "status": "pending"
+      },
+      {
+        "id": "repayment124",
+        "reference": "REP-2025-0124",
+        "contract_id": "contract457",
+        "status": "pending"
+      }
+    ],
+    "total_amount": 3802.08,
+    "total_count": 2
+  }
+}
+```
+
+## Obtenir les détails d'un lot de remboursements
+
+Récupère les détails d'un lot de remboursements et les remboursements associés.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/batch/{batchId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `batchId` : Identifiant unique du lot de remboursements
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "batch_id": "batch123",
+    "batch_reference": "BATCH-REP-2025-001",
+    "portfolio_id": "portfolio123",
+    "payment_date": "2025-02-15T00:00:00.000Z",
+    "description": "Remboursements groupés de février 2025",
+    "status": "processing",
+    "status_summary": {
+      "total": 2,
+      "pending": 0,
+      "processing": 1,
+      "processed": 1,
+      "failed": 0,
+      "cancelled": 0
+    },
+    "total_amount": 3802.08,
+    "currency": "XOF",
+    "created_at": "2025-02-15T08:00:00.000Z",
+    "created_by": {
+      "id": "user123",
+      "name": "Jean Dupont"
+    },
+    "updated_at": "2025-02-15T09:00:00.000Z",
+    "repayments": [
+      {
+        "id": "repayment123",
+        "reference": "REP-2025-0123",
+        "contract_id": "contract456",
+        "client_name": "Entreprise ABC",
+        "amount": 2302.08,
+        "status": "processed",
+        "processed_date": "2025-02-15T09:00:00.000Z"
+      },
+      {
+        "id": "repayment124",
+        "reference": "REP-2025-0124",
+        "contract_id": "contract457",
+        "client_name": "Pierre Durand",
+        "amount": 1500.00,
+        "status": "processing"
+      }
+    ]
+  }
+}
+```
+
+## Ajouter un document à un remboursement
+
+Ajoute un nouveau document à un remboursement existant.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/repayments/{repaymentId}/documents`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `repaymentId` : Identifiant unique du remboursement
+
+**Corps de la requête** :
+
+```json
+{
+  "type": "payment_receipt",
+  "file_id": "file125",
+  "name": "Reçu_Paiement.pdf",
+  "description": "Reçu de paiement bancaire"
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "message": "Document ajouté au remboursement avec succès",
+  "data": {
+    "document_id": "doc123"
+  }
+}
+```

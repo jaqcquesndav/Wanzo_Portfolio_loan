@@ -1,0 +1,36 @@
+// src/hooks/useDashboardMetrics.ts
+import { useApiQuery } from '../services/api/hooks/useApiQuery';
+import { API_CONFIG } from '../config/api';
+import { realtimeDataOptions } from '../services/api/reactQueryConfig';
+import { DashboardMetrics } from '../types/dashboard';
+
+/**
+ * Hook pour récupérer les métriques du dashboard en fonction du type de portefeuille
+ * 
+ * @param portfolioType Type de portefeuille (traditional, investment, leasing)
+ */
+export function useDashboardMetrics(portfolioType?: 'traditional' | 'investment' | 'leasing') {
+  // Utiliser le hook useApiQuery avec les options pour les données en temps réel
+  const { data, error, isLoading, refetch } = useApiQuery<DashboardMetrics>(
+    `/dashboard/${portfolioType || 'all'}/metrics`, 
+    undefined,
+    {
+      ...realtimeDataOptions,
+      // S'assurer que la requête n'est pas effectuée si le type de portefeuille n'est pas défini
+      enabled: !!portfolioType,
+      // Modifier la clé de requête pour inclure le type de portefeuille
+      queryKey: ['dashboardMetrics', portfolioType],
+      // Fonction de traitement des erreurs
+      onError: (error) => {
+        console.error(`Erreur lors de la récupération des métriques pour ${portfolioType}:`, error);
+      }
+    }
+  );
+  
+  return {
+    metrics: data,
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error : new Error('Une erreur est survenue')) : undefined,
+    refetch
+  };
+}

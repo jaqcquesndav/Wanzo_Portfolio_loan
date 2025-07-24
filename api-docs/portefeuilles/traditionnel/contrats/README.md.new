@@ -1,0 +1,760 @@
+# Contrats de Crédit - Portefeuille Traditionnel
+
+Ce document décrit les endpoints pour la gestion des contrats de crédit dans le cadre des portefeuilles traditionnels.
+
+## Liste des contrats de crédit
+
+Récupère la liste des contrats de crédit pour un portefeuille traditionnel spécifique.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Paramètres de requête** :
+- `page` (optionnel) : Numéro de la page (défaut : 1)
+- `limit` (optionnel) : Nombre d'éléments par page (défaut : 10, max : 100)
+- `status` (optionnel) : Filtre par statut (draft, active, completed, defaulted, restructured, cancelled)
+- `client` (optionnel) : Filtre par identifiant du client
+- `dateFrom` (optionnel) : Filtre par date de création (début)
+- `dateTo` (optionnel) : Filtre par date de création (fin)
+- `search` (optionnel) : Recherche textuelle (nom du client, référence)
+- `sortBy` (optionnel) : Trier par (created_at, client_name, amount, maturity_date)
+- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "contract123",
+      "reference": "CONT-2025-0123",
+      "portfolio_id": "portfolio123",
+      "request_id": "request456",
+      "client": {
+        "id": "client789",
+        "name": "Entreprise ABC",
+        "type": "company"
+      },
+      "amount": 25000.00,
+      "currency": "XOF",
+      "interest_rate": 10.5,
+      "term": 12,
+      "term_unit": "month",
+      "status": "active",
+      "disbursement_status": "completed",
+      "start_date": "2025-01-15T00:00:00.000Z",
+      "maturity_date": "2026-01-15T00:00:00.000Z",
+      "next_payment": {
+        "date": "2025-08-15T00:00:00.000Z",
+        "amount": 2291.67
+      },
+      "payment_stats": {
+        "total_paid": 13750.00,
+        "remaining_balance": 11250.00,
+        "payment_progress": 55.0,
+        "on_time_payments": 6,
+        "late_payments": 1
+      },
+      "created_at": "2025-01-10T08:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 35,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 4
+  }
+}
+```
+
+## Création d'un contrat de crédit
+
+Crée un nouveau contrat de crédit pour un portefeuille traditionnel.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "request_id": "request456",
+  "client_id": "client789",
+  "amount": 25000.00,
+  "currency": "XOF",
+  "interest_rate": 10.5,
+  "term": 12,
+  "term_unit": "month",
+  "payment_frequency": "monthly",
+  "start_date": "2025-01-15T00:00:00.000Z",
+  "grace_period": 0,
+  "grace_period_unit": "month",
+  "payment_method": "bank_transfer",
+  "guarantees": [
+    {
+      "id": "guarantee123",
+      "type": "collateral",
+      "value": 40000.00,
+      "description": "Équipement de production"
+    }
+  ],
+  "fees": [
+    {
+      "type": "administration",
+      "amount": 500.00,
+      "payment_timing": "upfront"
+    },
+    {
+      "type": "insurance",
+      "amount": 250.00,
+      "payment_timing": "monthly"
+    }
+  ],
+  "conditions": [
+    "Fourniture des statuts à jour de l'entreprise",
+    "Signature de tous les documents contractuels"
+  ],
+  "schedule_type": "amortization",
+  "early_payment_allowed": true,
+  "early_payment_penalty": 2.0
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "contract123",
+    "reference": "CONT-2025-0123",
+    "status": "draft",
+    "message": "Contrat de crédit créé avec succès",
+    "amortization_schedule_url": "/portfolio_inst/portfolios/traditional/portfolio123/contracts/contract123/schedule"
+  }
+}
+```
+
+## Détails d'un contrat de crédit
+
+Récupère les détails complets d'un contrat de crédit spécifique.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "contract123",
+    "reference": "CONT-2025-0123",
+    "portfolio_id": "portfolio123",
+    "request_id": "request456",
+    "client": {
+      "id": "client789",
+      "name": "Entreprise ABC",
+      "type": "company",
+      "sector": "commerce",
+      "contact": {
+        "name": "Pierre Durand",
+        "phone": "+22500000000",
+        "email": "pierre@entrepriseabc.com"
+      }
+    },
+    "amount": 25000.00,
+    "currency": "XOF",
+    "interest_rate": 10.5,
+    "term": 12,
+    "term_unit": "month",
+    "payment_frequency": "monthly",
+    "start_date": "2025-01-15T00:00:00.000Z",
+    "maturity_date": "2026-01-15T00:00:00.000Z",
+    "grace_period": 0,
+    "grace_period_unit": "month",
+    "payment_method": "bank_transfer",
+    "status": "active",
+    "status_history": [
+      {
+        "status": "draft",
+        "timestamp": "2025-01-10T08:00:00.000Z",
+        "user_id": "user123"
+      },
+      {
+        "status": "pending_signature",
+        "timestamp": "2025-01-12T10:30:00.000Z",
+        "user_id": "user123"
+      },
+      {
+        "status": "signed",
+        "timestamp": "2025-01-14T14:00:00.000Z",
+        "user_id": "user456"
+      },
+      {
+        "status": "active",
+        "timestamp": "2025-01-15T09:00:00.000Z",
+        "user_id": "user123"
+      }
+    ],
+    "disbursement_status": "completed",
+    "disbursement_details": {
+      "date": "2025-01-15T09:00:00.000Z",
+      "amount": 25000.00,
+      "method": "bank_transfer",
+      "reference": "DISB-2025-0123",
+      "account_info": {
+        "bank_name": "Banque XYZ",
+        "account_number": "****5678"
+      }
+    },
+    "guarantees": [
+      {
+        "id": "guarantee123",
+        "type": "collateral",
+        "value": 40000.00,
+        "description": "Équipement de production",
+        "status": "verified",
+        "documents": [
+          {
+            "id": "doc123",
+            "name": "Facture_Equipement.pdf",
+            "uploaded_at": "2025-01-10T08:00:00.000Z"
+          }
+        ]
+      }
+    ],
+    "fees": [
+      {
+        "id": "fee123",
+        "type": "administration",
+        "amount": 500.00,
+        "payment_timing": "upfront",
+        "status": "paid",
+        "payment_date": "2025-01-15T00:00:00.000Z"
+      },
+      {
+        "id": "fee124",
+        "type": "insurance",
+        "amount": 250.00,
+        "payment_timing": "monthly",
+        "status": "active"
+      }
+    ],
+    "conditions": [
+      {
+        "description": "Fourniture des statuts à jour de l'entreprise",
+        "status": "fulfilled",
+        "fulfilled_at": "2025-01-12T00:00:00.000Z"
+      },
+      {
+        "description": "Signature de tous les documents contractuels",
+        "status": "fulfilled",
+        "fulfilled_at": "2025-01-14T00:00:00.000Z"
+      }
+    ],
+    "schedule_summary": {
+      "total_principal": 25000.00,
+      "total_interest": 1458.33,
+      "total_amount": 26458.33,
+      "principal_paid": 13020.83,
+      "interest_paid": 729.17,
+      "total_paid": 13750.00,
+      "remaining_principal": 11979.17,
+      "remaining_interest": 729.16,
+      "remaining_total": 12708.33
+    },
+    "next_payment": {
+      "date": "2025-08-15T00:00:00.000Z",
+      "principal": 2187.50,
+      "interest": 104.17,
+      "total": 2291.67,
+      "number": 8,
+      "status": "pending"
+    },
+    "payment_stats": {
+      "total_installments": 12,
+      "completed_installments": 7,
+      "remaining_installments": 5,
+      "on_time_payments": 6,
+      "late_payments": 1,
+      "missed_payments": 0,
+      "payment_progress": 55.0
+    },
+    "documents": [
+      {
+        "id": "doc125",
+        "type": "contract",
+        "name": "Contrat_Signe.pdf",
+        "uploaded_at": "2025-01-14T14:00:00.000Z",
+        "status": "signed"
+      },
+      {
+        "id": "doc126",
+        "type": "disbursement_proof",
+        "name": "Preuve_Virement.pdf",
+        "uploaded_at": "2025-01-15T09:00:00.000Z"
+      }
+    ],
+    "schedule_type": "amortization",
+    "early_payment_allowed": true,
+    "early_payment_penalty": 2.0,
+    "created_at": "2025-01-10T08:00:00.000Z",
+    "created_by": {
+      "id": "user123",
+      "name": "Jean Dupont"
+    },
+    "updated_at": "2025-07-15T10:30:00.000Z"
+  }
+}
+```
+
+## Calendrier d'amortissement
+
+Récupère le calendrier d'amortissement complet pour un contrat de crédit.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/schedule`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "contract_id": "contract123",
+    "contract_reference": "CONT-2025-0123",
+    "principal_amount": 25000.00,
+    "interest_rate": 10.5,
+    "term": 12,
+    "payment_frequency": "monthly",
+    "start_date": "2025-01-15T00:00:00.000Z",
+    "maturity_date": "2026-01-15T00:00:00.000Z",
+    "currency": "XOF",
+    "schedule_type": "amortization",
+    "total_principal": 25000.00,
+    "total_interest": 1458.33,
+    "total_amount": 26458.33,
+    "installments": [
+      {
+        "number": 1,
+        "due_date": "2025-02-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 218.75,
+        "total": 2302.08,
+        "remaining_principal": 22916.67,
+        "status": "paid",
+        "payment_date": "2025-02-15T00:00:00.000Z",
+        "payment_amount": 2302.08
+      },
+      {
+        "number": 2,
+        "due_date": "2025-03-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 200.52,
+        "total": 2283.85,
+        "remaining_principal": 20833.34,
+        "status": "paid",
+        "payment_date": "2025-03-15T00:00:00.000Z",
+        "payment_amount": 2283.85
+      },
+      {
+        "number": 3,
+        "due_date": "2025-04-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 182.29,
+        "total": 2265.62,
+        "remaining_principal": 18750.01,
+        "status": "paid",
+        "payment_date": "2025-04-15T00:00:00.000Z",
+        "payment_amount": 2265.62
+      },
+      {
+        "number": 4,
+        "due_date": "2025-05-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 164.06,
+        "total": 2247.39,
+        "remaining_principal": 16666.68,
+        "status": "paid",
+        "payment_date": "2025-05-15T00:00:00.000Z",
+        "payment_amount": 2247.39
+      },
+      {
+        "number": 5,
+        "due_date": "2025-06-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 145.83,
+        "total": 2229.16,
+        "remaining_principal": 14583.35,
+        "status": "paid",
+        "payment_date": "2025-06-15T00:00:00.000Z",
+        "payment_amount": 2229.16
+      },
+      {
+        "number": 6,
+        "due_date": "2025-07-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 127.60,
+        "total": 2210.93,
+        "remaining_principal": 12500.02,
+        "status": "paid",
+        "payment_date": "2025-07-17T00:00:00.000Z",
+        "payment_amount": 2210.93,
+        "penalty": 15.00,
+        "total_with_penalty": 2225.93
+      },
+      {
+        "number": 7,
+        "due_date": "2025-08-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 109.38,
+        "total": 2192.71,
+        "remaining_principal": 10416.69,
+        "status": "paid",
+        "payment_date": "2025-08-15T00:00:00.000Z",
+        "payment_amount": 2192.71
+      },
+      {
+        "number": 8,
+        "due_date": "2025-09-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 91.15,
+        "total": 2174.48,
+        "remaining_principal": 8333.36,
+        "status": "pending"
+      },
+      {
+        "number": 9,
+        "due_date": "2025-10-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 72.92,
+        "total": 2156.25,
+        "remaining_principal": 6250.03,
+        "status": "pending"
+      },
+      {
+        "number": 10,
+        "due_date": "2025-11-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 54.69,
+        "total": 2138.02,
+        "remaining_principal": 4166.70,
+        "status": "pending"
+      },
+      {
+        "number": 11,
+        "due_date": "2025-12-15T00:00:00.000Z",
+        "principal": 2083.33,
+        "interest": 36.46,
+        "total": 2119.79,
+        "remaining_principal": 2083.37,
+        "status": "pending"
+      },
+      {
+        "number": 12,
+        "due_date": "2026-01-15T00:00:00.000Z",
+        "principal": 2083.37,
+        "interest": 18.23,
+        "total": 2101.60,
+        "remaining_principal": 0.00,
+        "status": "pending"
+      }
+    ]
+  }
+}
+```
+
+## Mettre à jour un contrat de crédit
+
+Modifie un contrat de crédit existant (uniquement possible à l'état de brouillon).
+
+**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "amount": 30000.00,
+  "interest_rate": 11.0,
+  "term": 18,
+  "payment_frequency": "monthly",
+  "start_date": "2025-02-01T00:00:00.000Z",
+  "grace_period": 1,
+  "grace_period_unit": "month",
+  "payment_method": "mobile_money",
+  "fees": [
+    {
+      "type": "administration",
+      "amount": 600.00,
+      "payment_timing": "upfront"
+    }
+  ],
+  "conditions": [
+    "Fourniture des statuts à jour de l'entreprise",
+    "Signature de tous les documents contractuels",
+    "Assurance des équipements"
+  ]
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Contrat de crédit mis à jour avec succès",
+  "data": {
+    "updated_amortization_schedule_url": "/portfolio_inst/portfolios/traditional/portfolio123/contracts/contract123/schedule"
+  }
+}
+```
+
+## Activer un contrat de crédit
+
+Active un contrat de crédit signé.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/activate`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "activation_date": "2025-01-15T00:00:00.000Z",
+  "notes": "Toutes les conditions préalables ont été remplies. Contrat activé.",
+  "initiating_disbursement": true
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Contrat de crédit activé avec succès",
+  "data": {
+    "contract_id": "contract123",
+    "new_status": "active",
+    "disbursement": {
+      "id": "disbursement123",
+      "status": "pending",
+      "message": "Demande de virement initiée"
+    }
+  }
+}
+```
+
+## Restructurer un contrat de crédit
+
+Restructure un contrat de crédit existant.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/restructure`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "restructuring_reason": "financial_difficulty",
+  "new_term": 24,
+  "new_interest_rate": 9.5,
+  "new_payment_frequency": "monthly",
+  "new_grace_period": 3,
+  "new_grace_period_unit": "month",
+  "apply_from_date": "2025-08-15T00:00:00.000Z",
+  "waive_penalties": true,
+  "additional_notes": "Restructuration suite aux difficultés financières temporaires du client."
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Contrat de crédit restructuré avec succès",
+  "data": {
+    "original_contract_id": "contract123",
+    "new_contract_id": "contract789",
+    "new_status": "restructured",
+    "new_amortization_schedule_url": "/portfolio_inst/portfolios/traditional/portfolio123/contracts/contract789/schedule"
+  }
+}
+```
+
+## Marquer un contrat comme terminé
+
+Marque un contrat de crédit comme terminé (remboursé intégralement).
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/complete`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "completion_date": "2026-01-15T00:00:00.000Z",
+  "notes": "Toutes les échéances ont été remboursées. Contrat complété avec succès.",
+  "release_guarantees": true
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Contrat de crédit marqué comme terminé",
+  "data": {
+    "contract_id": "contract123",
+    "new_status": "completed",
+    "guarantees_released": true
+  }
+}
+```
+
+## Marquer un contrat en défaut de paiement
+
+Marque un contrat de crédit en défaut de paiement.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/default`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "default_date": "2025-10-15T00:00:00.000Z",
+  "default_reason": "payment_default",
+  "days_past_due": 90,
+  "outstanding_principal": 8333.36,
+  "outstanding_interest": 218.76,
+  "outstanding_penalties": 125.00,
+  "total_outstanding": 8677.12,
+  "recovery_actions": [
+    {
+      "type": "call_client",
+      "scheduled_date": "2025-10-16T00:00:00.000Z"
+    },
+    {
+      "type": "send_formal_notice",
+      "scheduled_date": "2025-10-18T00:00:00.000Z"
+    },
+    {
+      "type": "activate_guarantees",
+      "scheduled_date": "2025-11-15T00:00:00.000Z"
+    }
+  ],
+  "notes": "Le client n'a pas respecté ses engagements de paiement malgré plusieurs relances."
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Contrat de crédit marqué en défaut de paiement",
+  "data": {
+    "contract_id": "contract123",
+    "new_status": "defaulted",
+    "recovery_plan_id": "recovery456"
+  }
+}
+```
+
+## Annuler un contrat de crédit
+
+Annule un contrat de crédit (uniquement possible avant l'activation).
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/cancel`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "cancellation_reason": "client_withdrawal",
+  "notes": "Le client a décidé de ne pas poursuivre avec ce contrat de crédit.",
+  "cancellation_date": "2025-01-12T00:00:00.000Z"
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Contrat de crédit annulé avec succès",
+  "data": {
+    "contract_id": "contract123",
+    "new_status": "cancelled"
+  }
+}
+```
+
+## Ajouter un document au contrat
+
+Ajoute un nouveau document à un contrat de crédit existant.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/documents`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `contractId` : Identifiant unique du contrat de crédit
+
+**Corps de la requête** :
+
+```json
+{
+  "type": "amendment",
+  "file_id": "file125",
+  "name": "Avenant_Contrat.pdf",
+  "description": "Avenant au contrat de crédit",
+  "status": "signed",
+  "signed_date": "2025-08-01T00:00:00.000Z"
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "message": "Document ajouté au contrat avec succès",
+  "data": {
+    "document_id": "doc127"
+  }
+}
+```

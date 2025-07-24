@@ -1,0 +1,1016 @@
+# Paramètres - Portefeuille Traditionnel
+
+Ce document décrit les endpoints pour la gestion des paramètres dans le cadre des portefeuilles traditionnels.
+
+## Obtenir les paramètres d'un portefeuille
+
+Récupère les paramètres configurés pour un portefeuille traditionnel spécifique.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/settings`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio_id": "portfolio123",
+    "loan_parameters": {
+      "max_loan_amount": 50000.00,
+      "min_loan_amount": 5000.00,
+      "default_loan_amount": 25000.00,
+      "interest_rate_range": {
+        "min": 5.0,
+        "max": 15.0,
+        "default": 10.0
+      },
+      "loan_term_range": {
+        "min": 3,
+        "max": 36,
+        "default": 12,
+        "unit": "month"
+      },
+      "grace_period_range": {
+        "min": 0,
+        "max": 6,
+        "default": 0,
+        "unit": "month"
+      },
+      "payment_frequency_options": ["monthly", "quarterly", "semi_annual", "annual"],
+      "default_payment_frequency": "monthly",
+      "early_payment_policy": {
+        "allowed": true,
+        "min_penalty_rate": 0.0,
+        "max_penalty_rate": 3.0,
+        "default_penalty_rate": 2.0
+      },
+      "default_currency": "XOF",
+      "supported_currencies": ["XOF", "EUR", "USD"]
+    },
+    "fees_and_charges": {
+      "administration_fee": {
+        "type": "percentage",
+        "value": 2.0,
+        "min_amount": 500.00,
+        "max_amount": 5000.00
+      },
+      "insurance_fee": {
+        "type": "percentage",
+        "value": 1.0,
+        "min_amount": 250.00,
+        "max_amount": 2500.00
+      },
+      "late_payment_penalty": {
+        "type": "percentage",
+        "value": 5.0,
+        "grace_days": 3
+      },
+      "disbursement_fee": {
+        "type": "fixed",
+        "value": 1000.00
+      }
+    },
+    "guarantee_requirements": {
+      "min_coverage_ratio": 120.0,
+      "recommended_coverage_ratio": 150.0,
+      "required_guarantee_types": ["collateral", "personal_guarantee"],
+      "guarantee_valuation_policy": {
+        "max_age_of_valuation_report": 90,
+        "periodic_revaluation_required": true,
+        "revaluation_frequency": {
+          "value": 6,
+          "unit": "month"
+        }
+      }
+    },
+    "risk_management": {
+      "credit_score_thresholds": {
+        "minimum_acceptable": 600,
+        "excellent": 800,
+        "good": 700,
+        "average": 650,
+        "poor": 600
+      },
+      "interest_rate_adjustments": {
+        "excellent": -2.0,
+        "good": -1.0,
+        "average": 0.0,
+        "poor": 2.0
+      },
+      "sector_risk_weights": {
+        "commerce": 1.0,
+        "agriculture": 1.2,
+        "manufacturing": 0.9,
+        "services": 0.8,
+        "construction": 1.3
+      },
+      "default_policy": {
+        "days_past_due_for_default": 90,
+        "recovery_process": "standard"
+      }
+    },
+    "approval_workflow": {
+      "approval_levels": [
+        {
+          "level": 1,
+          "name": "Agent de crédit",
+          "max_amount": 10000.00
+        },
+        {
+          "level": 2,
+          "name": "Responsable crédit",
+          "max_amount": 25000.00
+        },
+        {
+          "level": 3,
+          "name": "Comité de crédit",
+          "max_amount": 50000.00
+        },
+        {
+          "level": 4,
+          "name": "Conseil d'administration",
+          "max_amount": null
+        }
+      ],
+      "required_documents": [
+        {
+          "type": "identity_document",
+          "required": true
+        },
+        {
+          "type": "business_registration",
+          "required": true
+        },
+        {
+          "type": "financial_statement",
+          "required": true
+        },
+        {
+          "type": "business_plan",
+          "required": true
+        },
+        {
+          "type": "bank_statement",
+          "required": true,
+          "months_required": 6
+        },
+        {
+          "type": "tax_clearance",
+          "required": false
+        }
+      ]
+    },
+    "payment_methods": {
+      "allowed_disbursement_methods": ["bank_transfer", "mobile_money", "check"],
+      "allowed_repayment_methods": ["bank_transfer", "mobile_money", "cash", "check"],
+      "preferred_disbursement_method": "bank_transfer",
+      "preferred_repayment_method": "bank_transfer"
+    },
+    "last_updated": "2025-01-15T10:30:00.000Z",
+    "updated_by": {
+      "id": "user123",
+      "name": "Jean Dupont"
+    }
+  }
+}
+```
+
+## Mettre à jour les paramètres d'un portefeuille
+
+Met à jour les paramètres configurés pour un portefeuille traditionnel.
+
+**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}/settings`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "loan_parameters": {
+    "max_loan_amount": 75000.00,
+    "min_loan_amount": 7500.00,
+    "interest_rate_range": {
+      "min": 6.0,
+      "max": 16.0,
+      "default": 11.0
+    },
+    "loan_term_range": {
+      "min": 6,
+      "max": 48,
+      "default": 24
+    }
+  },
+  "fees_and_charges": {
+    "administration_fee": {
+      "type": "percentage",
+      "value": 1.5,
+      "min_amount": 750.00,
+      "max_amount": 7500.00
+    },
+    "late_payment_penalty": {
+      "type": "percentage",
+      "value": 4.0,
+      "grace_days": 5
+    }
+  },
+  "guarantee_requirements": {
+    "min_coverage_ratio": 130.0,
+    "recommended_coverage_ratio": 160.0
+  },
+  "risk_management": {
+    "sector_risk_weights": {
+      "commerce": 1.1,
+      "agriculture": 1.3,
+      "manufacturing": 0.8,
+      "services": 0.7,
+      "construction": 1.4
+    }
+  }
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Paramètres du portefeuille mis à jour avec succès",
+  "data": {
+    "updated_sections": ["loan_parameters", "fees_and_charges", "guarantee_requirements", "risk_management"],
+    "last_updated": "2025-07-20T14:30:00.000Z"
+  }
+}
+```
+
+## Obtenir les modèles de scoring
+
+Récupère les modèles de scoring configurés pour un portefeuille traditionnel.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/settings/scoring-models`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio_id": "portfolio123",
+    "scoring_models": [
+      {
+        "id": "model123",
+        "name": "Standard PME",
+        "description": "Modèle de scoring standard pour les petites et moyennes entreprises",
+        "is_default": true,
+        "target_clients": ["sme"],
+        "min_score": 0,
+        "max_score": 1000,
+        "thresholds": {
+          "approval": 650,
+          "review": 500,
+          "rejection": 0
+        },
+        "factors": [
+          {
+            "id": "factor1",
+            "name": "Historique de crédit",
+            "weight": 30.0,
+            "elements": [
+              {
+                "name": "Historique de remboursement",
+                "weight": 15.0,
+                "scoring_logic": "table",
+                "scoring_table": [
+                  {
+                    "value": "excellent",
+                    "score": 100
+                  },
+                  {
+                    "value": "good",
+                    "score": 80
+                  },
+                  {
+                    "value": "average",
+                    "score": 60
+                  },
+                  {
+                    "value": "poor",
+                    "score": 30
+                  },
+                  {
+                    "value": "very_poor",
+                    "score": 0
+                  }
+                ]
+              },
+              {
+                "name": "Ancienneté du client",
+                "weight": 10.0,
+                "scoring_logic": "formula",
+                "formula": "min(years_as_client * 10, 100)"
+              },
+              {
+                "name": "Défauts de paiement antérieurs",
+                "weight": 5.0,
+                "scoring_logic": "table",
+                "scoring_table": [
+                  {
+                    "value": 0,
+                    "score": 100
+                  },
+                  {
+                    "value": 1,
+                    "score": 50
+                  },
+                  {
+                    "value": 2,
+                    "score": 20
+                  },
+                  {
+                    "value": "3+",
+                    "score": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "factor2",
+            "name": "Capacité de remboursement",
+            "weight": 40.0,
+            "elements": [
+              {
+                "name": "Ratio de couverture du service de la dette",
+                "weight": 20.0,
+                "scoring_logic": "formula",
+                "formula": "min(dscr * 50, 100)"
+              },
+              {
+                "name": "Marge bénéficiaire",
+                "weight": 10.0,
+                "scoring_logic": "formula",
+                "formula": "min(profit_margin * 5, 100)"
+              },
+              {
+                "name": "Stabilité des revenus",
+                "weight": 10.0,
+                "scoring_logic": "table",
+                "scoring_table": [
+                  {
+                    "value": "very_stable",
+                    "score": 100
+                  },
+                  {
+                    "value": "stable",
+                    "score": 80
+                  },
+                  {
+                    "value": "moderate",
+                    "score": 60
+                  },
+                  {
+                    "value": "volatile",
+                    "score": 30
+                  },
+                  {
+                    "value": "very_volatile",
+                    "score": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "factor3",
+            "name": "Garanties",
+            "weight": 20.0,
+            "elements": [
+              {
+                "name": "Ratio de couverture des garanties",
+                "weight": 15.0,
+                "scoring_logic": "formula",
+                "formula": "min(collateral_coverage_ratio * 50, 100)"
+              },
+              {
+                "name": "Qualité des garanties",
+                "weight": 5.0,
+                "scoring_logic": "table",
+                "scoring_table": [
+                  {
+                    "value": "excellent",
+                    "score": 100
+                  },
+                  {
+                    "value": "good",
+                    "score": 80
+                  },
+                  {
+                    "value": "average",
+                    "score": 60
+                  },
+                  {
+                    "value": "poor",
+                    "score": 30
+                  },
+                  {
+                    "value": "very_poor",
+                    "score": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "factor4",
+            "name": "Environnement économique",
+            "weight": 10.0,
+            "elements": [
+              {
+                "name": "Secteur d'activité",
+                "weight": 5.0,
+                "scoring_logic": "table",
+                "scoring_table": [
+                  {
+                    "value": "growing",
+                    "score": 100
+                  },
+                  {
+                    "value": "stable",
+                    "score": 70
+                  },
+                  {
+                    "value": "declining",
+                    "score": 30
+                  },
+                  {
+                    "value": "high_risk",
+                    "score": 0
+                  }
+                ]
+              },
+              {
+                "name": "Position concurrentielle",
+                "weight": 5.0,
+                "scoring_logic": "table",
+                "scoring_table": [
+                  {
+                    "value": "leader",
+                    "score": 100
+                  },
+                  {
+                    "value": "strong",
+                    "score": 80
+                  },
+                  {
+                    "value": "average",
+                    "score": 60
+                  },
+                  {
+                    "value": "weak",
+                    "score": 30
+                  },
+                  {
+                    "value": "very_weak",
+                    "score": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "created_at": "2025-01-10T08:00:00.000Z",
+        "updated_at": "2025-01-15T10:30:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+## Créer un modèle de scoring
+
+Crée un nouveau modèle de scoring pour un portefeuille traditionnel.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/settings/scoring-models`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "name": "Modèle Micro-entreprises",
+  "description": "Modèle de scoring adapté aux micro-entreprises",
+  "is_default": false,
+  "target_clients": ["micro_business"],
+  "min_score": 0,
+  "max_score": 1000,
+  "thresholds": {
+    "approval": 600,
+    "review": 450,
+    "rejection": 0
+  },
+  "factors": [
+    {
+      "name": "Historique de crédit",
+      "weight": 25.0,
+      "elements": [
+        {
+          "name": "Historique de remboursement",
+          "weight": 15.0,
+          "scoring_logic": "table",
+          "scoring_table": [
+            {
+              "value": "excellent",
+              "score": 100
+            },
+            {
+              "value": "good",
+              "score": 80
+            },
+            {
+              "value": "average",
+              "score": 60
+            },
+            {
+              "value": "poor",
+              "score": 30
+            },
+            {
+              "value": "very_poor",
+              "score": 0
+            }
+          ]
+        },
+        {
+          "name": "Ancienneté du client",
+          "weight": 10.0,
+          "scoring_logic": "formula",
+          "formula": "min(years_as_client * 10, 100)"
+        }
+      ]
+    },
+    {
+      "name": "Capacité de remboursement",
+      "weight": 45.0,
+      "elements": [
+        {
+          "name": "Ratio de couverture du service de la dette",
+          "weight": 25.0,
+          "scoring_logic": "formula",
+          "formula": "min(dscr * 50, 100)"
+        },
+        {
+          "name": "Stabilité des revenus",
+          "weight": 20.0,
+          "scoring_logic": "table",
+          "scoring_table": [
+            {
+              "value": "very_stable",
+              "score": 100
+            },
+            {
+              "value": "stable",
+              "score": 80
+            },
+            {
+              "value": "moderate",
+              "score": 60
+            },
+            {
+              "value": "volatile",
+              "score": 30
+            },
+            {
+              "value": "very_volatile",
+              "score": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Garanties",
+      "weight": 20.0,
+      "elements": [
+        {
+          "name": "Ratio de couverture des garanties",
+          "weight": 15.0,
+          "scoring_logic": "formula",
+          "formula": "min(collateral_coverage_ratio * 50, 100)"
+        },
+        {
+          "name": "Qualité des garanties",
+          "weight": 5.0,
+          "scoring_logic": "table",
+          "scoring_table": [
+            {
+              "value": "excellent",
+              "score": 100
+            },
+            {
+              "value": "good",
+              "score": 80
+            },
+            {
+              "value": "average",
+              "score": 60
+            },
+            {
+              "value": "poor",
+              "score": 30
+            },
+            {
+              "value": "very_poor",
+              "score": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Caractéristiques du propriétaire",
+      "weight": 10.0,
+      "elements": [
+        {
+          "name": "Expérience du propriétaire",
+          "weight": 5.0,
+          "scoring_logic": "formula",
+          "formula": "min(years_experience * 10, 100)"
+        },
+        {
+          "name": "Niveau d'éducation",
+          "weight": 5.0,
+          "scoring_logic": "table",
+          "scoring_table": [
+            {
+              "value": "higher_education",
+              "score": 100
+            },
+            {
+              "value": "secondary",
+              "score": 75
+            },
+            {
+              "value": "primary",
+              "score": 50
+            },
+            {
+              "value": "none",
+              "score": 25
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "message": "Modèle de scoring créé avec succès",
+  "data": {
+    "model_id": "model124",
+    "name": "Modèle Micro-entreprises"
+  }
+}
+```
+
+## Mettre à jour un modèle de scoring
+
+Met à jour un modèle de scoring existant.
+
+**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}/settings/scoring-models/{modelId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `modelId` : Identifiant unique du modèle de scoring
+
+**Corps de la requête** :
+
+```json
+{
+  "name": "Modèle Micro-entreprises V2",
+  "description": "Version améliorée du modèle de scoring pour micro-entreprises",
+  "thresholds": {
+    "approval": 620,
+    "review": 470,
+    "rejection": 0
+  },
+  "factors": [
+    {
+      "id": "factor1",
+      "weight": 30.0,
+      "elements": [
+        {
+          "id": "element1",
+          "weight": 20.0
+        },
+        {
+          "id": "element2",
+          "weight": 10.0
+        }
+      ]
+    },
+    {
+      "id": "factor2",
+      "weight": 40.0
+    }
+  ]
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Modèle de scoring mis à jour avec succès",
+  "data": {
+    "model_id": "model124",
+    "name": "Modèle Micro-entreprises V2",
+    "updated_at": "2025-07-20T14:30:00.000Z"
+  }
+}
+```
+
+## Supprimer un modèle de scoring
+
+Supprime un modèle de scoring existant.
+
+**Endpoint** : `DELETE /portfolio_inst/portfolios/traditional/{portfolioId}/settings/scoring-models/{modelId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+- `modelId` : Identifiant unique du modèle de scoring
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Modèle de scoring supprimé avec succès"
+}
+```
+
+## Obtenir les modèles de documents
+
+Récupère les modèles de documents configurés pour un portefeuille traditionnel.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/settings/document-templates`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio_id": "portfolio123",
+    "document_templates": [
+      {
+        "id": "template123",
+        "name": "Contrat de crédit standard",
+        "description": "Modèle de contrat de crédit pour les prêts standards",
+        "type": "loan_agreement",
+        "format": "docx",
+        "language": "fr",
+        "version": "1.2",
+        "is_default": true,
+        "file_id": "file123",
+        "variables": [
+          {
+            "name": "client_name",
+            "description": "Nom du client",
+            "required": true
+          },
+          {
+            "name": "loan_amount",
+            "description": "Montant du prêt",
+            "required": true
+          },
+          {
+            "name": "interest_rate",
+            "description": "Taux d'intérêt",
+            "required": true
+          },
+          {
+            "name": "term",
+            "description": "Durée du prêt",
+            "required": true
+          },
+          {
+            "name": "start_date",
+            "description": "Date de début du prêt",
+            "required": true
+          }
+        ],
+        "created_at": "2025-01-10T08:00:00.000Z",
+        "updated_at": "2025-01-15T10:30:00.000Z"
+      },
+      {
+        "id": "template124",
+        "name": "Accord de garantie",
+        "description": "Modèle d'accord de garantie",
+        "type": "guarantee_agreement",
+        "format": "docx",
+        "language": "fr",
+        "version": "1.0",
+        "is_default": true,
+        "file_id": "file124",
+        "variables": [
+          {
+            "name": "guarantor_name",
+            "description": "Nom du garant",
+            "required": true
+          },
+          {
+            "name": "client_name",
+            "description": "Nom du client",
+            "required": true
+          },
+          {
+            "name": "guarantee_type",
+            "description": "Type de garantie",
+            "required": true
+          },
+          {
+            "name": "guarantee_description",
+            "description": "Description de la garantie",
+            "required": true
+          },
+          {
+            "name": "guarantee_value",
+            "description": "Valeur de la garantie",
+            "required": true
+          }
+        ],
+        "created_at": "2025-01-10T08:00:00.000Z",
+        "updated_at": "2025-01-15T10:30:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+## Obtenir la configuration des notifications
+
+Récupère la configuration des notifications pour un portefeuille traditionnel.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/settings/notifications`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio_id": "portfolio123",
+    "notification_settings": {
+      "email": {
+        "enabled": true,
+        "templates": [
+          {
+            "id": "email_template1",
+            "name": "Rappel d'échéance",
+            "subject": "Rappel : Échéance de paiement à venir",
+            "body": "Cher(e) {client_name},\n\nNous vous rappelons que votre prochaine échéance de {amount} {currency} est prévue pour le {due_date}.\n\nCordialement,\nL'équipe Wanzo",
+            "trigger": "payment_due",
+            "trigger_days": 5,
+            "enabled": true
+          },
+          {
+            "id": "email_template2",
+            "name": "Confirmation de paiement",
+            "subject": "Confirmation de votre paiement",
+            "body": "Cher(e) {client_name},\n\nNous confirmons la réception de votre paiement de {amount} {currency} le {payment_date}.\n\nCordialement,\nL'équipe Wanzo",
+            "trigger": "payment_received",
+            "trigger_days": 0,
+            "enabled": true
+          }
+        ]
+      },
+      "sms": {
+        "enabled": true,
+        "templates": [
+          {
+            "id": "sms_template1",
+            "name": "Rappel d'échéance",
+            "body": "WANZO: Rappel, votre échéance de {amount} {currency} est prévue pour le {due_date}.",
+            "trigger": "payment_due",
+            "trigger_days": 3,
+            "enabled": true
+          },
+          {
+            "id": "sms_template2",
+            "name": "Retard de paiement",
+            "body": "WANZO: Votre paiement de {amount} {currency} est en retard. Merci de régulariser votre situation rapidement.",
+            "trigger": "payment_overdue",
+            "trigger_days": 1,
+            "enabled": true
+          }
+        ]
+      },
+      "in_app": {
+        "enabled": true,
+        "notification_types": [
+          {
+            "id": "in_app_notification1",
+            "name": "Nouvelle demande de financement",
+            "message": "Nouvelle demande de financement reçue de {client_name}",
+            "trigger": "funding_request_created",
+            "roles": ["portfolio_manager", "credit_agent"],
+            "enabled": true
+          },
+          {
+            "id": "in_app_notification2",
+            "name": "Contrat approuvé",
+            "message": "Le contrat {contract_reference} a été approuvé",
+            "trigger": "contract_approved",
+            "roles": ["portfolio_manager", "credit_agent", "disbursement_officer"],
+            "enabled": true
+          }
+        ]
+      }
+    },
+    "last_updated": "2025-01-15T10:30:00.000Z",
+    "updated_by": {
+      "id": "user123",
+      "name": "Jean Dupont"
+    }
+  }
+}
+```
+
+## Mettre à jour la configuration des notifications
+
+Met à jour la configuration des notifications pour un portefeuille traditionnel.
+
+**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}/settings/notifications`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille traditionnel
+
+**Corps de la requête** :
+
+```json
+{
+  "email": {
+    "enabled": true,
+    "templates": [
+      {
+        "id": "email_template1",
+        "trigger_days": 7,
+        "enabled": true
+      },
+      {
+        "id": "email_template3",
+        "name": "Alerte de retard de paiement",
+        "subject": "Retard de paiement",
+        "body": "Cher(e) {client_name},\n\nVotre paiement de {amount} {currency} qui était prévu pour le {due_date} est en retard. Veuillez régulariser votre situation dès que possible.\n\nCordialement,\nL'équipe Wanzo",
+        "trigger": "payment_overdue",
+        "trigger_days": 1,
+        "enabled": true
+      }
+    ]
+  },
+  "sms": {
+    "templates": [
+      {
+        "id": "sms_template1",
+        "body": "WANZO: RAPPEL IMPORTANT, votre échéance de {amount} {currency} est prévue le {due_date}.",
+        "trigger_days": 5
+      }
+    ]
+  }
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Configuration des notifications mise à jour avec succès",
+  "data": {
+    "updated_sections": ["email", "sms"],
+    "last_updated": "2025-07-20T14:30:00.000Z"
+  }
+}
+```

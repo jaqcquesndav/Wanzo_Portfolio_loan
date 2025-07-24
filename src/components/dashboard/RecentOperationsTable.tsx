@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarClock, ArrowUpRight, Filter, ChevronDown, ArrowDownUp, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 import { Badge } from '../ui/Badge';
 import type { PortfolioType } from '../../types/portfolio';
+import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 
 // Types d'opérations spécifiques pour chaque type de portefeuille
 export type TraditionalOperation = {
@@ -103,6 +104,7 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
   limit = 5
 }) => {
   const navigate = useNavigate();
+  const { formatCurrency } = useFormatCurrency();
   const [sortField, setSortField] = useState<string>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);

@@ -1,0 +1,308 @@
+# Portefeuilles Traditionnels
+
+Ce document décrit les endpoints principaux pour la gestion des portefeuilles traditionnels dans l'API Wanzo Portfolio Institution.
+
+## Modules des Portefeuilles Traditionnels
+
+Les portefeuilles traditionnels sont organisés en plusieurs modules :
+
+1. **[Demandes de Financement](./demandes/README.md)** - Gestion des demandes de financement
+2. **[Contrats de Crédit](./contrats/README.md)** - Gestion des contrats de crédit
+3. **[Virements](./virements/README.md)** - Gestion des virements (disbursements)
+4. **[Remboursements](./remboursements/README.md)** - Gestion des remboursements
+5. **[Garanties](./garanties/README.md)** - Gestion des garanties
+6. **[Paramètres](./parametres/README.md)** - Configuration des paramètres du portefeuille
+
+## Liste des portefeuilles traditionnels
+
+Récupère la liste des portefeuilles traditionnels avec pagination et filtrage.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional`
+
+**Paramètres de requête** :
+- `page` (optionnel) : Numéro de la page (défaut : 1)
+- `limit` (optionnel) : Nombre de portefeuilles par page (défaut : 10, max : 100)
+- `status` (optionnel) : Filtre par statut (active, inactive)
+- `manager` (optionnel) : Filtre par gestionnaire
+- `risk_profile` (optionnel) : Filtre par profil de risque (conservative, moderate, aggressive)
+- `dateFrom` (optionnel) : Filtre par date de création (début)
+- `dateTo` (optionnel) : Filtre par date de création (fin)
+- `search` (optionnel) : Recherche textuelle (nom, référence)
+- `sortBy` (optionnel) : Trier par (created_at, name, target_amount, risk_profile)
+- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "portfolio123",
+      "name": "Portefeuille PME 2025",
+      "type": "traditional",
+      "status": "active",
+      "target_amount": 5000000.00,
+      "target_return": 12.5,
+      "target_sectors": ["commerce", "agriculture", "services"],
+      "risk_profile": "moderate",
+      "metrics": {
+        "totalDisbursed": 3750000.00,
+        "utilizationRate": 75.0,
+        "defaultRate": 2.3,
+        "onTimePaymentRate": 95.2,
+        "averageInterestRate": 11.8
+      },
+      "manager": {
+        "id": "user123",
+        "name": "Jean Dupont"
+      },
+      "created_at": "2025-01-15T08:00:00.000Z",
+      "updated_at": "2025-07-20T10:30:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 45,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5
+  }
+}
+```
+
+## Création d'un portefeuille traditionnel
+
+Crée un nouveau portefeuille traditionnel.
+
+**Endpoint** : `POST /portfolio_inst/portfolios/traditional`
+
+**Corps de la requête** :
+
+```json
+{
+  "name": "Nouveau Portefeuille PME",
+  "description": "Portefeuille destiné aux petites et moyennes entreprises",
+  "type": "traditional",
+  "target_amount": 5000000.00,
+  "target_return": 12.5,
+  "target_sectors": ["commerce", "agriculture", "services"],
+  "risk_profile": "moderate",
+  "manager_id": "user123",
+  "settings": {
+    "max_loan_amount": 50000.00,
+    "interest_rate_range": {
+      "min": 5.0,
+      "max": 15.0,
+      "default": 10.0
+    },
+    "loan_term_range": {
+      "min": 3,
+      "max": 36,
+      "default": 12
+    },
+    "disbursement_methods": ["bank_transfer", "mobile_money"],
+    "required_guarantees": ["personal_guarantee", "collateral"],
+    "scoring_model": "standard_pme"
+  }
+}
+```
+
+**Réponse réussie** (201 Created) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "portfolio789",
+    "name": "Nouveau Portefeuille PME",
+    "type": "traditional",
+    "message": "Portefeuille créé avec succès"
+  }
+}
+```
+
+## Détails d'un portefeuille traditionnel
+
+Récupère les détails complets d'un portefeuille traditionnel spécifique.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "portfolio123",
+    "name": "Portefeuille PME 2025",
+    "description": "Portefeuille destiné aux petites et moyennes entreprises",
+    "type": "traditional",
+    "status": "active",
+    "target_amount": 5000000.00,
+    "target_return": 12.5,
+    "target_sectors": ["commerce", "agriculture", "services"],
+    "risk_profile": "moderate",
+    "metrics": {
+      "totalDisbursed": 3750000.00,
+      "utilizationRate": 75.0,
+      "defaultRate": 2.3,
+      "onTimePaymentRate": 95.2,
+      "averageInterestRate": 11.8,
+      "totalContracts": 25,
+      "activeContracts": 20,
+      "completedContracts": 3,
+      "defaultedContracts": 2
+    },
+    "manager": {
+      "id": "user123",
+      "name": "Jean Dupont",
+      "email": "jean.dupont@example.com",
+      "role": "portfolio_manager"
+    },
+    "settings": {
+      "max_loan_amount": 50000.00,
+      "interest_rate_range": {
+        "min": 5.0,
+        "max": 15.0,
+        "default": 10.0
+      },
+      "loan_term_range": {
+        "min": 3,
+        "max": 36,
+        "default": 12
+      },
+      "disbursement_methods": ["bank_transfer", "mobile_money"],
+      "required_guarantees": ["personal_guarantee", "collateral"],
+      "scoring_model": "standard_pme"
+    },
+    "created_at": "2025-01-15T08:00:00.000Z",
+    "updated_at": "2025-07-20T10:30:00.000Z",
+    "recent_activities": [
+      {
+        "id": "act123",
+        "type": "contract_created",
+        "description": "Nouveau contrat créé",
+        "entity_id": "contract456",
+        "user_id": "user123",
+        "date": "2025-07-18T14:30:00.000Z"
+      },
+      {
+        "id": "act124",
+        "type": "disbursement",
+        "description": "Virement effectué",
+        "entity_id": "disbursement789",
+        "user_id": "user123",
+        "date": "2025-07-18T15:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+## Mettre à jour un portefeuille traditionnel
+
+Modifie un portefeuille traditionnel existant.
+
+**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille
+
+**Corps de la requête** :
+
+```json
+{
+  "name": "Portefeuille PME 2025 - Mise à jour",
+  "description": "Portefeuille destiné aux petites et moyennes entreprises - Version mise à jour",
+  "status": "inactive",
+  "target_amount": 6000000.00,
+  "manager_id": "user456",
+  "settings": {
+    "max_loan_amount": 75000.00,
+    "interest_rate_range": {
+      "min": 6.0,
+      "max": 16.0,
+      "default": 11.0
+    }
+  }
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Portefeuille mis à jour avec succès"
+}
+```
+
+## Supprimer un portefeuille traditionnel
+
+Supprime un portefeuille traditionnel du système.
+
+**Endpoint** : `DELETE /portfolio_inst/portfolios/traditional/{portfolioId}`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "message": "Portefeuille supprimé avec succès"
+}
+```
+
+## Métriques d'un portefeuille traditionnel
+
+Récupère les métriques et indicateurs de performance d'un portefeuille traditionnel.
+
+**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/metrics`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille
+
+**Paramètres de requête** :
+- `period` (optionnel) : Période d'analyse (week, month, quarter, year, all) - défaut: month
+- `startDate` (optionnel) : Date de début de la période d'analyse
+- `endDate` (optionnel) : Date de fin de la période d'analyse
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio_id": "portfolio123",
+    "period": "month",
+    "start_date": "2025-06-01T00:00:00.000Z",
+    "end_date": "2025-07-01T00:00:00.000Z",
+    "metrics": {
+      "totalDisbursed": 850000.00,
+      "totalRepaid": 320000.00,
+      "newContracts": 8,
+      "completedContracts": 2,
+      "defaultedContracts": 1,
+      "defaultRate": 2.5,
+      "onTimePaymentRate": 94.7,
+      "averageInterestRate": 11.5,
+      "profitability": 9.8,
+      "risk_indicators": {
+        "par30": 3.2,
+        "par60": 1.8,
+        "par90": 0.5
+      },
+      "monthly_comparison": {
+        "disbursement_growth": 12.5,
+        "default_rate_change": -0.5,
+        "profitability_change": 1.2
+      }
+    }
+  }
+}
+```

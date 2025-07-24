@@ -1,98 +1,337 @@
-# Chat
+# Chat API
 
 Ce document décrit les endpoints pour la gestion des conversations et messages dans l'API Wanzo Portfolio Institution.
 
-## Liste des conversations
+## Types de données
 
-Récupère la liste des conversations avec pagination et filtrage.
+Les types principaux utilisés dans l'API de chat:
 
-**Endpoint** : `GET /portfolio_inst/messages`
+```typescript
+interface Message {
+  id: string;
+  sender: 'user' | 'bot';
+  content: string;
+  timestamp: string;
+  likes?: number;
+  dislikes?: number;
+  attachment?: {
+    name: string;
+    type: string;
+    content: string;
+  };
+  error?: boolean;
+}
 
-**Paramètres de requête** :
-- `page` (optionnel) : Numéro de la page (défaut : 1)
-- `limit` (optionnel) : Nombre de conversations par page (défaut : 10, max : 100)
-- `status` (optionnel) : Filtre par statut (active, archived)
-- `search` (optionnel) : Recherche textuelle (sujet, participants)
-- `participantId` (optionnel) : Filtre par participant
-- `sortBy` (optionnel) : Trier par (updatedAt, createdAt)
-- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+interface Conversation {
+  id: string;
+  title: string;
+  timestamp: string;
+  messages: Message[];
+  isActive: boolean;
+  model: {
+    id: string;
+    name: string;
+    description: string;
+    capabilities: string[];
+    contextLength: number;
+  };
+  context: string[];
+}
 
-**Réponse réussie** (200 OK) :
+interface AIModel {
+  id: string;
+  name: string;
+  description: string;
+  capabilities: string[];
+  contextLength: number;
+}
+```
+
+## Endpoints
+
+### Récupération des conversations
+
+Récupère la liste des conversations pour l'utilisateur authentifié.
+
+#### Requête
+
+```
+GET /chat/conversations
+```
+
+#### Réponse
+
+```json
+[
+  {
+    "id": "conv123",
+    "title": "Demande d'information sur le portefeuille PME",
+    "timestamp": "2025-07-20T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "msg001",
+        "sender": "user",
+        "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
+        "timestamp": "2025-07-20T10:00:00.000Z"
+      },
+      {
+        "id": "msg002",
+        "sender": "bot",
+        "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
+        "timestamp": "2025-07-20T10:01:30.000Z"
+      }
+    ],
+    "isActive": true,
+    "model": {
+      "id": "adha-credit",
+      "name": "Adha Crédit",
+      "description": "Spécialisé en gestion de crédits et analyse de risques",
+      "capabilities": ["Analyse de solvabilité", "Évaluation des risques", "Gestion des garanties", "Plans de remboursement"],
+      "contextLength": 8192
+    },
+    "context": []
+  },
+  {
+    "id": "conv124",
+    "title": "Analyse du risque client XYZ",
+    "timestamp": "2025-07-22T14:30:00.000Z",
+    "messages": [],
+    "isActive": true,
+    "model": {
+      "id": "adha-analytics",
+      "name": "Adha Analytics",
+      "description": "Analyse approfondie des données financières et prévisions",
+      "capabilities": ["Modèles prédictifs", "Détection de fraude", "Tableaux de bord", "Rapports d'activité"],
+      "contextLength": 32768
+    },
+    "context": []
+  }
+]
+```
+
+### Récupération des messages d'une conversation
+
+Récupère tous les messages d'une conversation spécifique.
+
+#### Requête
+
+```
+GET /chat/messages/{conversationId}
+```
+
+#### Paramètres de chemin
+- `conversationId` : Identifiant unique de la conversation
+
+#### Réponse
+
+```json
+[
+  {
+    "id": "msg001",
+    "sender": "user",
+    "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
+    "timestamp": "2025-07-20T10:00:00.000Z"
+  },
+  {
+    "id": "msg002",
+    "sender": "bot",
+    "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
+    "timestamp": "2025-07-20T10:01:30.000Z"
+  },
+  {
+    "id": "msg003",
+    "sender": "user",
+    "content": "Oui, pouvez-vous me donner la répartition par secteur d'activité?",
+    "timestamp": "2025-07-20T10:02:45.000Z"
+  }
+]
+```
+
+### Envoi d'un message
+
+Envoie un nouveau message dans une conversation existante.
+
+#### Requête
+
+```
+POST /chat/messages
+```
+
+#### Corps de la requête
 
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": "conv123",
-      "subject": "Demande d'information sur le portefeuille PME",
-      "status": "active",
-      "unreadCount": 2,
-      "lastMessage": {
-        "content": "Pouvez-vous me fournir les derniers rapports ?",
-        "sentAt": "2025-07-23T14:30:00.000Z",
-        "sender": {
-          "id": "user456",
-          "name": "Marie Martin"
-        }
-      },
-      "participants": [
-        {
-          "id": "user123",
-          "name": "Jean Dupont",
-          "role": "portfolio_manager"
-        },
-        {
-          "id": "user456",
-          "name": "Marie Martin",
-          "role": "client_rep"
-        }
-      ],
-      "createdAt": "2025-07-20T10:00:00.000Z",
-      "updatedAt": "2025-07-23T14:30:00.000Z"
-    },
-    {
-      "id": "conv124",
-      "subject": "Questions sur le contrat de crédit CTR-2025-002",
-      "status": "active",
-      "unreadCount": 0,
-      "lastMessage": {
-        "content": "Merci pour ces précisions.",
-        "sentAt": "2025-07-22T09:15:00.000Z",
-        "sender": {
-          "id": "user789",
-          "name": "Pierre Durand"
-        }
-      },
-      "participants": [
-        {
-          "id": "user123",
-          "name": "Jean Dupont",
-          "role": "portfolio_manager"
-        },
-        {
-          "id": "user789",
-          "name": "Pierre Durand",
-          "role": "credit_analyst"
-        }
-      ],
-      "createdAt": "2025-07-21T16:00:00.000Z",
-      "updatedAt": "2025-07-22T09:15:00.000Z"
-    }
-    // ... autres conversations
-  ],
-  "meta": {
-    "total": 25,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 3
+  "conversationId": "conv123",
+  "content": "Quels sont les taux de remboursement anticipé sur ce portefeuille?",
+  "attachment": {
+    "name": "rapport_trimestriel.pdf",
+    "type": "application/pdf",
+    "content": "base64_encoded_content..."
+  },
+  "mode": "chat"
+}
+```
+
+#### Paramètres
+- `conversationId` : ID de la conversation (requis)
+- `content` : Contenu du message (requis)
+- `attachment` : Pièce jointe optionnelle
+- `mode` : Mode de chat ('chat' ou 'analyse', défaut = 'chat')
+
+#### Réponse
+
+```json
+{
+  "id": "msg004",
+  "sender": "user",
+  "content": "Quels sont les taux de remboursement anticipé sur ce portefeuille?",
+  "timestamp": "2025-07-20T10:10:15.000Z",
+  "attachment": {
+    "name": "rapport_trimestriel.pdf",
+    "type": "application/pdf",
+    "content": "base64_encoded_content..."
   }
 }
 ```
 
-## Détails d'une conversation
+### Création d'une conversation
 
-Récupère les détails d'une conversation spécifique avec ses messages.
+Crée une nouvelle conversation.
+
+#### Requête
+
+```
+POST /chat/conversations
+```
+
+#### Corps de la requête
+
+```json
+{
+  "title": "Analyse du risque client ABC"
+}
+```
+
+#### Paramètres
+- `title` : Titre de la conversation (optionnel, défaut = "Nouvelle conversation")
+
+#### Réponse
+
+```json
+{
+  "id": "conv125",
+  "title": "Analyse du risque client ABC",
+  "timestamp": "2025-07-23T09:30:00.000Z",
+  "messages": [],
+  "isActive": true,
+  "model": {
+    "id": "adha-credit",
+    "name": "Adha Crédit",
+    "description": "Spécialisé en gestion de crédits et analyse de risques",
+    "capabilities": ["Analyse de solvabilité", "Évaluation des risques", "Gestion des garanties", "Plans de remboursement"],
+    "contextLength": 8192
+  },
+  "context": []
+}
+```
+
+### Suppression d'une conversation
+
+Supprime une conversation existante.
+
+#### Requête
+
+```
+DELETE /chat/conversations/{conversationId}
+```
+
+#### Paramètres de chemin
+- `conversationId` : Identifiant unique de la conversation à supprimer
+
+#### Réponse
+
+```json
+{
+  "success": true
+}
+```
+
+### Mise à jour d'un message
+
+Met à jour un message existant (par exemple pour ajouter des réactions).
+
+#### Requête
+
+```
+PUT /chat/messages/{messageId}
+```
+
+#### Paramètres de chemin
+- `messageId` : Identifiant unique du message à mettre à jour
+
+#### Corps de la requête
+
+```json
+{
+  "likes": 1
+}
+```
+
+#### Réponse
+
+```json
+{
+  "id": "msg002",
+  "sender": "bot",
+  "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
+  "timestamp": "2025-07-20T10:01:30.000Z",
+  "likes": 1
+}
+```
+
+## Modèles d'IA disponibles
+
+L'API prend en charge plusieurs modèles d'IA spécialisés:
+
+```json
+[
+  {
+    "id": "adha-credit",
+    "name": "Adha Crédit",
+    "description": "Spécialisé en gestion de crédits et analyse de risques",
+    "capabilities": ["Analyse de solvabilité", "Évaluation des risques", "Gestion des garanties", "Plans de remboursement"],
+    "contextLength": 8192
+  },
+  {
+    "id": "adha-prospection",
+    "name": "Adha Prospection",
+    "description": "Analyse des opportunités de marché et ciblage client",
+    "capabilities": ["Segmentation client", "Analyse de marché", "Scoring prospects", "Simulations financières"],
+    "contextLength": 8192
+  },
+  {
+    "id": "adha-leasing",
+    "name": "Adha Leasing",
+    "description": "Expert en contrats de leasing et gestion d'équipements",
+    "capabilities": ["Valorisation d'actifs", "Gestion de contrats", "Maintenance prédictive", "Analyse de valeur résiduelle"],
+    "contextLength": 12288
+  },
+  {
+    "id": "adha-invest",
+    "name": "Adha Invest",
+    "description": "Spécialisé en capital-investissement et valorisation",
+    "capabilities": ["Due diligence", "Valorisation d'entreprises", "Stratégies d'exit", "Analyse de performance"],
+    "contextLength": 16384
+  },
+  {
+    "id": "adha-analytics",
+    "name": "Adha Analytics",
+    "description": "Analyse approfondie des données financières et prévisions",
+    "capabilities": ["Modèles prédictifs", "Détection de fraude", "Tableaux de bord", "Rapports d'activité"],
+    "contextLength": 32768
+  }
+]
+```
 
 **Endpoint** : `GET /portfolio_inst/messages/{id}`
 
