@@ -1,43 +1,20 @@
 // src/pages/LeasingContractDetail.tsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { LeasingContractDetailsResponsive } from '../components/portfolio/leasing/contract/LeasingContractDetailsResponsive';
-import { PageHeader, Button } from '../components/ui';
+import { LeasingContractDetailsResponsive, EnrichedLeasingContract } from '../components/portfolio/leasing/contract/LeasingContractDetailsResponsive';
+import { Button } from '../components/ui';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../contexts/NotificationContext';
 import { mockLeasingPortfolios } from '../data/mockLeasingPortfolios';
 import { mockEquipments } from '../data/mockEquipments';
-
-interface LeasingContract {
-  id: string;
-  equipment_id: string;
-  equipment_name?: string;
-  equipment_category?: string;
-  equipment_manufacturer?: string;
-  equipment_model?: string;
-  client_id: string;
-  client_name?: string;
-  start_date: string;
-  end_date: string;
-  monthly_payment: number;
-  interest_rate: number;
-  maintenance_included: boolean;
-  insurance_included: boolean;
-  status: 'active' | 'pending' | 'completed' | 'terminated';
-  residual_value?: number;
-  total_value?: number;
-  payments_made?: number;
-  remaining_payments?: number;
-  last_payment_date?: string;
-  next_payment_date?: string;
-  delinquency_days?: number;
-}
+import { LeasingContract as BaseLeasingContract } from '../types/leasing';
+import { Breadcrumb } from '../components/common/Breadcrumb';
 
 export default function LeasingContractDetail() {
   const { id, contractId } = useParams<{ id: string; contractId: string }>();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const [contract, setContract] = useState<LeasingContract | null>(null);
+  const [contract, setContract] = useState<EnrichedLeasingContract | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,7 +24,7 @@ export default function LeasingContractDetail() {
         setLoading(true);
         
         // Rechercher le contrat dans tous les portefeuilles
-        let foundContract: LeasingContract | null = null;
+        let foundContract: EnrichedLeasingContract | null = null;
         
         for (const portfolio of mockLeasingPortfolios) {
           const contract = portfolio.contracts.find(c => c.id === contractId);
@@ -55,6 +32,9 @@ export default function LeasingContractDetail() {
             // Enrichir le contrat avec les détails de l'équipement
             const equipment = mockEquipments.find(e => e.id === contract.equipment_id) || 
                              portfolio.equipment_catalog.find(e => e.id === contract.equipment_id);
+            
+            // S'assurer que le statut est compatible avec ExtendedLeasingStatusType
+            const safeStatus = contract.status === 'draft' ? 'pending' : contract.status;
             
             foundContract = {
               ...contract,
@@ -67,7 +47,8 @@ export default function LeasingContractDetail() {
               remaining_payments: Math.floor(Math.random() * 15) + 5,
               delinquency_days: Math.random() > 0.7 ? Math.floor(Math.random() * 30) : 0,
               residual_value: contract.monthly_payment * 3,
-              client_name: `Client ${contract.client_id}`
+              client_name: contract.client_name || `Client ${contract.client_id}`,
+              status: safeStatus as 'active' | 'pending' | 'completed' | 'terminated'
             };
             break;
           }
@@ -91,7 +72,7 @@ export default function LeasingContractDetail() {
   }, [contractId, navigate, showNotification]);
 
   // Gestionnaire pour la mise à jour du contrat
-  const handleUpdateContract = async (updatedData: Partial<LeasingContract>) => {
+  const handleUpdateContract = async (updatedData: Partial<EnrichedLeasingContract>) => {
     try {
       // Simuler une requête API pour mettre à jour le contrat
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -101,7 +82,7 @@ export default function LeasingContractDetail() {
       
       // Sauvegarder dans localStorage pour persister les modifications
       const storedContracts = JSON.parse(localStorage.getItem('leasingContracts') || '[]');
-      const updatedContracts = storedContracts.map((c: LeasingContract) => 
+      const updatedContracts = storedContracts.map((c: BaseLeasingContract) => 
         c.id === contractId ? { ...c, ...updatedData } : c
       );
       localStorage.setItem('leasingContracts', JSON.stringify(updatedContracts));
@@ -131,16 +112,21 @@ export default function LeasingContractDetail() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader
-        title="Détail du contrat de leasing"
-        description={`Référence: ${contract.id}`}
-        actions={
-          <Button variant="outline" onClick={() => navigate(`/app/leasing/${id}?tab=contracts`)}>
-            <ArrowLeftIcon className="h-5 w-5 mr-2" />
-            Retour
-          </Button>
-        }
+      <Breadcrumb 
+        portfolioType="leasing"
+        items={[
+          { label: 'Portefeuilles Leasing', href: '/app/leasing' },
+          { label: 'Détails du portefeuille', href: `/app/leasing/${id}` },
+          { label: 'Détail du contrat' }
+        ]}
       />
+      
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" onClick={() => navigate(`/app/leasing/${id}?tab=contracts`)}>
+          <ArrowLeftIcon className="h-5 w-5 mr-2" />
+          Retour
+        </Button>
+      </div>
       
       <div className="mt-6">
         <LeasingContractDetailsResponsive 

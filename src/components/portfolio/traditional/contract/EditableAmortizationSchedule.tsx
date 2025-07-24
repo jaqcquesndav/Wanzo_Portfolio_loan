@@ -11,6 +11,7 @@ import { Save, Edit, Download, Printer, ChevronLeft, ChevronRight, Plus, Trash2 
 import { useNotification } from '../../../../contexts/NotificationContext';
 import useAmortizationSchedules from '../../../../hooks/useAmortizationSchedules';
 import { AmortizationScheduleItem } from '../../../../data/mockAmortizationSchedules';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 // Types pour les éléments d'échéancier
 interface ScheduleItem {
@@ -37,13 +38,13 @@ interface EditableAmortizationScheduleProps {
 }
 
 // Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
+// const formatAmount = (amount: number) => {
+//   return new Intl.NumberFormat('fr-FR', { 
+//     style: 'currency', 
+//     currency: 'XAF',
+//     maximumFractionDigits: 0
+//   }).format(amount);
+// };
 
 // Fonction utilitaire pour le formatage des dates
 const formatDate = (dateString: string | undefined) => {
@@ -82,6 +83,7 @@ export function EditableAmortizationSchedule({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // Nombre d'éléments par page
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   
   // Log pour voir les paramètres de pagination passés au hook
   console.log(`Appel du hook avec: page=${currentPage}, pageSize=${pageSize}, filter=${activeTab}`);
@@ -353,22 +355,22 @@ export function EditableAmortizationSchedule({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card className="p-4 flex flex-col">
               <span className="text-sm text-gray-500">Montant total</span>
-              <span className="text-xl font-bold">{formatAmount(totalAmount)}</span>
+              <span className="text-xl font-bold">{formatCurrency(totalAmount)}</span>
               <div className="mt-2 text-xs text-gray-400">{totalSchedules} échéances</div>
             </Card>
             <Card className="p-4 flex flex-col">
               <span className="text-sm text-gray-500">Montant payé</span>
-              <span className="text-xl font-bold text-green-600">{formatAmount(paidAmount)}</span>
+              <span className="text-xl font-bold text-green-600">{formatCurrency(paidAmount)}</span>
               <div className="mt-2 text-xs text-gray-400">{paidSchedules} échéances payées</div>
             </Card>
             <Card className="p-4 flex flex-col">
               <span className="text-sm text-gray-500">Montant restant</span>
-              <span className="text-xl font-bold text-blue-600">{formatAmount(remainingAmount)}</span>
+              <span className="text-xl font-bold text-blue-600">{formatCurrency(remainingAmount)}</span>
               <div className="mt-2 text-xs text-gray-400">{pendingSchedules + dueSchedules} échéances à venir</div>
             </Card>
             <Card className="p-4 flex flex-col">
               <span className="text-sm text-gray-500">Montant en retard</span>
-              <span className="text-xl font-bold text-red-600">{formatAmount(overdueAmount)}</span>
+              <span className="text-xl font-bold text-red-600">{formatCurrency(overdueAmount)}</span>
               <div className="mt-2 text-xs text-gray-400">{overdueSchedules} échéances en retard</div>
             </Card>
           </div>
@@ -446,10 +448,10 @@ export function EditableAmortizationSchedule({
                     }>
                       <TableCell>{item.number}</TableCell>
                       <TableCell>{formatDate(item.dueDate)}</TableCell>
-                      <TableCell>{formatAmount(item.principal)}</TableCell>
-                      <TableCell>{formatAmount(item.interest)}</TableCell>
-                      <TableCell className="font-bold">{formatAmount(item.totalPayment)}</TableCell>
-                      <TableCell>{formatAmount(item.remainingBalance)}</TableCell>
+                      <TableCell>{formatCurrency(item.principal)}</TableCell>
+                      <TableCell>{formatCurrency(item.interest)}</TableCell>
+                      <TableCell className="font-bold">{formatCurrency(item.totalPayment)}</TableCell>
+                      <TableCell>{formatCurrency(item.remainingBalance)}</TableCell>
                       <TableCell>
                         <Badge 
                           variant={

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../../ui/Table';
 import { Button } from '../../../ui/Button';
 import { Search, Plus, Download, Filter } from 'lucide-react';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 interface Repayment {
   id: string;
@@ -16,13 +17,13 @@ interface Repayment {
 }
 
 // Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
+// const formatAmount = (amount: number) => {
+//   return new Intl.NumberFormat('fr-FR', { 
+//     style: 'currency', 
+//     currency: 'XAF',
+//     maximumFractionDigits: 0
+//   }).format(amount);
+// };
 
 // Fonction utilitaire pour le formatage des dates
 const formatDate = (dateString: string) => {
@@ -41,6 +42,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
   const [repayments, setRepayments] = useState<Repayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { formatCurrency } = useFormatCurrency();
   
   useEffect(() => {
     // Dans une application réelle, vous feriez un appel API ici
@@ -162,7 +164,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
             Filtrer
           </Button>
           <div className="text-sm font-medium">
-            Total: {formatAmount(totalAmount)}
+            Total: {formatCurrency(totalAmount)}
           </div>
         </div>
       </div>
@@ -199,7 +201,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
                 filteredRepayments.map((repayment) => (
                   <TableRow key={repayment.id}>
                     <TableCell>{formatDate(repayment.date)}</TableCell>
-                    <TableCell>{formatAmount(repayment.amount)}</TableCell>
+                    <TableCell>{formatCurrency(repayment.amount)}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

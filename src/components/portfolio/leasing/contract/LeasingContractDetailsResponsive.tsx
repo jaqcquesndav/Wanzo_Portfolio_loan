@@ -6,16 +6,19 @@ import { Button as UIButton } from '../../../ui/Button';
 import { LeasingContractDetails } from './LeasingContractDetails';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { LeasingContract } from '../../../../types/leasing';
+import { EditableAmortizationSchedule } from '../../traditional/contract/EditableAmortizationSchedule';
+import { ContractDocumentsManager } from '../../traditional/contract/ContractDocumentsManager';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 // Define the extended status type for our enriched contract
 export type ExtendedLeasingStatusType = 'active' | 'pending' | 'completed' | 'terminated';
 
-export interface EnrichedLeasingContract extends Omit<LeasingContract, 'status'> {
+export interface EnrichedLeasingContract extends Omit<LeasingContract, 'status' | 'client_name'> {
   equipment_name?: string;
   equipment_category?: string;
   equipment_manufacturer?: string;
   equipment_model?: string;
-  client_name?: string;
+  client_name: string;
   status: ExtendedLeasingStatusType;
   residual_value?: number;
   total_value?: number;
@@ -27,13 +30,13 @@ export interface EnrichedLeasingContract extends Omit<LeasingContract, 'status'>
 }
 
 // Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
+// const formatAmount = (amount: number) => {
+//   return new Intl.NumberFormat('fr-FR', { 
+//     style: 'currency', 
+//     currency: 'XAF',
+//     maximumFractionDigits: 0
+//   }).format(amount);
+// };
 
 // Configuration des status pour l'affichage
 const statusConfig: Record<string, { label: string; variant: "success" | "secondary" | "danger" | "warning" }> = {
@@ -52,6 +55,7 @@ export function LeasingContractDetailsResponsive({ contract, onUpdateContract }:
   const [activeTab, setActiveTab] = useState('general');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   
   // Gestionnaire pour changer le statut du contrat
   const handleStatusChange = async (newStatus: ExtendedLeasingStatusType, reason: string) => {
@@ -102,7 +106,7 @@ export function LeasingContractDetailsResponsive({ contract, onUpdateContract }:
       });
       
       showNotification(
-        `Paiement de ${formatAmount(amount)} enregistré avec succès`,
+        `Paiement de ${formatCurrency(amount)} enregistré avec succès`,
         'success'
       );
     } catch (error) {
@@ -225,37 +229,26 @@ export function LeasingContractDetailsResponsive({ contract, onUpdateContract }:
         
         <TabsContent value="payments" currentValue={activeTab}>
           <Card className="p-4">
-            <h3 className="text-lg font-medium mb-4">Historique des paiements</h3>
-            <div className="text-center py-8 text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              <h3 className="mt-2 text-lg font-medium">Suivi des paiements</h3>
-              <p className="mt-1">
-                Ce module vous permet de suivre l'historique des paiements pour ce contrat.
-              </p>
-              <p className="mt-2 text-sm">
-                Paiements effectués: {contract.payments_made || 0} | Paiements restants: {contract.remaining_payments || 0}
-              </p>
-            </div>
+            <EditableAmortizationSchedule 
+              contractId={contract.id}
+              amount={contract.monthly_payment * (contract.remaining_payments || 12)} // Montant total approximatif
+              interestRate={contract.interest_rate}
+              startDate={contract.start_date}
+              endDate={contract.end_date}
+              onEditSchedule={async () => {
+                // Dans une application réelle, nous sauvegarderions l'échéancier mis à jour
+                showNotification(
+                  'Échéancier mis à jour avec succès',
+                  'success'
+                );
+              }}
+            />
           </Card>
         </TabsContent>
         
         <TabsContent value="documents" currentValue={activeTab}>
           <Card className="p-4">
-            <h3 className="text-lg font-medium mb-4">Documents du contrat</h3>
-            <div className="text-center py-8 text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-              </svg>
-              <h3 className="mt-2 text-lg font-medium">Gestion des documents</h3>
-              <p className="mt-1">
-                Ce module vous permet de gérer les documents associés à ce contrat.
-              </p>
-              <p className="mt-2 text-sm">
-                Aucun document disponible pour le moment.
-              </p>
-            </div>
+            <ContractDocumentsManager contractId={contract.id} />
           </Card>
         </TabsContent>
       </Tabs>

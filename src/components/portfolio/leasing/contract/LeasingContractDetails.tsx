@@ -18,6 +18,7 @@ import {
   TruckIcon
 } from '@heroicons/react/24/outline';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 // Interface pour les données du contrat de leasing (simplifié)
 interface LeasingContract {
@@ -55,15 +56,6 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-// Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
-
 // Interface pour les options de sélection
 interface SelectOption {
   value: string;
@@ -91,6 +83,7 @@ export default function LeasingContractDetails({ contract, onUpdate }: LeasingCo
   const [editMode, setEditMode] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<LeasingContract>>({});
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   
   // Calculer la durée en mois entre la date de début et la date de fin
   const calculateTermInMonths = (): number => {
@@ -294,7 +287,7 @@ export default function LeasingContractDetails({ contract, onUpdate }: LeasingCo
       field: 'monthly_payment', 
       label: 'Paiement mensuel', 
       value: contract.monthly_payment,
-      displayValue: formatAmount(contract.monthly_payment),
+      displayValue: formatCurrency(contract.monthly_payment),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
@@ -303,7 +296,7 @@ export default function LeasingContractDetails({ contract, onUpdate }: LeasingCo
       field: 'total_value', 
       label: 'Valeur totale du contrat', 
       value: contract.total_value || calculateTermInMonths() * contract.monthly_payment,
-      displayValue: formatAmount(contract.total_value || calculateTermInMonths() * contract.monthly_payment),
+      displayValue: formatCurrency(contract.total_value || calculateTermInMonths() * contract.monthly_payment),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: false // Calculé automatiquement
     },
@@ -320,7 +313,7 @@ export default function LeasingContractDetails({ contract, onUpdate }: LeasingCo
       field: 'residual_value', 
       label: 'Valeur résiduelle', 
       value: contract.residual_value || 0,
-      displayValue: formatAmount(contract.residual_value || 0),
+      displayValue: formatCurrency(contract.residual_value || 0),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'

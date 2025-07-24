@@ -9,15 +9,16 @@ import { EditableAmortizationSchedule } from './EditableAmortizationSchedule';
 import { ContractActions } from './ContractActions';
 import { ContractDetails } from './ContractDetails';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 // Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
+// const formatAmount = (amount: number) => {
+//   return new Intl.NumberFormat('fr-FR', { 
+//     style: 'currency', 
+//     currency: 'XAF',
+//     maximumFractionDigits: 0
+//   }).format(amount);
+// };
 
 // Configuration des status pour l'affichage
 const statusConfig: Record<string, { label: string; variant: "success" | "secondary" | "danger" | "warning" }> = {
@@ -36,6 +37,7 @@ interface ContractDetailsResponsiveProps {
 export function ContractDetailsResponsive({ contract, onUpdateContract }: ContractDetailsResponsiveProps) {
   const [activeTab, setActiveTab] = useState('general');
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   
   // Gestionnaire pour changer le statut du contrat
   const handleStatusChange = async (newStatus: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation', reason: string) => {
@@ -83,7 +85,7 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
       });
       
       showNotification(
-        `Remboursement de ${formatAmount(amount)} enregistré avec succès`,
+        `Remboursement de ${formatCurrency(amount)} enregistré avec succès`,
         'success'
       );
     } catch (error) {

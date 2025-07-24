@@ -165,7 +165,7 @@ export default function LeasingPortfolioDetails() {
             onRowClick={(equipment) => {
               // Navigation désactivée
               console.log(`Équipement ${equipment.name} sélectionné`);
-              // navigate(`/app/${portfolioType}/equipments/${equipment.id}`);
+              showNotification(`Les détails des équipements ne sont pas accessibles, seuls les contrats sont consultables`, 'info');
             }}
           />
         </TabsContent>
@@ -174,20 +174,21 @@ export default function LeasingPortfolioDetails() {
             requests={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).leasing_requests : []}
             equipments={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).equipment_catalog : []}
             onViewDetails={(request) => {
-              // Navigation désactivée
               console.log(`Demande de leasing ${request.id} sélectionnée`);
-              // navigate(`/app/${portfolioType}/requests/${request.id}`);
+              // Comme on a besoin de voir uniquement les détails des contrats, on désactive cette navigation
+              showNotification(`Les détails des demandes ne sont pas accessibles, seuls les contrats sont consultables`, 'info');
             }}
             onViewCompany={handleViewCompany}
             onApprove={(request) => {
               console.log('Approuver la demande et créer un contrat:', request);
               
               // Marquer la demande comme approuvée et créer un contrat
-              // Note: Dans une implémentation réelle, nous utiliserions useLeasingRequestActions().approveRequest()
+              // Note: Dans une implémentation réelle, nous utiliserions useLeasingRequestActions().approveAndCreateContract()
               // Ici, nous simulons juste l'approbation avec un message
               showNotification(`Demande de leasing ${request.id} approuvée et contrat créé`, 'success');
               
-              // Nous ne lançons plus l'ordre de paiement ici - ce sera fait lors de la commande d'équipement
+              // Redirection vers le contrat créé (dans une implémentation réelle)
+              // navigate(`/app/${portfolioType}/leasing/${portfolioId}/contracts/${newContractId}`);
             }}
             onReject={(request) => {
               console.log('Rejeter la demande:', request);
@@ -204,7 +205,9 @@ export default function LeasingPortfolioDetails() {
             contracts={portfolio.type === 'leasing' ? (portfolio as unknown as LeasingPortfolio).contracts : []}
             onRowClick={(contract) => {
               // Naviguer vers la page de détail du contrat
-              navigate(`/app/leasing/${id}/contracts/${contract.id}`);
+              console.log(`Contrat ${contract.id} sélectionné`);
+              navigate(`/app/${portfolioType}/leasing/${id}/contracts/${contract.id}`);
+              showNotification(`Consultation des détails du contrat ${contract.id}`, 'info');
             }}
             onViewCompany={handleViewCompany}
             orderEquipment={(contract) => {
@@ -240,7 +243,7 @@ export default function LeasingPortfolioDetails() {
             onRowClick={(incident) => {
               // Navigation désactivée
               console.log(`Incident ${incident.id} sélectionné`);
-              // navigate(`/app/${portfolioType}/incidents/${incident.id}`);
+              showNotification(`Les détails des incidents ne sont pas accessibles, seuls les contrats sont consultables`, 'info');
             }}
           />
         </TabsContent>
@@ -250,7 +253,7 @@ export default function LeasingPortfolioDetails() {
             onRowClick={(maintenance) => {
               // Navigation désactivée
               console.log(`Maintenance ${maintenance.id} sélectionnée`);
-              // navigate(`/app/${portfolioType}/maintenance/${maintenance.id}`);
+              showNotification(`Les détails des maintenances ne sont pas accessibles, seuls les contrats sont consultables`, 'info');
             }}
           />
         </TabsContent>
@@ -260,7 +263,7 @@ export default function LeasingPortfolioDetails() {
             onRowClick={(payment) => {
               // Navigation désactivée
               console.log(`Paiement ${payment.id} sélectionné`);
-              // navigate(`/app/${portfolioType}/payments/${payment.id}`);
+              showNotification(`Les détails des paiements ne sont pas accessibles, seuls les contrats sont consultables`, 'info');
             }}
           />
         </TabsContent>

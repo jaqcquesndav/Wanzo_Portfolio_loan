@@ -3,10 +3,17 @@ import { useMemo } from 'react';
 import type { LeasingRequest } from '../../../types/leasing-request';
 import type { Equipment } from '../../../types/leasing';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
-import { Button } from '../../ui/Button';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
 import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
+
+// Interface pour les actions du dropdown
+interface DropdownAction {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}
 
 interface LeasingRequestsTableProps {
   requests: LeasingRequest[];
@@ -36,13 +43,6 @@ export function LeasingRequestsTable({
     'pending': { label: 'En attente', variant: 'warning' as const },
     'approved': { label: 'Approuvée', variant: 'success' as const },
     'rejected': { label: 'Rejetée', variant: 'error' as const }
-  }), []);
-  
-  // Map des types de contrat avec leurs variantes et labels
-  const contractTypeMap = useMemo(() => ({
-    'standard': { label: 'Standard', variant: 'default' as const },
-    'premium': { label: 'Premium', variant: 'success' as const },
-    'flex': { label: 'Flex', variant: 'info' as const }
   }), []);
   
   // Compter les demandes par statut
@@ -105,15 +105,6 @@ export function LeasingRequestsTable({
         }
       },
     {
-      header: 'Type de contrat',
-      accessorKey: 'contract_type',
-      cell: (request: LeasingRequest) => {
-        const type = request.contract_type;
-        const config = contractTypeMap[type as keyof typeof contractTypeMap] || { label: type, variant: 'default' as const };
-        return formatters.badge(type, config.variant, config.label);
-      }
-    },
-    {
       header: 'Budget mensuel',
       accessorKey: 'monthly_budget',
       cell: (request: LeasingRequest) => formatCurrency(request.monthly_budget),
@@ -139,28 +130,6 @@ export function LeasingRequestsTable({
       }
     },
     {
-      header: 'Paiement',
-      // Utiliser une propriété existante mais ne pas l'afficher, juste pour la structure
-      accessorKey: 'id',
-      cell: (request: LeasingRequest) => (
-        <div className="flex justify-center">
-          {request.status === 'pending' && (
-            <Button 
-              size="sm"
-              variant="outline"
-              onClick={() => onApprove && onApprove(request)}
-              className="bg-green-50 hover:bg-green-100 border-green-500 text-green-600 hover:text-green-700"
-            >
-              Paiement
-            </Button>
-          )}
-          {request.status !== 'pending' && (
-            <span className="text-gray-400">—</span>
-          )}
-        </div>
-      )
-    },
-    {
       header: 'Actions',
       accessorKey: 'id',  // Utiliser une propriété existante pour éviter les erreurs de type
       cell: (request: LeasingRequest) => (
@@ -171,6 +140,11 @@ export function LeasingRequestsTable({
                 label: 'Voir détails', 
                 onClick: () => onViewDetails && onViewDetails(request)
               },
+              request.status === 'pending' ? { 
+                label: 'Valider et créer contrat', 
+                onClick: () => onApprove && onApprove(request),
+                className: 'text-green-600 hover:text-green-700'
+              } : undefined,
               { 
                 label: 'Rejeter', 
                 onClick: () => onReject && onReject(request),
@@ -182,14 +156,14 @@ export function LeasingRequestsTable({
                 onClick: () => onDownloadTechnicalSheet && onDownloadTechnicalSheet(request),
                 disabled: !request.technical_sheet_url
               }
-            ]}
+            ].filter((action): action is DropdownAction => action !== undefined)}
           />
         </div>
       ),
       align: 'center' as const
     }
     ];
-  }, [onViewDetails, onApprove, onReject, onDownloadTechnicalSheet, equipments, statusMap, contractTypeMap, onViewCompany]);
+  }, [onViewDetails, onApprove, onReject, onDownloadTechnicalSheet, equipments, statusMap, onViewCompany, formatCurrency]);
 
   // Options de filtrage
   const filterOptions = [
@@ -200,15 +174,6 @@ export function LeasingRequestsTable({
         { value: 'pending', label: 'En attente' },
         { value: 'approved', label: 'Approuvée' },
         { value: 'rejected', label: 'Rejetée' }
-      ]
-    },
-    {
-      id: 'contract_type',
-      label: 'Type de contrat',
-      options: [
-        { value: 'standard', label: 'Standard' },
-        { value: 'premium', label: 'Premium' },
-        { value: 'flex', label: 'Flex' }
       ]
     }
   ];
