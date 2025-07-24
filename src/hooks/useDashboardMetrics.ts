@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { DashboardMetrics } from '../types/dashboard';
+import type { 
+  DashboardMetrics, 
+  TraditionalDashboardMetrics, 
+  InvestmentDashboardMetrics, 
+  LeasingDashboardMetrics 
+} from '../types/dashboard';
 
 
 const metricsByType: Record<string, DashboardMetrics> = {
@@ -10,10 +15,9 @@ const metricsByType: Record<string, DashboardMetrics> = {
       distribution: {
         credit: 60,
         microfinance: 20,
-        leasing: 0,
-        venture: 10,
-        treasury: 10
-      }
+        treasury: 20
+      },
+      creditUtilization: 75
     },
     performance: {
       global: 8.5,
@@ -30,27 +34,34 @@ const metricsByType: Record<string, DashboardMetrics> = {
     risk: {
       level: 'Faible',
       sharpeRatio: 2.1,
-      volatility: 8.5,
-      var95: 1.2
+      delinquencyRate: 3.2,
+      provisionRate: 2.5,
+      concentrationRisk: 12.4
     },
     clients: {
       active: 30,
       change: 2.2,
       newThisMonth: 1,
       churnRate: 0.2
+    },
+    paymentStatus: {
+      onTime: 82,
+      late30Days: 12,
+      late60Days: 4,
+      late90Days: 2
     }
-  },
+  } as TraditionalDashboardMetrics,
   investment: {
     assets: {
       total: 15000000,
       change: 18.7,
       distribution: {
-        credit: 10,
-        microfinance: 10,
-        leasing: 0,
-        venture: 60,
-        treasury: 20
-      }
+        equities: 45,
+        bonds: 30,
+        alternatives: 15,
+        cash: 10
+      },
+      liquidity: 85
     },
     performance: {
       global: 15.2,
@@ -68,26 +79,35 @@ const metricsByType: Record<string, DashboardMetrics> = {
       level: 'Élevé',
       sharpeRatio: 1.2,
       volatility: 18.5,
-      var95: 3.2
+      var95: 3.2,
+      beta: 1.1,
+      maxDrawdown: 12.5
     },
     clients: {
       active: 12,
       change: 1.2,
       newThisMonth: 2,
       churnRate: 0.8
+    },
+    benchmarkComparison: {
+      ytd: 2.1,
+      oneYear: 5.3,
+      threeYears: 18.7,
+      fiveYears: 35.2
     }
-  },
+  } as InvestmentDashboardMetrics,
   leasing: {
     assets: {
       total: 25000000,
       change: 15.4,
       distribution: {
-        credit: 0,
-        microfinance: 0,
-        leasing: 100,
-        venture: 0,
-        treasury: 0
-      }
+        vehicles: 45,
+        machinery: 30,
+        it: 15,
+        office: 10
+      },
+      residualValue: 15.8,
+      utilizationRate: 82.5
     },
     performance: {
       global: 12.5,
@@ -104,16 +124,26 @@ const metricsByType: Record<string, DashboardMetrics> = {
     risk: {
       level: 'Modéré',
       sharpeRatio: 1.8,
-      volatility: 12.5,
-      var95: 2.3
+      delinquencyRate: 3.5,
+      provisionRate: 2.8,
+      concentrationRisk: 15.2,
+      maintenanceRisk: 8.2,
+      defaultRate: 4.3,
+      assetDepreciation: 12.7
     },
     clients: {
       active: 48,
       change: 5.2,
       newThisMonth: 3,
       churnRate: 0.5
+    },
+    equipmentStatus: {
+      excellent: 35,
+      good: 45,
+      fair: 15,
+      poor: 5
     }
-  }
+  } as LeasingDashboardMetrics
 };
 
 import { isValidPortfolioType, getDefaultPortfolioType } from '../config/portfolioTypes';

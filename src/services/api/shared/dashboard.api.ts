@@ -133,7 +133,7 @@ export const dashboardApi = {
       id: string;
       companyId: string;
       companyName: string;
-      type: 'funding' | 'investment' | 'leasing';
+      type: 'traditional' | 'investment' | 'leasing';
       amount: number;
       probability: number;
       expectedCloseDate: string;

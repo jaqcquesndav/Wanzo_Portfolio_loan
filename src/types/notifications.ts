@@ -5,4 +5,6 @@ export interface Notification {
   type: NotificationType;
   message: string;
   duration?: number;
+  date: string;
+  read?: boolean;
 }

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Incident } from "../types/leasing-asset";
-import * as incidentService from "../services/leasing/incident.service";
+import * as incidentService from "../services/api/leasing/incident.service";
 
 export function useEquipmentIncidents(equipmentId?: string) {
   const [incidents, setIncidents] = useState<Incident[]>([]);

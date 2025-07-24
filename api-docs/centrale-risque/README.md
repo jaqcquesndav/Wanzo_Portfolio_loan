@@ -25,9 +25,9 @@ Vérifie les antécédents de crédit d'un client dans la centrale de risque.
     "clientType": "company",
     "identificationNumber": "NRC12345",
     "taxId": "123456789",
-    "creditStatus": "good_standing",
+    "creditStatus": "actif",
     "creditScore": 85,
-    "riskLevel": "low",
+    "riskLevel": "faible",
     "outstandingLoans": [
       {
         "lenderId": "bank123",
@@ -38,8 +38,8 @@ Vérifie les antécédents de crédit d'un client dans la centrale de risque.
         "outstandingAmount": 60000.00,
         "startDate": "2024-10-15T00:00:00.000Z",
         "maturityDate": "2026-10-14T23:59:59.999Z",
-        "status": "performing",
-        "paymentStatus": "current",
+        "status": "actif",
+        "paymentStatus": "à jour",
         "lastPaymentDate": "2025-07-15T00:00:00.000Z"
       },
       {
@@ -51,8 +51,8 @@ Vérifie les antécédents de crédit d'un client dans la centrale de risque.
         "outstandingAmount": 35000.00,
         "startDate": "2025-01-10T00:00:00.000Z",
         "maturityDate": "2026-01-09T23:59:59.999Z",
-        "status": "performing",
-        "paymentStatus": "current",
+        "status": "actif",
+        "paymentStatus": "à jour",
         "lastPaymentDate": "2025-07-10T00:00:00.000Z"
       }
     ],

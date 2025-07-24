@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle, Info, X, AlertTriangle } from 'lucide-react';
 import { Notification } from '../../types/notifications';
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../contexts/useNotification';
 
 export default function NotificationContainer() {
   const context = useNotification();

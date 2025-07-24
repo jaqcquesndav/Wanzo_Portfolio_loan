@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Reservation } from "../types/leasing-asset";
-import { ReservationService } from "../services/leasing/reservation.service";
+import { ReservationService } from "../services/api/leasing/reservation.service";
 
 export function useEquipmentReservations(equipmentId: string) {
   const [reservations, setReservations] = useState<Reservation[]>([]);

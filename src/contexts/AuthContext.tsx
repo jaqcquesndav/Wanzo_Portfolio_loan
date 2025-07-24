@@ -1,6 +1,6 @@
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
 import { Institution } from '../types/institution';
-import { auth0Service } from '../services/auth/auth0Service';
+import { auth0Service } from '../services/api/auth/auth0Service';
 import { UserRole, UserType } from '../types/users';
 
 // Interface pour l'utilisateur adapté avec les nouveaux types

@@ -1,5 +1,5 @@
 import { API_CONFIG } from '../../config/api';
-import { auth0Service } from '../auth/auth0Service';
+import { auth0Service } from './auth/auth0Service';
 import { apiCache, CacheOptions } from './cache';
 import { interceptorManager, RequestConfig } from './interceptors';
 

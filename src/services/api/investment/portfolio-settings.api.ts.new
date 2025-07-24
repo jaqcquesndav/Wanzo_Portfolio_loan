@@ -1,0 +1,489 @@
+// src/services/api/investment/portfolio-settings.api.ts
+import { apiClient } from '../base.api';
+import { investmentDataService } from './dataService';
+
+/**
+ * Type pour les paramètres de portefeuille d'investissement
+ */
+export interface InvestmentPortfolioSettings {
+  portfolio_id: string;
+  // Paramètres généraux d'investissement
+  investment_strategy: {
+    risk_profile: 'low' | 'medium' | 'high';
+    target_return: number;
+    investment_horizon: number; // en années
+    rebalancing_frequency: 'monthly' | 'quarterly' | 'bi-annually' | 'annually';
+    max_position_size_percentage: number; // Taille maximale d'une position en % du portefeuille
+    max_sector_allocation_percentage: number; // Allocation maximale par secteur en % du portefeuille
+    max_geographic_allocation_percentage: number; // Allocation maximale par région en % du portefeuille
+  };
+  // Paramètres des allocations d'actifs
+  asset_allocation: {
+    target_allocations: {
+      equity: number; // en %
+      fixed_income: number; // en %
+      cash: number; // en %
+      alternatives: number; // en %
+      real_estate?: number; // en %
+      commodities?: number; // en %
+      other?: number; // en %
+    };
+    allocation_limits: {
+      equity: { min: number; max: number }; // en %
+      fixed_income: { min: number; max: number }; // en %
+      cash: { min: number; max: number }; // en %
+      alternatives: { min: number; max: number }; // en %
+      real_estate?: { min: number; max: number }; // en %
+      commodities?: { min: number; max: number }; // en %
+      other?: { min: number; max: number }; // en %
+    };
+    allowed_asset_types: string[];
+  };
+  // Paramètres de frais et commissions
+  fee_structure: {
+    management_fee: number; // en % annuel
+    performance_fee?: number; // en % des bénéfices
+    entry_fee?: number; // en % du montant investi
+    exit_fee?: number; // en % du montant retiré
+    early_redemption_fee?: number; // en % du montant retiré avant échéance
+    transaction_fees: {
+      equities: number; // en % ou montant fixe
+      bonds: number; // en % ou montant fixe
+      funds: number; // en % ou montant fixe
+      other: number; // en % ou montant fixe
+    };
+  };
+  // Paramètres de valorisation
+  valuation_settings: {
+    valuation_frequency: 'daily' | 'weekly' | 'monthly';
+    valuation_method: 'mark_to_market' | 'mark_to_model' | 'acquisition_cost';
+    valuation_day_of_week?: number; // 1-7 pour lundi-dimanche
+    valuation_day_of_month?: number; // 1-31
+    pricing_sources: string[];
+    enable_auto_valuation: boolean;
+  };
+  // Paramètres de souscription/rachat
+  subscription_settings: {
+    min_subscription_amount: number;
+    subscription_frequency: 'daily' | 'weekly' | 'monthly';
+    subscription_notice_days: number;
+    redemption_frequency: 'daily' | 'weekly' | 'monthly';
+    redemption_notice_days: number;
+    lock_up_period: number; // en mois
+    investor_types: string[];
+    kyc_requirements: string[];
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Type pour les classes d'actifs
+ */
+export interface AssetClass {
+  id: string;
+  portfolio_id: string;
+  name: string;
+  description?: string;
+  target_allocation: number; // pourcentage
+  min_allocation: number; // pourcentage
+  max_allocation: number; // pourcentage
+  risk_level: 'low' | 'medium' | 'high';
+  expected_return: number; // pourcentage
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Type pour les stratégies d'investissement
+ */
+export interface InvestmentStrategy {
+  id: string;
+  portfolio_id: string;
+  name: string;
+  description?: string;
+  risk_profile: 'conservative' | 'moderate' | 'aggressive';
+  min_investment_period: number; // en mois
+  expected_return_range: {
+    min: number;
+    max: number;
+  };
+  allowed_asset_classes: string[]; // IDs des classes d'actifs
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * API pour les paramètres des portefeuilles d'investissement
+ */
+export const portfolioSettingsApi = {
+  /**
+   * Récupère les paramètres d'un portefeuille d'investissement
+   */
+  getPortfolioSettings: async (portfolioId: string) => {
+    try {
+      return await apiClient.get<InvestmentPortfolioSettings>(`/portfolios/investment/${portfolioId}/settings`);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for investment portfolio settings ${portfolioId}`, error);
+      
+      // Implémentation fictive pour le développement local
+      return {
+        portfolio_id: portfolioId,
+        investment_strategy: {
+          risk_profile: 'medium',
+          target_return: 10,
+          investment_horizon: 5,
+          rebalancing_frequency: 'quarterly',
+          max_position_size_percentage: 5,
+          max_sector_allocation_percentage: 25,
+          max_geographic_allocation_percentage: 40,
+        },
+        asset_allocation: {
+          target_allocations: {
+            equity: 40,
+            fixed_income: 30,
+            cash: 10,
+            alternatives: 10,
+            real_estate: 10,
+          },
+          allocation_limits: {
+            equity: { min: 30, max: 50 },
+            fixed_income: { min: 20, max: 40 },
+            cash: { min: 5, max: 15 },
+            alternatives: { min: 5, max: 15 },
+            real_estate: { min: 5, max: 15 },
+          },
+          allowed_asset_types: ['stocks', 'bonds', 'mutual_funds', 'etfs', 'reits', 'private_equity'],
+        },
+        fee_structure: {
+          management_fee: 1.5,
+          performance_fee: 15,
+          entry_fee: 0.5,
+          exit_fee: 0.5,
+          early_redemption_fee: 2,
+          transaction_fees: {
+            equities: 0.2,
+            bonds: 0.1,
+            funds: 0.15,
+            other: 0.3,
+          },
+        },
+        valuation_settings: {
+          valuation_frequency: 'weekly',
+          valuation_method: 'mark_to_market',
+          valuation_day_of_week: 5, // Vendredi
+          pricing_sources: ['bloomberg', 'reuters', 'morningstar'],
+          enable_auto_valuation: true,
+        },
+        subscription_settings: {
+          min_subscription_amount: 10000000,
+          subscription_frequency: 'monthly',
+          subscription_notice_days: 5,
+          redemption_frequency: 'monthly',
+          redemption_notice_days: 10,
+          lock_up_period: 6,
+          investor_types: ['individual', 'institutional', 'corporate'],
+          kyc_requirements: ['id_verification', 'address_proof', 'source_of_funds'],
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as InvestmentPortfolioSettings;
+    }
+  },
+
+  /**
+   * Met à jour les paramètres d'un portefeuille d'investissement
+   */
+  updatePortfolioSettings: async (portfolioId: string, settings: Partial<InvestmentPortfolioSettings>) => {
+    try {
+      return await apiClient.put<InvestmentPortfolioSettings>(`/portfolios/investment/${portfolioId}/settings`, settings);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for updating investment portfolio settings ${portfolioId}`, error);
+      
+      // Dans un environnement réel, ces modifications seraient envoyées au backend
+      // et la réponse serait retournée
+      return {
+        ...await portfolioSettingsApi.getPortfolioSettings(portfolioId),
+        ...settings,
+        updated_at: new Date().toISOString(),
+      } as InvestmentPortfolioSettings;
+    }
+  },
+
+  /**
+   * Réinitialise les paramètres d'un portefeuille aux valeurs par défaut
+   */
+  resetPortfolioSettings: async (portfolioId: string) => {
+    try {
+      return await apiClient.post<InvestmentPortfolioSettings>(`/portfolios/investment/${portfolioId}/settings/reset`, {});
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for resetting investment portfolio settings ${portfolioId}`, error);
+      
+      // Retourne les paramètres par défaut
+      return portfolioSettingsApi.getPortfolioSettings(portfolioId);
+    }
+  },
+
+  /**
+   * Récupère toutes les classes d'actifs d'un portefeuille
+   */
+  getAssetClasses: async (portfolioId: string) => {
+    try {
+      return await apiClient.get<AssetClass[]>(`/portfolios/investment/${portfolioId}/asset-classes`);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for asset classes of portfolio ${portfolioId}`, error);
+      
+      // Retourne les classes d'actifs depuis le service de données local
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      return portfolio?.asset_classes || [];
+    }
+  },
+
+  /**
+   * Récupère une classe d'actifs par son ID
+   */
+  getAssetClassById: async (portfolioId: string, assetClassId: string) => {
+    try {
+      return await apiClient.get<AssetClass>(`/portfolios/investment/${portfolioId}/asset-classes/${assetClassId}`);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for asset class ${assetClassId} of portfolio ${portfolioId}`, error);
+      
+      // Retourne la classe d'actifs depuis le service de données local
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      const assetClass = portfolio?.asset_classes?.find(ac => ac.id === assetClassId);
+      
+      if (!assetClass) {
+        throw new Error(`Asset class with ID ${assetClassId} not found in portfolio ${portfolioId}`);
+      }
+      
+      return assetClass;
+    }
+  },
+
+  /**
+   * Crée une nouvelle classe d'actifs
+   */
+  createAssetClass: async (portfolioId: string, assetClass: Omit<AssetClass, 'id' | 'portfolio_id' | 'created_at' | 'updated_at'>) => {
+    try {
+      return await apiClient.post<AssetClass>(`/portfolios/investment/${portfolioId}/asset-classes`, assetClass);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for creating asset class in portfolio ${portfolioId}`, error);
+      
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      
+      if (!portfolio) {
+        throw new Error(`Portfolio with ID ${portfolioId} not found`);
+      }
+      
+      const newAssetClass = {
+        ...assetClass,
+        id: investmentDataService.generateId(),
+        portfolio_id: portfolioId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as AssetClass;
+      
+      // Ajoute la nouvelle classe d'actifs au portefeuille
+      portfolio.asset_classes = [...(portfolio.asset_classes || []), newAssetClass];
+      investmentDataService.updatePortfolio(portfolio);
+      
+      return newAssetClass;
+    }
+  },
+
+  /**
+   * Met à jour une classe d'actifs
+   */
+  updateAssetClass: async (portfolioId: string, assetClassId: string, updates: Partial<AssetClass>) => {
+    try {
+      return await apiClient.put<AssetClass>(`/portfolios/investment/${portfolioId}/asset-classes/${assetClassId}`, updates);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for updating asset class ${assetClassId} in portfolio ${portfolioId}`, error);
+      
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      
+      if (!portfolio) {
+        throw new Error(`Portfolio with ID ${portfolioId} not found`);
+      }
+      
+      const assetClassIndex = portfolio.asset_classes?.findIndex(ac => ac.id === assetClassId) ?? -1;
+      
+      if (assetClassIndex === -1) {
+        throw new Error(`Asset class with ID ${assetClassId} not found in portfolio ${portfolioId}`);
+      }
+      
+      // Met à jour la classe d'actifs
+      portfolio.asset_classes![assetClassIndex] = {
+        ...portfolio.asset_classes![assetClassIndex],
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      
+      investmentDataService.updatePortfolio(portfolio);
+      
+      return portfolio.asset_classes![assetClassIndex];
+    }
+  },
+
+  /**
+   * Supprime une classe d'actifs
+   */
+  deleteAssetClass: async (portfolioId: string, assetClassId: string) => {
+    try {
+      await apiClient.delete(`/portfolios/investment/${portfolioId}/asset-classes/${assetClassId}`);
+      return true;
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for deleting asset class ${assetClassId} from portfolio ${portfolioId}`, error);
+      
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      
+      if (!portfolio) {
+        throw new Error(`Portfolio with ID ${portfolioId} not found`);
+      }
+      
+      // Supprime la classe d'actifs du portefeuille
+      portfolio.asset_classes = portfolio.asset_classes?.filter(ac => ac.id !== assetClassId) || [];
+      investmentDataService.updatePortfolio(portfolio);
+      
+      return true;
+    }
+  },
+
+  /**
+   * Récupère toutes les stratégies d'investissement d'un portefeuille
+   */
+  getInvestmentStrategies: async (portfolioId: string) => {
+    try {
+      return await apiClient.get<InvestmentStrategy[]>(`/portfolios/investment/${portfolioId}/strategies`);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for investment strategies of portfolio ${portfolioId}`, error);
+      
+      // Retourne les stratégies d'investissement depuis le service de données local
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      return portfolio?.investment_strategies || [];
+    }
+  },
+
+  /**
+   * Récupère une stratégie d'investissement par son ID
+   */
+  getInvestmentStrategyById: async (portfolioId: string, strategyId: string) => {
+    try {
+      return await apiClient.get<InvestmentStrategy>(`/portfolios/investment/${portfolioId}/strategies/${strategyId}`);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for investment strategy ${strategyId} of portfolio ${portfolioId}`, error);
+      
+      // Retourne la stratégie d'investissement depuis le service de données local
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      const strategy = portfolio?.investment_strategies?.find(s => s.id === strategyId);
+      
+      if (!strategy) {
+        throw new Error(`Investment strategy with ID ${strategyId} not found in portfolio ${portfolioId}`);
+      }
+      
+      return strategy;
+    }
+  },
+
+  /**
+   * Crée une nouvelle stratégie d'investissement
+   */
+  createInvestmentStrategy: async (portfolioId: string, strategy: Omit<InvestmentStrategy, 'id' | 'portfolio_id' | 'created_at' | 'updated_at'>) => {
+    try {
+      return await apiClient.post<InvestmentStrategy>(`/portfolios/investment/${portfolioId}/strategies`, strategy);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for creating investment strategy in portfolio ${portfolioId}`, error);
+      
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      
+      if (!portfolio) {
+        throw new Error(`Portfolio with ID ${portfolioId} not found`);
+      }
+      
+      const newStrategy = {
+        ...strategy,
+        id: investmentDataService.generateId(),
+        portfolio_id: portfolioId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as InvestmentStrategy;
+      
+      // Ajoute la nouvelle stratégie d'investissement au portefeuille
+      portfolio.investment_strategies = [...(portfolio.investment_strategies || []), newStrategy];
+      investmentDataService.updatePortfolio(portfolio);
+      
+      return newStrategy;
+    }
+  },
+
+  /**
+   * Met à jour une stratégie d'investissement
+   */
+  updateInvestmentStrategy: async (portfolioId: string, strategyId: string, updates: Partial<InvestmentStrategy>) => {
+    try {
+      return await apiClient.put<InvestmentStrategy>(`/portfolios/investment/${portfolioId}/strategies/${strategyId}`, updates);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for updating investment strategy ${strategyId} in portfolio ${portfolioId}`, error);
+      
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      
+      if (!portfolio) {
+        throw new Error(`Portfolio with ID ${portfolioId} not found`);
+      }
+      
+      const strategyIndex = portfolio.investment_strategies?.findIndex(s => s.id === strategyId) ?? -1;
+      
+      if (strategyIndex === -1) {
+        throw new Error(`Investment strategy with ID ${strategyId} not found in portfolio ${portfolioId}`);
+      }
+      
+      // Met à jour la stratégie d'investissement
+      portfolio.investment_strategies![strategyIndex] = {
+        ...portfolio.investment_strategies![strategyIndex],
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      
+      investmentDataService.updatePortfolio(portfolio);
+      
+      return portfolio.investment_strategies![strategyIndex];
+    }
+  },
+
+  /**
+   * Supprime une stratégie d'investissement
+   */
+  deleteInvestmentStrategy: async (portfolioId: string, strategyId: string) => {
+    try {
+      await apiClient.delete(`/portfolios/investment/${portfolioId}/strategies/${strategyId}`);
+      return true;
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for deleting investment strategy ${strategyId} from portfolio ${portfolioId}`, error);
+      
+      const portfolio = investmentDataService.getPortfolioById(portfolioId);
+      
+      if (!portfolio) {
+        throw new Error(`Portfolio with ID ${portfolioId} not found`);
+      }
+      
+      // Supprime la stratégie d'investissement du portefeuille
+      portfolio.investment_strategies = portfolio.investment_strategies?.filter(s => s.id !== strategyId) || [];
+      investmentDataService.updatePortfolio(portfolio);
+      
+      return true;
+    }
+  }
+};

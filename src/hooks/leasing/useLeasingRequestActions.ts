@@ -3,14 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { LeasingRequest } from '../../types/leasing-request';
 import { LeasingContract } from '../../types/leasing';
-import {
-  getLeasingRequests,
-  updateLeasingRequest,
-  addLeasingContract,
-  generateContractId,
-  getLeasingRequestById,
-  getEquipmentById
-} from '../../services/leasing/leasingDataService';
+import { leasingDataService } from '../../services/api/leasing/dataService';
 
 export function useLeasingRequestActions() {
   const navigate = useNavigate();
@@ -24,7 +17,7 @@ export function useLeasingRequestActions() {
     setLoading(true);
     try {
       // Récupérer la demande actuelle
-      const request = getLeasingRequestById(requestId);
+      const request = leasingDataService.getLeasingRequestById(requestId);
       if (!request) {
         toast.error('Demande non trouvée');
         return false;
@@ -38,7 +31,7 @@ export function useLeasingRequestActions() {
       };
       
       // Sauvegarder dans le localStorage
-      updateLeasingRequest(updatedRequest);
+      leasingDataService.updateLeasingRequest(updatedRequest);
       
       // Créer automatiquement un contrat
       const success = await createContract(requestId);
@@ -62,7 +55,7 @@ export function useLeasingRequestActions() {
     setLoading(true);
     try {
       // Récupérer la demande actuelle
-      const request = getLeasingRequestById(requestId);
+      const request = leasingDataService.getLeasingRequestById(requestId);
       if (!request) {
         toast.error('Demande non trouvée');
         return false;
@@ -77,7 +70,7 @@ export function useLeasingRequestActions() {
       };
       
       // Sauvegarder dans le localStorage
-      updateLeasingRequest(updatedRequest);
+      leasingDataService.updateLeasingRequest(updatedRequest);
       
       toast.success('Demande de leasing rejetée');
       return true;
@@ -94,14 +87,14 @@ export function useLeasingRequestActions() {
     setLoading(true);
     try {
       // Récupérer la demande
-      const request = getLeasingRequestById(requestId);
+      const request = leasingDataService.getLeasingRequestById(requestId);
       if (!request) {
         toast.error('Demande non trouvée');
         return false;
       }
       
       // Récupérer les détails de l'équipement
-      const equipment = getEquipmentById(request.equipment_id);
+      const equipment = leasingDataService.getEquipmentById(request.equipment_id);
       if (!equipment) {
         toast.error('Équipement non trouvé');
         return false;
@@ -113,7 +106,7 @@ export function useLeasingRequestActions() {
       endDate.setMonth(endDate.getMonth() + request.requested_duration);
       
       // Créer un nouveau contrat
-      const newContractId = generateContractId();
+      const newContractId = leasingDataService.generateContractId();
       const newContract: LeasingContract = {
         id: newContractId,
         equipment_id: request.equipment_id,
@@ -131,7 +124,7 @@ export function useLeasingRequestActions() {
       };
       
       // Ajouter le contrat
-      addLeasingContract(newContract);
+      leasingDataService.addLeasingContract(newContract);
       
       // Mettre à jour le statut de la demande
       const updatedRequest = {
@@ -141,7 +134,7 @@ export function useLeasingRequestActions() {
         contract_id: newContractId
       };
       
-      updateLeasingRequest(updatedRequest);
+      leasingDataService.updateLeasingRequest(updatedRequest);
       
       toast.success('Contrat de leasing créé avec succès');
       
@@ -161,7 +154,7 @@ export function useLeasingRequestActions() {
 
   return {
     loading,
-    requests: getLeasingRequests(), // Toujours retourner les données à jour
+    requests: leasingDataService.getLeasingRequests(), // Toujours retourner les données à jour
     viewDetails,
     approveRequest,
     rejectRequest,

@@ -1,18 +1,28 @@
-# Documentation de l'API Dashboard
+# Documentation des API du Dashboard
 
-Cette section détaille les endpoints de l'API liés au tableau de bord (dashboard) de la plateforme Wanzo Portfolio Institution. Ces endpoints permettent de récupérer diverses métriques, alertes et données agrégées pour visualiser et analyser l'état global des portefeuilles.
+Ce document sert de point d'entrée pour la documentation des API du tableau de bord de Wanzo Portfolio Institution. Les tableaux de bord sont spécifiques à chaque type de portefeuille et présentent des métriques et analyses adaptées.
 
-## Récupération des données agrégées du tableau de bord
+## Structure des Dashboards
+
+L'application prend en charge trois types de dashboards correspondant aux trois types de portefeuilles :
+
+1. **[Dashboard Portefeuille Traditionnel](./traditional/README.md)** - Métriques et KPIs pour les portefeuilles de crédit traditionnel
+2. **[Dashboard Portefeuille d'Investissement](./investment/README.md)** - Métriques et KPIs pour les portefeuilles d'investissement
+3. **[Dashboard Portefeuille de Leasing](./leasing/README.md)** - Métriques et KPIs pour les portefeuilles de leasing
+
+## Endpoints communs
+
+### Récupération des données agrégées du tableau de bord
 
 Récupère un ensemble complet de données agrégées pour le tableau de bord, incluant les résumés de portefeuille, l'activité récente, les alertes et divers KPIs.
 
-### Requête
+#### Requête
 
 ```
 GET /dashboard
 ```
 
-### Réponse
+#### Réponse
 
 ```json
 {
@@ -44,29 +54,11 @@ GET /dashboard
     },
     {
       "id": "act-123457",
-      "type": "funding_request",
+      "type": "traditional_request",
       "entityId": "req-345678",
       "title": "Nouvelle demande de financement",
       "description": "Demande de 500 000€ pour Société XYZ",
       "timestamp": "2025-07-20T14:15:22Z"
-    }
-  ],
-  "alerts": [
-    {
-      "id": "alert-123",
-      "type": "risk",
-      "level": "warning",
-      "title": "Risque de crédit élevé",
-      "description": "Portefeuille traditionnel #5 présente un risque de crédit accru",
-      "timestamp": "2025-07-20T10:45:12Z"
-    },
-    {
-      "id": "alert-124",
-      "type": "compliance",
-      "level": "critical",
-      "title": "Document manquant",
-      "description": "KYC incomplet pour le client ID 45678",
-      "timestamp": "2025-07-19T16:30:00Z"
     }
   ],
   "kpis": {
@@ -77,27 +69,50 @@ GET /dashboard
     "pendingRequests": 7,
     "riskScore": 2.6,
     "complianceScore": 92
-  },
-  "charts": {
-    "portfolioDistribution": [
-      { "category": "Traditionnel", "value": 5000000 },
-      { "category": "Investissement", "value": 3500000 },
-      { "category": "Leasing", "value": 1200000 }
-    ],
-    "monthlyPerformance": [
-      { 
-        "month": "Jan 2025", 
-        "traditional": 0.8, 
-        "investment": 1.2, 
-        "leasing": 0.5 
-      },
-      { 
-        "month": "Fév 2025", 
-        "traditional": 0.6, 
-        "investment": -0.3, 
-        "leasing": 0.7 
-      }
-    ],
+  }
+}
+```
+
+### Récupération des KPIs par type de portefeuille
+
+Récupère les indicateurs clés de performance (KPIs) pour un type de portefeuille spécifique.
+
+#### Requête
+
+```
+GET /dashboard/portfolio-type/:type/kpis
+```
+
+#### Paramètres
+
+| Paramètre | Type   | Description |
+|-----------|--------|-------------|
+| type      | string | Type de portefeuille ('traditional', 'investment', 'leasing') |
+
+#### Réponse
+
+```json
+{
+  "type": "traditional",
+  "count": 12,
+  "totalValue": 5000000,
+  "growth": 2.8,
+  "avgRiskScore": 2.4,
+  "performance": {
+    "monthly": 0.8,
+    "quarterly": 2.1,
+    "yearly": 7.5
+  }
+}
+```
+
+## Documentation détaillée par type de portefeuille
+
+Pour des informations détaillées sur les API spécifiques à chaque type de portefeuille, veuillez consulter les pages correspondantes :
+
+- [API Dashboard Portefeuille Traditionnel](./traditional/README.md)
+- [API Dashboard Portefeuille d'Investissement](./investment/README.md)
+- [API Dashboard Portefeuille de Leasing](./leasing/README.md),
     "riskDistribution": [
       { "riskLevel": "Faible", "percentage": 45 },
       { "riskLevel": "Moyen", "percentage": 35 },

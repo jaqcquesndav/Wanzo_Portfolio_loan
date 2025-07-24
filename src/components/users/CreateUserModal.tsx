@@ -7,8 +7,8 @@ import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { FormField, Input, Select } from '../ui/Form';
 import { Checkbox } from '../ui/Checkbox';
-import { useNotification } from '../../contexts/NotificationContext';
-import { usersApi } from '../../services/api/users.api';
+import { useNotification } from '../../contexts/useNotification';
+import { userApi } from '../../services/api/shared/user.api';
 
 const createUserSchema = z.object({
   givenName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
@@ -59,11 +59,15 @@ export function CreateUserModal({
   const onSubmit = async (data: CreateUserFormData) => {
     try {
       // Préparons les données pour l'API en respectant son interface
-      await usersApi.create({
+      await userApi.createUser({
         email: data.email,
-        name: `${data.givenName} ${data.familyName}`,
-        role: data.role === 'Admin' ? 'admin' : 'user',
+        firstName: data.givenName,
+        lastName: data.familyName,
+        role: data.role,
+        department: 'Default',
+        position: data.role,
         phone: data.phone,
+        sendInvitation: true
       });
       
       // Ici, nous pourrions faire un second appel API pour mettre à jour 

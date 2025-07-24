@@ -36,7 +36,7 @@ GET /prospection/opportunities
       "id": "opp-123456",
       "companyId": "comp-789012",
       "companyName": "TechInnovation SA",
-      "type": "funding",
+      "type": "traditional",
       "amount": 500000,
       "probability": 75,
       "expectedCloseDate": "2025-09-15",
@@ -102,7 +102,7 @@ GET /prospection/opportunities/:id
   "id": "opp-123456",
   "companyId": "comp-789012",
   "companyName": "TechInnovation SA",
-  "type": "funding",
+  "type": "traditional",
   "amount": 500000,
   "probability": 75,
   "expectedCloseDate": "2025-09-15",
@@ -622,7 +622,7 @@ GET /prospection/stats?period=:period
     }
   ],
   "byType": {
-    "funding": 12,
+    "traditional": 12,
     "investment": 8,
     "leasing": 4
   },

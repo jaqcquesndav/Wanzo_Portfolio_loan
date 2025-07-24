@@ -11,6 +11,9 @@ export interface Message {
     type: string;
     content: string;
   };
+  error?: boolean;
+  pending?: boolean;
+  retry?: number;
 }
 
 export interface Contact {
@@ -28,6 +31,9 @@ export interface Conversation {
   isActive: boolean;
   model: AIModel;
   context: string[];
+  error?: boolean;
+  synced?: boolean;
+  lastSyncTime?: string;
 }
 
 export interface AIModel {

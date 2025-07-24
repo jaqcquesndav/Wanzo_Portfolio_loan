@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Indicator } from '../dashboard/FundingOffers';
+import type { Indicator } from '../dashboard/PortfolioDashboard';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface MetricDetailModalProps {

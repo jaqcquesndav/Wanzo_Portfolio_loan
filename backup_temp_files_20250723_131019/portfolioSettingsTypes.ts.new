@@ -1,0 +1,127 @@
+// Types pour les paramètres de portefeuille
+
+// Types communs à tous les portefeuilles
+export interface PortfolioSettingsBase {
+  bank_accounts: BankAccount[];
+  manager?: PortfolioManager;
+  management_fees?: ManagementFees;
+}
+
+export interface BankAccount {
+  id: string;
+  bank_name: string;
+  account_number: string;
+  account_type: string;
+  currency: string;
+  primary: boolean;
+  branch?: string;
+  swift_code?: string;
+}
+
+export interface PortfolioManager {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role?: string;
+  department?: string;
+  photo_url?: string;
+}
+
+export interface ManagementFees {
+  setup_fee?: number;
+  annual_fee?: number;
+  performance_fee?: number;
+  early_withdrawal_fee?: number;
+  transaction_fee?: number;
+}
+
+// Types spécifiques pour les portefeuilles traditionnels
+export interface TraditionalPortfolioSettings extends PortfolioSettingsBase {
+  financial_products: FinancialProduct[];
+}
+
+export interface FinancialProduct {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  interest_rate_range: {
+    min: number;
+    max: number;
+  };
+  term_range: {
+    min: number;
+    max: number;
+  };
+  currency: string;
+  min_amount: number;
+  max_amount: number;
+  required_guarantees?: string[];
+  required_documents?: string[];
+  status: 'active' | 'inactive' | 'draft';
+  created_at: string;
+  updated_at: string;
+}
+
+// Types spécifiques pour les portefeuilles de leasing
+export interface LeasingPortfolioSettings extends PortfolioSettingsBase {
+  leasing_terms: {
+    min_duration: number;
+    max_duration: number;
+    interest_rate_range: {
+      min: number;
+      max: number;
+    };
+    maintenance_included: boolean;
+    insurance_required: boolean;
+    residual_value_percentage: number;
+  };
+  maintenance_options?: {
+    included_services: string[];
+    pricing_structure: string;
+    service_intervals: number; // en mois
+  };
+  insurance_options?: {
+    coverage_types: string[];
+    minimum_coverage: number; // pourcentage de la valeur de l'équipement
+    preferred_providers?: string[];
+  };
+}
+
+// Types spécifiques pour les portefeuilles d'investissement
+export interface InvestmentPortfolioSettings extends PortfolioSettingsBase {
+  asset_classes: AssetClass[];
+  investment_strategies: InvestmentStrategy[];
+  risk_parameters: {
+    max_allocation_per_sector: number; // pourcentage
+    max_allocation_per_asset: number; // pourcentage
+    max_leverage: number; // pourcentage
+    diversification_requirements?: string[];
+  };
+  valuation_frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+}
+
+export interface AssetClass {
+  id: string;
+  name: string;
+  description?: string;
+  target_allocation: number; // pourcentage
+  min_allocation: number; // pourcentage
+  max_allocation: number; // pourcentage
+  risk_level: 'low' | 'medium' | 'high';
+  expected_return: number; // pourcentage
+}
+
+export interface InvestmentStrategy {
+  id: string;
+  name: string;
+  description?: string;
+  risk_profile: 'conservative' | 'moderate' | 'aggressive';
+  min_investment_period: number; // en mois
+  expected_return_range: {
+    min: number;
+    max: number;
+  };
+  allowed_asset_classes: string[]; // IDs des classes d'actifs
+}

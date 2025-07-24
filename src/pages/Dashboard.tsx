@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import FundingOffers from '../components/dashboard/FundingOffers';
+import { DashboardByType } from '../components/dashboard/DashboardByType';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
@@ -8,7 +8,7 @@ import { isValidPortfolioType, getDefaultPortfolioType } from '../config/portfol
 
 export default function Dashboard() {
   const { portfolioType } = useParams<{ portfolioType: 'traditional' | 'investment' | 'leasing' }>();
-  const { loading, error } = useDashboardMetrics(portfolioType);
+  const { metrics, loading, error } = useDashboardMetrics(portfolioType);
   const { setPortfolioType } = usePortfolioContext();
   const navigate = useNavigate();
 
@@ -48,7 +48,12 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6 space-y-6">
       <DashboardHeader />
-      <FundingOffers />
+      <DashboardByType
+        portfolioType={portfolioType}
+        metrics={metrics}
+        loading={loading}
+        error={error}
+      />
     </div>
   );
 }

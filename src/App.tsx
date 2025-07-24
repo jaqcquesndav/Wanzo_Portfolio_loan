@@ -12,8 +12,8 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { AppLoading } from './components/ui/AppLoading';
-import { auth0Service } from './services/auth/auth0Service';
-import { useInitData } from './services/leasing/useInitData';
+import { auth0Service } from './services/api/auth/auth0Service';
+import { useInitData } from './services/api/leasing/useInitData';
 
 export default function App() {
   // Utilisation du hook pour initialiser les données mock

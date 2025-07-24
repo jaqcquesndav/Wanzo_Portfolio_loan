@@ -231,7 +231,15 @@ export const API_ENDPOINTS = {
     send: '/messages',
     reply: (id: string) => `/messages/${id}/reply`,
     markAsRead: (id: string) => `/messages/${id}/read`,
-    archive: (id: string) => `/messages/${id}/archive`
+    archive: (id: string) => `/messages/${id}/archive`,
+    
+    // Endpoints spécifiques au chat
+    getConversations: '/chat/conversations',
+    getMessages: '/chat/messages',
+    sendMessage: '/chat/messages',
+    createConversation: '/chat/conversations',
+    deleteConversation: '/chat/conversations',
+    updateMessage: '/chat/messages'
   },
 
   meetings: {

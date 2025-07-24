@@ -5,7 +5,7 @@ import { useTheme } from '../../hooks/useTheme';
 // import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
-import { auth0Service } from '../../services/auth/auth0Service';
+import { auth0Service } from '../../services/api/auth/auth0Service';
 
 export function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);

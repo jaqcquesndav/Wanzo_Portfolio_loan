@@ -1,6 +1,6 @@
 // src/services/auth/auth0Service.ts
-import { User } from '../../contexts/AuthContext';
-import { UserRole, UserType } from '../../types/users';
+import { User } from '../../../contexts/AuthContext';
+import { UserRole, UserType } from '../../../types/users';
 
 // Clés de stockage centralisées pour l'authentification
 const STORAGE_KEYS = {

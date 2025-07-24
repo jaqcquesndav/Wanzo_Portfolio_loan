@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Maintenance } from "../types/leasing-asset";
-import * as maintenanceService from "../services/leasing/maintenance.service";
+import * as maintenanceService from "../services/api/leasing/maintenance.service";
 
 export function useEquipmentMaintenance(equipmentId?: string) {
   const [maintenances, setMaintenances] = useState<Maintenance[]>([]);

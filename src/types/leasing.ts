@@ -1,5 +1,6 @@
 import type { PortfolioWithType } from './portfolio';
 import type { LeasingRequest } from './leasing-request';
+import type { MaintenanceOption, InsuranceOption } from '../services/api/leasing/portfolio-settings.api';
 
 export interface LeasingPortfolio extends PortfolioWithType {
   equipment_catalog: Equipment[];
@@ -18,6 +19,8 @@ export interface LeasingPortfolio extends PortfolioWithType {
     maintenance_included: boolean;
     insurance_required: boolean;
   };
+  maintenance_options?: MaintenanceOption[];
+  insurance_options?: InsuranceOption[];
 }
 
 export interface Equipment {
@@ -39,6 +42,8 @@ export interface Equipment {
 }
 
 export type LeasingContractStatus = 'draft' | 'pending' | 'active' | 'completed' | 'terminated';
+export type PaymentStatus = 'pending' | 'completed' | 'failed';
+export type MaintenanceStatus = 'ok' | 'requires_attention' | 'under_maintenance';
 
 export interface LeasingContract {
   id: string;
@@ -57,6 +62,7 @@ export interface LeasingContract {
   terminationDate?: string;
   terminationReason?: string;
   nextInvoiceDate?: string;
+  last_payment_date?: string; // Ajout de cette propriété
   amortization_schedule?: {
     date: string;
     amount: number;
@@ -64,4 +70,15 @@ export interface LeasingContract {
     interest: number;
     balance: number;
   }[];
+  // Propriétés pour les paiements
+  payments?: {
+    id: string;
+    amount: number;
+    date: string;
+    status: PaymentStatus;
+  }[];
+  // Propriétés pour la maintenance
+  maintenance_status?: MaintenanceStatus;
+  maintenance_notes?: string;
+  maintenance_last_updated?: string;
 }

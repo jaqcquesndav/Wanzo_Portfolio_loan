@@ -1,23 +1,41 @@
 import React, { useRef } from 'react';
 import type { Portfolio } from '../../types/portfolio';
-// Removed mockPortfolios import; now receives portfolios as prop
 import { PerformanceComparisonCard } from './PerformanceComparisonCard';
-
+import { getMockPortfoliosByType, getCurrentPortfolio } from './mockPortfolios';
 
 interface PerformanceComparisonScrollerProps {
-  currentPortfolio: Portfolio;
-  performanceType: 'performance_curve' | 'return' | 'benchmark';
-  portfolios: Portfolio[];
+  currentPortfolio?: Portfolio;
+  performanceType?: 'performance_curve' | 'return' | 'benchmark';
+  portfolios?: Portfolio[];
+  portfolioType?: 'traditional' | 'investment' | 'leasing';
 }
 
-export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScrollerProps> = ({ currentPortfolio, performanceType, portfolios }) => {
+export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScrollerProps> = ({ 
+  currentPortfolio, 
+  performanceType = 'performance_curve', 
+  portfolios,
+  portfolioType
+}) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  
+  // Si on n'a que le type de portefeuille, utiliser les mocks
+  const mockCurrentPortfolio = portfolioType ? getCurrentPortfolio(portfolioType) : undefined;
+  const mockPortfolios = portfolioType ? getMockPortfoliosByType(portfolioType) : [];
+  
+  // Utiliser les valeurs fournies ou les mocks
+  const effectiveCurrentPortfolio = currentPortfolio || mockCurrentPortfolio;
+  const effectivePortfolios = portfolios || mockPortfolios;
+  
+  if (!effectiveCurrentPortfolio) {
+    console.warn('PerformanceComparisonScroller: Aucun portefeuille actuel disponible');
+    return null;
+  }
   // Filtrer les portefeuilles du même type (hors sélectionné)
-  const sameTypePortfolios = portfolios.filter(
-    (p) => p && p.type === currentPortfolio.type && p.id !== currentPortfolio.id && p.metrics
+  const sameTypePortfolios = effectivePortfolios.filter(
+    (p) => p && p.type === effectiveCurrentPortfolio.type && p.id !== effectiveCurrentPortfolio.id && p.metrics
   );
   // Valeur du portefeuille courant (dernier point de la courbe)
-  const currentValue = getPerfValue(currentPortfolio, performanceType);
+  const currentValue = getPerfValue(effectiveCurrentPortfolio, performanceType);
 
   // Générer les cards à afficher
   const cards = [
@@ -35,10 +53,10 @@ export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScroll
       );
     }).filter(Boolean),
     // Card du portefeuille courant, toujours à la fin
-    currentPortfolio && currentPortfolio.name ? (
+    effectiveCurrentPortfolio && effectiveCurrentPortfolio.name ? (
       <PerformanceComparisonCard
-        key={currentPortfolio.id}
-        portfolioName={currentPortfolio.name + ' (vous)'}
+        key={effectiveCurrentPortfolio.id}
+        portfolioName={effectiveCurrentPortfolio.name + ' (vous)'}
         value={currentValue}
         trend="neutral"
         highlight

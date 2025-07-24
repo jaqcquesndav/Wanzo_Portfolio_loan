@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Maximize2, Minimize2, X, Send, Smile, Paperclip, Mic, Copy, ThumbsUp, ThumbsDown, Sparkles, AlignJustify } from 'lucide-react';
+import { MessageSquare, Maximize2, Minimize2, X, Send, Smile, Paperclip, Mic, Copy, ThumbsUp, ThumbsDown, Sparkles, AlignJustify, AlertCircle, Repeat } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
 import { EmojiPicker } from './EmojiPicker';
@@ -19,7 +19,9 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     activeConversationId,
     isTyping,
     isRecording,
+    isApiMode,
     setRecording,
+    setApiMode,
     addMessage,
     updateMessage,
     toggleLike,
@@ -32,7 +34,8 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     setCurrentPortfolioId,
     createNewConversation,
     deleteConversation,
-    setActiveConversation
+    setActiveConversation,
+    fetchConversations
   } = useChatStore();
   
   const adhaWriteMode = useAdhaWriteMode();
@@ -43,10 +46,21 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
   const [showSidebar, setShowSidebar] = useState(mode === 'fullscreen');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
   const messages = React.useMemo(() => activeConversation?.messages || [], [activeConversation]);
 
+  // Charger les conversations au démarrage en mode API
+  useEffect(() => {
+    if (isApiMode && !isInitialized) {
+      fetchConversations().then(() => {
+        setIsInitialized(true);
+      });
+    }
+  }, [isApiMode, isInitialized, fetchConversations]);
+
+  // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -176,7 +190,23 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                         ? 'bg-[#197ca8] text-white' 
                         : 'bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                       }
+                      ${message.error ? 'border border-red-500' : ''}
+                      ${message.pending ? 'opacity-70' : ''}
                     `}>
+                      {message.error && (
+                        <div className="flex items-center text-red-500 dark:text-red-400 mb-2 text-xs">
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          <span>Erreur d'envoi</span>
+                          <button 
+                            onClick={() => addMessage(message.content, 'user', message.attachment)}
+                            className="ml-2 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                            title="Réessayer"
+                          >
+                            <Repeat className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+
                       <MessageContent 
                         content={message.content}
                         onEdit={message.sender === 'bot' ? (newContent) => 
@@ -225,7 +255,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
 
               {/* Sélecteur de mode (normal/écriture) */}
               <div className="relative border-t border-gray-100 py-2 px-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600">Mode:</span>
                   <div className="flex items-center space-x-2">
                     <span className="text-xs text-gray-500">Chat</span>
@@ -239,6 +269,24 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
                     </label>
                     <span className="text-xs text-gray-500">Analyse</span>
+                  </div>
+                </div>
+                
+                {/* Option pour activer/désactiver l'API */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Connexion API:</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">Mock</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer"
+                        checked={isApiMode}
+                        onChange={() => setApiMode(!isApiMode)}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                    <span className="text-xs text-gray-500">API</span>
                   </div>
                 </div>
               </div>

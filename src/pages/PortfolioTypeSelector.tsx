@@ -1,6 +1,6 @@
 
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
-import { auth0Service } from '../services/auth/auth0Service';
+import { auth0Service } from '../services/api/auth/auth0Service';
 
 
 const choices = [
