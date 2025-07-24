@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Bell, BarChart2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 // import { ProfileMenu } from './ProfileMenu';
 import { ChatButton } from '../chat/ChatButton';
 import { NotificationsPopover } from '../notifications/NotificationsPopover';
+import { ConnectivityStatus } from './ConnectivityStatus';
 
 interface NavbarProps {
   children?: React.ReactNode;
@@ -46,6 +46,10 @@ export function Navbar({ children }: NavbarProps) {
               {showNotifications && (
                 <NotificationsPopover onClose={() => setShowNotifications(false)} />
               )}
+            </div>
+
+            <div className="hidden sm:block mx-2">
+              <ConnectivityStatus minimal />
             </div>
 
             {/* <ProfileMenu /> */}

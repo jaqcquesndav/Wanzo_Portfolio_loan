@@ -12,6 +12,7 @@
  * - payments: Gestion des paiements
  * - portfolioSettings: Gestion des paramètres du portefeuille
  * - dataService: Service de données local (fallback)
+ * - useInitData: Hook pour initialiser les données
  */
 
 // Utiliser les exports des fichiers directement
@@ -24,6 +25,7 @@ export * from './maintenance.api';
 export * from './payments.api';
 export * from './portfolio-settings.api';
 export * from './dataService';
+export * from './useInitData';
 
 // Créer un objet vide pour l'API leasing pour l'instant
 // Il faudra ajuster les exports dans chaque fichier API individuel

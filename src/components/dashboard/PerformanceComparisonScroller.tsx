@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import type { Portfolio } from '../../types/portfolio';
 import { PerformanceComparisonCard } from './PerformanceComparisonCard';
-import { getMockPortfoliosByType, getCurrentPortfolio } from './mockPortfolios';
+import { getPortfoliosByType, getCurrentPortfolio } from '../../services/dashboard/portfolioService';
 
 interface PerformanceComparisonScrollerProps {
   currentPortfolio?: Portfolio;
@@ -17,29 +17,50 @@ export const PerformanceComparisonScroller: React.FC<PerformanceComparisonScroll
   portfolioType
 }) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [loadedCurrentPortfolio, setLoadedCurrentPortfolio] = useState<Portfolio | undefined>(undefined);
+  const [loadedPortfolios, setLoadedPortfolios] = useState<Portfolio[]>([]);
   
-  // Si on n'a que le type de portefeuille, utiliser les mocks
-  const mockCurrentPortfolio = portfolioType ? getCurrentPortfolio(portfolioType) : undefined;
-  const mockPortfolios = portfolioType ? getMockPortfoliosByType(portfolioType) : [];
+  // Charger les données de portefeuille si nécessaire
+  useEffect(() => {
+    // Si des portefeuilles sont fournis directement, les utiliser
+    if (currentPortfolio) {
+      setLoadedCurrentPortfolio(currentPortfolio);
+    } else if (portfolioType) {
+      // Sinon, charger depuis le service
+      getCurrentPortfolio(portfolioType).then(portfolio => {
+        setLoadedCurrentPortfolio(portfolio || undefined);
+      });
+    }
+    
+    if (portfolios) {
+      setLoadedPortfolios(portfolios);
+    } else if (portfolioType) {
+      getPortfoliosByType(portfolioType).then(loadedPortfolios => {
+        setLoadedPortfolios(loadedPortfolios);
+      });
+    }
+  }, [currentPortfolio, portfolios, portfolioType]);
   
-  // Utiliser les valeurs fournies ou les mocks
-  const effectiveCurrentPortfolio = currentPortfolio || mockCurrentPortfolio;
-  const effectivePortfolios = portfolios || mockPortfolios;
+  // Utiliser les valeurs chargées
+  const effectiveCurrentPortfolio = currentPortfolio || loadedCurrentPortfolio;
+  const effectivePortfolios = portfolios || loadedPortfolios;
   
   if (!effectiveCurrentPortfolio) {
     console.warn('PerformanceComparisonScroller: Aucun portefeuille actuel disponible');
     return null;
   }
+  
   // Filtrer les portefeuilles du même type (hors sélectionné)
   const sameTypePortfolios = effectivePortfolios.filter(
-    (p) => p && p.type === effectiveCurrentPortfolio.type && p.id !== effectiveCurrentPortfolio.id && p.metrics
+    (p: Portfolio) => p && p.type === effectiveCurrentPortfolio.type && p.id !== effectiveCurrentPortfolio.id && p.metrics
   );
+  
   // Valeur du portefeuille courant (dernier point de la courbe)
   const currentValue = getPerfValue(effectiveCurrentPortfolio, performanceType);
 
   // Générer les cards à afficher
   const cards = [
-    ...sameTypePortfolios.map(p => {
+    ...sameTypePortfolios.map((p: Portfolio) => {
       if (!p || !p.name) return null;
       const value = getPerfValue(p, performanceType);
       const trend = value > currentValue ? 'up' : value < currentValue ? 'down' : 'neutral';

@@ -10,10 +10,7 @@ import { CompanyDocuments } from './CompanyDocuments';
 interface FinancialHighlights {
   [key: string]: number | string;
 }
-// Extend BaseCompany with custom fields and override conflicting types
-interface Company extends Omit<BaseCompany, 'annual_revenue' | 'employee_count'> {
-  annual_revenue?: number; // Make optional
-  employee_count?: number; // Make optional
+interface Company extends BaseCompany {
   founded?: number;
   employees?: number;
   financialHighlights?: FinancialHighlights;
@@ -81,6 +78,8 @@ interface Company extends Omit<BaseCompany, 'annual_revenue' | 'employee_count'>
     bio?: string;
     photo?: string;
   };
+  employee_count?: number;
+  annual_revenue?: number;
 }
 
 interface CompanyDetailsProps {
@@ -124,15 +123,13 @@ export function CompanyDetails({
 
   if (!company) return null;
 
-  // We don't use this in this implementation, but keeping the definition
-  // in case we need it later for extension and customization
-  /*const socialIcons = {
+  const socialIcons = {
     website: Globe,
     facebook: Facebook,
     linkedin: Linkedin,
     twitter: Twitter,
     youtube: Youtube,
-  };*/
+  };
 
   return (
     <div
@@ -173,11 +170,11 @@ export function CompanyDetails({
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="overview" currentValue={activeTab} onValueChange={setActiveTab}>Aperçu</TabsTrigger>
-            <TabsTrigger value="documents" currentValue={activeTab} onValueChange={setActiveTab}>Documents</TabsTrigger>
-            <TabsTrigger value="leadership" currentValue={activeTab} onValueChange={setActiveTab}>Direction</TabsTrigger>
+            <TabsTrigger value="overview">Aperçu</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="leadership">Direction</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview" currentValue={activeTab} className="p-4">
+          <TabsContent value="overview" className="p-4">
             <div className="mb-8">
               <div className="flex flex-wrap gap-2 items-center mb-4">
                 {company.sector || company.industry ? (
@@ -289,7 +286,7 @@ export function CompanyDetails({
                   
                   <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-1">Chiffre d'affaires</h4>
-                    <p className="text-2xl font-bold text-purple-800 dark:text-purple-200">{company.annual_revenue ? formatCurrency(company.annual_revenue, undefined) : '-'}</p>
+                    <p className="text-2xl font-bold text-purple-800 dark:text-purple-200">{company.annual_revenue ? formatCurrency(company.annual_revenue, undefined, 'USD') : '-'}</p>
                   </div>
                 </div>
               </div>
@@ -323,7 +320,7 @@ export function CompanyDetails({
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="leadership" currentValue={activeTab} className="p-4">
+          <TabsContent value="leadership" className="p-4">
             {company.ceo ? (
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                 <div className="flex flex-col md:flex-row gap-4">
@@ -410,7 +407,7 @@ export function CompanyDetails({
               </div>
             )}
           </TabsContent>
-          <TabsContent value="documents" currentValue={activeTab} className="p-4">
+          <TabsContent value="documents" className="p-4">
             {(company.documents && company.documents.length > 0) || 
              (company.financial_documents && company.financial_documents.length > 0) ? (
               <div>

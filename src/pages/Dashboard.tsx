@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { DashboardByType } from '../components/dashboard/DashboardByType';
+import { EnhancedDashboard } from '../components/dashboard/EnhancedDashboard';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
@@ -47,8 +46,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6 space-y-6">
-      <DashboardHeader />
-      <DashboardByType
+      <EnhancedDashboard
         portfolioType={portfolioType}
         metrics={metrics}
         loading={loading}

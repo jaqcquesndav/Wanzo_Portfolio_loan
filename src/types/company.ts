@@ -1,5 +1,5 @@
 export type CompanySize = 'micro' | 'small' | 'medium' | 'large';
-export type CompanyStatus = 'active' | 'pending' | 'rejected' | 'funded';
+export type CompanyStatus = 'active' | 'pending' | 'rejected' | 'funded' | 'contacted';
 
 export interface Company {
   id: string;
@@ -11,6 +11,7 @@ export interface Company {
   website_url?: string;
   pitch_deck_url?: string;
   status: CompanyStatus;
+  lastContact?: string;
   financial_metrics: {
     revenue_growth: number;
     profit_margin: number;

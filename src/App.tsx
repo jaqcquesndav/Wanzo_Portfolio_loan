@@ -13,7 +13,8 @@ import { Toaster } from 'react-hot-toast';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { AppLoading } from './components/ui/AppLoading';
 import { auth0Service } from './services/api/auth/auth0Service';
-import { useInitData } from './services/api/leasing/useInitData';
+import { useInitData } from './services/api/leasing';
+import { ConnectivityProvider } from './contexts/ConnectivityContext';
 
 export default function App() {
   // Utilisation du hook pour initialiser les données mock
@@ -80,35 +81,37 @@ export default function App() {
   const hasValidationIssues = validationIssues && validationIssues.length > 0;
 
   return (
-    <PortfolioProvider>
-      <NotificationProvider>
-        <CurrencyProvider>
-          <PaymentOrderProvider>
-            {hasValidationIssues && (
-              <div className="fixed top-0 left-0 right-0 bg-amber-50 border-b border-amber-200 p-2 z-50">
-                <div className="container mx-auto flex items-center justify-between">
-                  <div className="flex items-center">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mr-2" />
-                    <span className="text-amber-800 text-sm">
-                      {validationIssues.length} problème(s) de données détecté(s). 
-                    </span>
+    <ConnectivityProvider>
+      <PortfolioProvider>
+        <NotificationProvider>
+          <CurrencyProvider>
+            <PaymentOrderProvider>
+              {hasValidationIssues && (
+                <div className="fixed top-0 left-0 right-0 bg-amber-50 border-b border-amber-200 p-2 z-50">
+                  <div className="container mx-auto flex items-center justify-between">
+                    <div className="flex items-center">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mr-2" />
+                      <span className="text-amber-800 text-sm">
+                        {validationIssues.length} problème(s) de données détecté(s). 
+                      </span>
+                    </div>
+                    <button 
+                      onClick={resetMockData}
+                      className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded"
+                    >
+                      Réinitialiser les données
+                    </button>
                   </div>
-                  <button 
-                    onClick={resetMockData}
-                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded"
-                  >
-                    Réinitialiser les données
-                  </button>
                 </div>
-              </div>
-            )}
-            <RouterProvider router={optimizedRouter} />
-            {/* Modal d'ordre de paiement pour les portefeuilles */}
-            <GlobalPaymentOrderModal />
-            <Toaster position="top-right" />
-          </PaymentOrderProvider>
-        </CurrencyProvider>
-      </NotificationProvider>
-    </PortfolioProvider>
+              )}
+              <RouterProvider router={optimizedRouter} />
+              {/* Modal d'ordre de paiement pour les portefeuilles */}
+              <GlobalPaymentOrderModal />
+              <Toaster position="top-right" />
+            </PaymentOrderProvider>
+          </CurrencyProvider>
+        </NotificationProvider>
+      </PortfolioProvider>
+    </ConnectivityProvider>
   );
 }

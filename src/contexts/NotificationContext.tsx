@@ -3,6 +3,9 @@ import { NotificationType, Notification } from '../types/notifications';
 import NotificationContainer from '../components/notifications/NotificationContainer';
 import { notificationsApi } from '../services/api/shared/notifications.api';
 
+// Réexporter le hook useNotification depuis le fichier dédié
+export { useNotification } from './useNotification';
+
 interface NotificationContextType {
   notifications: Notification[];
   showNotification: (message: string, type: NotificationType, duration?: number) => void;

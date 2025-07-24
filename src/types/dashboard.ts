@@ -26,6 +26,15 @@ interface BaseClientMetrics {
   churnRate: number;
 }
 
+// Indicateur type utilisé dans les dashboards
+export type Indicator = {
+  label: string;
+  value: string | number;
+  trend?: 'up' | 'down' | 'neutral';
+  tag?: string;
+  color?: string;
+};
+
 // Extensions spécifiques pour le portefeuille traditionnel
 interface TraditionalAssetMetrics extends BaseAssetMetrics {
   distribution: {

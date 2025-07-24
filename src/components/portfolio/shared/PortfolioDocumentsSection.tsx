@@ -1,7 +1,7 @@
 // src/components/portfolio/shared/PortfolioDocumentsSection.tsx
 import { useState, useEffect } from 'react';
 import { DocumentManager } from '../../common/DocumentManager';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 import { 
   getPortfolioDocuments, 
   uploadDocument, 
@@ -43,10 +43,20 @@ export function PortfolioDocumentsSection({ portfolioId }: PortfolioDocumentsSec
     metadata: Omit<PortfolioDocument, 'id' | 'fileUrl' | 'fileSize' | 'fileType' | 'uploadedAt' | 'uploadedBy'>
   ) => {
     try {
-      const result = await uploadDocument(portfolioId, file, metadata);
+      // Compléter les données manquantes pour correspondre au type attendu
+      const documentData: Omit<PortfolioDocument, 'id' | 'fileUrl' | 'uploadedAt'> = {
+        ...metadata,
+        fileSize: file.size,
+        fileType: file.type,
+        uploadedBy: 'current-user' // Valeur par défaut pour le développement
+      };
+      
+      const result = await uploadDocument(portfolioId, documentData, file);
       
       if (result.success && result.document) {
-        setDocuments(prev => [...prev, result.document as PortfolioDocument]);
+        // S'assurer que document n'est pas undefined avant de l'ajouter
+        const newDocument = result.document;
+        setDocuments(prev => [...prev, newDocument]);
         showNotification('Document importé avec succès', 'success');
       } else {
         throw new Error(result.error || 'Erreur inconnue');
@@ -61,7 +71,7 @@ export function PortfolioDocumentsSection({ portfolioId }: PortfolioDocumentsSec
   const handleDelete = async (documentId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
       try {
-        const success = await deleteDocument(portfolioId, documentId);
+        const success = await deleteDocument(documentId);
         
         if (success) {
           setDocuments(prev => prev.filter(doc => doc.id !== documentId));
@@ -88,11 +98,19 @@ export function PortfolioDocumentsSection({ portfolioId }: PortfolioDocumentsSec
   };
 
   // Gérer le téléchargement d'un document
-  const handleDownload = async (document: PortfolioDocument) => {
+  const handleDownload = async (doc: PortfolioDocument) => {
     try {
-      const success = await downloadDocument(document);
+      const downloadUrl = await downloadDocument(doc.id);
       
-      if (!success) {
+      if (downloadUrl) {
+        // Créer un lien temporaire pour le téléchargement
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
         throw new Error('Erreur lors du téléchargement');
       }
     } catch (error) {

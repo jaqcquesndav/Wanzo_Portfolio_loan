@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -36,7 +36,7 @@ export function CompanyMap({ companies, onSelectCompany }: CompanyMapProps) {
   
   useEffect(() => {
     // Fix for default marker icons in production build
-    // @ts-ignore
+    // @ts-expect-error - _getIconUrl is a private property but needs to be deleted for the leaflet workaround
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -46,7 +46,7 @@ export function CompanyMap({ companies, onSelectCompany }: CompanyMapProps) {
   }, []);
 
   return (
-    <div className="h-[calc(100vh-16rem)] w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+    <div className="h-[calc(100vh-16rem)] w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden z-0">
       <MapContainer
         center={GOMA_POSITION}
         zoom={13}
