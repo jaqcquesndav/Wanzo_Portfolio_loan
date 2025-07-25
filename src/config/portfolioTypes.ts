@@ -4,28 +4,17 @@ import { CreditContractsList } from '../components/portfolio/traditional/credit-
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
-import { LeasingRequestsTable } from '../components/portfolio/leasing/LeasingRequestsTable';
-import { ContractsTable } from '../components/portfolio/leasing/ContractsTable';
-import { IncidentsTable } from '../components/portfolio/leasing/IncidentsTable';
-import { MaintenanceTable } from '../components/portfolio/leasing/MaintenanceTable';
-import { PaymentsTable } from '../components/portfolio/leasing/PaymentsTable';
-import { LeasingPortfolioSettingsDisplay } from '../components/portfolio/leasing/LeasingPortfolioSettingsDisplay';
-import { AssetsTable } from '../components/portfolio/investment/AssetsTable';
-import { SubscriptionsTable } from '../components/portfolio/investment/SubscriptionsTable';
-import { ValuationsTable } from '../components/portfolio/investment/ValuationsTable';
-import { InvestmentPortfolioSettingsDisplay } from '../components/portfolio/investment/InvestmentPortfolioSettingsDisplay';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
-import { MarketSecuritiesTable } from '../components/portfolio/investment/market/MarketSecuritiesTable';
 
 // Fonction utilitaire pour vérifier la validité d'un type de portefeuille
 export function isValidPortfolioType(type: string | null | undefined): boolean {
-  return !!type && ['traditional', 'investment', 'leasing'].includes(type);
+  return !!type && ['traditional'].includes(type);
 }
 
 // Fonction pour obtenir un type par défaut si le type fourni n'est pas valide
-export function getDefaultPortfolioType(type?: string | null): 'traditional' | 'investment' | 'leasing' {
+export function getDefaultPortfolioType(type?: string | null): 'traditional' {
   if (isValidPortfolioType(type)) {
-    return type as 'traditional' | 'investment' | 'leasing';
+    return type as 'traditional';
   }
   return 'traditional'; // Type par défaut
 }
@@ -49,41 +38,5 @@ export const portfolioTypeConfig = {
       guarantees: 'mockGuarantees',
     },
     hook: 'useTraditionalPortfolio',
-  },
-  leasing: {
-    label: 'Portefeuille de leasing',
-    tabs: [
-      { key: 'requests', label: 'Demandes', component: LeasingRequestsTable },
-      { key: 'contracts', label: 'Contrats', component: ContractsTable },
-      { key: 'incidents', label: 'Incidents', component: IncidentsTable },
-      { key: 'maintenance', label: 'Maintenance', component: MaintenanceTable },
-      { key: 'payments', label: 'Paiements', component: PaymentsTable },
-      { key: 'settings', label: 'Paramètres', component: LeasingPortfolioSettingsDisplay },
-    ],
-    mockData: {
-      requests: 'mockLeasingRequests',
-      contracts: 'mockLeasingContracts',
-      incidents: 'mockIncidents',
-      maintenance: 'mockMaintenance',
-      payments: 'mockPayments',
-    },
-    hook: 'useLeasingPortfolio',
-  },
-  investment: {
-    label: 'Portefeuille d\'investissement',
-    tabs: [
-      { key: 'market', label: 'Marché', component: MarketSecuritiesTable },
-      { key: 'assets', label: 'Actifs', component: AssetsTable },
-      { key: 'subscriptions', label: 'Souscriptions', component: SubscriptionsTable },
-      { key: 'valuations', label: 'Valorisation', component: ValuationsTable },
-      { key: 'settings', label: 'Paramètres', component: InvestmentPortfolioSettingsDisplay },
-    ],
-    mockData: {
-      assets: 'mockAssets',
-      subscriptions: 'mockSubscriptions',
-      valuations: 'mockValuations',
-      market: 'mockMarketSecurities', // Ajout des données pour le marché
-    },
-    hook: 'useInvestmentPortfolio',
-  },
+  }
 };

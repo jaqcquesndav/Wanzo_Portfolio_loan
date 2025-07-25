@@ -1,6 +1,5 @@
 // src/components/portfolio/CreatePortfolioModal.tsx
 // import React from 'react';
-import { useLocation } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -16,10 +15,6 @@ interface CreatePortfolioModalProps {
 }
 
 export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModalProps) {
-  const location = useLocation();
-  const portfolioType = location.pathname.split('/')[2]; // 'traditional', 'investment', ou 'leasing'
-
-  // Pour chaque type, on force le bon typage du handler
   // Transforme explicitement PortfolioStepperFormData en DefaultPortfolioFormData pour onSubmit
   const handleDefaultSubmit = async (data: Record<string, unknown>) => {
     // Correction de typage stricte pour TypeScript
@@ -60,7 +55,7 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
         >
           <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {portfolioType === 'leasing' ? 'Nouveau portefeuille de leasing' : 'Nouveau portefeuille'}
+              Nouveau portefeuille
             </h2>
             <Button
               variant="ghost"

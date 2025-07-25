@@ -1,33 +1,13 @@
-import LeasingEquipmentDetail from '../pages/leasing/LeasingEquipmentDetail';
-import LeasingContractDetail from '../pages/LeasingContractDetail';
-import LeasingIncidentDetail from '../pages/leasing/LeasingIncidentDetail';
-import LeasingMaintenanceDetail from '../pages/leasing/LeasingMaintenanceDetail';
-import LeasingPaymentDetail from '../pages/leasing/LeasingPaymentDetail';
-import LeasingReportingDetail from '../pages/leasing/LeasingReportingDetail';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import PortfolioTypeSelector from '../pages/PortfolioTypeSelector';
 import AuthCallback from '../pages/AuthCallback';
-// import LoginForm from '../components/auth/LoginForm';
 import InstitutionValidation from '../pages/InstitutionValidation';
 import Dashboard from '../pages/Dashboard';
 import Prospection from '../pages/Prospection';
 import TraditionalPortfolio from '../pages/TraditionalPortfolio';
 import TraditionalPortfolioDetails from '../pages/TraditionalPortfolioDetails';
 import { TraditionalPortfolioView } from '../pages/TraditionalPortfolioView';
-import InvestmentPortfolio from '../pages/InvestmentPortfolio';
-import InvestmentPortfolioDetails from '../pages/InvestmentPortfolioDetails';
-import InvestmentAssetDetail from '../pages/InvestmentAssetDetail';
-import InvestmentSubscriptionDetail from '../pages/InvestmentSubscriptionDetail';
-import InvestmentValuationDetail from '../pages/InvestmentValuationDetail';
-import InvestmentReportingDetail from '../pages/InvestmentReportingDetail';
-import LeasingPortfolio from '../pages/LeasingPortfolio';
-import LeasingPortfolioDetails from '../pages/LeasingPortfolioDetails';
-import LeasingReservationsPage from '../pages/leasing/LeasingReservationsPage';
-import LeasingMaintenancePage from '../pages/leasing/LeasingMaintenancePage';
-import LeasingIncidentsPage from '../pages/leasing/LeasingIncidentsPage';
-import LeasingMovementsPage from '../pages/leasing/LeasingMovementsPage';
-// Imports d'opérations supprimés
 import CreditRequestDetails from '../pages/CreditRequestDetails';
 import CreditContractDetail from '../pages/CreditContractDetail';
 import CreditContractSchedulePage from '../pages/CreditContractSchedulePage';
@@ -50,38 +30,23 @@ export const router = createBrowserRouter([
   // Redirections pour accès direct aux menus globaux (settings, users, institution, docs, help)
   {
     path: '/settings',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/settings`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/settings" replace />
   },
   {
     path: '/users',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/users`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/users" replace />
   },
   {
     path: '/institution',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/institution`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/institution" replace />
   },
   {
     path: '/docs',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/docs`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/docs" replace />
   },
   {
     path: '/help',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/help`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/help" replace />
   },
   {
     path: '/',
@@ -98,26 +63,17 @@ export const router = createBrowserRouter([
   // Redirection dynamique pour /dashboard
   {
     path: '/dashboard',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}`;
-    })()} replace />
+    element: <Navigate to="/app/traditional" replace />
   },
   // Route partagée pour la prospection
   {
     path: '/prospection',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/prospection`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/prospection" replace />
   },
   // Route partagée pour la centrale de risque
   {
     path: '/central-risque',
-    element: <Navigate to={(() => {
-      const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-      return `/app/${portfolioType}/central-risque`;
-    })()} replace />
+    element: <Navigate to="/app/traditional/central-risque" replace />
   },
   {
     path: '/app/:portfolioType',
@@ -149,27 +105,6 @@ export const router = createBrowserRouter([
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Route de fallback garantie pour compatibilité
       { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Investment
-      { path: 'investment', element: <InvestmentPortfolio /> },
-      { path: 'investment/:id', element: <InvestmentPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'assets/:assetId', element: <InvestmentAssetDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'subscriptions/:subscriptionId', element: <InvestmentSubscriptionDetail /> },
-      { path: 'valuations/:valuationId', element: <InvestmentValuationDetail /> },
-      { path: 'reporting/:reportId', element: <InvestmentReportingDetail /> },
-      // Leasing
-      { path: 'leasing', element: <LeasingPortfolio /> },
-      { path: 'leasing/:id', element: <LeasingPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/leasing/:id/equipments/:equipmentId', element: <LeasingEquipmentDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/leasing/:id/contracts/:contractId', element: <LeasingContractDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/leasing/:id/incidents/:incidentId', element: <LeasingIncidentDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/leasing/:id/maintenance/:maintenanceId', element: <LeasingMaintenanceDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/leasing/:id/payments/:paymentId', element: <LeasingPaymentDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'leasing/leasing/:id/reporting/:reportId', element: <LeasingReportingDetail />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'reservations', element: <LeasingReservationsPage /> },
-      { path: 'maintenance', element: <LeasingMaintenancePage /> },
-      { path: 'incidents', element: <LeasingIncidentsPage /> },
-      { path: 'movements', element: <LeasingMovementsPage /> },
-      // Operations - Supprimées
       // Settings
       { path: 'settings', element: <Settings /> },
       // Administration
@@ -185,9 +120,7 @@ export const router = createBrowserRouter([
       { path: 'help', element: <Help /> },
       // 404 Not Found pour les détails de portefeuille
       // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
-      { path: 'traditional/*', element: <PortfolioNotFound /> },
-      { path: 'investment/*', element: <PortfolioNotFound /> },
-      { path: 'leasing/*', element: <PortfolioNotFound /> }
+      { path: 'traditional/*', element: <PortfolioNotFound /> }
     ]
   }
 ]);

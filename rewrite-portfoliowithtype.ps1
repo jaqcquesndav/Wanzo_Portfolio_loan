@@ -1,3 +1,5 @@
+# Script pour réécrire complètement le fichier portfolioWithType.ts
+$content = @'
 // src/types/portfolioWithType.ts
 import type { Portfolio } from './portfolio';
 
@@ -12,3 +14,7 @@ export interface PortfolioWithType extends Portfolio {
   // Signature d'index pour compatibilité avec le stockage
   [key: string]: unknown;
 }
+'@
+
+$filePath = "C:\Users\DevSpace\Wanzo_pf\Wanzo_Portfolio_loan\src\types\portfolioWithType.ts"
+Set-Content -Path $filePath -Value $content -Force

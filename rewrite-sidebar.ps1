@@ -1,3 +1,5 @@
+# Script pour réécrire complètement le fichier SidebarPortfolios.tsx
+$content = @'
 import { useState } from 'react';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,6 +14,7 @@ import type { DefaultPortfolioFormData } from '../portfolio/DefaultPortfolioForm
 type CreatePortfolioFormData = DefaultPortfolioFormData;
 
 export function SidebarPortfolios() {
+  const [modalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
   const { portfolioType } = useParams();
 
@@ -34,11 +37,12 @@ export function SidebarPortfolios() {
   };
 
   const handleAddPortfolio = () => {
-    // Simplement afficher le modal
+    setModalOpen(true);
   };
 
   const handleCreatePortfolio = async (data: CreatePortfolioFormData) => {
     if (!portfolioType) {
+      setModalOpen(false);
       return;
     }
     if (portfolioType === 'traditional' && traditional.createPortfolio) {
@@ -49,6 +53,7 @@ export function SidebarPortfolios() {
       };
       await traditional.createPortfolio(toCreate);
     }
+    setModalOpen(false);
   };
 
   const [confirm, setConfirm] = useState<{ open: boolean; portfolio?: TraditionalPortfolio; action?: string }>({ open: false });
@@ -119,11 +124,7 @@ export function SidebarPortfolios() {
                           </div>
                         </div>
                         <PortfolioActionsDropdown
-                          actions={[
-                            { key: 'view', label: 'Voir' },
-                            { key: 'edit', label: 'Modifier' },
-                            { key: 'delete', label: 'Supprimer' }
-                          ]}
+                          portfolio={portfolio}
                           onAction={(action) => handlePortfolioMenu(portfolio, action)}
                         />
                       </div>
@@ -138,19 +139,25 @@ export function SidebarPortfolios() {
       </div>
 
       <CreatePortfolioModal
-        onClose={() => {}}
-        onSubmit={handleCreatePortfolio}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreate={handleCreatePortfolio}
+        portfolioType={portfolioType || 'traditional'}
       />
 
       <ConfirmModal
-        open={confirm.open}
+        isOpen={confirm.open}
         title="Confirmer la suppression"
         message={`Êtes-vous sûr de vouloir supprimer le portefeuille "${confirm.portfolio?.name}" ? Cette action est irréversible.`}
-        confirmLabel="Supprimer"
-        cancelLabel="Annuler"
+        confirmText="Supprimer"
+        cancelText="Annuler"
         onConfirm={confirmAction}
         onCancel={() => setConfirm({ open: false })}
       />
     </>
   );
 }
+'@
+
+$filePath = "C:\Users\DevSpace\Wanzo_pf\Wanzo_Portfolio_loan\src\components\layout\SidebarPortfolios.tsx"
+Set-Content -Path $filePath -Value $content -Force

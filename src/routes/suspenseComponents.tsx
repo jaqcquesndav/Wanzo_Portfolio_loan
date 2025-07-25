@@ -15,28 +15,6 @@ export const TraditionalPortfolio = withSuspense(lazyComponents.TraditionalPortf
 export const TraditionalPortfolioDetails = withSuspense(lazyComponents.TraditionalPortfolioDetails);
 export const TraditionalPortfolioView = withSuspense(lazyComponents.TraditionalPortfolioView);
 
-// Portfolios d'investissement
-export const InvestmentPortfolio = withSuspense(lazyComponents.InvestmentPortfolio);
-export const InvestmentPortfolioDetails = withSuspense(lazyComponents.InvestmentPortfolioDetails);
-export const InvestmentAssetDetail = withSuspense(lazyComponents.InvestmentAssetDetail);
-export const InvestmentSubscriptionDetail = withSuspense(lazyComponents.InvestmentSubscriptionDetail);
-export const InvestmentValuationDetail = withSuspense(lazyComponents.InvestmentValuationDetail);
-export const InvestmentReportingDetail = withSuspense(lazyComponents.InvestmentReportingDetail);
-
-// Portfolios de leasing
-export const LeasingPortfolio = withSuspense(lazyComponents.LeasingPortfolio);
-export const LeasingPortfolioDetails = withSuspense(lazyComponents.LeasingPortfolioDetails);
-export const LeasingEquipmentDetail = withSuspense(lazyComponents.LeasingEquipmentDetail);
-export const LeasingContractDetail = withSuspense(lazyComponents.LeasingContractDetail);
-export const LeasingIncidentDetail = withSuspense(lazyComponents.LeasingIncidentDetail);
-export const LeasingMaintenanceDetail = withSuspense(lazyComponents.LeasingMaintenanceDetail);
-export const LeasingPaymentDetail = withSuspense(lazyComponents.LeasingPaymentDetail);
-export const LeasingReportingDetail = withSuspense(lazyComponents.LeasingReportingDetail);
-export const LeasingReservationsPage = withSuspense(lazyComponents.LeasingReservationsPage);
-export const LeasingMaintenancePage = withSuspense(lazyComponents.LeasingMaintenancePage);
-export const LeasingIncidentsPage = withSuspense(lazyComponents.LeasingIncidentsPage);
-export const LeasingMovementsPage = withSuspense(lazyComponents.LeasingMovementsPage);
-
 // Détails des opérations
 export const CreditRequestDetails = withSuspense(lazyComponents.CreditRequestDetails);
 export const CreditContractDetail = withSuspense(lazyComponents.CreditContractDetail);

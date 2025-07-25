@@ -72,6 +72,16 @@ export function useTraditionalPortfolios() {
     return newPortfolio;
   };
 
+  /**
+   * Supprime un portefeuille traditionnel
+   * @param {string} id Identifiant du portefeuille à supprimer
+   * @returns {Promise<void>}
+   */
+  const deletePortfolio = async (id: string): Promise<void> => {
+    await portfolioStorageService.deletePortfolio(id);
+    refresh(); // Rafraîchit la liste après suppression
+  };
+
   const filteredPortfolios = useMemo(() => {
     return portfolios.filter(portfolio => {
       if (filters.status && portfolio.status !== filters.status) return false;
@@ -89,6 +99,7 @@ export function useTraditionalPortfolios() {
     setFilters,
     filteredPortfolios,
     createPortfolio,
+    deletePortfolio,
     refresh,
   };
 }

@@ -1,19 +1,12 @@
-
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { auth0Service } from '../services/api/auth/auth0Service';
 
-
 const choices = [
-  { type: 'traditional', label: 'Finance Traditionnelle', description: 'Portefeuille bancaire, crédit, épargne, etc.' },
-  { type: 'investment', label: 'Capital Investissement', description: 'Private equity, fonds, participations.' },
-  { type: 'leasing', label: 'Leasing d’équipements', description: 'Gestion d’actifs, location, maintenance.' }
+  { type: 'traditional', label: 'Finance Traditionnelle', description: 'Portefeuille bancaire, cr�dit, �pargne, etc.' }
 ];
 
 export default function PortfolioTypeSelector() {
-
   const { setPortfolioType } = usePortfolioContext();
-
-
 
   // PKCE code challenge generation utility
   function base64URLEncode(str: ArrayBuffer) {
@@ -30,7 +23,7 @@ export default function PortfolioTypeSelector() {
   }
 
   async function handleSelect(type: string) {
-    setPortfolioType(type as 'traditional' | 'investment' | 'leasing');
+    setPortfolioType(type as 'traditional');
     localStorage.setItem('portfolioType', type);
 
     // PKCE
@@ -58,12 +51,10 @@ export default function PortfolioTypeSelector() {
     window.location.href = `https://${domain}/authorize?${params.toString()}`;
   }
 
-
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <h1 className="text-2xl font-bold mb-8">Choisissez votre univers de gestion</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <h1 className="text-2xl font-bold mb-8">Gestion des portefeuilles de cr�dit</h1>
+      <div className="grid grid-cols-1 gap-8">
         {choices.map(choice => (
           <button
             key={choice.type}

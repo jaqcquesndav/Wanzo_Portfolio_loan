@@ -13,24 +13,6 @@ export const TraditionalPortfolioView = lazy(() =>
   import('../pages/TraditionalPortfolioView').then(module => ({ default: module.TraditionalPortfolioView }))
 );
 
-// Portfolios d'investissement
-export const InvestmentPortfolio = lazy(() => import('../pages/InvestmentPortfolio'));
-export const InvestmentPortfolioDetails = lazy(() => import('../pages/InvestmentPortfolioDetails'));
-export const InvestmentAssetDetail = lazy(() => import('../pages/InvestmentAssetDetail'));
-export const InvestmentSubscriptionDetail = lazy(() => import('../pages/InvestmentSubscriptionDetail'));
-export const InvestmentValuationDetail = lazy(() => import('../pages/InvestmentValuationDetail'));
-export const InvestmentReportingDetail = lazy(() => import('../pages/InvestmentReportingDetail'));
-
-// Portfolios de leasing
-export const LeasingPortfolio = lazy(() => import('../pages/LeasingPortfolio'));
-export const LeasingPortfolioDetails = lazy(() => import('../pages/LeasingPortfolioDetails'));
-export const LeasingEquipmentDetail = lazy(() => import('../pages/leasing/LeasingEquipmentDetail'));
-export const LeasingContractDetail = lazy(() => import('../pages/LeasingContractDetail'));
-export const LeasingIncidentDetail = lazy(() => import('../pages/leasing/LeasingIncidentDetail'));
-export const LeasingMaintenanceDetail = lazy(() => import('../pages/leasing/LeasingMaintenanceDetail'));
-export const LeasingPaymentDetail = lazy(() => import('../pages/leasing/LeasingPaymentDetail'));
-export const LeasingReportingDetail = lazy(() => import('../pages/leasing/LeasingReportingDetail'));
-
 // Détails des opérations
 export const CreditRequestDetails = lazy(() => import('../pages/CreditRequestDetails'));
 export const CreditContractDetail = lazy(() => import('../pages/CreditContractDetail'));

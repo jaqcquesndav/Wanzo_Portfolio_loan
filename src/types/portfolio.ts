@@ -4,7 +4,7 @@ import type { BankAccount } from './bankAccount';
 // Autres types importés à la demande
 
 export type PortfolioStatus = 'active' | 'inactive' | 'pending' | 'archived';
-export type PortfolioType = 'traditional' | 'investment' | 'leasing';
+export type PortfolioType = 'traditional';
 
 /**
  * Interface de base pour tous les types de portefeuilles
@@ -20,7 +20,6 @@ export interface Portfolio {
   target_sectors: string[];
   risk_profile: 'conservative' | 'moderate' | 'aggressive';
   products: FinancialProduct[]; // Maintenant obligatoire et non optionnel
-  investment_stage?: string;
   bank_accounts?: BankAccount[];
   manager?: {
     id: string;
