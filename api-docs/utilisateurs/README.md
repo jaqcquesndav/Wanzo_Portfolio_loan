@@ -7,36 +7,67 @@ Ce document décrit les endpoints pour la gestion des utilisateurs dans l'API Wa
 Les types principaux utilisés dans les API d'utilisateurs sont les suivants:
 
 ```typescript
-// Types de base pour les utilisateurs
-interface User {
+export interface UserSettings {
+  notifications?: {
+    email?: boolean;
+    sms?: boolean;
+    app?: boolean;
+  };
+  theme?: 'light' | 'dark' | 'system';
+  dashboard?: {
+    defaultView?: string;
+    widgets?: string[];
+  };
+}
+
+export type UserType = 'sme' | 'financial_institution';
+export type UserRole = 'Admin' | 'Portfolio_Manager' | 'Auditor' | 'User';
+export type IdType = 'passport' | 'national_id' | 'driver_license' | 'other';
+export type IdStatus = 'pending' | 'verified' | 'rejected';
+export type Language = 'fr' | 'en';
+
+// Utilisateur de base
+export interface User {
   id: string;
-  firstName: string;
-  lastName: string;
   email: string;
-  role: string;
-  department: string;
-  position: string;
+  emailVerified?: boolean;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;
   phone?: string;
-  profileImageUrl?: string;
-  status: 'active' | 'inactive' | 'pending';
-  lastLogin?: string;
-  created_at: string;
-  updated_at: string;
+  phoneVerified?: boolean;
+  address?: string;
+  idNumber?: string;
+  idType?: IdType;
+  idStatus?: IdStatus;
+  role?: UserRole;
+  birthdate?: string;
+  bio?: string;
+  userType?: UserType;
+  companyId?: string; 
+  financialInstitutionId?: string;
+  isCompanyOwner?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  settings?: UserSettings;
+  language?: Language;
+  permissions?: string[];
+  plan?: string;
+  tokenBalance?: number;
+  tokenTotal?: number;
 }
 
 // Détails complets d'un utilisateur
-interface UserDetails extends User {
-  permissions: string[];
+export interface UserDetails extends User {
   manager?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
     email: string;
   };
   directReports: Array<{
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
     position: string;
   }>;
   portfolioAssignments: Array<{
@@ -51,33 +82,8 @@ interface UserDetails extends User {
   }>;
 }
 
-// Utilisateur actuellement connecté
-interface CurrentUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  department: string;
-  position: string;
-  phone?: string;
-  profileImageUrl?: string;
-  permissions: string[];
-  preferences: {
-    theme: 'light' | 'dark' | 'system';
-    language: string;
-    notifications: {
-      email: boolean;
-      push: boolean;
-      desktop: boolean;
-    };
-    dashboardLayout?: Record<string, unknown>;
-  };
-  lastLogin?: string;
-}
-
 // Activité utilisateur
-interface UserActivity {
+export interface UserActivity {
   id: string;
   userId: string;
   userName: string;
@@ -91,18 +97,18 @@ interface UserActivity {
 }
 
 // Rôle utilisateur
-interface UserRole {
+export interface UserRole {
   id: string;
   name: string;
   description: string;
   permissions: string[];
   isSystem: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Permission
-interface Permission {
+export interface Permission {
   id: string;
   name: string;
   description: string;
@@ -119,7 +125,7 @@ Récupère la liste des utilisateurs avec pagination et filtrage.
 **Paramètres de requête** :
 - `page` (optionnel) : Numéro de la page
 - `limit` (optionnel) : Nombre d'utilisateurs par page
-- `role` (optionnel) : Filtre par rôle (ex: admin, manager, analyst)
+- `role` (optionnel) : Filtre par rôle (ex: Admin, Portfolio_Manager)
 - `status` (optionnel) : Filtre par statut (active, inactive, pending)
 - `department` (optionnel) : Filtre par département
 - `search` (optionnel) : Recherche textuelle (nom, prénom, email)
@@ -131,16 +137,16 @@ Récupère la liste des utilisateurs avec pagination et filtrage.
   "data": [
     {
       "id": "user123",
-      "firstName": "Jean",
-      "lastName": "Dupont",
       "email": "jean.dupont@exemple.com",
-      "role": "manager",
-      "department": "credit",
-      "position": "Responsable crédit",
+      "name": "Jean Dupont",
+      "givenName": "Jean",
+      "familyName": "Dupont",
+      "picture": "https://example.com/profiles/jean.jpg",
+      "phone": "+243810123456",
+      "role": "Portfolio_Manager",
       "status": "active",
-      "lastLogin": "2025-07-20T10:30:00.000Z",
-      "created_at": "2025-01-15T08:00:00.000Z",
-      "updated_at": "2025-07-20T10:30:00.000Z"
+      "createdAt": "2025-01-15T08:00:00.000Z",
+      "updatedAt": "2025-07-20T10:30:00.000Z"
     },
     // ... autres utilisateurs
   ],
@@ -167,27 +173,27 @@ Récupère les détails complets d'un utilisateur spécifique.
 ```json
 {
   "id": "user123",
-  "firstName": "Jean",
-  "lastName": "Dupont",
   "email": "jean.dupont@exemple.com",
-  "role": "manager",
-  "department": "credit",
-  "position": "Responsable crédit",
+  "name": "Jean Dupont",
+  "givenName": "Jean",
+  "familyName": "Dupont",
+  "picture": "https://example.com/profiles/jean.jpg",
   "phone": "+243810123456",
-  "profileImageUrl": "https://example.com/profiles/jean.jpg",
-  "status": "active",
+  "phoneVerified": true,
+  "address": "123 Rue de la Paix, Kinshasa",
+  "role": "Portfolio_Manager",
   "permissions": ["read:users", "write:portfolios", "read:reports"],
+  "language": "fr",
+  "userType": "financial_institution",
   "manager": {
     "id": "user456",
-    "firstName": "Marie",
-    "lastName": "Martin",
+    "name": "Marie Martin",
     "email": "marie.martin@exemple.com"
   },
   "directReports": [
     {
       "id": "user789",
-      "firstName": "Paul",
-      "lastName": "Petit",
+      "name": "Paul Petit",
       "position": "Analyste crédit"
     }
   ],
@@ -205,8 +211,8 @@ Récupère les détails complets d'un utilisateur spécifique.
       "details": "Connexion depuis 192.168.1.100"
     }
   ],
-  "created_at": "2025-01-15T08:00:00.000Z",
-  "updated_at": "2025-07-20T10:30:00.000Z"
+  "createdAt": "2025-01-15T08:00:00.000Z",
+  "updatedAt": "2025-07-20T10:30:00.000Z"
 }
 ```
 
@@ -220,15 +226,13 @@ Crée un nouvel utilisateur dans le système.
 
 ```json
 {
-  "firstName": "Thomas",
-  "lastName": "Dubois",
   "email": "thomas.dubois@exemple.com",
-  "role": "analyst",
-  "department": "risk",
-  "position": "Analyste de risque",
+  "name": "Thomas Dubois",
+  "givenName": "Thomas",
+  "familyName": "Dubois",
   "phone": "+243810789012",
-  "managerId": "user123",
-  "status": "active",
+  "role": "Auditor",
+  "userType": "financial_institution",
   "permissions": ["read:portfolios", "read:reports", "write:risk"],
   "sendInvitation": true
 }
@@ -239,17 +243,16 @@ Crée un nouvel utilisateur dans le système.
 ```json
 {
   "id": "user456",
-  "firstName": "Thomas",
-  "lastName": "Dubois",
   "email": "thomas.dubois@exemple.com",
-  "role": "analyst",
-  "department": "risk",
-  "position": "Analyste de risque",
+  "name": "Thomas Dubois",
+  "givenName": "Thomas",
+  "familyName": "Dubois",
   "phone": "+243810789012",
-  "status": "active",
+  "role": "Auditor",
+  "userType": "financial_institution",
   "invitationSent": true,
-  "created_at": "2025-07-24T15:30:00.000Z",
-  "updated_at": "2025-07-24T15:30:00.000Z"
+  "createdAt": "2025-07-24T15:30:00.000Z",
+  "updatedAt": "2025-07-24T15:30:00.000Z"
 }
 ```
 
@@ -266,10 +269,9 @@ Met à jour les informations d'un utilisateur existant.
 
 ```json
 {
-  "department": "compliance",
-  "position": "Responsable conformité",
-  "status": "active",
-  "permissions": ["read:portfolios", "read:reports", "write:compliance"]
+  "name": "Thomas Dubois-Martin",
+  "role": "Portfolio_Manager",
+  "permissions": ["read:portfolios", "write:portfolios", "read:reports"]
 }
 ```
 
@@ -278,16 +280,15 @@ Met à jour les informations d'un utilisateur existant.
 ```json
 {
   "id": "user456",
-  "firstName": "Thomas",
-  "lastName": "Dubois",
   "email": "thomas.dubois@exemple.com",
-  "role": "analyst",
-  "department": "compliance",
-  "position": "Responsable conformité",
+  "name": "Thomas Dubois-Martin",
+  "givenName": "Thomas",
+  "familyName": "Dubois-Martin",
   "phone": "+243810789012",
-  "status": "active",
-  "created_at": "2025-07-24T15:30:00.000Z",
-  "updated_at": "2025-07-24T16:45:00.000Z"
+  "role": "Portfolio_Manager",
+  "userType": "financial_institution",
+  "createdAt": "2025-07-24T15:30:00.000Z",
+  "updatedAt": "2025-07-24T16:45:00.000Z"
 }
 ```
 
@@ -345,7 +346,7 @@ Assigne un portefeuille à un utilisateur avec un rôle spécifique.
   "userId": "user456",
   "portfolioId": "portfolio123",
   "role": "manager",
-  "assigned_at": "2025-07-24T17:00:00.000Z"
+  "assignedAt": "2025-07-24T17:00:00.000Z"
 }
 ```
 
@@ -372,28 +373,28 @@ Récupère les informations sur l'utilisateur actuellement authentifié.
 ```json
 {
   "id": "user123",
-  "firstName": "Jean",
-  "lastName": "Dupont",
   "email": "jean.dupont@exemple.com",
-  "role": "manager",
-  "department": "credit",
-  "position": "Responsable crédit",
+  "name": "Jean Dupont",
+  "givenName": "Jean",
+  "familyName": "Dupont",
+  "picture": "https://example.com/profiles/jean.jpg",
   "phone": "+243810123456",
-  "profileImageUrl": "https://example.com/profiles/jean.jpg",
+  "role": "Portfolio_Manager",
   "permissions": ["read:users", "write:portfolios", "read:reports"],
-  "preferences": {
-    "theme": "dark",
-    "language": "fr",
+  "settings": {
     "notifications": {
       "email": true,
-      "push": true,
-      "desktop": false
+      "sms": true,
+      "app": false
     },
-    "dashboardLayout": {
+    "theme": "dark",
+    "dashboard": {
       "widgets": ["performance", "risk", "payments"]
     }
   },
-  "lastLogin": "2025-07-24T09:00:00.000Z"
+  "language": "fr",
+  "createdAt": "2025-01-15T08:00:00.000Z",
+  "updatedAt": "2025-07-24T09:00:00.000Z"
 }
 ```
 
@@ -409,9 +410,10 @@ Met à jour les préférences de l'utilisateur actuellement authentifié.
 {
   "theme": "light",
   "notifications": {
-    "desktop": true
+    "sms": true,
+    "app": true
   },
-  "dashboardLayout": {
+  "dashboard": {
     "widgets": ["performance", "risk", "payments", "alerts"]
   }
 }
@@ -422,19 +424,18 @@ Met à jour les préférences de l'utilisateur actuellement authentifié.
 ```json
 {
   "id": "user123",
-  "preferences": {
-    "theme": "light",
-    "language": "fr",
+  "settings": {
     "notifications": {
       "email": true,
-      "push": true,
-      "desktop": true
+      "sms": true,
+      "app": true
     },
-    "dashboardLayout": {
+    "theme": "light",
+    "dashboard": {
       "widgets": ["performance", "risk", "payments", "alerts"]
     }
   },
-  "updated_at": "2025-07-24T10:15:00.000Z"
+  "updatedAt": "2025-07-24T10:15:00.000Z"
 }
 ```
 
@@ -450,7 +451,7 @@ Récupère la liste des rôles disponibles dans le système.
 [
   {
     "id": "role1",
-    "name": "admin",
+    "name": "Admin",
     "description": "Administrateur système avec tous les droits",
     "permissions": ["*"],
     "isSystem": true,
@@ -459,7 +460,7 @@ Récupère la liste des rôles disponibles dans le système.
   },
   {
     "id": "role2",
-    "name": "manager",
+    "name": "Portfolio_Manager",
     "description": "Gestionnaire de portefeuilles",
     "permissions": ["read:users", "write:portfolios", "read:reports", "write:reports"],
     "isSystem": true,
@@ -545,404 +546,26 @@ Récupère les logs d'activité des utilisateurs avec filtrage.
   }
 }
 ```
-      }
-    ],
-    "lastLogin": "2025-07-23T09:15:00.000Z",
-    "created_at": "2025-01-15T08:00:00.000Z",
-    "updated_at": "2025-07-20T10:30:00.000Z"
+
+## Erreurs spécifiques
+
+| Code HTTP | Code d'erreur         | Description                                  |
+|-----------|------------------------|----------------------------------------------|
+| 400       | INVALID_USER_DATA      | Données utilisateur invalides                |
+| 404       | USER_NOT_FOUND         | Utilisateur non trouvé                       |
+| 409       | EMAIL_ALREADY_EXISTS   | Email déjà utilisé par un autre utilisateur  |
+| 403       | INSUFFICIENT_PERMISSIONS | Permissions insuffisantes                    |
   }
 }
 ```
 
-## Création d'un utilisateur
 
-Crée un nouvel utilisateur dans le système.
 
-**Endpoint** : `POST /portfolio_inst/users`
 
-**Corps de la requête** :
 
-```json
-{
-  "firstName": "Pierre",
-  "lastName": "Durand",
-  "email": "pierre.durand@exemple.com",
-  "role": "analyst",
-  "department": "risk",
-  "position": "Analyste risque",
-  "phone": "+243810987654",
-  "profileImageUrl": "https://example.com/profiles/pierre.jpg",
-  "managerId": "user123",
-  "status": "active",
-  "permissions": ["read:portfolios", "read:reports"],
-  "sendInvitation": true
-}
-```
 
-**Réponse réussie** (201 Created) :
 
-```json
-{
-  "success": true,
-  "data": {
-    "id": "user789",
-    "firstName": "Pierre",
-    "lastName": "Durand",
-    "email": "pierre.durand@exemple.com",
-    "role": "analyst",
-    "department": "risk",
-    "position": "Analyste risque",
-    "phone": "+243810987654",
-    "profileImageUrl": "https://example.com/profiles/pierre.jpg",
-    "status": "active",
-    "invitationSent": true,
-    "created_at": "2025-07-24T15:30:00.000Z",
-    "updated_at": "2025-07-24T15:30:00.000Z"
-  }
-}
-```
 
-## Mise à jour d'un utilisateur
-
-Met à jour les informations d'un utilisateur existant.
-
-**Endpoint** : `PUT /portfolio_inst/users/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
-
-**Corps de la requête** :
-
-```json
-{
-  "firstName": "Pierre",
-  "lastName": "Durand-Martin",
-  "email": "pierre.durand@exemple.com",
-  "role": "manager",
-  "department": "risk",
-  "position": "Responsable risque",
-  "phone": "+243810987654",
-  "profileImageUrl": "https://example.com/profiles/pierre_new.jpg",
-  "managerId": "user456",
-  "status": "active",
-  "permissions": ["read:portfolios", "write:portfolios", "read:reports", "write:reports"]
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "user789",
-    "firstName": "Pierre",
-    "lastName": "Durand-Martin",
-    "email": "pierre.durand@exemple.com",
-    "role": "manager",
-    "department": "risk",
-    "position": "Responsable risque",
-    "phone": "+243810987654",
-    "profileImageUrl": "https://example.com/profiles/pierre_new.jpg",
-    "status": "active",
-    "updated_at": "2025-07-24T16:15:00.000Z"
-  }
-}
-```
-
-## Suppression d'un utilisateur
-
-Supprime un utilisateur du système.
-
-**Endpoint** : `DELETE /portfolio_inst/users/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Utilisateur supprimé avec succès"
-  }
-}
-```
-
-## Réinitialisation du mot de passe
-
-Envoie un email de réinitialisation de mot de passe à l'utilisateur.
-
-**Endpoint** : `POST /portfolio_inst/users/{id}/reset-password`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Email de réinitialisation envoyé avec succès"
-  }
-}
-```
-
-## Attribution de portefeuille
-
-Assigne un portefeuille à un utilisateur avec un rôle spécifique.
-
-**Endpoint** : `POST /portfolio_inst/users/{userId}/portfolios`
-
-**Paramètres de chemin** :
-- `userId` : Identifiant unique de l'utilisateur
-
-**Corps de la requête** :
-
-```json
-{
-  "portfolioId": "portfolio123",
-  "role": "manager"
-}
-```
-
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "userId": "user789",
-    "portfolioId": "portfolio123",
-    "role": "manager",
-    "assigned_at": "2025-07-24T16:30:00.000Z"
-  }
-}
-```
-
-## Suppression d'attribution de portefeuille
-
-Supprime l'attribution d'un portefeuille à un utilisateur.
-
-**Endpoint** : `DELETE /portfolio_inst/users/{userId}/portfolios/{portfolioId}`
-
-**Paramètres de chemin** :
-- `userId` : Identifiant unique de l'utilisateur
-- `portfolioId` : Identifiant unique du portefeuille
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Attribution supprimée avec succès"
-  }
-}
-```
-
-## Profil utilisateur courant
-
-Récupère les informations du profil de l'utilisateur connecté.
-
-**Endpoint** : `GET /portfolio_inst/users/me`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "user123",
-    "firstName": "Jean",
-    "lastName": "Dupont",
-    "email": "jean.dupont@exemple.com",
-    "role": "manager",
-    "department": "credit",
-    "position": "Responsable crédit",
-    "phone": "+243810123456",
-    "profileImageUrl": "https://example.com/profiles/jean.jpg",
-    "permissions": ["read:users", "write:portfolios", "read:reports"],
-    "preferences": {
-      "theme": "dark",
-      "language": "fr",
-      "notifications": {
-        "email": true,
-        "push": true,
-        "desktop": false
-      },
-      "dashboardLayout": {
-        "widgets": ["recentActivity", "portfolioSummary", "riskAlerts"]
-      }
-    },
-    "lastLogin": "2025-07-23T09:15:00.000Z"
-  }
-}
-```
-
-## Mise à jour des préférences utilisateur
-
-Met à jour les préférences de l'utilisateur connecté.
-
-**Endpoint** : `PUT /portfolio_inst/users/me/preferences`
-
-**Corps de la requête** :
-
-```json
-{
-  "theme": "light",
-  "language": "fr",
-  "notifications": {
-    "email": true,
-    "push": false,
-    "desktop": true
-  },
-  "dashboardLayout": {
-    "widgets": ["portfolioSummary", "calendar", "messages"]
-  }
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "user123",
-    "preferences": {
-      "theme": "light",
-      "language": "fr",
-      "notifications": {
-        "email": true,
-        "push": false,
-        "desktop": true
-      },
-      "dashboardLayout": {
-        "widgets": ["portfolioSummary", "calendar", "messages"]
-      }
-    },
-    "updated_at": "2025-07-24T16:45:00.000Z"
-  }
-}
-```
-
-## Liste des rôles
-
-Récupère la liste des rôles disponibles dans le système.
-
-**Endpoint** : `GET /portfolio_inst/users/roles`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "role123",
-      "name": "admin",
-      "description": "Administrateur système",
-      "permissions": ["*"],
-      "isSystem": true,
-      "created_at": "2025-01-01T00:00:00.000Z",
-      "updated_at": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "id": "role456",
-      "name": "manager",
-      "description": "Gestionnaire de portefeuille",
-      "permissions": ["read:users", "read:portfolios", "write:portfolios", "read:reports"],
-      "isSystem": true,
-      "created_at": "2025-01-01T00:00:00.000Z",
-      "updated_at": "2025-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-## Liste des permissions
-
-Récupère la liste des permissions disponibles dans le système.
-
-**Endpoint** : `GET /portfolio_inst/users/permissions`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "perm123",
-      "name": "read:users",
-      "description": "Voir les utilisateurs",
-      "category": "users"
-    },
-    {
-      "id": "perm456",
-      "name": "write:users",
-      "description": "Créer/modifier les utilisateurs",
-      "category": "users"
-    }
-  ]
-}
-```
-
-## Activité des utilisateurs
-
-Récupère l'historique des activités des utilisateurs avec pagination et filtrage.
-
-**Endpoint** : `GET /portfolio_inst/users/activity`
-
-**Paramètres de requête** :
-- `page` (optionnel) : Numéro de la page (défaut : 1)
-- `limit` (optionnel) : Nombre d'activités par page (défaut : 10, max : 100)
-- `userId` (optionnel) : Filtre par identifiant d'utilisateur
-- `action` (optionnel) : Filtre par type d'action (login, logout, create, update, delete)
-- `startDate` (optionnel) : Filtre par date de début (format ISO)
-- `endDate` (optionnel) : Filtre par date de fin (format ISO)
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "act123",
-      "userId": "user123",
-      "userName": "Jean Dupont",
-      "action": "login",
-      "entity": "auth",
-      "details": "Connexion depuis 192.168.1.100",
-      "ip": "192.168.1.100",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "timestamp": "2025-07-24T09:00:00.000Z"
-    },
-    {
-      "id": "act456",
-      "userId": "user123",
-      "userName": "Jean Dupont",
-      "action": "create",
-      "entity": "portfolio",
-      "entityId": "portfolio789",
-      "details": "Création d'un nouveau portefeuille 'PME 2025'",
-      "ip": "192.168.1.100",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "timestamp": "2025-07-24T10:15:00.000Z"
-    }
-  ],
-  "meta": {
-    "total": 150,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 15
-  }
-}
-```
 
 ## Erreurs spécifiques
 

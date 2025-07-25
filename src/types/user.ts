@@ -35,6 +35,14 @@ export interface UserSettings {
   };
 }
 
+// Définition du type Permission
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+}
+
 export interface User {
   id: string;
   email: string;

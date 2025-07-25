@@ -1,41 +1,26 @@
 // src/services/api/shared/user.api.ts
 import { apiClient } from '../base.api';
 import { PaginatedResponse, SuccessResponse } from '../types';
-
-/**
- * Interface pour les données utilisateur
- */
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  department: string;
-  position: string;
-  phone?: string;
-  profileImageUrl?: string;
-  status: 'active' | 'inactive' | 'pending';
-  lastLogin?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { 
+  User, 
+  UserSettings, 
+  UserRole as UserRoleEnum, 
+  UserType, 
+  Permission 
+} from '../../../types/user';
 
 /**
  * Interface pour les détails utilisateur complets
  */
 export interface UserDetails extends User {
-  permissions: string[];
   manager?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
     email: string;
   };
   directReports: Array<{
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
     position: string;
   }>;
   portfolioAssignments: Array<{
@@ -48,33 +33,6 @@ export interface UserDetails extends User {
     timestamp: string;
     details?: string;
   }>;
-}
-
-/**
- * Interface pour le profil utilisateur courant
- */
-export interface CurrentUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  department: string;
-  position: string;
-  phone?: string;
-  profileImageUrl?: string;
-  permissions: string[];
-  preferences: {
-    theme: 'light' | 'dark' | 'system';
-    language: string;
-    notifications: {
-      email: boolean;
-      push: boolean;
-      desktop: boolean;
-    };
-    dashboardLayout?: Record<string, unknown>;
-  };
-  lastLogin?: string;
 }
 
 /**
@@ -96,24 +54,14 @@ export interface UserActivity {
 /**
  * Interface pour les rôles utilisateur
  */
-export interface UserRole {
+export interface UserRoleDetails {
   id: string;
   name: string;
   description: string;
   permissions: string[];
   isSystem: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-/**
- * Interface pour les permissions
- */
-export interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -124,8 +72,8 @@ export const userApi = {
    * Récupère tous les utilisateurs
    */
   getAllUsers: (filters?: {
-    role?: string;
-    status?: 'active' | 'inactive' | 'pending';
+    role?: UserRoleEnum;
+    status?: string;
     department?: string;
     search?: string;
     page?: number;
@@ -153,38 +101,24 @@ export const userApi = {
    * Crée un nouvel utilisateur
    */
   createUser: (user: {
-    firstName: string;
-    lastName: string;
     email: string;
-    role: string;
-    department: string;
-    position: string;
+    name?: string;
+    givenName?: string;
+    familyName?: string;
+    picture?: string;
     phone?: string;
-    profileImageUrl?: string;
-    managerId?: string;
-    status?: 'active' | 'inactive' | 'pending';
+    role?: UserRoleEnum;
+    userType?: UserType;
     permissions?: string[];
     sendInvitation?: boolean;
   }) => {
-    return apiClient.post<User & { invitationSent: boolean }>('/users', user);
+    return apiClient.post<User & { invitationSent?: boolean }>('/users', user);
   },
 
   /**
    * Met à jour un utilisateur
    */
-  updateUser: (id: string, updates: {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    role?: string;
-    department?: string;
-    position?: string;
-    phone?: string;
-    profileImageUrl?: string;
-    managerId?: string;
-    status?: 'active' | 'inactive' | 'pending';
-    permissions?: string[];
-  }) => {
+  updateUser: (id: string, updates: Partial<User>) => {
     return apiClient.put<User>(`/users/${id}`, updates);
   },
 
@@ -210,7 +144,7 @@ export const userApi = {
       userId: string;
       portfolioId: string;
       role: 'owner' | 'manager' | 'viewer';
-      assigned_at: string;
+      assignedAt: string;
     }>(`/users/${userId}/portfolios`, { portfolioId, role });
   },
 
@@ -225,34 +159,25 @@ export const userApi = {
    * Récupère le profil de l'utilisateur courant
    */
   getCurrentUser: () => {
-    return apiClient.get<CurrentUser>('/users/me');
+    return apiClient.get<User>('/users/me');
   },
 
   /**
    * Met à jour les préférences de l'utilisateur courant
    */
-  updateUserPreferences: (preferences: {
-    theme?: 'light' | 'dark' | 'system';
-    language?: string;
-    notifications?: {
-      email?: boolean;
-      push?: boolean;
-      desktop?: boolean;
-    };
-    dashboardLayout?: Record<string, unknown>;
-  }) => {
+  updateUserPreferences: (settings: Partial<UserSettings>) => {
     return apiClient.put<{
       id: string;
-      preferences: CurrentUser['preferences'];
-      updated_at: string;
-    }>('/users/me/preferences', preferences);
+      settings: UserSettings;
+      updatedAt: string;
+    }>('/users/me/preferences', { settings });
   },
 
   /**
    * Récupère les rôles disponibles
    */
   getRoles: () => {
-    return apiClient.get<UserRole[]>('/users/roles');
+    return apiClient.get<UserRoleDetails[]>('/users/roles');
   },
 
   /**
