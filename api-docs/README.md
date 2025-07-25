@@ -4,11 +4,11 @@ Cette documentation est destinée aux développeurs backend qui utilisent NestJS
 
 ## Structure de la documentation
 
-La documentation des APIs est organisée selon la structure modulaire de l'application. Chaque type de portefeuille a sa propre section avec des sous-sections pour chaque fonctionnalité.
+La documentation des APIs est organisée selon la structure modulaire de l'application.
 
 ### Portefeuilles
 
-La plateforme prend en charge trois types de portefeuilles:
+La plateforme prend en charge un type de portefeuille:
 
 1. **Portefeuille Traditionnel** (`/api-docs/portefeuilles/traditionnel/`)
    - Demandes de financement
@@ -17,22 +17,6 @@ La plateforme prend en charge trois types de portefeuilles:
    - Remboursements
    - Garanties
    - Produits financiers
-   - Paramètres
-
-2. **Portefeuille de Leasing** (`/api-docs/portefeuilles/leasing/`)
-   - Demandes de leasing
-   - Contrats de leasing
-   - Incidents
-   - Maintenance
-   - Paiements
-   - Équipements
-   - Paramètres
-
-3. **Portefeuille d'Investissement** (`/api-docs/portefeuilles/investissement/`)
-   - Marché
-   - Actifs
-   - Souscriptions
-   - Valorisation
    - Paramètres
 
 ### Autres modules

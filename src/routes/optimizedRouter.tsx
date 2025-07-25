@@ -9,38 +9,23 @@ export function createOptimizedRouter() {
     // Redirections pour accès direct aux menus globaux
     {
       path: '/settings',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/settings`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/settings" replace />
     },
     {
       path: '/users',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/users`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/users" replace />
     },
     {
       path: '/institution',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/institution`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/institution" replace />
     },
     {
       path: '/docs',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/docs`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/docs" replace />
     },
     {
       path: '/help',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/help`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/help" replace />
     },
     {
       path: '/',
@@ -57,26 +42,17 @@ export function createOptimizedRouter() {
     // Redirection dynamique pour /dashboard
     {
       path: '/dashboard',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}`;
-      })()} replace />
+      element: <Navigate to="/app/traditional" replace />
     },
     // Route partagée pour la prospection
     {
       path: '/prospection',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/prospection`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/prospection" replace />
     },
     // Route partagée pour la centrale de risque
     {
       path: '/central-risque',
-      element: <Navigate to={(() => {
-        const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-        return `/app/${portfolioType}/central-risque`;
-      })()} replace />
+      element: <Navigate to="/app/traditional/central-risque" replace />
     },
     // Routes principales de l'application
     {
@@ -104,26 +80,6 @@ export function createOptimizedRouter() {
         { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <components.RepaymentDetails /> },
         { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
-        // Investment
-        { path: 'investment', element: <components.InvestmentPortfolio /> },
-        { path: 'investment/:id', element: <components.InvestmentPortfolioDetails />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'assets/:assetId', element: <components.InvestmentAssetDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'subscriptions/:subscriptionId', element: <components.InvestmentSubscriptionDetail /> },
-        { path: 'valuations/:valuationId', element: <components.InvestmentValuationDetail /> },
-        { path: 'reporting/:reportId', element: <components.InvestmentReportingDetail /> },
-        // Leasing
-        { path: 'leasing', element: <components.LeasingPortfolio /> },
-        { path: 'leasing/:id', element: <components.LeasingPortfolioDetails />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'leasing/:id/equipments/:equipmentId', element: <components.LeasingEquipmentDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'leasing/:id/contracts/:contractId', element: <components.LeasingContractDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'leasing/:id/incidents/:incidentId', element: <components.LeasingIncidentDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'leasing/:id/maintenance/:maintenanceId', element: <components.LeasingMaintenanceDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'payments/:paymentId', element: <components.LeasingPaymentDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'reporting/:reportId', element: <components.LeasingReportingDetail />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'reservations', element: <components.LeasingReservationsPage /> },
-        { path: 'maintenance', element: <components.LeasingMaintenancePage /> },
-        { path: 'incidents', element: <components.LeasingIncidentsPage /> },
-        { path: 'movements', element: <components.LeasingMovementsPage /> },
         // Settings
         { path: 'settings', element: <components.Settings /> },
         // Administration
@@ -138,9 +94,7 @@ export function createOptimizedRouter() {
         { path: 'docs', element: <components.Documentation /> },
         { path: 'help', element: <components.Help /> },
         // 404 Not Found pour les détails de portefeuille
-        { path: 'traditional/*', element: <components.PortfolioNotFound /> },
-        { path: 'investment/*', element: <components.PortfolioNotFound /> },
-        { path: 'leasing/*', element: <components.PortfolioNotFound /> }
+        { path: 'traditional/*', element: <components.PortfolioNotFound /> }
       ]
     }
   ]);

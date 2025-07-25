@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { portfolioStorageService } from '../services/storage/localStorage';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
-export type PortfolioType = 'traditional' | 'leasing' | 'investment';
+export type PortfolioType = 'traditional';
 
 export function usePortfolios(type: PortfolioType) {
   const [portfolios, setPortfolios] = useState<AnyPortfolio[]>([]);

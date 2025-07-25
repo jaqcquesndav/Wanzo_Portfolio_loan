@@ -1,7 +1,5 @@
 // src/utils/validation.ts
 import { TraditionalPortfolio } from '../types/traditional-portfolio';
-import { LeasingPortfolio } from '../types/leasing';
-import { InvestmentPortfolio } from '../types/investment-portfolio';
 import { PortfolioType } from '../types/portfolio';
 
 /**
@@ -40,18 +38,12 @@ export function validateTraditionalPortfolio(portfolio: Partial<TraditionalPortf
  * @returns Objet contenant le résultat de la validation et les erreurs éventuelles
  */
 export function validatePortfolio(
-  portfolio: Partial<TraditionalPortfolio | LeasingPortfolio | InvestmentPortfolio>, 
+  portfolio: Partial<TraditionalPortfolio>, 
   type: PortfolioType
 ) {
   switch (type) {
     case 'traditional':
       return validateTraditionalPortfolio(portfolio as Partial<TraditionalPortfolio>);
-    case 'leasing':
-      // Implémentation future
-      return { isValid: true, errors: {} };
-    case 'investment':
-      // Implémentation future
-      return { isValid: true, errors: {} };
     default:
       return { isValid: false, errors: { type: 'Type de portefeuille non valide' } };
   }

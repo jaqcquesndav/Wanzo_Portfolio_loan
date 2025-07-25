@@ -8,13 +8,13 @@ import type { PaymentOrderData } from '../components/payment/PaymentOrderModal';
  * Type d'action qui déclenche un ordre de paiement
  */
 export type PaymentTriggerAction = 
-  | 'buy_security'  // Achat de valeurs mobilières (marché)
   | 'validate_funding'  // Validation de financement (portefeuille traditionnel)
-  | 'approve_leasing'  // Approbation de demande de leasing
-  | 'order_equipment'  // Commander l'équipement pour un contrat de leasing
-  | 'equipment_maintenance'  // Maintenance d'équipement
-  | 'equipment_incident'  // Incident d'équipement
-  | 'payment_schedule';  // Échéancier de paiement
+  | 'payment_schedule'  // Échéancier de paiement
+  | 'buy_security'      // Gardé pour compatibilité avec le code existant
+  | 'approve_leasing'   // Gardé pour compatibilité avec le code existant
+  | 'order_equipment'   // Gardé pour compatibilité avec le code existant
+  | 'equipment_maintenance' // Gardé pour compatibilité avec le code existant
+  | 'equipment_incident';   // Gardé pour compatibilité avec le code existant
 
 // Interface pour les informations supplémentaires d'investissement
 export interface InvestmentAdditionalInfo {
@@ -56,21 +56,19 @@ export const openPaymentOrder = (
   context: PaymentTriggerContext,
   showPaymentOrderModal: (data: PaymentOrderData, portfolioType: PortfolioType) => void
 ) => {
-  // Déterminer le type de portefeuille en fonction de l'action
-  let portfolioType: PortfolioType = 'traditional';
+  // Nous ne supportons maintenant que le type de portefeuille traditionnel
+  const portfolioType: PortfolioType = 'traditional';
   
+  // Pour la compatibilité avec le code existant, nous conservons la structure du switch
+  // mais toutes les actions sont maintenant traitées comme des actions de portefeuille traditionnel
   switch(context.action) {
     case 'buy_security':
-      portfolioType = 'investment';
-      break;
     case 'approve_leasing':
     case 'equipment_maintenance':
     case 'equipment_incident':
-      portfolioType = 'leasing';
-      break;
     case 'validate_funding':
     default:
-      portfolioType = 'traditional';
+      // Tout est maintenant traité comme un portefeuille traditionnel
       break;
   }
   
@@ -91,40 +89,23 @@ export const openPaymentOrder = (
   // Compléter les données additionnelles selon le type d'action
   switch(context.action) {
     case 'buy_security':
-      additionalData.investmentType = 'valeur_mobilière';
-      additionalData.securityId = context.itemId;
-      if (context.additionalInfo && 'securityType' in context.additionalInfo) {
-        const investInfo = context.additionalInfo as InvestmentAdditionalInfo;
-        additionalData.securityType = investInfo.securityType;
-        additionalData.quantity = investInfo.quantity;
-        additionalData.unitPrice = investInfo.unitPrice;
-      }
+      // Converti en type traditionnel pour compatibilité
+      additionalData.fundingType = 'octroi_crédit';
       break;
       
     case 'approve_leasing':
-      additionalData.leasingType = 'achat_équipement';
-      additionalData.contractId = context.itemId;
-      if (context.additionalInfo && 'equipmentId' in context.additionalInfo) {
-        const leasingInfo = context.additionalInfo as LeasingAdditionalInfo;
-        additionalData.equipmentId = leasingInfo.equipmentId;
-        additionalData.equipmentName = leasingInfo.equipmentName;
-        additionalData.equipmentCategory = leasingInfo.equipmentCategory;
-        additionalData.supplier = leasingInfo.supplier;
-      }
+      // Converti en type traditionnel pour compatibilité
+      additionalData.fundingType = 'octroi_crédit';
       break;
       
     case 'equipment_maintenance':
-      additionalData.leasingType = 'maintenance';
-      additionalData.contractId = context.additionalInfo && 'contractId' in context.additionalInfo 
-        ? (context.additionalInfo as LeasingAdditionalInfo).contractId || context.itemId
-        : context.itemId;
+      // Converti en type traditionnel pour compatibilité
+      additionalData.fundingType = 'octroi_crédit';
       break;
       
     case 'equipment_incident':
-      additionalData.leasingType = 'autres';
-      additionalData.contractId = context.additionalInfo && 'contractId' in context.additionalInfo 
-        ? (context.additionalInfo as LeasingAdditionalInfo).contractId || context.itemId
-        : context.itemId;
+      // Converti en type traditionnel pour compatibilité
+      additionalData.fundingType = 'octroi_crédit';
       break;
       
     case 'validate_funding':
@@ -133,34 +114,34 @@ export const openPaymentOrder = (
   }
   
   // Créer l'ordre de paiement avec les données du payment order
-  const paymentOrder = createPaymentOrderFromDisbursement(disbursement, portfolioType, additionalData);
+  // Cast portfolioType en 'traditional' pour correspondre au type attendu
+  const paymentOrder = createPaymentOrderFromDisbursement(disbursement, 'traditional', additionalData);
   
   // Convertir en PaymentOrderData pour le modal
   const paymentOrderData: PaymentOrderData = {
     id: paymentOrder.id,
     orderNumber: `ORD-${Date.now()}`,
-    portfolioManager: {
-      name: "Gestionnaire de portefeuille", // À remplacer par des données réelles
-      accountNumber: "123456789",
-      portfolioType: portfolioType,
-      bankName: "Banque Principale"
-    },
+    date: new Date().toISOString(),
+    amount: disbursement.amount,
+    currency: 'XOF',
     beneficiary: {
-      companyName: disbursement.company,
-      bank: "À spécifier",
-      branch: "",
+      name: disbursement.company,
       accountNumber: "À spécifier",
+      bankName: "À spécifier",
       swiftCode: ""
     },
-    amount: disbursement.amount,
     reference: paymentOrder.reference,
-    paymentReason: context.action === 'buy_security' ? 
-      `Achat de valeurs mobilières: ${disbursement.product || ''}` : 
+    description: context.action === 'buy_security' ? 
+        `Achat de valeurs mobilières: ${disbursement.product || ''}` : 
       context.action === 'approve_leasing' ?
-      `Approbation de leasing: ${disbursement.product || ''}` :
-      `Paiement: ${disbursement.product || ''}`,
-    createdAt: new Date(),
-    status: 'pending'
+        `Approbation de leasing: ${disbursement.product || ''}` :
+        `Paiement: ${disbursement.product || ''}`,
+    portfolioId: context.portfolioId,
+    portfolioName: context.portfolioName || 'Portefeuille',
+    status: 'pending',
+    createdBy: 'Utilisateur actuel',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   
   // Afficher le modal d'ordre de paiement avec les données préparées

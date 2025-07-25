@@ -4,27 +4,23 @@ Ce document sert de point d'entrée pour toute la documentation des API liées a
 
 ## Types de Portefeuilles
 
-L'API Wanzo Portfolio Institution prend en charge trois types principaux de portefeuilles:
+L'API Wanzo Portfolio Institution prend en charge un type principal de portefeuille:
 
 1. **[Portefeuilles Traditionnels](./traditionnel/README.md)** - Pour la gestion des portefeuilles de crédit classiques
-2. **[Portefeuilles d'Investissement](./investissement/README.md)** - Pour la gestion des portefeuilles d'actifs financiers et d'investissement
-3. **[Portefeuilles de Leasing](./leasing/README.md)** - Pour la gestion des portefeuilles immobiliers et de leasing
 
 ## Structure Commune
 
-Chaque type de portefeuille partage une structure d'API similaire pour les opérations de base:
+Le portefeuille partage une structure d'API pour les opérations de base:
 
-- **Création de portefeuille** - `POST /portfolio_inst/portfolios/{type}`
-- **Récupération d'un portefeuille** - `GET /portfolio_inst/portfolios/{type}/{id}`
-- **Mise à jour d'un portefeuille** - `PUT /portfolio_inst/portfolios/{type}/{id}`
-- **Suppression d'un portefeuille** - `DELETE /portfolio_inst/portfolios/{type}/{id}`
-- **Liste des portefeuilles** - `GET /portfolio_inst/portfolios/{type}`
+- **Création de portefeuille** - `POST /portfolio_inst/portfolios/traditional`
+- **Récupération d'un portefeuille** - `GET /portfolio_inst/portfolios/traditional/{id}`
+- **Mise à jour d'un portefeuille** - `PUT /portfolio_inst/portfolios/traditional/{id}`
+- **Suppression d'un portefeuille** - `DELETE /portfolio_inst/portfolios/traditional/{id}`
+- **Liste des portefeuilles** - `GET /portfolio_inst/portfolios/traditional`
 
-Où `{type}` peut être `traditional`, `investment` ou `leasing`.
+## Spécificités du Portefeuille Traditionnel
 
-## Spécificités par Type
-
-Chaque type de portefeuille dispose de modules spécifiques adaptés à sa nature:
+Le portefeuille traditionnel dispose de modules spécifiques adaptés à sa nature:
 
 ### Portefeuille Traditionnel
 - [Demandes de financement](./traditionnel/demandes/README.md)
@@ -35,22 +31,6 @@ Chaque type de portefeuille dispose de modules spécifiques adaptés à sa natur
 - [Produits financiers](./traditionnel/produits/README.md)
 - [Paramètres](./traditionnel/parametres/README.md)
 
-### Portefeuille de Leasing
-- [Demandes de leasing](./leasing/demandes/README.md)
-- [Contrats de leasing](./leasing/contrats/README.md)
-- [Incidents](./leasing/incidents/README.md)
-- [Maintenance](./leasing/maintenance/README.md)
-- [Paiements](./leasing/paiements/README.md)
-- [Équipements](./leasing/equipements/README.md)
-- [Paramètres](./leasing/parametres/README.md)
-
-### Portefeuille d'Investissement
-- [Marché](./investissement/marche/README.md)
-- [Actifs](./investissement/actifs/README.md)
-- [Souscriptions](./investissement/souscriptions/README.md)
-- [Valorisation](./investissement/valorisation/README.md)
-- [Paramètres](./investissement/parametres/README.md)
-
 ## Modèles de Données Communs
 
 ### Portefeuille
@@ -58,7 +38,7 @@ Chaque type de portefeuille dispose de modules spécifiques adaptés à sa natur
 |-------|------|-------------|
 | id | string | Identifiant unique du portefeuille |
 | name | string | Nom du portefeuille |
-| type | string | Type de portefeuille ('traditional', 'leasing', 'investment') |
+| type | string | Type de portefeuille ('traditional') |
 | status | string | Statut du portefeuille ('active', 'inactive', 'archived') |
 | description | string | Description détaillée |
 | currency | string | Devise principale (code ISO) |
