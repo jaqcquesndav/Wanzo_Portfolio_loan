@@ -15,14 +15,41 @@ Le dashboard pour les portefeuilles d'investissement se concentre sur les métri
 Les types de données principaux utilisés dans les API sont les suivants:
 
 ```typescript
-type PortfolioType = 'traditional' | 'investment' | 'leasing';
-type PortfolioStatus = 'active' | 'inactive' | 'pending' | 'archived';
+interface InvestmentDashboardMetrics {
+  assets: InvestmentAssetMetrics;
+  performance: BasePerformanceMetrics;
+  risk: InvestmentRiskMetrics;
+  clients: BaseClientMetrics;
+  benchmarkComparison?: {
+    ytd: number;
+    oneYear: number;
+    threeYears: number;
+    fiveYears: number;
+  };
+}
+
+interface InvestmentAssetMetrics extends BaseAssetMetrics {
+  distribution: {
+    equities: number;
+    bonds: number;
+    alternatives: number;
+    cash: number;
+  };
+  liquidity: number;
+}
+
+interface InvestmentRiskMetrics extends BaseRiskMetrics {
+  volatility: number;
+  var95: number;
+  beta: number;
+  maxDrawdown: number;
+}
 
 interface InvestmentPortfolio {
   id: string;
   name: string;
-  type: 'investment'; // Type spécifique 'investment'
-  status: PortfolioStatus;
+  type: 'investment';
+  status: 'active' | 'inactive' | 'pending' | 'archived';
   target_amount: number;
   target_return: number;
   target_sectors: string[];
@@ -52,19 +79,6 @@ interface InvestmentPortfolio {
     avg_ticket?: number;
     nb_companies?: number;
   };
-}
-
-interface InvestmentAsset {
-  id: string;
-  name: string;
-  companyId: string;
-  type: 'share' | 'bond' | 'other';
-  acquiredDate: string;
-  initialValue: number;
-  currentValue?: number;
-  status: 'active' | 'exited' | 'written-off';
-  created_at: string;
-  updated_at: string;
 }
 ```
 
@@ -238,38 +252,7 @@ Récupère les données de performance pour un portefeuille d'investissement sp�
 #### Requête
 
 ```
-GET /portfolios/investment/:id/performance
-```
-
-#### Paramètres de requête
-
-| Paramètre | Type   | Description | Requis |
-|-----------|--------|-------------|--------|
-| period    | string | Période d'analyse ('ytd', '1m', '3m', '6m', '1y', '3y', '5y', 'si') | Non |
-
-#### Réponse
-
-```json
-{
-  "period": "1y",
-  "return_value": 12.5,
-  "benchmark_return": 10.2,
-  "risk_metrics": {
-    "volatility": 0.12,
-    "sharpe_ratio": 1.2,
-    "max_drawdown": -0.15
-  }
-}
-```
-
-### Récupération des actifs d'un portefeuille
-
-Récupère la liste des actifs appartenant à un portefeuille d'investissement.
-
-#### Requête
-
-```
-GET /portfolios/investment/assets
+GET /dashboard/portfolio/{portfolioId}/performance?type=investment&period={period}
 ```
 
 #### Paramètres de requête
@@ -277,27 +260,90 @@ GET /portfolios/investment/assets
 | Paramètre   | Type   | Description | Requis |
 |-------------|--------|-------------|--------|
 | portfolioId | string | ID du portefeuille | Oui |
-| type        | string | Type d'actif ('share', 'bond', 'other') | Non |
-| status      | string | Statut ('active', 'exited', 'written-off') | Non |
+| type        | string | Type de portefeuille (doit être 'investment' ici) | Oui |
+| period      | string | Période d'analyse ('daily', 'weekly', 'monthly', 'quarterly', 'yearly') | Oui |
 
 #### Réponse
 
 ```json
-[
-  {
-    "id": "asset-789",
-    "name": "Actions TechStart SA",
-    "companyId": "comp-456",
-    "type": "share",
-    "acquiredDate": "2025-02-10T00:00:00Z",
-    "initialValue": 1000000,
-    "currentValue": 1200000,
-    "status": "active",
-    "created_at": "2025-02-10T10:30:00Z",
-    "updated_at": "2025-07-20T14:15:30Z"
+{
+  "id": "port-123",
+  "name": "Portefeuille Tech",
+  "type": "investment",
+  "period": "monthly",
+  "data": [
+    { "date": "2025-01-01", "value": 1150000 },
+    { "date": "2025-02-01", "value": 1180000 },
+    { "date": "2025-03-01", "value": 1210000 },
+    { "date": "2025-04-01", "value": 1240000 },
+    { "date": "2025-05-01", "value": 1260000 },
+    { "date": "2025-06-01", "value": 1300000 }
+  ],
+  "metrics": {
+    "totalReturn": 13.2,
+    "annualizedReturn": 24.5,
+    "volatility": 8.5,
+    "sharpeRatio": 1.2,
+    "maxDrawdown": 3.2
   }
-]
+}
 ```
+
+### Récupération des tendances de portefeuille
+
+Récupère les données de tendance pour tous les portefeuilles, y compris le type investment.
+
+#### Requête
+
+```
+GET /dashboard/trends?period={period}
+```
+
+#### Paramètres de requête
+
+| Paramètre | Type   | Description | Requis |
+|-----------|--------|-------------|--------|
+| period    | string | Période d'analyse ('daily', 'weekly', 'monthly', 'quarterly', 'yearly') | Oui |
+
+#### Réponse
+
+```json
+{
+  "period": "monthly",
+  "trends": {
+    "traditional": {
+      "growth": 4.2,
+      "data": [/* ... */]
+    },
+    "investment": {
+      "growth": 7.5,
+      "data": [
+        { "date": "2025-01-01", "value": 3250000 },
+        { "date": "2025-02-01", "value": 3320000 },
+        { "date": "2025-03-01", "value": 3370000 },
+        { "date": "2025-04-01", "value": 3430000 },
+        { "date": "2025-05-01", "value": 3470000 },
+        { "date": "2025-06-01", "value": 3500000 }
+      ]
+    },
+    "leasing": {
+      "growth": 3.5,
+      "data": [/* ... */]
+    }
+  }
+}
+```
+
+## Composants UI associés
+
+Les principaux composants UI utilisés pour afficher les données du dashboard d'investissement sont :
+
+- `PortfolioPerformanceChart` - Affiche la performance des portefeuilles d'investissement
+- `AssetAllocationPieChart` - Montre la répartition des actifs par type
+- `VolatilityChart` - Montre l'évolution de la volatilité sur une période
+- `BenchmarkComparisonChart` - Compare la performance avec les indices de référence
+
+Ces composants utilisent les données fournies par les endpoints API décrits ci-dessus.
 
 ## Composants UI associés
 

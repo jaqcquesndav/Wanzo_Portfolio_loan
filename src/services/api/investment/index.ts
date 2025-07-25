@@ -8,6 +8,7 @@
  * - subscription: Gestion des souscriptions
  * - valuation: Gestion des évaluations
  * - portfolioSettings: Gestion des paramètres du portefeuille
+ * - market: Gestion des titres du marché
  * - dataService: Service de données local (fallback)
  */
 
@@ -15,13 +16,8 @@ import { portfolioApi } from './portfolio.api';
 import { assetApi } from './asset.api';
 import { subscriptionApi } from './subscription.api';
 import { valuationApi } from './valuation.api';
-// Créer une API locale pour les paramètres de portefeuille
-const portfolioSettingsApi = {
-  // Ajouter ici les méthodes nécessaires
-  getPortfolioSettings: async () => ({}),
-  updatePortfolioSettings: async () => ({}),
-  // ... autres méthodes
-};
+import { marketApi } from './market.api';
+import { portfolioSettingsApi } from './portfolio-settings.api';
 import { investmentDataService } from './dataService';
 
 // Initialise les données mock locales si nécessaire (pour le développement)
@@ -33,6 +29,7 @@ export const investmentApi = {
   subscriptions: subscriptionApi,
   valuations: valuationApi,
   portfolioSettings: portfolioSettingsApi,
+  market: marketApi,
   dataService: investmentDataService
 };
 
@@ -42,5 +39,6 @@ export {
   subscriptionApi,
   valuationApi,
   portfolioSettingsApi,
+  marketApi,
   investmentDataService
 };

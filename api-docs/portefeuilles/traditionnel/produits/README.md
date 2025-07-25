@@ -1,359 +1,248 @@
-# API des Produits Financiers
+# Produits Financiers - Documentation Technique
 
-Cette API permet de gérer les produits financiers dans le portefeuille traditionnel.
+Ce document détaille le système de produits financiers utilisé dans le module de portefeuille traditionnel.
 
-## Points d'accès
+## 1. Aperçu du Système de Produits Financiers
 
-### Obtenir tous les produits
-```
-GET /api/portfolio/traditional/products
-```
+Le module de produits financiers permet aux institutions de définir, configurer et gérer l'ensemble des produits financiers proposés dans leurs portefeuilles traditionnels. Ces produits constituent la base des services offerts aux clients et déterminent les paramètres des contrats financiers.
 
-#### Paramètres de requête
-| Paramètre | Type | Description |
-|-----------|------|-------------|
-| page | number | Numéro de page (par défaut: 1) |
-| limit | number | Nombre d'éléments par page (par défaut: 10) |
-| search | string | Terme de recherche (optionnel) |
-| status | string | Filtrer par statut (optionnel) |
-| type | string | Filtrer par type de produit (optionnel) |
-| category | string | Filtrer par catégorie (optionnel) |
-| sortBy | string | Champ pour le tri (par défaut: 'createdAt') |
-| sortOrder | string | Ordre de tri ('asc' ou 'desc', par défaut: 'desc') |
+## 2. Structure des Données
 
-#### Réponse
-```json
-{
-  "success": true,
-  "data": {
-    "products": [
-      {
-        "id": "prod-123",
-        "name": "Prêt Express",
-        "type": "LOAN",
-        "category": "SHORT_TERM",
-        "interestRate": 5.5,
-        "minAmount": 1000,
-        "maxAmount": 50000,
-        "minTerm": 3,
-        "maxTerm": 36,
-        "currency": "XOF",
-        "status": "ACTIVE",
-        "description": "Prêt à court terme pour les besoins urgents",
-        "requirements": ["Pièce d'identité", "Justificatif de revenus"],
-        "createdAt": "2023-03-15T10:30:00Z",
-        "updatedAt": "2023-04-20T14:15:00Z"
-      },
-      // ...autres produits
-    ],
-    "pagination": {
-      "total": 45,
-      "page": 1,
-      "limit": 10,
-      "pages": 5
-    }
-  }
+### 2.1 Produit Financier
+
+La structure principale est l'interface `FinancialProduct` :
+
+```typescript
+interface FinancialProduct {
+  id: string;
+  name: string;
+  type: 'credit' | 'savings' | 'investment';
+  description: string;
+  minAmount: number;
+  maxAmount: number;
+  duration: {
+    min: number;
+    max: number;
+  };
+  interestRate: {
+    type: 'fixed' | 'variable';
+    value?: number;
+    min?: number;
+    max?: number;
+  };
+  requirements: string[];
+  acceptedGuarantees?: string[]; // Types de garanties acceptées pour ce produit
+  isPublic: boolean;
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
 }
 ```
 
-### Obtenir un produit par ID
-```
-GET /api/portfolio/traditional/products/:id
+### 2.2 Types de Produits
+
+Le système prend en charge trois types principaux de produits :
+
+1. **Crédit** - Prêts et avances de fonds
+   - Crédits commerciaux
+   - Crédits d'investissement
+   - Lignes de crédit
+   - Microcrédits
+   - etc.
+
+2. **Épargne** - Produits de dépôt et d'épargne
+   - Comptes d'épargne
+   - Dépôts à terme
+   - Plans d'épargne programmée
+   - etc.
+
+3. **Investissement** - Produits d'investissement
+   - Fonds communs de placement
+   - Obligations
+   - Actions
+   - etc.
+
+### 2.3 Configuration des Taux d'Intérêt
+
+Les taux d'intérêt peuvent être configurés de deux manières :
+
+1. **Taux fixe** - Un taux unique défini pour toute la durée du produit
+   ```json
+   "interestRate": {
+     "type": "fixed",
+     "value": 12.5
+   }
+   ```
+
+2. **Taux variable** - Une plage de taux avec minimum et maximum
+   ```json
+   "interestRate": {
+     "type": "variable",
+     "min": 8.0,
+     "max": 15.0
+   }
+   ```
+
+## 3. Gestion des Produits
+
+### 3.1 Création d'un Produit
+
+La création d'un produit implique la définition de ses paramètres de base :
+- Nom et description
+- Type de produit
+- Limites de montant
+- Durée minimale et maximale
+- Configuration du taux d'intérêt
+- Exigences et garanties acceptées
+
+### 3.2 Activation/Désactivation
+
+Les produits peuvent être activés ou désactivés :
+- Les produits actifs sont disponibles pour les nouvelles demandes
+- Les produits inactifs ne sont plus proposés, mais les contrats existants restent valides
+
+### 3.3 Visibilité
+
+La visibilité des produits peut être configurée :
+- Produits publics : visibles par tous les clients
+- Produits non-publics : réservés à certains clients ou utilisés uniquement en interne
+
+## 4. API Services
+
+Le module expose plusieurs services API pour gérer les produits financiers :
+
+```typescript
+// API pour les produits financiers
+export const financialProductApi = {
+  getAllProducts: async (filters?: {
+    type?: 'credit' | 'savings' | 'investment';
+    status?: 'active' | 'inactive';
+    isPublic?: boolean;
+  }) => { /* ... */ },
+  
+  getProductById: async (productId: string) => { /* ... */ },
+  
+  createProduct: async (data: Omit<FinancialProduct, 'id' | 'created_at' | 'updated_at'>) => { /* ... */ },
+  
+  updateProduct: async (productId: string, data: Partial<FinancialProduct>) => { /* ... */ },
+  
+  activateProduct: async (productId: string) => { /* ... */ },
+  
+  deactivateProduct: async (productId: string) => { /* ... */ }
+};
 ```
 
-#### Paramètres de chemin
-| Paramètre | Type | Description |
-|-----------|------|-------------|
-| id | string | Identifiant unique du produit |
+## 5. Interfaces API REST
 
-#### Réponse
+### 5.1 Liste des Produits
+
+**Endpoint** : `GET /api/portfolio/traditional/products`
+
+**Paramètres de requête** :
+- `type` (optionnel) : Filtre par type de produit
+- `status` (optionnel) : Filtre par statut
+- `isPublic` (optionnel) : Filtre par visibilité
+- etc.
+
+### 5.2 Création d'un Produit
+
+**Endpoint** : `POST /api/portfolio/traditional/products`
+
+**Corps de la requête** :
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "prod-123",
-    "name": "Prêt Express",
-    "type": "LOAN",
-    "category": "SHORT_TERM",
-    "interestRate": 5.5,
-    "minAmount": 1000,
-    "maxAmount": 50000,
-    "minTerm": 3,
-    "maxTerm": 36,
-    "currency": "XOF",
-    "status": "ACTIVE",
-    "description": "Prêt à court terme pour les besoins urgents",
-    "requirements": ["Pièce d'identité", "Justificatif de revenus"],
-    "createdAt": "2023-03-15T10:30:00Z",
-    "updatedAt": "2023-04-20T14:15:00Z",
-    "fees": [
-      {
-        "id": "fee-001",
-        "name": "Frais de dossier",
-        "type": "FIXED",
-        "amount": 5000,
-        "currency": "XOF"
-      },
-      {
-        "id": "fee-002",
-        "name": "Frais d'assurance",
-        "type": "PERCENTAGE",
-        "percentage": 1.2
-      }
-    ],
-    "eligibilityCriteria": [
-      {
-        "id": "crit-001",
-        "type": "MIN_INCOME",
-        "value": 150000,
-        "currency": "XOF"
-      },
-      {
-        "id": "crit-002",
-        "type": "MIN_CREDIT_SCORE",
-        "value": 650
-      }
-    ]
-  }
-}
-```
-
-### Créer un nouveau produit
-```
-POST /api/portfolio/traditional/products
-```
-
-#### Corps de la requête
-```json
-{
-  "name": "Crédit Investissement",
-  "type": "LOAN",
-  "category": "LONG_TERM",
-  "interestRate": 8.75,
-  "minAmount": 5000000,
-  "maxAmount": 100000000,
-  "minTerm": 12,
-  "maxTerm": 120,
-  "currency": "XOF",
-  "description": "Crédit d'investissement pour les entreprises",
-  "requirements": ["Business plan", "États financiers", "Garanties"],
-  "fees": [
-    {
-      "name": "Frais de dossier",
-      "type": "PERCENTAGE",
-      "percentage": 1.5
-    }
+  "name": "Crédit Investissement PME",
+  "type": "credit",
+  "description": "Crédit d'investissement pour petites et moyennes entreprises",
+  "minAmount": 10000,
+  "maxAmount": 500000,
+  "duration": {
+    "min": 6,
+    "max": 60
+  },
+  "interestRate": {
+    "type": "fixed",
+    "value": 12.5
+  },
+  "requirements": [
+    "Plan d'affaires",
+    "États financiers des 2 dernières années",
+    "Projections financières"
   ],
-  "eligibilityCriteria": [
-    {
-      "type": "MIN_BUSINESS_AGE",
-      "value": 2
-    }
-  ]
+  "acceptedGuarantees": [
+    "real_estate",
+    "equipment",
+    "cash_collateral"
+  ],
+  "isPublic": true,
+  "status": "active"
 }
 ```
 
-#### Réponse
-```json
-{
-  "success": true,
-  "data": {
-    "id": "prod-456",
-    "name": "Crédit Investissement",
-    "type": "LOAN",
-    "category": "LONG_TERM",
-    "interestRate": 8.75,
-    "minAmount": 5000000,
-    "maxAmount": 100000000,
-    "minTerm": 12,
-    "maxTerm": 120,
-    "currency": "XOF",
-    "status": "ACTIVE",
-    "description": "Crédit d'investissement pour les entreprises",
-    "requirements": ["Business plan", "États financiers", "Garanties"],
-    "createdAt": "2023-07-10T09:45:00Z",
-    "updatedAt": "2023-07-10T09:45:00Z",
-    "fees": [
-      {
-        "id": "fee-003",
-        "name": "Frais de dossier",
-        "type": "PERCENTAGE",
-        "percentage": 1.5
-      }
-    ],
-    "eligibilityCriteria": [
-      {
-        "id": "crit-003",
-        "type": "MIN_BUSINESS_AGE",
-        "value": 2
-      }
-    ]
-  }
-}
-```
+### 5.3 Autres Endpoints
 
-### Mettre à jour un produit
-```
-PUT /api/portfolio/traditional/products/:id
-```
+- `GET /api/portfolio/traditional/products/{productId}`
+- `PUT /api/portfolio/traditional/products/{productId}`
+- `PATCH /api/portfolio/traditional/products/{productId}/status`
 
-#### Paramètres de chemin
-| Paramètre | Type | Description |
-|-----------|------|-------------|
-| id | string | Identifiant unique du produit |
+## 6. Composants UI
 
-#### Corps de la requête
-```json
-{
-  "name": "Prêt Express Plus",
-  "interestRate": 5.25,
-  "maxAmount": 60000,
-  "status": "ACTIVE",
-  "description": "Prêt à court terme pour les besoins urgents avec conditions améliorées"
-}
-```
+L'interface utilisateur comprend plusieurs composants clés :
 
-#### Réponse
-```json
-{
-  "success": true,
-  "data": {
-    "id": "prod-123",
-    "name": "Prêt Express Plus",
-    "type": "LOAN",
-    "category": "SHORT_TERM",
-    "interestRate": 5.25,
-    "minAmount": 1000,
-    "maxAmount": 60000,
-    "minTerm": 3,
-    "maxTerm": 36,
-    "currency": "XOF",
-    "status": "ACTIVE",
-    "description": "Prêt à court terme pour les besoins urgents avec conditions améliorées",
-    "requirements": ["Pièce d'identité", "Justificatif de revenus"],
-    "updatedAt": "2023-07-15T11:20:00Z"
-  }
-}
-```
+- `ProductList` - Liste des produits avec filtrage
+- `ProductForm` - Formulaire de création/modification de produit
+- `ProductDetails` - Affichage détaillé d'un produit
+- `InterestRateConfig` - Configuration des taux d'intérêt
+- `RequirementsEditor` - Éditeur des exigences du produit
 
-### Supprimer un produit
-```
-DELETE /api/portfolio/traditional/products/:id
-```
+## 7. Intégration avec les Demandes de Financement
 
-#### Paramètres de chemin
-| Paramètre | Type | Description |
-|-----------|------|-------------|
-| id | string | Identifiant unique du produit |
+Les produits financiers sont étroitement liés aux demandes de financement :
 
-#### Réponse
-```json
-{
-  "success": true,
-  "message": "Produit supprimé avec succès"
-}
-```
+1. Un client sélectionne un produit lors de la création d'une demande
+2. Les paramètres du produit déterminent les limites et conditions de la demande
+3. Les exigences du produit déterminent les documents à fournir
+4. Les garanties acceptées limitent les types de garanties proposables
 
-### Obtenir les types de produits
-```
-GET /api/portfolio/traditional/product-types
-```
+## 8. Calculs Financiers
 
-#### Réponse
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "LOAN",
-      "name": "Prêt",
-      "description": "Produits de financement classiques"
-    },
-    {
-      "id": "CREDIT_LINE",
-      "name": "Ligne de crédit",
-      "description": "Crédit renouvelable avec plafond prédéfini"
-    },
-    {
-      "id": "LEASING",
-      "name": "Leasing",
-      "description": "Location avec option d'achat"
-    },
-    {
-      "id": "OVERDRAFT",
-      "name": "Découvert",
-      "description": "Autorisation de dépassement du solde"
-    }
-  ]
-}
-```
+Le module intègre plusieurs fonctions de calcul financier :
 
-### Obtenir les catégories de produits
-```
-GET /api/portfolio/traditional/product-categories
-```
+- Calcul des échéanciers de remboursement
+- Calcul des intérêts (fixes ou variables)
+- Calcul des frais associés
+- Simulation de scénarios financiers
 
-#### Réponse
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "SHORT_TERM",
-      "name": "Court terme",
-      "description": "Produits avec une durée inférieure à 12 mois"
-    },
-    {
-      "id": "MEDIUM_TERM",
-      "name": "Moyen terme",
-      "description": "Produits avec une durée entre 12 et 60 mois"
-    },
-    {
-      "id": "LONG_TERM",
-      "name": "Long terme",
-      "description": "Produits avec une durée supérieure à 60 mois"
-    }
-  ]
-}
-```
+Ces calculs sont utilisés pour :
+- Générer des simulations pour les clients
+- Créer des tableaux d'amortissement
+- Calculer les montants des échéances
 
-## Modèles de données
+## 9. Personnalisation et Flexibilité
 
-### Produit financier
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du produit |
-| name | string | Nom du produit |
-| type | string | Type du produit (LOAN, CREDIT_LINE, LEASING, OVERDRAFT) |
-| category | string | Catégorie du produit (SHORT_TERM, MEDIUM_TERM, LONG_TERM) |
-| interestRate | number | Taux d'intérêt nominal (en pourcentage) |
-| minAmount | number | Montant minimum du financement |
-| maxAmount | number | Montant maximum du financement |
-| minTerm | number | Durée minimum (en mois) |
-| maxTerm | number | Durée maximum (en mois) |
-| currency | string | Devise (code ISO) |
-| status | string | Statut du produit (ACTIVE, INACTIVE, DRAFT) |
-| description | string | Description détaillée du produit |
-| requirements | array | Liste des documents requis |
-| fees | array | Liste des frais associés au produit |
-| eligibilityCriteria | array | Critères d'éligibilité |
-| createdAt | string | Date de création (format ISO) |
-| updatedAt | string | Date de dernière modification (format ISO) |
+Le système est conçu pour être hautement configurable :
 
-### Frais
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique des frais |
-| name | string | Nom des frais |
-| type | string | Type de frais (FIXED, PERCENTAGE) |
-| amount | number | Montant (si type = FIXED) |
-| percentage | number | Pourcentage (si type = PERCENTAGE) |
-| currency | string | Devise (si type = FIXED) |
+- Création de produits personnalisés pour des marchés spécifiques
+- Ajustement des paramètres selon l'évolution du marché
+- Gestion des versions de produits
+- Produits saisonniers ou promotionnels
 
-### Critère d'éligibilité
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du critère |
-| type | string | Type de critère (MIN_INCOME, MIN_CREDIT_SCORE, MIN_BUSINESS_AGE, etc.) |
-| value | number | Valeur du critère |
-| currency | string | Devise (si applicable) |
+## 10. Rapports et Analyse
+
+Le module fournit des rapports sur les produits :
+
+- Performance des produits
+- Taux d'approbation par produit
+- Taux de défaut par produit
+- Rentabilité par produit
+
+Ces informations aident à optimiser l'offre de produits et à ajuster les paramètres pour mieux répondre aux besoins du marché.
+
+## 11. Considérations Réglementaires
+
+Le système permet de configurer les produits conformément aux exigences réglementaires :
+
+- Limites de taux d'intérêt
+- Divulgation d'informations obligatoires
+- Conformité avec les règles de protection des consommateurs
+- Adaptation aux spécificités réglementaires locales

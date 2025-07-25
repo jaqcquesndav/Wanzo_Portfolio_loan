@@ -1,4 +1,4 @@
-# Chat API
+﻿# Chat API
 
 Ce document décrit les endpoints pour la gestion des conversations et messages dans l'API Wanzo Portfolio Institution.
 
@@ -28,13 +28,7 @@ interface Conversation {
   timestamp: string;
   messages: Message[];
   isActive: boolean;
-  model: {
-    id: string;
-    name: string;
-    description: string;
-    capabilities: string[];
-    contextLength: number;
-  };
+  model: AIModel;
   context: string[];
 }
 
@@ -49,107 +43,9 @@ interface AIModel {
 
 ## Endpoints
 
-### Récupération des conversations
+### Envoyer un message
 
-Récupère la liste des conversations pour l'utilisateur authentifié.
-
-#### Requête
-
-```
-GET /chat/conversations
-```
-
-#### Réponse
-
-```json
-[
-  {
-    "id": "conv123",
-    "title": "Demande d'information sur le portefeuille PME",
-    "timestamp": "2025-07-20T10:00:00.000Z",
-    "messages": [
-      {
-        "id": "msg001",
-        "sender": "user",
-        "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
-        "timestamp": "2025-07-20T10:00:00.000Z"
-      },
-      {
-        "id": "msg002",
-        "sender": "bot",
-        "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
-        "timestamp": "2025-07-20T10:01:30.000Z"
-      }
-    ],
-    "isActive": true,
-    "model": {
-      "id": "adha-credit",
-      "name": "Adha Crédit",
-      "description": "Spécialisé en gestion de crédits et analyse de risques",
-      "capabilities": ["Analyse de solvabilité", "Évaluation des risques", "Gestion des garanties", "Plans de remboursement"],
-      "contextLength": 8192
-    },
-    "context": []
-  },
-  {
-    "id": "conv124",
-    "title": "Analyse du risque client XYZ",
-    "timestamp": "2025-07-22T14:30:00.000Z",
-    "messages": [],
-    "isActive": true,
-    "model": {
-      "id": "adha-analytics",
-      "name": "Adha Analytics",
-      "description": "Analyse approfondie des données financières et prévisions",
-      "capabilities": ["Modèles prédictifs", "Détection de fraude", "Tableaux de bord", "Rapports d'activité"],
-      "contextLength": 32768
-    },
-    "context": []
-  }
-]
-```
-
-### Récupération des messages d'une conversation
-
-Récupère tous les messages d'une conversation spécifique.
-
-#### Requête
-
-```
-GET /chat/messages/{conversationId}
-```
-
-#### Paramètres de chemin
-- `conversationId` : Identifiant unique de la conversation
-
-#### Réponse
-
-```json
-[
-  {
-    "id": "msg001",
-    "sender": "user",
-    "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
-    "timestamp": "2025-07-20T10:00:00.000Z"
-  },
-  {
-    "id": "msg002",
-    "sender": "bot",
-    "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
-    "timestamp": "2025-07-20T10:01:30.000Z"
-  },
-  {
-    "id": "msg003",
-    "sender": "user",
-    "content": "Oui, pouvez-vous me donner la répartition par secteur d'activité?",
-    "timestamp": "2025-07-20T10:02:45.000Z"
-  }
-]
-```
-
-### Envoi d'un message
-
-Envoie un nouveau message dans une conversation existante.
+Envoie un message au système de chat.
 
 #### Requête
 
@@ -161,119 +57,252 @@ POST /chat/messages
 
 ```json
 {
-  "conversationId": "conv123",
-  "content": "Quels sont les taux de remboursement anticipé sur ce portefeuille?",
-  "attachment": {
-    "name": "rapport_trimestriel.pdf",
-    "type": "application/pdf",
-    "content": "base64_encoded_content..."
-  },
-  "mode": "chat"
+  "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
+  "contextId": "ctx123",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional",
+    "companyId": "comp789",
+    "entityType": "portfolio",
+    "entityId": "port456"
+  }
 }
 ```
-
-#### Paramètres
-- `conversationId` : ID de la conversation (requis)
-- `content` : Contenu du message (requis)
-- `attachment` : Pièce jointe optionnelle
-- `mode` : Mode de chat ('chat' ou 'analyse', défaut = 'chat')
 
 #### Réponse
 
 ```json
 {
-  "id": "msg004",
+  "id": "msg001",
+  "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
+  "timestamp": "2025-07-25T12:00:00.000Z",
   "sender": "user",
-  "content": "Quels sont les taux de remboursement anticipé sur ce portefeuille?",
-  "timestamp": "2025-07-20T10:10:15.000Z",
-  "attachment": {
-    "name": "rapport_trimestriel.pdf",
-    "type": "application/pdf",
-    "content": "base64_encoded_content..."
+  "contextId": "ctx123",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional"
+  },
+  "response": {
+    "id": "msg002",
+    "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
+    "timestamp": "2025-07-25T12:00:02.000Z",
+    "sender": "assistant",
+    "attachments": []
   }
 }
 ```
 
-### Création d'une conversation
+### Récupérer l'historique des messages
 
-Crée une nouvelle conversation.
+Récupère l'historique des messages pour un contexte spécifique.
 
 #### Requête
 
 ```
-POST /chat/conversations
+GET /chat/contexts/{contextId}/messages
+```
+
+#### Paramètres de chemin
+- `contextId` : Identifiant unique du contexte de chat
+
+#### Paramètres de requête
+- `limit` (optionnel) : Nombre maximum de messages à récupérer
+- `before` (optionnel) : Récupérer les messages avant cette date/ID
+- `after` (optionnel) : Récupérer les messages après cette date/ID
+
+#### Réponse
+
+```json
+{
+  "messages": [
+    {
+      "id": "msg001",
+      "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
+      "timestamp": "2025-07-25T12:00:00.000Z",
+      "sender": "user",
+      "contextId": "ctx123",
+      "metadata": {
+        "portfolioId": "port456",
+        "portfolioType": "traditional"
+      }
+    },
+    {
+      "id": "msg002",
+      "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
+      "timestamp": "2025-07-25T12:00:02.000Z",
+      "sender": "assistant",
+      "contextId": "ctx123"
+    },
+    {
+      "id": "msg003",
+      "content": "Oui, pouvez-vous me donner la répartition par secteur d'activité?",
+      "timestamp": "2025-07-25T12:01:30.000Z",
+      "sender": "user",
+      "contextId": "ctx123"
+    }
+  ],
+  "hasMore": true,
+  "nextCursor": "msg004"
+}
+```
+
+### Créer un nouveau contexte de chat
+
+Crée un nouveau contexte de conversation.
+
+#### Requête
+
+```
+POST /chat/contexts
 ```
 
 #### Corps de la requête
 
 ```json
 {
-  "title": "Analyse du risque client ABC"
+  "title": "Analyse du portefeuille PME",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional",
+    "companyId": "comp789"
+  }
 }
 ```
-
-#### Paramètres
-- `title` : Titre de la conversation (optionnel, défaut = "Nouvelle conversation")
 
 #### Réponse
 
 ```json
 {
-  "id": "conv125",
-  "title": "Analyse du risque client ABC",
-  "timestamp": "2025-07-23T09:30:00.000Z",
-  "messages": [],
-  "isActive": true,
-  "model": {
-    "id": "adha-credit",
-    "name": "Adha Crédit",
-    "description": "Spécialisé en gestion de crédits et analyse de risques",
-    "capabilities": ["Analyse de solvabilité", "Évaluation des risques", "Gestion des garanties", "Plans de remboursement"],
-    "contextLength": 8192
+  "id": "ctx123",
+  "title": "Analyse du portefeuille PME",
+  "created_at": "2025-07-25T12:00:00.000Z",
+  "updated_at": "2025-07-25T12:00:00.000Z",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional",
+    "companyId": "comp789"
+  }
+}
+```
+
+### Récupérer un contexte de chat
+
+Récupère les détails d'un contexte de chat par son ID.
+
+#### Requête
+
+```
+GET /chat/contexts/{id}
+```
+
+#### Paramètres de chemin
+- `id` : Identifiant unique du contexte de chat
+
+#### Réponse
+
+```json
+{
+  "id": "ctx123",
+  "title": "Analyse du portefeuille PME",
+  "created_at": "2025-07-25T12:00:00.000Z",
+  "updated_at": "2025-07-25T12:01:30.000Z",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional",
+    "companyId": "comp789"
   },
-  "context": []
+  "messageCount": 3,
+  "lastMessage": {
+    "content": "Oui, pouvez-vous me donner la répartition par secteur d'activité?",
+    "timestamp": "2025-07-25T12:01:30.000Z",
+    "sender": "user"
+  }
 }
 ```
 
-### Suppression d'une conversation
+### Récupérer tous les contextes de chat
 
-Supprime une conversation existante.
+Récupère tous les contextes de chat de l'utilisateur.
 
 #### Requête
 
 ```
-DELETE /chat/conversations/{conversationId}
+GET /chat/contexts
 ```
 
-#### Paramètres de chemin
-- `conversationId` : Identifiant unique de la conversation à supprimer
+#### Paramètres de requête
+- `limit` (optionnel) : Nombre maximum de contextes à récupérer
+- `offset` (optionnel) : Nombre de contextes à ignorer
+- `search` (optionnel) : Terme de recherche
+- `portfolioId` (optionnel) : Filtrer par ID de portefeuille
+- `companyId` (optionnel) : Filtrer par ID d'entreprise
 
 #### Réponse
 
 ```json
 {
-  "success": true
+  "contexts": [
+    {
+      "id": "ctx123",
+      "title": "Analyse du portefeuille PME",
+      "created_at": "2025-07-25T12:00:00.000Z",
+      "updated_at": "2025-07-25T12:01:30.000Z",
+      "metadata": {
+        "portfolioId": "port456",
+        "portfolioType": "traditional",
+        "companyId": "comp789"
+      },
+      "messageCount": 3,
+      "lastMessage": {
+        "content": "Oui, pouvez-vous me donner la répartition par secteur d'activité?",
+        "timestamp": "2025-07-25T12:01:30.000Z",
+        "sender": "user"
+      }
+    },
+    {
+      "id": "ctx124",
+      "title": "Analyse des risques",
+      "created_at": "2025-07-24T15:30:00.000Z",
+      "updated_at": "2025-07-24T15:45:00.000Z",
+      "metadata": {
+        "portfolioId": "port789",
+        "portfolioType": "investment"
+      },
+      "messageCount": 5,
+      "lastMessage": {
+        "content": "Merci pour ces informations détaillées.",
+        "timestamp": "2025-07-24T15:45:00.000Z",
+        "sender": "user"
+      }
+    }
+  ],
+  "total": 10,
+  "limit": 2,
+  "offset": 0
 }
 ```
 
-### Mise à jour d'un message
+### Mettre à jour un contexte de chat
 
-Met à jour un message existant (par exemple pour ajouter des réactions).
+Met à jour les détails d'un contexte de chat existant.
 
 #### Requête
 
 ```
-PUT /chat/messages/{messageId}
+PUT /chat/contexts/{id}
 ```
 
 #### Paramètres de chemin
-- `messageId` : Identifiant unique du message à mettre à jour
+- `id` : Identifiant unique du contexte de chat
 
 #### Corps de la requête
 
 ```json
 {
-  "likes": 1
+  "title": "Analyse approfondie du portefeuille PME",
+  "metadata": {
+    "priority": "high"
+  }
 }
 ```
 
@@ -281,504 +310,249 @@ PUT /chat/messages/{messageId}
 
 ```json
 {
-  "id": "msg002",
-  "sender": "bot",
-  "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
-  "timestamp": "2025-07-20T10:01:30.000Z",
-  "likes": 1
-}
-```
-
-## Modèles d'IA disponibles
-
-L'API prend en charge plusieurs modèles d'IA spécialisés:
-
-```json
-[
-  {
-    "id": "adha-credit",
-    "name": "Adha Crédit",
-    "description": "Spécialisé en gestion de crédits et analyse de risques",
-    "capabilities": ["Analyse de solvabilité", "Évaluation des risques", "Gestion des garanties", "Plans de remboursement"],
-    "contextLength": 8192
-  },
-  {
-    "id": "adha-prospection",
-    "name": "Adha Prospection",
-    "description": "Analyse des opportunités de marché et ciblage client",
-    "capabilities": ["Segmentation client", "Analyse de marché", "Scoring prospects", "Simulations financières"],
-    "contextLength": 8192
-  },
-  {
-    "id": "adha-leasing",
-    "name": "Adha Leasing",
-    "description": "Expert en contrats de leasing et gestion d'équipements",
-    "capabilities": ["Valorisation d'actifs", "Gestion de contrats", "Maintenance prédictive", "Analyse de valeur résiduelle"],
-    "contextLength": 12288
-  },
-  {
-    "id": "adha-invest",
-    "name": "Adha Invest",
-    "description": "Spécialisé en capital-investissement et valorisation",
-    "capabilities": ["Due diligence", "Valorisation d'entreprises", "Stratégies d'exit", "Analyse de performance"],
-    "contextLength": 16384
-  },
-  {
-    "id": "adha-analytics",
-    "name": "Adha Analytics",
-    "description": "Analyse approfondie des données financières et prévisions",
-    "capabilities": ["Modèles prédictifs", "Détection de fraude", "Tableaux de bord", "Rapports d'activité"],
-    "contextLength": 32768
-  }
-]
-```
-
-**Endpoint** : `GET /portfolio_inst/messages/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
-
-**Paramètres de requête** :
-- `page` (optionnel) : Numéro de la page pour les messages (défaut : 1)
-- `limit` (optionnel) : Nombre de messages par page (défaut : 50, max : 100)
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "conv123",
-    "subject": "Demande d'information sur le portefeuille PME",
-    "status": "active",
-    "participants": [
-      {
-        "id": "user123",
-        "name": "Jean Dupont",
-        "email": "jean.dupont@exemple.com",
-        "role": "portfolio_manager",
-        "avatar": "https://example.com/avatars/jean.jpg"
-      },
-      {
-        "id": "user456",
-        "name": "Marie Martin",
-        "email": "marie.martin@banquecommerciale.com",
-        "role": "client_rep",
-        "avatar": "https://example.com/avatars/marie.jpg"
-      }
-    ],
-    "relatedEntities": [
-      {
-        "type": "portfolio",
-        "id": "portfolio123",
-        "name": "Portefeuille PME 2025"
-      }
-    ],
-    "messages": [
-      {
-        "id": "msg789",
-        "content": "Bonjour Jean, pouvez-vous me fournir des informations sur le portefeuille PME 2025 ? Merci.",
-        "attachments": [],
-        "sentAt": "2025-07-20T10:00:00.000Z",
-        "readAt": "2025-07-20T10:15:00.000Z",
-        "sender": {
-          "id": "user456",
-          "name": "Marie Martin"
-        }
-      },
-      {
-        "id": "msg790",
-        "content": "Bonjour Marie, bien sûr. Quelles informations spécifiques recherchez-vous ?",
-        "attachments": [],
-        "sentAt": "2025-07-20T10:30:00.000Z",
-        "readAt": "2025-07-20T11:00:00.000Z",
-        "sender": {
-          "id": "user123",
-          "name": "Jean Dupont"
-        }
-      },
-      {
-        "id": "msg791",
-        "content": "J'aimerais avoir les derniers rapports sur la performance du portefeuille, ainsi que des détails sur les nouveaux crédits accordés ce trimestre.",
-        "attachments": [],
-        "sentAt": "2025-07-23T14:00:00.000Z",
-        "readAt": "2025-07-23T14:15:00.000Z",
-        "sender": {
-          "id": "user456",
-          "name": "Marie Martin"
-        }
-      },
-      {
-        "id": "msg792",
-        "content": "Pouvez-vous me fournir les derniers rapports ?",
-        "attachments": [],
-        "sentAt": "2025-07-23T14:30:00.000Z",
-        "readAt": null,
-        "sender": {
-          "id": "user456",
-          "name": "Marie Martin"
-        }
-      }
-    ],
-    "createdAt": "2025-07-20T10:00:00.000Z",
-    "updatedAt": "2025-07-23T14:30:00.000Z"
+  "id": "ctx123",
+  "title": "Analyse approfondie du portefeuille PME",
+  "updated_at": "2025-07-25T12:10:00.000Z",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional",
+    "companyId": "comp789",
+    "priority": "high"
   }
 }
 ```
 
-## Création d'une conversation
+### Supprimer un contexte de chat
 
-Crée une nouvelle conversation.
+Supprime un contexte de chat et tous ses messages.
 
-**Endpoint** : `POST /portfolio_inst/messages`
+#### Requête
 
-**Corps de la requête** :
+```
+DELETE /chat/contexts/{id}
+```
+
+#### Paramètres de chemin
+- `id` : Identifiant unique du contexte de chat
+
+#### Réponse
+
+```
+204 No Content
+```
+
+### Récupérer des suggestions de chat
+
+Récupère des suggestions de questions ou de sujets basés sur le contexte actuel.
+
+#### Requête
+
+```
+GET /chat/suggestions
+```
+
+#### Paramètres de requête
+- `contextId` (optionnel) : ID du contexte de chat
+- `portfolioId` (optionnel) : ID du portefeuille
+- `portfolioType` (optionnel) : Type de portefeuille (traditional, investment, leasing)
+- `companyId` (optionnel) : ID de l'entreprise
+- `currentScreenPath` (optionnel) : Chemin de l'écran actuel
+
+#### Réponse
 
 ```json
 {
-  "subject": "Discussion sur le nouveau contrat de leasing",
-  "initialMessage": "Bonjour, j'aimerais discuter des détails du nouveau contrat de leasing pour l'entreprise XYZ.",
-  "participants": ["user789", "user456"],
-  "relatedEntities": [
+  "suggestions": [
     {
-      "type": "contract",
-      "id": "lease123"
+      "id": "sug1",
+      "text": "Quelle est la répartition sectorielle du portefeuille?",
+      "category": "analyse",
+      "relevance": 0.95
     },
     {
-      "type": "portfolio",
-      "id": "portfolio456"
+      "id": "sug2",
+      "text": "Quels sont les principaux risques identifiés?",
+      "category": "risque",
+      "relevance": 0.85
+    },
+    {
+      "id": "sug3",
+      "text": "Pouvez-vous me montrer l'évolution des performances sur les 12 derniers mois?",
+      "category": "performance",
+      "relevance": 0.80
     }
   ]
 }
 ```
 
-**Réponse réussie** (201 Created) :
+### Générer un rapport de chat
+
+Génère un rapport basé sur les conversations de chat.
+
+#### Requête
+
+```
+POST /chat/reports
+```
+
+#### Corps de la requête
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "conv125",
-    "subject": "Discussion sur le nouveau contrat de leasing",
-    "status": "active",
-    "participants": [
-      {
-        "id": "user123",
-        "name": "Jean Dupont",
-        "role": "portfolio_manager"
-      },
-      {
-        "id": "user789",
-        "name": "Pierre Durand",
-        "role": "credit_analyst"
-      },
-      {
-        "id": "user456",
-        "name": "Marie Martin",
-        "role": "client_rep"
-      }
-    ],
-    "relatedEntities": [
-      {
-        "type": "contract",
-        "id": "lease123",
-        "name": "Contrat de leasing - Entreprise XYZ"
-      },
-      {
-        "type": "portfolio",
-        "id": "portfolio456",
-        "name": "Portefeuille Leasing 2025"
-      }
-    ],
-    "messages": [
-      {
-        "id": "msg793",
-        "content": "Bonjour, j'aimerais discuter des détails du nouveau contrat de leasing pour l'entreprise XYZ.",
-        "attachments": [],
-        "sentAt": "2025-07-24T15:00:00.000Z",
-        "readAt": null,
-        "sender": {
-          "id": "user123",
-          "name": "Jean Dupont"
-        }
-      }
-    ],
-    "createdAt": "2025-07-24T15:00:00.000Z",
-    "updatedAt": "2025-07-24T15:00:00.000Z"
-  }
+  "contextId": "ctx123",
+  "title": "Rapport d'analyse du portefeuille PME",
+  "format": "pdf",
+  "includeMetadata": true
 }
 ```
 
-## Envoi d'un message
-
-Ajoute un nouveau message à une conversation existante.
-
-**Endpoint** : `POST /portfolio_inst/messages/{id}/reply`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
-
-**Corps de la requête** :
+#### Réponse
 
 ```json
 {
-  "content": "Voici les rapports demandés. N'hésitez pas si vous avez des questions.",
-  "attachments": [
+  "id": "rep123",
+  "title": "Rapport d'analyse du portefeuille PME",
+  "format": "pdf",
+  "url": "https://api.wanzo.com/reports/rep123.pdf",
+  "generated_at": "2025-07-25T12:15:00.000Z",
+  "size": 245678
+}
+```
+
+### Récupérer des réponses prédéfinies
+
+Récupère des réponses prédéfinies pour le chat, optionnellement filtrées par catégorie.
+
+#### Requête
+
+```
+GET /chat/predefined-responses
+```
+
+#### Paramètres de requête
+- `category` (optionnel) : Catégorie de réponses (ex: risque, performance, analyse)
+
+#### Réponse
+
+```json
+{
+  "responses": [
     {
-      "name": "Rapport_Performance_Q2_2025.pdf",
-      "url": "https://example.com/documents/rapport_q2_2025.pdf",
-      "type": "application/pdf",
-      "size": 2048000
-    }
-  ]
-}
-```
-
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "msg794",
-    "content": "Voici les rapports demandés. N'hésitez pas si vous avez des questions.",
-    "attachments": [
-      {
-        "id": "att123",
-        "name": "Rapport_Performance_Q2_2025.pdf",
-        "url": "https://example.com/documents/rapport_q2_2025.pdf",
-        "type": "application/pdf",
-        "size": 2048000,
-        "uploadedAt": "2025-07-24T15:30:00.000Z"
-      }
-    ],
-    "sentAt": "2025-07-24T15:30:00.000Z",
-    "readAt": null,
-    "sender": {
-      "id": "user123",
-      "name": "Jean Dupont"
+      "id": "resp1",
+      "title": "Analyse des ratios financiers",
+      "content": "Voici une analyse détaillée des ratios financiers de l'entreprise...",
+      "category": "analyse",
+      "tags": ["ratios", "financier", "analyse"]
     },
-    "conversation": {
-      "id": "conv123",
-      "subject": "Demande d'information sur le portefeuille PME"
+    {
+      "id": "resp2",
+      "title": "Explication du scoring de risque",
+      "content": "Le scoring de risque est calculé en fonction des paramètres suivants...",
+      "category": "risque",
+      "tags": ["scoring", "risque", "méthodologie"]
     }
-  }
+  ],
+  "categories": ["analyse", "risque", "performance", "crédit", "leasing", "investissement"]
 }
 ```
 
-## Marquer un message comme lu
+### Évaluer un message
 
-Marque un message ou tous les messages d'une conversation comme lus.
+Enregistre une évaluation pour une réponse de chat.
 
-**Endpoint** : `PATCH /portfolio_inst/messages/{id}/read`
+#### Requête
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
+```
+POST /chat/messages/{messageId}/rating
+```
 
-**Corps de la requête** :
+#### Paramètres de chemin
+- `messageId` : Identifiant unique du message
+
+#### Corps de la requête
 
 ```json
 {
-  "messageId": "msg792",
-  "markAllAsRead": false
+  "score": 4,
+  "feedback": "Réponse très utile mais pourrait être plus détaillée"
 }
 ```
 
-**Réponse réussie** (200 OK) :
+#### Réponse
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "msg792",
-    "readAt": "2025-07-24T16:00:00.000Z",
-    "conversation": {
-      "id": "conv123",
-      "unreadCount": 1
-    }
-  }
+  "id": "rat123",
+  "messageId": "msg002",
+  "score": 4,
+  "feedback": "Réponse très utile mais pourrait être plus détaillée",
+  "timestamp": "2025-07-25T12:20:00.000Z"
 }
 ```
 
-## Archiver une conversation
+### Ajouter une pièce jointe à un message
 
-Archive une conversation.
+Ajoute une pièce jointe à un message.
 
-**Endpoint** : `PATCH /portfolio_inst/messages/{id}/archive`
+#### Requête
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
+```
+POST /chat/messages/{messageId}/attachments
+```
 
-**Réponse réussie** (200 OK) :
+#### Paramètres de chemin
+- `messageId` : Identifiant unique du message
+
+#### Corps de la requête
+FormData contenant le fichier à télécharger.
+
+#### Réponse
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "conv123",
-    "status": "archived",
-    "archivedAt": "2025-07-24T16:30:00.000Z",
-    "archivedBy": {
-      "id": "user123",
-      "name": "Jean Dupont"
-    }
-  }
+  "id": "att123",
+  "messageId": "msg001",
+  "type": "application/pdf",
+  "url": "https://api.wanzo.com/attachments/att123.pdf",
+  "name": "rapport_analyse.pdf",
+  "size": 123456,
+  "uploaded_at": "2025-07-25T12:25:00.000Z"
 }
 ```
 
-## Réactiver une conversation
+## Implémentation technique
 
-Réactive une conversation archivée.
+Les endpoints ci-dessus sont implémentés dans le module `chat.api.ts` qui fournit les fonctions suivantes:
 
-**Endpoint** : `PATCH /portfolio_inst/messages/{id}/activate`
+- `sendMessage(message)`: Envoie un message au système de chat
+- `getMessageHistory(contextId, params)`: Récupère l'historique des messages pour un contexte
+- `createContext(data)`: Crée un nouveau contexte de chat
+- `getContextById(id)`: Récupère un contexte de chat par son ID
+- `getAllContexts(params)`: Récupère tous les contextes de chat
+- `updateContext(id, updates)`: Met à jour un contexte de chat
+- `deleteContext(id)`: Supprime un contexte de chat
+- `getChatSuggestions(contextId, data)`: Récupère des suggestions de chat
+- `generateChatReport(params)`: Génère un rapport basé sur les conversations
+- `getPredefinedResponses(category)`: Récupère des réponses prédéfinies
+- `rateMessage(messageId, rating)`: Évalue un message
+- `addAttachment(messageId, file)`: Ajoute une pièce jointe à un message
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
+Les modèles d'IA disponibles sont définis dans le module `chat.ts` et incluent:
 
-**Réponse réussie** (200 OK) :
+1. Adha Crédit - Spécialisé en gestion de crédits et analyse de risques
+2. Adha Prospection - Analyse des opportunités de marché et ciblage client
+3. Adha Leasing - Expert en contrats de leasing et gestion d'équipements
+4. Adha Invest - Spécialisé en capital-investissement et valorisation
+5. Adha Analytics - Analyse approfondie des données financières et prévisions
 
-```json
-{
-  "success": true,
-  "data": {
-    "id": "conv123",
-    "status": "active",
-    "activatedAt": "2025-07-24T17:00:00.000Z",
-    "activatedBy": {
-      "id": "user123",
-      "name": "Jean Dupont"
-    }
-  }
-}
-```
+## Codes d'erreur
 
-## Ajouter des participants à une conversation
-
-Ajoute de nouveaux participants à une conversation existante.
-
-**Endpoint** : `POST /portfolio_inst/messages/{id}/participants`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
-
-**Corps de la requête** :
-
-```json
-{
-  "participants": ["user789", "user101"]
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "conv123",
-    "participants": [
-      {
-        "id": "user123",
-        "name": "Jean Dupont",
-        "role": "portfolio_manager"
-      },
-      {
-        "id": "user456",
-        "name": "Marie Martin",
-        "role": "client_rep"
-      },
-      {
-        "id": "user789",
-        "name": "Pierre Durand",
-        "role": "credit_analyst"
-      },
-      {
-        "id": "user101",
-        "name": "Sophie Legrand",
-        "role": "risk_manager"
-      }
-    ],
-    "updatedAt": "2025-07-24T17:30:00.000Z"
-  }
-}
-```
-
-## Retirer des participants d'une conversation
-
-Retire des participants d'une conversation existante.
-
-**Endpoint** : `DELETE /portfolio_inst/messages/{id}/participants`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la conversation
-
-**Corps de la requête** :
-
-```json
-{
-  "participants": ["user101"]
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "conv123",
-    "participants": [
-      {
-        "id": "user123",
-        "name": "Jean Dupont",
-        "role": "portfolio_manager"
-      },
-      {
-        "id": "user456",
-        "name": "Marie Martin",
-        "role": "client_rep"
-      },
-      {
-        "id": "user789",
-        "name": "Pierre Durand",
-        "role": "credit_analyst"
-      }
-    ],
-    "updatedAt": "2025-07-24T18:00:00.000Z"
-  }
-}
-```
-
-## Téléchargement d'une pièce jointe
-
-Génère une URL signée pour télécharger une pièce jointe.
-
-**Endpoint** : `GET /portfolio_inst/messages/attachments/{id}/download`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la pièce jointe
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "downloadUrl": "https://example.com/signed-url/attachment.pdf?token=abc123",
-    "expiresAt": "2025-07-24T19:00:00.000Z"
-  }
-}
-```
-
-## Erreurs spécifiques
-
-| Code HTTP | Code d'erreur                | Description                                         |
-|-----------|-----------------------------|-----------------------------------------------------|
-| 400       | INVALID_MESSAGE_DATA        | Données de message invalides                         |
-| 404       | CONVERSATION_NOT_FOUND      | Conversation non trouvée                             |
-| 404       | MESSAGE_NOT_FOUND           | Message non trouvé                                   |
-| 404       | ATTACHMENT_NOT_FOUND        | Pièce jointe non trouvée                            |
-| 403       | NOT_CONVERSATION_PARTICIPANT| L'utilisateur n'est pas participant à la conversation|
-| 400       | EMPTY_MESSAGE               | Le message ne peut pas être vide                     |
-| 400       | ATTACHMENT_TOO_LARGE        | Pièce jointe trop volumineuse                        |
-| 403       | INSUFFICIENT_PERMISSIONS    | Permissions insuffisantes                            |
+| Code | Description |
+|------|-------------|
+| 400  | Requête invalide ou paramètres manquants |
+| 401  | Non autorisé - Authentification requise |
+| 403  | Accès interdit - Droits insuffisants |
+| 404  | Ressource non trouvée |
+| 422  | Entité non traitable - Validation échouée |
+| 429  | Trop de requêtes - Limite de taux dépassée |
+| 500  | Erreur serveur interne |

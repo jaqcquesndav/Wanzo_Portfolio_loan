@@ -1,202 +1,248 @@
-# Gestion des Équipements
+# Équipements de Leasing
 
-Ce document décrit les endpoints pour la gestion du catalogue d'équipements dans les portefeuilles de leasing.
+Ce document décrit les endpoints pour la gestion des équipements dans les portefeuilles de leasing.
 
 ## Liste des équipements
 
-Récupère la liste des équipements disponibles dans un portefeuille de leasing avec pagination et filtrage.
+Récupère la liste des équipements du catalogue de leasing avec filtrage.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/leasing/{portfolioId}/equipments`
+**Endpoint** : `GET /portfolios/leasing/equipment`
+
 **Paramètres de requête** :
-- `page` (optionnel) : Numéro de la page (défaut : 1)
-- `limit` (optionnel) : Nombre d'équipements par page (défaut : 10, max : 100)
 - `category` (optionnel) : Filtre par catégorie d'équipement
-- `manufacturer` (optionnel) : Filtre par fabricant
-- `condition` (optionnel) : Filtre par état (new, used)
-- `availability` (optionnel) : Filtre par disponibilité (true, false)
-- `minPrice` (optionnel) : Prix minimum
-- `maxPrice` (optionnel) : Prix maximum
-- `search` (optionnel) : Recherche textuelle (nom, modèle, description)
-- `sortBy` (optionnel) : Trier par (name, price, year)
-- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+- `status` (optionnel) : Filtre par statut (available, leased, maintenance, retired)
+- `minValue` (optionnel) : Prix minimum
+- `maxValue` (optionnel) : Prix maximum
 
 **Réponse réussie** (200 OK) :
 
 ```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "eq123",
-      "name": "Tractopelle JCB 3CX",
-      "description": "Tractopelle polyvalente pour chantiers urbains",
-      "category": "engin_chantier",
-      "manufacturer": "JCB",
-      "model": "3CX",
-      "year": 2024,
-      "price": 85000.00,
-      "condition": "new",
-      "specifications": {
-        "puissance": "68 kW",
-        "poids": "8425 kg",
-        "capacité_godet": "1.1 m³"
-      },
-      "availability": true,
-      "maintenanceIncluded": true,
-      "warrantyDuration": 36,
-      "deliveryTime": 15,
-      "imageUrl": "https://api.wanzo.com/images/equipments/jcb-3cx.jpg"
-    }
-  ],
-  "meta": {
-    "total": 45,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 5
-  }
-}
-```
-
-## Détails d'un équipement
-
-Récupère les détails complets d'un équipement spécifique.
-
-**Endpoint** : `GET /portfolio_inst/portfolios/leasing/{portfolioId}/equipments/{equipmentId}`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "eq123",
-    "name": "Tractopelle JCB 3CX",
-    "description": "Tractopelle polyvalente pour chantiers urbains",
-    "category": "engin_chantier",
-    "manufacturer": "JCB",
-    "model": "3CX",
+[
+  {
+    "id": "EQP-001",
+    "name": "Tracteur agricole XT5000",
+    "description": "Tracteur polyvalent idéal pour les grandes exploitations agricoles",
+    "category": "Agricole",
+    "manufacturer": "AgriTech Congo",
+    "model": "XT5000",
     "year": 2024,
-    "price": 85000.00,
+    "price": 75000000,
     "condition": "new",
     "specifications": {
-      "puissance": "68 kW",
-      "poids": "8425 kg",
-      "capacité_godet": "1.1 m³"
+      "puissance": "120 CV",
+      "carburant": "Diesel",
+      "capacité": "5000 kg",
+      "vitesse": "40 km/h"
+    },
+    "availability": true,
+    "maintenanceIncluded": true,
+    "warrantyDuration": 24,
+    "deliveryTime": 15,
+    "imageUrl": "/images/equipments/tracteur-xt5000.jpg"
+  },
+  {
+    "id": "EQP-002",
+    "name": "Excavatrice BTP Pro X1",
+    "description": "Excavatrice haute performance pour chantiers de grande envergure",
+    "category": "Construction",
+    "manufacturer": "ConstructCorp",
+    "model": "Pro X1",
+    "year": 2023,
+    "price": 120000000,
+    "condition": "new",
+    "specifications": {
+      "puissance": "200 CV",
+      "profondeur_max": "6m",
+      "capacité_godet": "1.2m³"
     },
     "availability": true,
     "maintenanceIncluded": true,
     "warrantyDuration": 36,
-    "deliveryTime": 15,
-    "imageUrl": "https://api.wanzo.com/images/equipments/jcb-3cx.jpg",
-    "reservations": [
-      {
-        "id": "res1",
-        "start_date": "2025-08-10T09:00:00Z",
-        "end_date": "2025-08-15T18:00:00Z",
-        "status": "confirmed"
-      }
-    ],
-    "maintenances": [
-      {
-        "id": "mnt1",
-        "type": "preventive",
-        "scheduled_date": "2025-09-20T09:00:00Z",
-        "status": "scheduled"
-      }
-    ],
-    "incidents": [],
-    "movements": [
-      {
-        "id": "mov1",
-        "type": "in",
-        "date": "2025-07-01T14:00:00Z",
-        "from_location": "Fournisseur",
-        "to_location": "Dépôt central"
-      }
-    ],
-    "leasing_contracts": []
+    "deliveryTime": 30,
+    "imageUrl": "/images/equipments/excavatrice-prox1.jpg"
   }
-}
+]
 ```
 
-## Ajouter un équipement
+## Détails d'un équipement
 
-Ajoute un nouvel équipement au catalogue d'un portefeuille de leasing.
+Récupère les informations détaillées d'un équipement.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/leasing/{portfolioId}/equipments`
-**Corps de la requête** :
+**Endpoint** : `GET /portfolios/leasing/equipment/{equipmentId}`
+
+**Paramètres de chemin** :
+- `equipmentId` : Identifiant unique de l'équipement
+
+**Réponse réussie** (200 OK) :
 
 ```json
 {
-  "name": "Tractopelle JCB 3CX",
-  "description": "Tractopelle polyvalente pour chantiers urbains",
-  "category": "engin_chantier",
-  "manufacturer": "JCB",
-  "model": "3CX",
+  "id": "EQP-001",
+  "name": "Tracteur agricole XT5000",
+  "description": "Tracteur polyvalent idéal pour les grandes exploitations agricoles",
+  "category": "Agricole",
+  "manufacturer": "AgriTech Congo",
+  "model": "XT5000",
   "year": 2024,
-  "price": 85000.00,
+  "price": 75000000,
   "condition": "new",
   "specifications": {
-    "puissance": "68 kW",
-    "poids": "8425 kg",
-    "capacité_godet": "1.1 m³"
+    "puissance": "120 CV",
+    "carburant": "Diesel",
+    "capacité": "5000 kg",
+    "vitesse": "40 km/h"
   },
   "availability": true,
   "maintenanceIncluded": true,
-  "warrantyDuration": 36,
+  "warrantyDuration": 24,
   "deliveryTime": 15,
-  "imageUrl": "https://api.wanzo.com/images/equipments/jcb-3cx.jpg"
+  "imageUrl": "/images/equipments/tracteur-xt5000.jpg"
 }
 ```
 
-**Réponse réussie** (201 Created) :
+## Équipements disponibles pour un portefeuille
+
+Récupère la liste des équipements disponibles pour un portefeuille spécifique.
+
+**Endpoint** : `GET /portfolios/leasing/{portfolioId}/available-equipment`
+
+**Paramètres de chemin** :
+- `portfolioId` : Identifiant unique du portefeuille de leasing
+
+**Réponse réussie** (200 OK) :
 
 ```json
-{
-  "success": true,
-  "data": {
-    "id": "eq123",
-    "name": "Tractopelle JCB 3CX",
-    "message": "Équipement ajouté avec succès"
+[
+  {
+    "id": "EQP-001",
+    "name": "Tracteur agricole XT5000",
+    "description": "Tracteur polyvalent idéal pour les grandes exploitations agricoles",
+    "category": "Agricole",
+    "manufacturer": "AgriTech Congo",
+    "model": "XT5000",
+    "year": 2024,
+    "price": 75000000,
+    "condition": "new",
+    "specifications": {
+      "puissance": "120 CV",
+      "carburant": "Diesel",
+      "capacité": "5000 kg",
+      "vitesse": "40 km/h"
+    },
+    "availability": true,
+    "maintenanceIncluded": true,
+    "warrantyDuration": 24,
+    "deliveryTime": 15,
+    "imageUrl": "/images/equipments/tracteur-xt5000.jpg"
   }
-}
+]
 ```
 
-## Mettre à jour un équipement
+## Historique de maintenance d'un équipement
 
-Modifie les détails d'un équipement existant.
+Récupère l'historique des interventions de maintenance pour un équipement spécifique.
 
-**Endpoint** : `PUT /portfolio_inst/portfolios/leasing/{portfolioId}/equipments/{equipmentId}`
-**Corps de la requête** :
+**Endpoint** : `GET /portfolios/leasing/equipment/{equipmentId}/maintenance-history`
 
-```json
-{
-  "price": 82500.00,
-  "availability": false,
-  "maintenanceIncluded": false
-}
-```
+**Paramètres de chemin** :
+- `equipmentId` : Identifiant unique de l'équipement
 
 **Réponse réussie** (200 OK) :
 
 ```json
-{
-  "success": true,
-  "message": "Équipement mis à jour avec succès"
-}
+[
+  {
+    "id": "MAINT-001",
+    "equipmentId": "EQP-001",
+    "date": "2024-05-15T10:00:00Z",
+    "type": "scheduled",
+    "description": "Maintenance préventive trimestrielle",
+    "technician": "Jean Lukusa",
+    "cost": 250000,
+    "parts": [
+      {
+        "name": "Filtre à huile",
+        "quantity": 1,
+        "cost": 50000
+      },
+      {
+        "name": "Huile moteur",
+        "quantity": 5,
+        "unit": "L",
+        "cost": 100000
+      }
+    ],
+    "duration": 120,
+    "status": "completed",
+    "notes": "Remplacement des filtres et vidange effectués"
+  }
+]
 ```
 
-## Supprimer un équipement
+## Historique des contrats d'un équipement
 
-Supprime un équipement du catalogue.
+Récupère l'historique des contrats associés à un équipement spécifique.
 
-**Endpoint** : `DELETE /portfolio_inst/portfolios/leasing/{portfolioId}/equipments/{equipmentId}`
+**Endpoint** : `GET /portfolios/leasing/equipment/{equipmentId}/contract-history`
+
+**Paramètres de chemin** :
+- `equipmentId` : Identifiant unique de l'équipement
 
 **Réponse réussie** (200 OK) :
 
 ```json
-{
-  "success": true,
-  "message": "Équipement supprimé avec succès"
-}
+[
+  {
+    "id": "LEAS-001",
+    "equipmentId": "EQP-001",
+    "clientId": "CLI-005",
+    "clientName": "Ferme Kivu Vert",
+    "startDate": "2023-07-01T00:00:00Z",
+    "endDate": "2025-06-30T23:59:59Z",
+    "monthlyPayment": 3500000,
+    "status": "active",
+    "totalValue": 84000000
+  },
+  {
+    "id": "LEAS-045",
+    "equipmentId": "EQP-001",
+    "clientId": "CLI-022",
+    "clientName": "Coopérative Agricole du Congo",
+    "startDate": "2022-03-15T00:00:00Z",
+    "endDate": "2023-03-14T23:59:59Z",
+    "monthlyPayment": 3200000,
+    "status": "completed",
+    "totalValue": 38400000
+  }
+]
+```
+
+## Incidents liés à un équipement
+
+Récupère la liste des incidents signalés pour un équipement spécifique.
+
+**Endpoint** : `GET /portfolios/leasing/equipment/{equipmentId}/incidents`
+
+**Paramètres de chemin** :
+- `equipmentId` : Identifiant unique de l'équipement
+
+**Réponse réussie** (200 OK) :
+
+```json
+[
+  {
+    "id": "INC-023",
+    "equipmentId": "EQP-001",
+    "date": "2024-04-10T14:30:00Z",
+    "reportedBy": "Ferme Kivu Vert",
+    "type": "breakdown",
+    "description": "Panne du système hydraulique lors des travaux dans le champ",
+    "severity": "high",
+    "status": "resolved",
+    "resolutionDate": "2024-04-12T16:45:00Z",
+    "resolutionDescription": "Remplacement de la pompe hydraulique et des joints défectueux",
+    "downtime": 54,
+    "cost": 650000
+  }
+]
 ```

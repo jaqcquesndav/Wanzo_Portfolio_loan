@@ -8,7 +8,43 @@ Le dashboard pour les portefeuilles de leasing se concentre sur les métriques s
 - Performance des contrats de leasing
 - Répartition par type d'équipement
 - Suivi de l'état des actifs et maintenance
-- Analyse des fins de contrats et résidus
+- Analyse des taux de défaut et des valeurs résiduelles
+
+## Types de Données Principaux
+
+Les types de données principaux utilisés dans les API sont les suivants:
+
+```typescript
+interface LeasingDashboardMetrics {
+  assets: LeasingAssetMetrics;
+  performance: BasePerformanceMetrics;
+  risk: LeasingRiskMetrics;
+  clients: BaseClientMetrics;
+  equipmentStatus?: {
+    excellent: number;
+    good: number;
+    fair: number;
+    poor: number;
+  };
+}
+
+interface LeasingAssetMetrics extends BaseAssetMetrics {
+  distribution: {
+    vehicles: number;
+    machinery: number;
+    it: number;
+    office: number;
+  };
+  residualValue: number;
+  utilizationRate: number;
+}
+
+interface LeasingRiskMetrics extends BaseRiskMetrics {
+  maintenanceRisk: number;
+  defaultRate: number;
+  assetDepreciation: number;
+}
+```
 
 ## Endpoints spécifiques
 
@@ -36,89 +72,127 @@ GET /dashboard/portfolio-type/leasing/kpis
     "quarterly": 1.8,
     "yearly": 5.5
   },
-  "equipmentDistribution": {
-    "vehicles": 40,
-    "machinery": 35,
-    "it": 15,
-    "office": 10
-  },
-  "contractStatus": {
-    "active": 85,
-    "ending30Days": 8,
-    "ending90Days": 5,
-    "overdue": 2
+  "topPortfolios": [
+    {
+      "id": "port-789",
+      "name": "Flotte Véhicules XYZ",
+      "value": 450000,
+      "growth": 2.1
+    },
+    {
+      "id": "port-012",
+      "name": "Équipement Industriel ABC",
+      "value": 350000,
+      "growth": 1.5
+    }
+  ],
+  "metrics": {
+    "maintenanceRisk": 8.2,
+    "defaultRate": 4.3,
+    "assetDepreciation": 12.7,
+    "utilizationRate": 82.5
   }
 }
 ```
 
-### État des équipements et maintenance
+### Récupération des données de performance pour un portefeuille
 
-Récupère les données détaillées sur l'état des équipements et les besoins en maintenance.
+Récupère les données de performance pour un portefeuille de leasing spécifique.
 
 #### Requête
 
 ```
-GET /dashboard/portfolio-type/leasing/equipment-status
+GET /dashboard/portfolio/{portfolioId}/performance?type=leasing&period={period}
 ```
+
+#### Paramètres de requête
+
+| Paramètre   | Type   | Description | Requis |
+|-------------|--------|-------------|--------|
+| portfolioId | string | ID du portefeuille | Oui |
+| type        | string | Type de portefeuille (doit être 'leasing' ici) | Oui |
+| period      | string | Période d'analyse ('daily', 'weekly', 'monthly', 'quarterly', 'yearly') | Oui |
 
 #### Réponse
 
 ```json
 {
-  "summary": {
-    "totalEquipment": 125,
-    "needingMaintenance": 15,
-    "maintenancePercentage": 12.0,
-    "averageEquipmentAge": 2.5
-  },
-  "maintenanceSchedule": [
-    {
-      "month": "Août 2025",
-      "plannedCount": 8,
-      "estimatedCost": 12000
-    },
-    {
-      "month": "Septembre 2025",
-      "plannedCount": 12,
-      "estimatedCost": 18000
-    }
+  "id": "port-789",
+  "name": "Flotte Véhicules XYZ",
+  "type": "leasing",
+  "period": "monthly",
+  "data": [
+    { "date": "2025-01-01", "value": 425000 },
+    { "date": "2025-02-01", "value": 430000 },
+    { "date": "2025-03-01", "value": 435000 },
+    { "date": "2025-04-01", "value": 440000 },
+    { "date": "2025-05-01", "value": 445000 },
+    { "date": "2025-06-01", "value": 450000 }
   ],
-  "equipmentCondition": {
-    "excellent": 25,
-    "good": 55,
-    "fair": 15,
-    "poor": 5
-  },
-  "topMaintenanceNeeds": [
-    {
-      "equipmentId": "equip-12345",
-      "type": "Véhicule utilitaire",
-      "client": "Société ABC",
-      "issue": "Révision des 50 000 km",
-      "estimatedCost": 2500,
-      "scheduledDate": "2025-08-15T00:00:00Z"
-    },
-    {
-      "equipmentId": "equip-12346",
-      "type": "Machine industrielle",
-      "client": "Entreprise XYZ",
-      "issue": "Remplacement pièces d'usure",
-      "estimatedCost": 3800,
-      "scheduledDate": "2025-08-22T00:00:00Z"
-    }
-  ]
+  "metrics": {
+    "totalReturn": 5.8,
+    "annualizedReturn": 12.1,
+    "volatility": 2.1,
+    "sharpeRatio": 1.8,
+    "maxDrawdown": 0.5
+  }
 }
 ```
 
-### Analyse des fins de contrats
+### Récupération des tendances de portefeuille
 
-Récupère les prévisions et analyses des contrats arrivant à terme.
+Récupère les données de tendance pour tous les portefeuilles, y compris le type leasing.
 
 #### Requête
 
 ```
-GET /dashboard/portfolio-type/leasing/contract-end-analysis
+GET /dashboard/trends?period={period}
 ```
+
+#### Paramètres de requête
+
+| Paramètre | Type   | Description | Requis |
+|-----------|--------|-------------|--------|
+| period    | string | Période d'analyse ('daily', 'weekly', 'monthly', 'quarterly', 'yearly') | Oui |
+
+#### Réponse
+
+```json
+{
+  "period": "monthly",
+  "trends": {
+    "traditional": {
+      "growth": 4.2,
+      "data": [/* ... */]
+    },
+    "investment": {
+      "growth": 7.5,
+      "data": [/* ... */]
+    },
+    "leasing": {
+      "growth": 3.5,
+      "data": [
+        { "date": "2025-01-01", "value": 1150000 },
+        { "date": "2025-02-01", "value": 1160000 },
+        { "date": "2025-03-01", "value": 1170000 },
+        { "date": "2025-04-01", "value": 1180000 },
+        { "date": "2025-05-01", "value": 1190000 },
+        { "date": "2025-06-01", "value": 1200000 }
+      ]
+    }
+  }
+}
+```
+
+## Composants UI associés
+
+Les principaux composants UI utilisés pour afficher les données du dashboard de leasing sont :
+
+- `PortfolioPerformanceChart` - Affiche la performance des portefeuilles de leasing
+- `EquipmentDistributionPieChart` - Montre la répartition des équipements par type
+- `EquipmentStatusGauge` - Jauge indiquant l'état général des équipements
+
+Ces composants utilisent les données fournies par les endpoints API décrits ci-dessus.
 
 #### Réponse
 
