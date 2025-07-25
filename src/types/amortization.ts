@@ -62,6 +62,7 @@ export interface UseAmortizationSchedulesOptions {
   interestRate: number;
   startDate: string;
   endDate: string;
+  amortizationMethod?: 'linear' | 'degressive' | 'progressive' | 'balloon';
   page?: number;
   pageSize?: number;
   filter?: string;

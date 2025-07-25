@@ -12,7 +12,7 @@ import { useNotification } from '../../../../contexts/NotificationContext';
 // Composants pour les différentes sections
 import { ContractOverview } from './ContractOverview';
 // Import direct avec chemin relatif complet au cas où
-import { ContractDetails } from '../../../../components/portfolio/traditional/contract/ContractDetails';
+import ContractDetails from '../../../../components/portfolio/traditional/contract/ContractDetails';
 import { EditableAmortizationSchedule } from './EditableAmortizationSchedule';
 import { ContractRepayments } from './ContractRepayments';
 import { ContractGuarantees } from './ContractGuarantees';
@@ -163,9 +163,20 @@ export default function CreditContractDetailPage() {
               interestRate={contract.interestRate}
               startDate={contract.startDate || new Date().toISOString()}
               endDate={contract.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString()}
+              amortizationMethod={contract.amortization_method || 'linear'}
               onEditSchedule={async (updatedSchedule) => {
-                console.log('Échéancier mis à jour:', updatedSchedule);
-                showNotification('Échéancier mis à jour avec succès', 'success');
+                // Si updatedSchedule est vide, cela signifie que seule la méthode d'amortissement a changé
+                if (updatedSchedule.length === 0) {
+                  // Mettre à jour la méthode d'amortissement du contrat
+                  handleUpdateContract({
+                    amortization_method: contract.amortization_method === 'linear' ? 'degressive' :
+                                        contract.amortization_method === 'degressive' ? 'progressive' :
+                                        contract.amortization_method === 'progressive' ? 'balloon' : 'linear'
+                  });
+                } else {
+                  console.log('Échéancier mis à jour:', updatedSchedule);
+                  showNotification('Échéancier mis à jour avec succès', 'success');
+                }
               }}
             />
           </TabsContent>

@@ -6,6 +6,7 @@ import { Input } from '../../../../components/ui/Input';
 import { ArrowUpDown, Download } from 'lucide-react';
 import { MarketSecurity, SecuritiesType, InvestmentEntryType } from '../../../../types/market-securities';
 import { exportToExcel, exportToPDF } from '../../../../utils/exports';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 interface MarketSecuritiesTableProps {
   securities: MarketSecurity[];
@@ -34,6 +35,7 @@ export const MarketSecuritiesTable: React.FC<MarketSecuritiesTableProps> = ({ se
   const [sortBy, setSortBy] = useState<{ key: keyof MarketSecurity; direction: 'asc' | 'desc' } | null>(null);
   const [typeFilter, setTypeFilter] = useState<SecuritiesType | 'all'>('all');
   const [purchaseQuantities, setPurchaseQuantities] = useState<Record<string, number>>({});
+  const { formatCurrency } = useFormatCurrency();
 
   const handleQuantityChange = (id: string, value: string) => {
     const quantity = parseInt(value, 10);
@@ -87,8 +89,8 @@ export const MarketSecuritiesTable: React.FC<MarketSecuritiesTableProps> = ({ se
       'Entreprise': s.companyName,
       'Type': s.type,
       'Entrée Capital': s.investmentEntryType ? entryTypeLabels[s.investmentEntryType] : 'N/A',
-      'Valeur Ent. (FCFA)': s.enterpriseValue?.toLocaleString(),
-      'Prix Unitaire (FCFA)': s.unitPrice.toLocaleString(),
+      'Valeur Ent.': formatCurrency(s.enterpriseValue || 0),
+      'Prix Unitaire': formatCurrency(s.unitPrice),
       'Risque': s.risk,
       'Rdt. Attendu (%)': s.expectedReturn,
     }));
@@ -103,8 +105,8 @@ export const MarketSecuritiesTable: React.FC<MarketSecuritiesTableProps> = ({ se
         s.companyName,
         s.type,
         s.investmentEntryType ? entryTypeLabels[s.investmentEntryType] : 'N/A',
-        s.enterpriseValue?.toLocaleString() + ' FCFA',
-        s.unitPrice.toLocaleString() + ' FCFA',
+        formatCurrency(s.enterpriseValue || 0),
+        formatCurrency(s.unitPrice),
         s.risk,
         s.expectedReturn ? `${s.expectedReturn}%` : 'N/A',
       ]),
@@ -136,7 +138,7 @@ export const MarketSecuritiesTable: React.FC<MarketSecuritiesTableProps> = ({ se
             </div>
             <div>
               <span className="text-xs block text-gray-200">Volume</span>
-              <span className="font-semibold">14.2M FCFA</span>
+              <span className="font-semibold">{formatCurrency(14200000, { compact: true })}</span>
             </div>
             <div>
               <span className="text-xs block text-gray-200">Cotations</span>
@@ -263,12 +265,12 @@ export const MarketSecuritiesTable: React.FC<MarketSecuritiesTableProps> = ({ se
                     )}
                   </td>
                   <td className="py-4 px-4">
-                    <span className="font-mono">{security.enterpriseValue?.toLocaleString()} FCFA</span>
+                    <span className="font-mono">{formatCurrency(security.enterpriseValue || 0)}</span>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex flex-col">
                       <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        {security.unitPrice.toLocaleString()} FCFA
+                        {formatCurrency(security.unitPrice)}
                       </span>
                       <span className="text-xs text-green-600 dark:text-green-400">
                         +2.3% <span className="text-gray-400 dark:text-gray-500">24h</span>
@@ -345,7 +347,7 @@ export const MarketSecuritiesTable: React.FC<MarketSecuritiesTableProps> = ({ se
         <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
           <div className="flex flex-col mb-3 md:mb-0">
             <span className="text-sm text-gray-600 dark:text-gray-400">Affichage de {filteredAndSortedSecurities.length} titres sur {securities.length}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-500">Dernière mise à jour: {new Date().toLocaleString()}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-500">Dernière mise à jour: {new Date().toISOString().split('T')[0]} {new Date().toTimeString().split(' ')[0]}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600">

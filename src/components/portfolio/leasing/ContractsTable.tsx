@@ -83,7 +83,7 @@ export function ContractsTable({
     {
       header: 'Mensualité',
       accessorKey: 'monthly_payment',
-      cell: (contract) => formatCurrency(contract.monthly_payment, undefined, 'USD'),
+      cell: (contract) => formatCurrency(contract.monthly_payment),
       align: 'right' as const
     },
     {
@@ -211,7 +211,7 @@ export function ContractsTable({
     },
     { 
       label: 'Valeur totale', 
-      value: formatCurrency(totalAmount, undefined, 'USD')
+      value: formatCurrency(totalAmount)
     },
     {
       label: 'Durée moyenne',

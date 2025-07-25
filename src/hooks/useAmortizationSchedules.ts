@@ -35,6 +35,7 @@ const useAmortizationSchedules = ({
   interestRate,
   startDate,
   endDate,
+  amortizationMethod = 'linear',
   page = 1,
   pageSize = 10,
   filter = 'all'
@@ -76,7 +77,8 @@ const useAmortizationSchedules = ({
           amount,
           interestRate,
           startDate,
-          endDate
+          endDate,
+          amortizationMethod
         );
         
         // Mettre à jour le localStorage avec le nouvel échéancier
@@ -139,7 +141,7 @@ const useAmortizationSchedules = ({
         error: error instanceof Error ? error : new Error('Une erreur est survenue lors du chargement des échéanciers')
       }));
     }
-  }, [contractId, amount, interestRate, startDate, endDate, page, pageSize, filter]);
+  }, [contractId, amount, interestRate, startDate, endDate, amortizationMethod, page, pageSize, filter]);
 
   // Fonction pour mettre à jour une échéance
   const updateScheduleItem = useCallback(async (updatedItem: AmortizationScheduleItem) => {

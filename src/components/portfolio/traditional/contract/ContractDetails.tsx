@@ -269,6 +269,24 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       type: 'number'
     },
     { 
+      field: 'amortization_method', 
+      label: 'Méthode d\'amortissement', 
+      value: contract.amortization_method || 'linear',
+      displayValue: contract.amortization_method === 'linear' ? 'Linéaire (constant)' :
+                   contract.amortization_method === 'degressive' ? 'Dégressive' :
+                   contract.amortization_method === 'progressive' ? 'Progressive' :
+                   contract.amortization_method === 'balloon' ? 'Paiement ballon' : 'Linéaire (constant)',
+      icon: <ScaleIcon className="h-5 w-5 text-gray-500" />,
+      editable: true,
+      type: 'select',
+      options: [
+        { value: 'linear', label: 'Linéaire (constant)' },
+        { value: 'degressive', label: 'Dégressive' },
+        { value: 'progressive', label: 'Progressive' },
+        { value: 'balloon', label: 'Paiement ballon' }
+      ]
+    },
+    { 
       field: 'interestRate', 
       label: 'Taux d\'intérêt', 
       value: contract.interestRate,

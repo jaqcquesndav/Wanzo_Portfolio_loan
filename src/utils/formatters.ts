@@ -1,17 +1,8 @@
-export const formatCurrency = (amount: number, currency: string = 'FCFA', asText: boolean = false): string => {
-  if (asText) {
-    // Conversion en texte pour les montants (en français)
-    // Cette implémentation est simplifiée et pourrait être améliorée
-    const formatter = new Intl.NumberFormat('fr-FR', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    });
-    
-    const amountStr = formatter.format(amount);
-    return `${amountStr} ${currency} (montant en lettres)`;
-  }
-  
+export const formatCurrency = (
+  amount: number, 
+  currency: string = 'FCFA', 
+  compact: boolean = false
+): string => {
   // Mapper les devises à leurs locales et symboles
   const localeMap = {
     'CDF': 'fr-CD',
@@ -21,13 +12,21 @@ export const formatCurrency = (amount: number, currency: string = 'FCFA', asText
     'XOF': 'fr-FR'
   };
   
+  // Options de formatage
+  const options: Intl.NumberFormatOptions = {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  };
+  
+  if (compact) {
+    options.notation = 'compact';
+    options.compactDisplay = 'short';
+  }
+  
   // Si c'est FCFA ou XOF, format personnalisé car non standard dans Intl
   if (currency === 'FCFA' || currency === 'XOF') {
-    const formatted = new Intl.NumberFormat('fr-FR', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+    const formatted = new Intl.NumberFormat('fr-FR', options).format(amount);
     
     return `${formatted} ${currency}`;
   }

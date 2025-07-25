@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ExitEvent } from '../../../types/investment-portfolio';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface ExitEventsTableProps {
   exits: ExitEvent[];
@@ -9,6 +10,8 @@ interface ExitEventsTableProps {
 }
 
 export const ExitEventsTable: React.FC<ExitEventsTableProps> = ({ exits, loading, onView }) => {
+  const { formatCurrency } = useFormatCurrency();
+  
   return (
     <div className="overflow-x-auto overflow-visible rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <table className="min-w-full bg-white dark:bg-gray-800">
@@ -40,7 +43,7 @@ export const ExitEventsTable: React.FC<ExitEventsTableProps> = ({ exits, loading
                 <td className="px-4 py-2">{e.companyId}</td>
                 <td className="px-4 py-2">{e.type}</td>
                 <td className="px-4 py-2">{e.date}</td>
-                <td className="px-4 py-2">{e.amount.toLocaleString()} FCFA</td>
+                <td className="px-4 py-2">{formatCurrency(e.amount)}</td>
                 <td className="px-4 py-2">{e.performance.tri}%</td>
                 <td className="px-4 py-2">{e.performance.multiple}x</td>
                 <td className="px-4 py-2 text-center">

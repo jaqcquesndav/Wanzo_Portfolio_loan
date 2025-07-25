@@ -401,6 +401,7 @@ export type CreditContract = {
   consolidatedTo?: string;
   duration?: number; // Durée du crédit en mois
   gracePeriod?: number; // Période de grâce en mois
+  amortization_method?: 'linear' | 'degressive' | 'progressive' | 'balloon'; // Méthode d'amortissement du crédit
   createdAt: string;
   updatedAt?: string;
   lastUpdated?: string; // Dernière mise à jour du contrat

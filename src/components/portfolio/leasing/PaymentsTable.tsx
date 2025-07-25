@@ -69,7 +69,7 @@ export function PaymentsTable({ payments, loading = false, onRowClick }: Payment
     {
       header: 'Montant',
       accessorKey: 'amount',
-      cell: (payment) => formatCurrency(payment.amount, undefined, 'USD'),
+      cell: (payment) => formatCurrency(payment.amount),
       align: 'right' as const
     },
     {
@@ -135,7 +135,7 @@ export function PaymentsTable({ payments, loading = false, onRowClick }: Payment
   const summaryData = [
     { 
       label: 'Total des paiements', 
-      value: formatCurrency(totalAmount, undefined, 'USD')
+      value: formatCurrency(totalAmount)
     },
     { 
       label: 'Nombre de transactions', 

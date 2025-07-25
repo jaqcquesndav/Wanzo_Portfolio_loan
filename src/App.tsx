@@ -17,6 +17,7 @@ import { useInitData } from './services/api/leasing';
 import { ConnectivityProvider } from './contexts/ConnectivityContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/api/reactQueryConfig';
+import { storageManager } from './utils/storageManager';
 // Import de l'intercepteur de token pour s'assurer qu'il est bien initialisé
 import './services/api/tokenInterceptor';
 
@@ -26,6 +27,29 @@ export default function App() {
   
   // Initialiser les données de leasing
   useInitData();
+
+  // Nettoyer le stockage au démarrage pour éviter les problèmes de quota
+  React.useEffect(() => {
+    try {
+      // Essayer de détecter si on approche de la limite
+      let totalSize = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const value = localStorage.getItem(key) || '';
+          totalSize += key.length + value.length;
+        }
+      }
+      
+      // Si on dépasse 3 Mo (approx.), nettoyer le stockage
+      if (totalSize > 3 * 1024 * 1024) {
+        storageManager.clearOldData();
+        console.log("Nettoyage du stockage effectué pour libérer de l'espace.");
+      }
+    } catch (error) {
+      console.warn("Erreur lors de la vérification du stockage:", error);
+    }
+  }, []);
 
   // Démarrer le service de synchronisation si activée
   React.useEffect(() => {

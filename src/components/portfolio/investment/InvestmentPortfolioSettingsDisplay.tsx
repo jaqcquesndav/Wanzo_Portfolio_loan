@@ -7,6 +7,7 @@ import { ConfirmModal } from '../../ui/ConfirmModal';
 import { BankAccountsDisplay } from '../../portfolio/shared/BankAccountsDisplay';
 import { PortfolioManagementDisplay } from '../../portfolio/shared/PortfolioManagementDisplay';
 import { PortfolioDocumentsSection } from '../../portfolio/shared/PortfolioDocumentsSection';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface InvestmentPortfolioSettingsDisplayProps {
   portfolio: InvestmentPortfolio;
@@ -17,6 +18,7 @@ interface InvestmentPortfolioSettingsDisplayProps {
 export function InvestmentPortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: InvestmentPortfolioSettingsDisplayProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [currentTab, setCurrentTab] = useState('general');
+  const { formatCurrency } = useFormatCurrency();
   
   return (
     <div className="space-y-8">
@@ -62,7 +64,7 @@ export function InvestmentPortfolioSettingsDisplay({ portfolio, onEdit, onDelete
             <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 flex flex-col gap-4">
               <h3 className="text-lg font-bold text-primary mb-2">Objectifs</h3>
               <div className="flex flex-col gap-1 text-base text-gray-800 dark:text-gray-100">
-                <div><span className="font-semibold">Objectif de collecte :</span> {portfolio.target_amount?.toLocaleString()} FCFA</div>
+                <div><span className="font-semibold">Objectif de collecte :</span> {portfolio.target_amount ? formatCurrency(portfolio.target_amount) : <span className="italic text-gray-400">Non renseigné</span>}</div>
                 <div><span className="font-semibold">Objectif de rendement :</span> {portfolio.target_return}%</div>
                 <div><span className="font-semibold">Secteurs visés :</span> {portfolio.target_sectors?.length ? portfolio.target_sectors.join(', ') : <span className="italic text-gray-400">Aucun</span>}</div>
               </div>

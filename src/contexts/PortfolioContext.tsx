@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-
+import { storageManager } from '../utils/storageManager';
 
 import type { PortfolioType } from './portfolioTypes';
 
@@ -18,22 +18,22 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [currentPortfolioId, setCurrentPortfolioIdState] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedType = localStorage.getItem('portfolioType');
+    const storedType = storageManager.getItem('portfolioType');
     if (storedType) setPortfolioTypeState(storedType as PortfolioType);
-    const storedId = localStorage.getItem('currentPortfolioId');
+    const storedId = storageManager.getItem('currentPortfolioId');
     if (storedId) setCurrentPortfolioIdState(storedId);
   }, []);
 
   const setPortfolioType = (type: PortfolioType) => {
     setPortfolioTypeState(type);
-    if (type) localStorage.setItem('portfolioType', type);
-    else localStorage.removeItem('portfolioType');
+    if (type) storageManager.setItem('portfolioType', type);
+    else storageManager.removeItem('portfolioType');
   };
 
   const setCurrentPortfolioId = (id: string | null) => {
     setCurrentPortfolioIdState(id);
-    if (id) localStorage.setItem('currentPortfolioId', id);
-    else localStorage.removeItem('currentPortfolioId');
+    if (id) storageManager.setItem('currentPortfolioId', id);
+    else storageManager.removeItem('currentPortfolioId');
   };
 
   const resetPortfolioType = () => setPortfolioType(null);

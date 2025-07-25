@@ -3,7 +3,9 @@ import type { Maintenance } from '../../../types/leasing-asset';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
-import { formatCurrency, generateTransactionId } from '../../../utils/formatters';
+import { generateTransactionId } from '../../../utils/formatters';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 interface MaintenanceTableProps {
   maintenance: Maintenance[];
@@ -12,6 +14,8 @@ interface MaintenanceTableProps {
 }
 
 export function MaintenanceTable({ maintenance, loading = false, onRowClick }: MaintenanceTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  const { refreshCounter } = useCurrencyContext();
   // Map des statuts de maintenance avec leurs variantes et labels
   const statusMap = useMemo(() => ({
     'scheduled': { label: 'Planifiée', variant: 'info' as const },
@@ -47,7 +51,7 @@ export function MaintenanceTable({ maintenance, loading = false, onRowClick }: M
   // Calculer le coût total des maintenances
   const totalCost = useMemo(() => {
     return maintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
-  }, [maintenance]);
+  }, [maintenance, refreshCounter]);
 
   // Configuration des colonnes
   const columns = useMemo<Column<Maintenance>[]>(() => [
@@ -99,7 +103,7 @@ export function MaintenanceTable({ maintenance, loading = false, onRowClick }: M
     {
       header: 'Coût',
       accessorKey: 'cost',
-      cell: (item) => item.cost ? formatCurrency(item.cost, undefined, 'USD') : '-',
+      cell: (item) => item.cost ? formatCurrency(item.cost) : '-',
       align: 'right' as const
     },
     {
@@ -138,7 +142,7 @@ export function MaintenanceTable({ maintenance, loading = false, onRowClick }: M
       ),
       align: 'center' as const
     }
-  ], [onRowClick, statusMap, typeMap]);
+  ], [onRowClick, statusMap, typeMap, formatCurrency]);
 
   // Options de filtrage
   const filterOptions = [
@@ -178,7 +182,7 @@ export function MaintenanceTable({ maintenance, loading = false, onRowClick }: M
     },
     {
       label: 'Coût total',
-      value: formatCurrency(totalCost, undefined, 'USD')
+      value: formatCurrency(totalCost)
     }
   ];
 

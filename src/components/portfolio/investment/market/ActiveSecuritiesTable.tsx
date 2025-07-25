@@ -6,6 +6,7 @@ import { Input } from '../../../ui/form/Input';
 import { ArrowUpDown, Download } from 'lucide-react';
 import { InvestmentAsset } from '../../../../types/investment-portfolio';
 import { exportToExcel, exportToPDF } from '../../../../utils/export';
+import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
 
 interface ActiveSecuritiesTableProps {
   assets: InvestmentAsset[];
@@ -23,6 +24,7 @@ export const ActiveSecuritiesTable: React.FC<ActiveSecuritiesTableProps> = ({ as
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<{ key: keyof InvestmentAsset; direction: 'asc' | 'desc' } | null>(null);
   const [sellQuantities, setSellQuantities] = useState<Record<string, number>>({});
+  const { formatCurrency } = useFormatCurrency();
 
   const handleQuantityChange = (id: string, value: string) => {
     const quantity = parseInt(value, 10);
@@ -68,8 +70,8 @@ export const ActiveSecuritiesTable: React.FC<ActiveSecuritiesTableProps> = ({ as
     const dataToExport = filteredAndSortedAssets.map(a => ({
       'Nom': a.name,
       'Type': a.type,
-      'Valeur Initiale (FCFA)': a.initialValue.toLocaleString(),
-      'Valeur Actuelle (FCFA)': a.currentValue?.toLocaleString() || 'N/A',
+      'Valeur Initiale': formatCurrency(a.initialValue),
+      'Valeur Actuelle': a.currentValue ? formatCurrency(a.currentValue) : 'N/A',
       'Statut': a.status,
     }));
     exportToExcel(dataToExport, 'Actifs_En_Portefeuille');
@@ -82,8 +84,8 @@ export const ActiveSecuritiesTable: React.FC<ActiveSecuritiesTableProps> = ({ as
       data: filteredAndSortedAssets.map(a => [
         a.name,
         a.type,
-        a.initialValue.toLocaleString() + ' FCFA',
-        a.currentValue?.toLocaleString() ? a.currentValue.toLocaleString() + ' FCFA' : 'N/A',
+        formatCurrency(a.initialValue),
+        a.currentValue ? formatCurrency(a.currentValue) : 'N/A',
         a.status,
       ]),
       filename: 'Actifs_En_Portefeuille.pdf'
@@ -111,7 +113,7 @@ export const ActiveSecuritiesTable: React.FC<ActiveSecuritiesTableProps> = ({ as
             <div>
               <span className="text-xs block text-gray-200">Valeur Totale</span>
               <span className="font-semibold">
-                {assets.reduce((sum, asset) => sum + (asset.currentValue || asset.initialValue), 0).toLocaleString()} FCFA
+                {formatCurrency(assets.reduce((sum, asset) => sum + (asset.currentValue || asset.initialValue), 0))}
               </span>
             </div>
             <div>
@@ -203,12 +205,12 @@ export const ActiveSecuritiesTable: React.FC<ActiveSecuritiesTableProps> = ({ as
                       </Badge>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="font-mono">{asset.initialValue.toLocaleString()} FCFA</span>
+                      <span className="font-mono">{formatCurrency(asset.initialValue)}</span>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex flex-col">
                         <span className="font-mono font-medium">
-                          {asset.currentValue?.toLocaleString() || 'N/A'} FCFA
+                          {asset.currentValue ? formatCurrency(asset.currentValue) : 'N/A'}
                         </span>
                         {asset.currentValue && (
                           <span className={`text-xs ${isPositivePerformance ? 'text-green-600' : 'text-red-600'}`}>
@@ -271,12 +273,12 @@ export const ActiveSecuritiesTable: React.FC<ActiveSecuritiesTableProps> = ({ as
         <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
           <div className="flex flex-col mb-3 md:mb-0">
             <span className="text-sm text-gray-600 dark:text-gray-400">Affichage de {filteredAndSortedAssets.length} actifs sur {assets.length}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-500">Dernière mise à jour: {new Date().toLocaleString()}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-500">Dernière mise à jour: {new Date().toISOString().split('T')[0]} {new Date().toTimeString().split(' ')[0]}</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-sm font-medium">Valeur totale du portefeuille:</span>
             <span className="text-lg font-bold text-emerald-600">
-              {assets.reduce((sum, asset) => sum + (asset.currentValue || asset.initialValue), 0).toLocaleString()} FCFA
+              {formatCurrency(assets.reduce((sum, asset) => sum + (asset.currentValue || asset.initialValue), 0))}
             </span>
           </div>
         </div>

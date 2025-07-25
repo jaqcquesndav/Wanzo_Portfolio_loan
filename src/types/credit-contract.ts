@@ -11,6 +11,7 @@ export interface CreditContract {
   start_date: string;
   end_date: string;
   status: 'active' | 'completed' | 'defaulted' | 'restructured';
+  amortization_method?: 'linear' | 'degressive' | 'progressive' | 'balloon';
   terms: string;
   created_at: string;
   updated_at: string;

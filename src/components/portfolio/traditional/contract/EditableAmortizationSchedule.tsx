@@ -7,6 +7,7 @@ import { Card } from '../../../ui/Card';
 import { Input } from '../../../ui/Form';
 import { Modal } from '../../../ui/Modal';
 import { Tabs, TabsList, TabsTrigger } from '../../../ui/Tabs';
+import { SimpleSelect } from '../../../ui/SimpleSelect';
 import { Save, Edit, Download, Printer, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import useAmortizationSchedules from '../../../../hooks/useAmortizationSchedules';
@@ -19,6 +20,7 @@ interface EditableAmortizationScheduleProps {
   interestRate: number;
   startDate: string;
   endDate: string;
+  amortizationMethod?: 'linear' | 'degressive' | 'progressive' | 'balloon';
   onEditSchedule?: (updatedSchedule: AmortizationScheduleItem[]) => Promise<void>;
 }
 
@@ -48,6 +50,7 @@ export function EditableAmortizationSchedule({
   interestRate,
   startDate,
   endDate,
+  amortizationMethod = 'linear',
   onEditSchedule
 }: EditableAmortizationScheduleProps) {
   const [scheduleItems, setScheduleItems] = useState<AmortizationScheduleItem[]>([]);
@@ -64,6 +67,8 @@ export function EditableAmortizationSchedule({
     remainingBalance: 0
   });
   const [activeTab, setActiveTab] = useState('all');
+  // État pour la méthode d'amortissement
+  const [selectedAmortizationMethod, setSelectedAmortizationMethod] = useState<'linear' | 'degressive' | 'progressive' | 'balloon'>(amortizationMethod);
   // État pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // Nombre d'éléments par page
@@ -71,7 +76,7 @@ export function EditableAmortizationSchedule({
   const { formatCurrency } = useFormatCurrency();
   
   // Log pour voir les paramètres de pagination passés au hook
-  console.log(`Appel du hook avec: page=${currentPage}, pageSize=${pageSize}, filter=${activeTab}`);
+  console.log(`Appel du hook avec: page=${currentPage}, pageSize=${pageSize}, filter=${activeTab}, amortizationMethod=${selectedAmortizationMethod}`);
   
   const amortizationSchedules = useAmortizationSchedules({
     contractId,
@@ -79,6 +84,7 @@ export function EditableAmortizationSchedule({
     interestRate,
     startDate,
     endDate,
+    amortizationMethod: selectedAmortizationMethod,
     page: currentPage,
     pageSize,
     filter: activeTab
@@ -125,6 +131,39 @@ export function EditableAmortizationSchedule({
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setCurrentPage(1); // Réinitialiser à la première page lors du changement de filtre
+  };
+
+  // Gestionnaire pour changer de méthode d'amortissement
+  const handleAmortizationMethodChange = (method: 'linear' | 'degressive' | 'progressive' | 'balloon') => {
+    setSelectedAmortizationMethod(method);
+    // Rafraîchir les données avec la nouvelle méthode
+    amortizationSchedules.refresh();
+    
+    // Mettre à jour le contrat si onEditSchedule est fourni
+    if (onEditSchedule) {
+      // Nous passons un tableau vide car nous ne modifions pas les échéances elles-mêmes
+      // La méthode d'amortissement sera mise à jour dans le composant parent
+      onEditSchedule([]).then(() => {
+        // Après la mise à jour, nous envoyons une notification
+        showNotification(`Méthode d'amortissement modifiée en "${
+          method === 'linear' ? 'Linéaire' : 
+          method === 'degressive' ? 'Dégressive' : 
+          method === 'progressive' ? 'Progressive' : 
+          'Paiement ballon'
+        }"`, 'info');
+      }).catch(error => {
+        console.error('Erreur lors de la mise à jour de la méthode d\'amortissement:', error);
+        showNotification('Erreur lors de la mise à jour de la méthode d\'amortissement', 'error');
+      });
+    } else {
+      // Si pas de callback, juste notification
+      showNotification(`Méthode d'amortissement modifiée en "${
+        method === 'linear' ? 'Linéaire' : 
+        method === 'degressive' ? 'Dégressive' : 
+        method === 'progressive' ? 'Progressive' : 
+        'Paiement ballon'
+      }"`, 'info');
+    }
   };
 
   // Gestionnaire pour ouvrir le modal d'édition
@@ -358,6 +397,24 @@ export function EditableAmortizationSchedule({
               <span className="text-xl font-bold text-red-600">{formatCurrency(overdueAmount)}</span>
               <div className="mt-2 text-xs text-gray-400">{overdueSchedules} échéances en retard</div>
             </Card>
+          </div>
+          
+          {/* Sélecteur de méthode d'amortissement */}
+          <div className="mb-4">
+            <div className="flex items-center">
+              <label className="mr-2 text-sm text-gray-500">Méthode d'amortissement:</label>
+              <SimpleSelect<'linear' | 'degressive' | 'progressive' | 'balloon'>
+                value={selectedAmortizationMethod}
+                onChange={handleAmortizationMethodChange}
+                options={[
+                  { value: 'linear', label: 'Linéaire (constant)' },
+                  { value: 'degressive', label: 'Dégressive' },
+                  { value: 'progressive', label: 'Progressive' },
+                  { value: 'balloon', label: 'Paiement ballon' }
+                ]}
+                className="w-[220px]"
+              />
+            </div>
           </div>
           
           <div className="flex justify-between items-center mb-4">

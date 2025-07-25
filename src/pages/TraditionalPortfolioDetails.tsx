@@ -48,7 +48,7 @@ export default function TraditionalPortfolioDetails() {
   const { setCurrentPortfolioId } = usePortfolioContext();
   const [showProductForm, setShowProductForm] = useState(false);
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'products';
+  const initialTab = searchParams.get('tab') || 'requests';
   const [tab, setTab] = useState(initialTab);
   
   // État pour le modal de détails de l'entreprise
@@ -67,7 +67,7 @@ export default function TraditionalPortfolioDetails() {
   // Update URL when tab changes
   useEffect(() => {
     const currentParams = new URLSearchParams(searchParams);
-    if (tab !== 'products') {
+    if (tab !== 'requests') {
       currentParams.set('tab', tab);
     } else {
       currentParams.delete('tab');

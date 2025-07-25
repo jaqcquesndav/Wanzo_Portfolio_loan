@@ -1,6 +1,7 @@
 import React from 'react';
 import type { InvestmentTransaction } from '../../../types/investment-portfolio';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface InvestmentTransactionsTableProps {
   transactions: InvestmentTransaction[];
@@ -9,6 +10,8 @@ interface InvestmentTransactionsTableProps {
 }
 
 export const InvestmentTransactionsTable: React.FC<InvestmentTransactionsTableProps> = ({ transactions, loading, onView }) => {
+  const { formatCurrency } = useFormatCurrency();
+  
   return (
     <div className="overflow-x-auto overflow-visible rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <table className="min-w-full bg-white dark:bg-gray-800">
@@ -38,7 +41,7 @@ export const InvestmentTransactionsTable: React.FC<InvestmentTransactionsTablePr
               <tr key={trx.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onClick={() => onView(trx.id)}>
                 <td className="px-4 py-2">{trx.companyId}</td>
                 <td className="px-4 py-2">{trx.type}</td>
-                <td className="px-4 py-2">{trx.amount.toLocaleString()} FCFA</td>
+                <td className="px-4 py-2">{formatCurrency(trx.amount)}</td>
                 <td className="px-4 py-2">{trx.date}</td>
                 <td className="px-4 py-2">{trx.status}</td>
                 <td className="px-4 py-2 text-center">

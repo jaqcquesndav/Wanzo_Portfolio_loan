@@ -7,7 +7,8 @@ export const generateAmortizationSchedule = (
   amount: number,
   interestRate: number,
   startDate: string,
-  endDate: string
+  endDate: string,
+  amortizationMethod: 'linear' | 'degressive' | 'progressive' | 'balloon' = 'linear'
 ): AmortizationScheduleItem[] => {
   const items: AmortizationScheduleItem[] = [];
   const start = new Date(startDate);
@@ -18,17 +19,80 @@ export const generateAmortizationSchedule = (
     (end.getFullYear() - start.getFullYear()) * 12 + 
     (end.getMonth() - start.getMonth());
   
-  // Calcul simple d'un échéancier à amortissement constant
-  const monthlyPrincipal = amount / termInMonths;
+  // Variables pour les calculs
+  let monthlyPrincipal = 0;
   let remainingBalance = amount;
+  
+  // Calcul selon la méthode d'amortissement
+  switch(amortizationMethod) {
+    case 'linear': // Amortissement constant (méthode linéaire)
+      monthlyPrincipal = amount / termInMonths;
+      break;
+      
+    case 'degressive': // Amortissement dégressif
+      // Dans cette méthode, on paie plus de principal au début
+      // et la part d'intérêts diminue plus rapidement
+      monthlyPrincipal = amount / ((termInMonths * (termInMonths + 1)) / 2) * termInMonths;
+      break;
+      
+    case 'progressive': // Amortissement progressif
+      // Dans cette méthode, on paie moins de principal au début
+      // et la part d'intérêts diminue plus lentement
+      monthlyPrincipal = amount / ((termInMonths * (termInMonths + 1)) / 2);
+      break;
+      
+    case 'balloon': // Amortissement avec paiement ballon
+      // Dans cette méthode, on effectue des paiements réguliers puis un gros paiement final
+      monthlyPrincipal = (amount * 0.7) / (termInMonths - 1); // 70% réparti sur les n-1 premiers mois
+      break;
+  }
   
   for (let i = 0; i < termInMonths; i++) {
     const dueDate = new Date(start);
     dueDate.setMonth(dueDate.getMonth() + i + 1);
     
-    const monthlyInterest = remainingBalance * (interestRate / 100 / 12);
-    const payment = monthlyPrincipal + monthlyInterest;
-    remainingBalance -= monthlyPrincipal;
+    let payment = 0;
+    let principal = 0;
+    
+    // Calcul du paiement selon la méthode d'amortissement
+    switch(amortizationMethod) {
+      case 'linear': { // Méthode linéaire (amortissement constant)
+        principal = monthlyPrincipal;
+        const monthlyInterest = remainingBalance * (interestRate / 100 / 12);
+        payment = principal + monthlyInterest;
+        break;
+      }
+        
+      case 'degressive': { // Amortissement dégressif
+        principal = monthlyPrincipal - (i * (monthlyPrincipal / termInMonths));
+        const dInterest = remainingBalance * (interestRate / 100 / 12);
+        payment = principal + dInterest;
+        break;
+      }
+        
+      case 'progressive': { // Amortissement progressif
+        principal = monthlyPrincipal + (i * (monthlyPrincipal / termInMonths));
+        const pInterest = remainingBalance * (interestRate / 100 / 12);
+        payment = principal + pInterest;
+        break;
+      }
+        
+      case 'balloon': { // Amortissement avec paiement ballon
+        // Dernier mois: paiement ballon (30% restant + intérêts)
+        if (i === termInMonths - 1) {
+          principal = remainingBalance;
+          const bInterest = remainingBalance * (interestRate / 100 / 12);
+          payment = principal + bInterest;
+        } else {
+          principal = monthlyPrincipal;
+          const bInterest = remainingBalance * (interestRate / 100 / 12);
+          payment = principal + bInterest;
+        }
+        break;
+      }
+    }
+    
+    remainingBalance -= principal;
     
     // Déterminer le statut en fonction de la date d'échéance
     const now = new Date();
@@ -52,8 +116,8 @@ export const generateAmortizationSchedule = (
       contractId,
       number: i + 1,
       dueDate: dueDate.toISOString(),
-      principal: monthlyPrincipal,
-      interest: monthlyInterest,
+      principal: principal,
+      interest: payment - principal,
       totalPayment: payment,
       remainingBalance: Math.max(0, remainingBalance),
       status,

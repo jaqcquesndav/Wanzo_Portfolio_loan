@@ -3,6 +3,7 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { LeasingTable, type Column } from '../../ui/LeasingTable';
 import { formatters } from '../../../utils/tableFormatters';
 import { toast } from 'react-hot-toast';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface EquipmentsTableProps {
   equipments: Equipment[];
@@ -11,6 +12,8 @@ interface EquipmentsTableProps {
 }
 
 export function EquipmentsTable({ equipments, loading, onRowClick }: EquipmentsTableProps) {
+  const { formatCurrency } = useFormatCurrency();
+  
   // Navigation désactivée pour empêcher l'ouverture d'une nouvelle page
   const handleRowClick = (equipment: Equipment) => {
     if (onRowClick) {
@@ -46,6 +49,11 @@ export function EquipmentsTable({ equipments, loading, onRowClick }: EquipmentsT
       header: 'État',
       accessorKey: 'condition',
       cell: (equipment: Equipment) => getEquipmentConditionBadge(equipment.condition)
+    },
+    {
+      header: 'Prix',
+      accessorKey: 'price',
+      cell: (equipment: Equipment) => formatCurrency(equipment.price)
     },
     {
       header: 'Disponibilité',
