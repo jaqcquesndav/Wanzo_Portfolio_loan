@@ -1,6 +1,6 @@
 // src/components/layout/PageLayout.tsx
 import React from 'react';
-import { Header } from './Header';
+import { PageHeader } from '../ui/PageHeader';
 import { Breadcrumb } from '../common/Breadcrumb';
 
 interface PageLayoutProps {
@@ -17,8 +17,8 @@ export function PageLayout({
   breadcrumbs
 }: PageLayoutProps) {
   return (
-    <div className="space-y-6">
-      <Header title={title} actions={actions} />
+    <div className="container mx-auto p-6 space-y-6">
+      <PageHeader title={title} actions={actions} />
       {breadcrumbs && <Breadcrumb items={breadcrumbs} />}
       {children}
     </div>

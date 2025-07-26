@@ -6,7 +6,7 @@ import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Form';
 import { CalendarIcon, DocumentIcon, UserIcon, BuildingOfficeIcon, CurrencyDollarIcon, ScaleIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../../../../contexts/NotificationContext';
-import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 
 // Fonction utilitaire pour le formatage des dates
 const formatDate = (dateString?: string) => {
@@ -45,7 +45,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
   const [editMode, setEditMode] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<CreditContract>>({});
   const { showNotification } = useNotification();
-  const { formatCurrency } = useFormatCurrency();
+  const { formatAmount } = useCurrencyContext();
   
   // Calculer la durée en mois entre la date de début et la date de fin
   const calculateTermInMonths = (): number => {
@@ -247,7 +247,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       field: 'amount', 
       label: 'Montant accordé', 
       value: contract.amount,
-      displayValue: formatCurrency(contract.amount),
+      displayValue: formatAmount(contract.amount),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
@@ -256,7 +256,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       field: 'remainingAmount', 
       label: 'Montant restant dû', 
       value: contract.remainingAmount || 0,
-      displayValue: formatCurrency(contract.remainingAmount || 0),
+      displayValue: formatAmount(contract.remainingAmount || 0),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
@@ -345,7 +345,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       field: 'disbursedAmount', 
       label: 'Montant décaissé', 
       value: contract.disbursedAmount || 0,
-      displayValue: formatCurrency(contract.disbursedAmount || 0),
+      displayValue: formatAmount(contract.disbursedAmount || 0),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'

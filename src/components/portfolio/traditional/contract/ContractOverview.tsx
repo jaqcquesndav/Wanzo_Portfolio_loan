@@ -2,21 +2,16 @@
 import { Button } from '../../../ui/Button';
 import { StatusBadge } from '../../../ui/StatusBadge';
 import { CreditContract } from '../../../../types/credit';
-
-// Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
+import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 
 interface ContractOverviewProps {
   contract: CreditContract;
 }
 
 export function ContractOverview({ contract }: ContractOverviewProps) {
+  // Utiliser le contexte de devise pour le formatage des montants
+  const { formatAmount } = useCurrencyContext();
+  
   // Calculer le pourcentage restant à payer
   const remainingPercentage = contract.remainingAmount 
     ? Math.round((contract.remainingAmount / contract.amount) * 100) 

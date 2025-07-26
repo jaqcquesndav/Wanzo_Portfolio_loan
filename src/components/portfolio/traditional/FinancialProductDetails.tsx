@@ -1,28 +1,28 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Edit2, Tag, Calendar, TrendingUp, Users } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
-import { FinancialProductForm } from './FinancialProductForm';
-import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
+import { FinancialProductForm, ProductFormData } from './FinancialProductForm';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import type { Portfolio } from '../../../types/portfolio';
 
 interface FinancialProductDetailsProps {
   product: FinancialProduct;
-  portfolio: Portfolio;
+  portfolio?: Portfolio; // Make portfolio optional since we're not using it
   onClose: () => void;
   onUpdate: (product: FinancialProduct) => Promise<void>;
 }
 
 export function FinancialProductDetails({ 
   product, 
-  portfolio,
   onClose,
   onUpdate 
 }: FinancialProductDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const { formatAmount } = useCurrencyContext();
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: ProductFormData) => {
     try {
       await onUpdate({
         ...product,
@@ -44,7 +44,6 @@ export function FinancialProductDetails({
           </div>
           <div className="p-6">
             <FinancialProductForm
-              portfolio={portfolio}
               onSubmit={handleUpdate}
               onCancel={() => setIsEditing(false)}
               initialData={product}
@@ -93,7 +92,7 @@ export function FinancialProductDetails({
                 <div className="flex items-center text-sm text-gray-500">
                   <Tag className="h-4 w-4 mr-2" />
                   <span>
-                    {formatCurrency(product.minAmount, undefined, 'USD')} - {formatCurrency(product.maxAmount, undefined, 'USD')}
+                    {formatAmount(product.minAmount)} - {formatAmount(product.maxAmount)}
                   </span>
                 </div>
                 <div className="flex items-center text-sm text-gray-500">

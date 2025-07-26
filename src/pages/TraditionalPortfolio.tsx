@@ -93,7 +93,7 @@ export default function TraditionalPortfolio() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Afficher différents états en fonction des conditions */}
       {loading && (
         <div className="flex justify-center items-center h-64">

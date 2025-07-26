@@ -86,7 +86,7 @@ export default function Layout() {
               className="flex-1 min-h-screen flex flex-col items-stretch justify-start"
               style={{ transition: 'margin-left 0.25s ease-out' }}
             >
-              <div className="w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
+              <div className="container mx-auto w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
                 <Outlet />
               </div>
             </main>
@@ -107,7 +107,7 @@ export default function Layout() {
             <main
               className="flex-1 min-h-screen transition-all duration-300 flex flex-col items-stretch justify-start"
             >
-              <div className="w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
+              <div className="container mx-auto w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
                 <Outlet />
               </div>
             </main>

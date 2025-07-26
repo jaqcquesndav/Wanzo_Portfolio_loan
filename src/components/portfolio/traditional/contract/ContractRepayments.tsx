@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../../ui/Table';
 import { Button } from '../../../ui/Button';
 import { Search, Plus, Download, Filter } from 'lucide-react';
-import { useFormatCurrency } from '../../../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 
 interface Repayment {
   id: string;
@@ -42,7 +42,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
   const [repayments, setRepayments] = useState<Repayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const { formatCurrency } = useFormatCurrency();
+  const { formatAmount } = useCurrencyContext();
   
   useEffect(() => {
     // Dans une application réelle, vous feriez un appel API ici
@@ -164,7 +164,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
             Filtrer
           </Button>
           <div className="text-sm font-medium">
-            Total: {formatCurrency(totalAmount)}
+            Total: {formatAmount(totalAmount)}
           </div>
         </div>
       </div>
@@ -201,7 +201,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
                 filteredRepayments.map((repayment) => (
                   <TableRow key={repayment.id}>
                     <TableCell>{formatDate(repayment.date)}</TableCell>
-                    <TableCell>{formatCurrency(repayment.amount)}</TableCell>
+                    <TableCell>{formatAmount(repayment.amount)}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

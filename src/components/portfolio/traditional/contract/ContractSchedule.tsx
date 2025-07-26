@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../../ui/Table';
 import { Button } from '../../../ui/Button';
 import { Calendar, Download, Printer } from 'lucide-react';
+import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 
 interface ScheduleInstallment {
   id: string;
@@ -15,15 +16,6 @@ interface ScheduleInstallment {
   status: 'paid' | 'pending' | 'overdue' | 'upcoming';
   paymentDate?: string;
 }
-
-// Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XAF',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
 
 // Fonction utilitaire pour le formatage des dates
 const formatDate = (dateString: string) => {
@@ -41,6 +33,9 @@ interface ContractScheduleProps {
 export function ContractSchedule({ contractId }: ContractScheduleProps) {
   const [installments, setInstallments] = useState<ScheduleInstallment[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Utiliser le contexte de devise pour le formatage des montants
+  const { formatAmount } = useCurrencyContext();
   
   useEffect(() => {
     // Dans une application réelle, vous feriez un appel API ici

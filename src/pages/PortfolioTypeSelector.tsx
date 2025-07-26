@@ -52,7 +52,7 @@ export default function PortfolioTypeSelector() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+    <div className="container mx-auto min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <h1 className="text-2xl font-bold mb-8">Gestion des portefeuilles de cr�dit</h1>
       <div className="grid grid-cols-1 gap-8">
         {choices.map(choice => (

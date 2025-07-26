@@ -15,7 +15,7 @@ const PortfolioCompanyReportDetails: React.FC = () => {
 
   const company = mockCompanies.find(c => c.id === report.companyId);
   return (
-    <div className="p-6">
+    <div className="container mx-auto p-6">
       <Breadcrumbs
         items={[
           { label: 'Portefeuilles', to: '/app/portfolio' },
