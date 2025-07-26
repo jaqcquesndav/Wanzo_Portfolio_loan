@@ -1,6 +1,6 @@
 import { mockDisbursements } from '../../data/mockDisbursements';
 import { mockRepayments } from '../../data/mockRepayments';
-import { mockFundingRequests } from '../../data/mockFundingRequests';
+import { mockCreditRequests } from '../../data/mockCreditRequests';
 import { mockCreditContracts } from '../../data/mockCreditContracts';
 import { mockGuarantees } from '../../data/mockGuarantees';
 
@@ -8,7 +8,7 @@ import { mockGuarantees } from '../../data/mockGuarantees';
 const STORAGE_KEYS = {
   DISBURSEMENTS: 'wanzo_portfolio_disbursements',
   REPAYMENTS: 'wanzo_portfolio_repayments',
-  FUNDING_REQUESTS: 'wanzo_portfolio_funding_requests',
+  CREDIT_REQUESTS: 'wanzo_portfolio_credit_requests',
   CREDIT_CONTRACTS: 'wanzo_portfolio_credit_contracts',
   GUARANTEES: 'wanzo_portfolio_guarantees'
 };
@@ -38,7 +38,7 @@ const getFromStorage = <T>(key: string, defaultData: T): T => {
 // Fonctions spécifiques pour chaque type de données
 export const getDisbursements = () => getFromStorage(STORAGE_KEYS.DISBURSEMENTS, mockDisbursements);
 export const getRepayments = () => getFromStorage(STORAGE_KEYS.REPAYMENTS, mockRepayments);
-export const getFundingRequests = () => getFromStorage(STORAGE_KEYS.FUNDING_REQUESTS, mockFundingRequests);
+export const getCreditRequests = () => getFromStorage(STORAGE_KEYS.CREDIT_REQUESTS, mockCreditRequests);
 export const getCreditContracts = () => getFromStorage(STORAGE_KEYS.CREDIT_CONTRACTS, mockCreditContracts);
 export const getGuarantees = () => getFromStorage(STORAGE_KEYS.GUARANTEES, mockGuarantees);
 
@@ -46,7 +46,7 @@ export const getGuarantees = () => getFromStorage(STORAGE_KEYS.GUARANTEES, mockG
 export const initializeLocalStorageMocks = (): void => {
   saveToStorage(STORAGE_KEYS.DISBURSEMENTS, mockDisbursements);
   saveToStorage(STORAGE_KEYS.REPAYMENTS, mockRepayments);
-  saveToStorage(STORAGE_KEYS.FUNDING_REQUESTS, mockFundingRequests);
+  saveToStorage(STORAGE_KEYS.CREDIT_REQUESTS, mockCreditRequests);
   saveToStorage(STORAGE_KEYS.CREDIT_CONTRACTS, mockCreditContracts);
   saveToStorage(STORAGE_KEYS.GUARANTEES, mockGuarantees);
   

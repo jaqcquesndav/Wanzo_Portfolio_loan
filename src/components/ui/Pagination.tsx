@@ -1,4 +1,3 @@
-import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './Button';
 
@@ -6,9 +5,10 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  showPageNumbers?: boolean;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, onPageChange, showPageNumbers = false }: PaginationProps) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
@@ -48,7 +48,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
               <ChevronLeft className="h-5 w-5" />
             </Button>
             
-            {pages.map((page) => (
+            {showPageNumbers && pages.map((page) => (
               <Button
                 key={page}
                 variant={currentPage === page ? 'primary' : 'outline'}

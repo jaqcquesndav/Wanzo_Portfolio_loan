@@ -126,6 +126,14 @@ export const apiClient = {
       body: JSON.stringify(data)
     });
   },
+  
+  async patch<T, D = unknown>(endpoint: string, data: D): Promise<T> {
+    return this.request<T>(endpoint, {
+      url: endpoint,
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  },
 
   async delete(endpoint: string): Promise<void> {
     await this.request(endpoint, { url: endpoint, method: 'DELETE' });

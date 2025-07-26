@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, CheckIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import { formatCurrency } from '../../utils/formatters';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
+import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
 
 /**
  * Interface pour les données d'un ordre de paiement
@@ -54,6 +57,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<PaymentOrderData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { currency } = useCurrencyContext();
 
   // Mettre à jour les données du formulaire lorsque initialData change
   useEffect(() => {
@@ -72,6 +76,13 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
           ...(prev[parent as keyof PaymentOrderData] as Record<string, string | number>),
           [child]: value
         }
+      }));
+    } else if (name === 'amount') {
+      // Pour le montant, on s'assure que c'est un nombre
+      setFormData(prev => ({
+        ...prev,
+        [name]: parseFloat(value) || 0,
+        currency // Utiliser la devise du contexte
       }));
     } else {
       setFormData(prev => ({
@@ -147,7 +158,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div className="flex justify-between items-center border-b pb-3 mb-4">
-                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                    <Dialog.Title as="h3" className="text-xl font-semibold leading-6 text-gray-900">
                       Ordre de Paiement {readOnly ? '(Lecture seule)' : ''}
                     </Dialog.Title>
                     <button
@@ -160,42 +171,42 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     </button>
                   </div>
                   
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 border border-gray-200 rounded-md shadow-sm">
                     <div className="grid grid-cols-2 gap-6">
                       {/* Section Informations générales */}
                       <div className="space-y-3">
-                        <h4 className="text-md font-medium text-gray-700">Informations générales</h4>
+                        <h4 className="text-md font-semibold text-gray-800 border-b pb-2">Informations générales</h4>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Numéro d'ordre</label>
-                          <input
+                          <Input
                             type="text"
                             name="orderNumber"
                             value={formData.orderNumber}
                             onChange={handleChange}
                             disabled={true} // Le numéro d'ordre est généré et non modifiable
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            className="mt-1 font-mono bg-gray-50"
                           />
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Date</label>
-                          <input
+                          <Input
                             type="date"
                             name="date"
                             value={formData.date}
                             onChange={handleChange}
                             disabled={readOnly}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            className="mt-1 font-mono"
                           />
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Portefeuille</label>
-                          <input
+                          <Input
                             type="text"
                             value={formData.portfolioName}
                             disabled={true} // Le portefeuille est choisi en amont
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 sm:text-sm"
+                            className="mt-1 bg-gray-50 font-medium"
                           />
                         </div>
                         
@@ -220,18 +231,18 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       </div>
                       
                       {/* Section Informations bénéficiaire */}
-                      <div className="space-y-3">
-                        <h4 className="text-md font-medium text-gray-700">Informations du bénéficiaire</h4>
+                      <div className="space-y-3 border-l pl-4">
+                        <h4 className="text-md font-semibold text-gray-800 border-b pb-2">Informations du bénéficiaire</h4>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Nom du bénéficiaire</label>
-                          <input
+                          <Input
                             type="text"
                             name="beneficiary.name"
                             value={formData.beneficiary.name}
                             onChange={handleChange}
                             disabled={readOnly}
-                            className={`mt-1 block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                              errors['beneficiary.name'] ? 'border-red-300' : 'border-gray-300'
+                            className={`mt-1 font-medium text-base ${
+                              errors['beneficiary.name'] ? 'border-red-300 focus-visible:ring-red-500' : ''
                             }`}
                           />
                           {errors['beneficiary.name'] && (
@@ -241,14 +252,14 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Numéro de compte</label>
-                          <input
+                          <Input
                             type="text"
                             name="beneficiary.accountNumber"
                             value={formData.beneficiary.accountNumber}
                             onChange={handleChange}
                             disabled={readOnly}
-                            className={`mt-1 block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                              errors['beneficiary.accountNumber'] ? 'border-red-300' : 'border-gray-300'
+                            className={`mt-1 font-mono text-base ${
+                              errors['beneficiary.accountNumber'] ? 'border-red-300 focus-visible:ring-red-500' : ''
                             }`}
                           />
                           {errors['beneficiary.accountNumber'] && (
@@ -258,14 +269,14 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Banque</label>
-                          <input
+                          <Input
                             type="text"
                             name="beneficiary.bankName"
                             value={formData.beneficiary.bankName}
                             onChange={handleChange}
                             disabled={readOnly}
-                            className={`mt-1 block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                              errors['beneficiary.bankName'] ? 'border-red-300' : 'border-gray-300'
+                            className={`mt-1 font-medium ${
+                              errors['beneficiary.bankName'] ? 'border-red-300 focus-visible:ring-red-500' : ''
                             }`}
                           />
                           {errors['beneficiary.bankName'] && (
@@ -275,13 +286,13 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Code SWIFT (optionnel)</label>
-                          <input
+                          <Input
                             type="text"
                             name="beneficiary.swiftCode"
                             value={formData.beneficiary.swiftCode || ''}
                             onChange={handleChange}
                             disabled={readOnly}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            className="mt-1 font-mono text-base"
                           />
                         </div>
                       </div>
@@ -292,17 +303,17 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Montant</label>
                         <div className="mt-1 flex rounded-md shadow-sm">
-                          <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                            {formData.currency}
+                          <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-gray-50 px-3 text-gray-500 font-medium">
+                            {currency}
                           </span>
-                          <input
+                          <Input
                             type="number"
                             name="amount"
                             value={formData.amount}
                             onChange={handleChange}
                             disabled={readOnly}
-                            className={`block w-full flex-1 rounded-none rounded-r-md focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                              errors.amount ? 'border-red-300' : 'border-gray-300'
+                            className={`rounded-l-none font-mono text-base ${
+                              errors.amount ? 'border-red-300 focus-visible:ring-red-500' : ''
                             }`}
                           />
                         </div>
@@ -311,30 +322,28 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         )}
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Référence</label>
-                        <input
-                          type="text"
-                          name="reference"
-                          value={formData.reference}
-                          onChange={handleChange}
-                          disabled={readOnly}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Référence</label>
+                      <Input
+                        type="text"
+                        name="reference"
+                        value={formData.reference}
+                        onChange={handleChange}
+                        disabled={readOnly}
+                        className="mt-1 font-medium"
+                      />
                     </div>
-                    
-                    {/* Description */}
+                  </div>                    {/* Description */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Description / Motif du paiement</label>
-                      <textarea
+                      <Textarea
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
                         disabled={readOnly}
                         rows={3}
-                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                          errors.description ? 'border-red-300' : 'border-gray-300'
+                        className={`mt-1 font-medium text-base resize-vertical ${
+                          errors.description ? 'border-red-300 focus-visible:ring-red-500' : ''
                         }`}
                       />
                       {errors.description && (
@@ -345,15 +354,15 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     {/* Montant en lettres (automatique) */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Montant en lettres</label>
-                      <div className="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">
-                        <p className="text-sm italic">
-                          {formatCurrency(formData.amount, formData.currency, true)}
+                      <div className="mt-1 p-3 bg-gray-50 rounded-md border border-gray-300 shadow-inner">
+                        <p className="text-base font-medium uppercase">
+                          {formatCurrency(formData.amount, currency, true)}
                         </p>
                       </div>
                     </div>
                     
                     {/* Actions */}
-                    <div className="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse space-x-2 space-x-reverse">
+                    <div className="mt-8 sm:mt-6 sm:flex sm:flex-row-reverse space-x-2 space-x-reverse border-t pt-4">
                       {!readOnly && (
                         <button
                           type="submit"

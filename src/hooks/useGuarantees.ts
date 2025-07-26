@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Guarantee } from '../types/guarantee';
-import { guaranteeStorageService } from '../services/storage/guaranteeStorageUnified';
+import { guaranteeService } from '../services/guaranteeService';
 
 export function useGuarantees(portfolioId: string) {
   const [guarantees, setGuarantees] = useState<Guarantee[]>([]);
@@ -13,32 +13,19 @@ export function useGuarantees(portfolioId: string) {
       // Simuler un appel API avec un délai
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Récupérer les données depuis le localStorage
-      const allGuarantees = await guaranteeStorageService.getAllGuarantees();
-      console.log(`[useGuarantees] Loaded ${allGuarantees.length} guarantees from storage`);
-      console.log(`[useGuarantees] Using portfolioId: "${portfolioId}" for filtering`);
+      let fetchedGuarantees: Guarantee[] = [];
       
-      // Vérifier si le portfolioId existe dans les garanties
-      const portfolioIds = [...new Set(allGuarantees.map((g: Guarantee) => g.portfolioId))];
-      console.log(`[useGuarantees] Available portfolioIds in guarantees:`, portfolioIds);
-      
-      const hasGuaranteesForPortfolio = allGuarantees.some((guarantee: Guarantee) => guarantee.portfolioId === portfolioId);
-      
-      // Si le portfolioId spécifié n'existe pas dans les garanties, utiliser toutes les garanties
-      // sinon, filtrer par portfolioId
-      let filtered: Guarantee[];
-      if (!hasGuaranteesForPortfolio && portfolioId !== 'default') {
-        console.warn(`[useGuarantees] No guarantees found for portfolioId "${portfolioId}", using all guarantees`);
-        filtered = allGuarantees;
-      } else if (portfolioId === 'default') {
-        console.log(`[useGuarantees] Using all guarantees (default portfolioId)`);
-        filtered = allGuarantees;
+      if (portfolioId === 'default') {
+        // Pour le portefeuille par défaut, récupérer toutes les garanties
+        fetchedGuarantees = await guaranteeService.getAllGuarantees();
+        console.log(`[useGuarantees] Loaded all guarantees (default portfolioId)`);
       } else {
-        console.log(`[useGuarantees] Filtering guarantees for portfolioId "${portfolioId}"`);
-        filtered = allGuarantees.filter((guarantee: Guarantee) => guarantee.portfolioId === portfolioId);
+        // Sinon, récupérer les garanties pour ce portefeuille spécifique
+        fetchedGuarantees = await guaranteeService.getGuaranteesByPortfolioId(portfolioId);
+        console.log(`[useGuarantees] Loaded guarantees for portfolioId "${portfolioId}"`);
       }
       
-      setGuarantees(filtered);
+      setGuarantees(fetchedGuarantees);
       setError(null);
     } catch (err) {
       console.error('Error fetching guarantees:', err);
@@ -54,7 +41,7 @@ export function useGuarantees(portfolioId: string) {
 
   const getGuaranteeById = useCallback(async (id: string): Promise<Guarantee | null> => {
     try {
-      return await guaranteeStorageService.getGuaranteeById(id);
+      return await guaranteeService.getGuaranteeById(id);
     } catch (err) {
       console.error(`Error getting guarantee ${id}:`, err);
       setError(`Erreur lors de la récupération de la garantie ${id}`);
@@ -64,7 +51,7 @@ export function useGuarantees(portfolioId: string) {
 
   const updateGuarantee = useCallback(async (id: string, updatedData: Partial<Guarantee>): Promise<Guarantee | null> => {
     try {
-      const updatedGuarantee = await guaranteeStorageService.updateGuarantee(id, updatedData);
+      const updatedGuarantee = await guaranteeService.updateGuarantee(id, updatedData);
       if (updatedGuarantee) {
         setGuarantees(prevGuarantees => 
           prevGuarantees.map(g => g.id === id ? { ...g, ...updatedData } : g)
@@ -80,7 +67,7 @@ export function useGuarantees(portfolioId: string) {
 
   const deleteGuarantee = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const success = await guaranteeStorageService.deleteGuarantee(id);
+      const success = await guaranteeService.deleteGuarantee(id);
       if (success) {
         setGuarantees(prevGuarantees => prevGuarantees.filter(g => g.id !== id));
       }
@@ -94,7 +81,7 @@ export function useGuarantees(portfolioId: string) {
 
   const resetToMockData = useCallback(async (): Promise<boolean> => {
     try {
-      const success = await guaranteeStorageService.resetToMockData();
+      const success = await guaranteeService.resetToMockData();
       if (success) {
         fetchGuarantees();
       }

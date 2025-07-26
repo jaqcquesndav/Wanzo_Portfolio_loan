@@ -78,9 +78,25 @@ export function TableHeader({
   );
 }
 
-export function TableCell({ children, align = 'left', className = '', colSpan }: { children: React.ReactNode; align?: 'left' | 'right' | 'center', className?: string, colSpan?: number }) {
+export function TableCell({ 
+  children, 
+  align = 'left', 
+  className = '', 
+  colSpan,
+  onClick
+}: { 
+  children: React.ReactNode; 
+  align?: 'left' | 'right' | 'center', 
+  className?: string, 
+  colSpan?: number,
+  onClick?: () => void 
+}) {
   return (
-    <td className={`px-6 py-4 whitespace-nowrap text-${align} ${className}`} colSpan={colSpan}>
+    <td 
+      className={`px-6 py-4 whitespace-nowrap text-${align} ${className} ${onClick ? 'cursor-pointer' : ''}`} 
+      colSpan={colSpan}
+      onClick={onClick}
+    >
       {children}
     </td>
   );

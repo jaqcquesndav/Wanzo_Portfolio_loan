@@ -3,7 +3,7 @@ import type { PortfolioOperation } from '../../components/dashboard/RecentOperat
 import { 
   getDisbursements,
   getRepayments, 
-  getFundingRequests,
+  getCreditRequests,
   getCreditContracts,
   getGuarantees
 } from '../localStorage/mockStorage';
@@ -79,17 +79,17 @@ export const getRecentOperations = async (portfolioType?: PortfolioType): Promis
       portfolioType: 'traditional' as const
     }));
     
-    // Demandes de financement
-    const requestOps = getFundingRequests().map((item) => ({
+    // Demandes de crédit
+    const requestOps = getCreditRequests().map((item) => ({
       id: item.id,
       type: 'request' as const,
-      amount: item.amount,
-      date: item.created_at || new Date().toISOString(),
+      amount: item.requestAmount, // Updated from amount to requestAmount
+      date: item.createdAt || new Date().toISOString(), // Updated from created_at to createdAt
       status: mapStatus(item.status),
-      portfolioId: item.portfolioId,
-      portfolioName: item.portfolioId, // à remplacer par le nom réel
-      clientName: item.company,
-      description: `Demande de ${item.amount} XOF`,
+      portfolioId: "default-portfolio", // We'll use a default value since portfolioId doesn't exist
+      portfolioName: "default-portfolio", // Same for portfolioName
+      clientName: item.memberId, // Updated from company to memberId
+      description: `Demande de ${item.requestAmount} XOF`, // Updated from amount to requestAmount
       portfolioType: 'traditional' as const
     }));
     

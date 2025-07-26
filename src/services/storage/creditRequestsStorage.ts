@@ -1,5 +1,5 @@
 // src/services/storage/creditRequestsStorage.ts
-import { CreditRequest } from '../../types/credit';
+import { CreditRequest, CreditRequestStatus } from '../../types/credit';
 import { mockCreditRequests as initialMockData } from '../../data';
 
 const STORAGE_KEYS = {
@@ -93,6 +93,13 @@ export const creditRequestsStorageService = {
   },
 
   /**
+   * Met à jour le statut d'une demande de crédit
+   */
+  async updateRequestStatus(id: string, status: CreditRequestStatus): Promise<CreditRequest | undefined> {
+    return this.updateRequest(id, { status });
+  },
+
+  /**
    * Supprime une demande de crédit
    */
   async deleteRequest(id: string): Promise<boolean> {
@@ -110,9 +117,10 @@ export const creditRequestsStorageService = {
   /**
    * Réinitialise les données de demandes de crédit aux valeurs initiales
    */
-  async resetToMockData(): Promise<void> {
+  async resetToMockData(): Promise<CreditRequest[]> {
     try {
       localStorage.setItem(STORAGE_KEYS.CREDIT_REQUESTS, JSON.stringify(initialMockData));
+      return initialMockData;
     } catch (error) {
       console.error('Error resetting credit requests to mock data:', error);
       throw error;

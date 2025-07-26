@@ -4,9 +4,10 @@
  * 
  * Ce module expose les services API suivants:
  * - portfolios: Gestion des portefeuilles traditionnels (CRUD, filtrage)
- * - fundingRequests: Gestion des demandes de financement (création, approbation, rejet)
+ * - creditRequests: Gestion des demandes de crédit (création, approbation, rejet)
  * - creditContracts: Gestion des contrats de crédit (création, visualisation, modification)
  * - payments: Gestion des paiements (création, annulation, recherche)
+ * - guarantees: Gestion des garanties (création, validation, réévaluation)
  * - portfolioSettings: Gestion des paramètres du portefeuille (configuration, mise à jour)
  * - dataService: Service de données local (fallback pour développement)
  * 
@@ -15,11 +16,13 @@
  */
 
 import { traditionalPortfolioApi } from './portfolio.api';
-import { fundingRequestApi } from './funding-request.api';
+import { creditRequestApi } from './credit-request.api';
 import { creditContractApi } from './credit-contract.api';
 import { paymentApi } from './payment.api';
+import { guaranteeApi } from './guarantee.api';
 import { portfolioSettingsApi } from './portfolio-settings.api';
 import { traditionalDataService } from './dataService';
+import { disbursementApi } from './disbursement.api';
 
 // Initialise les données mock locales si nécessaire (pour le développement)
 traditionalDataService.initData();
@@ -33,19 +36,23 @@ traditionalDataService.initData();
  */
 export const traditionalApi = {
   portfolios: traditionalPortfolioApi,
-  fundingRequests: fundingRequestApi,
+  creditRequests: creditRequestApi,
   creditContracts: creditContractApi,
   payments: paymentApi,
+  guarantees: guaranteeApi,
   portfolioSettings: portfolioSettingsApi,
+  disbursements: disbursementApi,
   dataService: traditionalDataService
 };
 
 export {
   traditionalPortfolioApi as portfolioApi,
-  fundingRequestApi,
+  creditRequestApi,
   creditContractApi,
   paymentApi,
+  guaranteeApi,
   portfolioSettingsApi,
+  disbursementApi,
   traditionalDataService
 };
 
@@ -56,8 +63,8 @@ export type {
 } from '../../../types/traditional-portfolio';
 
 export type {
-  FundingRequest
-} from '../../../types/funding-request';
+  CreditRequest
+} from '../../../types/credit';
 
 export type {
   CreditContract
@@ -66,3 +73,11 @@ export type {
 export type {
   CreditPayment
 } from '../../../types/credit-payment';
+
+export type {
+  Guarantee
+} from '../../../types/guarantee';
+
+export type {
+  Disbursement
+} from '../../../types/disbursement';

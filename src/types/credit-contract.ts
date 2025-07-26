@@ -45,6 +45,10 @@ export interface CreditContract {
     payment_date?: string;
     payment_amount?: number;
     payment_reference?: string;
+    installment_number: number; // Numéro de l'échéance
+    remaining_percentage?: number; // Pourcentage restant à payer
+    remaining_amount?: number; // Montant restant à payer
+    transaction_reference?: string; // Référence de la transaction
   }>;
   restructuring_history?: Array<{
     date: string;

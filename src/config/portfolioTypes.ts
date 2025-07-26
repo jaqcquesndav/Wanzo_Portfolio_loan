@@ -1,9 +1,8 @@
 // src/config/portfolioTypes.ts
-import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
+import { CreditRequestsTable } from '../components/portfolio/traditional/CreditRequestsTable';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
-import { GuaranteesTable } from '../components/portfolio/traditional/GuaranteesTable';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
 
 // Fonction utilitaire pour vérifier la validité d'un type de portefeuille
@@ -23,19 +22,17 @@ export const portfolioTypeConfig = {
   traditional: {
     label: 'Portefeuille traditionnel',
     tabs: [
-      { key: 'requests', label: 'Demandes', component: FundingRequestsTable },
+      { key: 'requests', label: 'Demandes', component: CreditRequestsTable },
       { key: 'contracts', label: 'Contrats', component: CreditContractsList },
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
       { key: 'repayments', label: 'Remboursements', component: RepaymentsTable },
-      { key: 'guarantees', label: 'Garanties', component: GuaranteesTable },
       { key: 'settings', label: 'Paramètres', component: PortfolioSettingsDisplay },
     ],
     mockData: {
       products: 'mockFinancialProducts',
-      requests: 'mockFundingRequests',
+      requests: 'mockCreditRequests',
       disbursements: 'mockDisbursements',
       repayments: 'mockRepayments',
-      guarantees: 'mockGuarantees',
     },
     hook: 'useTraditionalPortfolio',
   }

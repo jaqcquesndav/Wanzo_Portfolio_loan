@@ -2,6 +2,7 @@
 import { utils, writeFile } from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { PaymentOrderData } from '../components/payment/PaymentOrderModal';
 
 interface ExportToPDFProps {
   title: string;
@@ -18,51 +19,109 @@ export const exportToExcel = (data: Record<string, unknown>[], fileName: string)
 };
 
 export const exportToPDF = ({ title, headers, data, filename }: ExportToPDFProps): void => {
-  const doc = new jsPDF();
+  // Créer un nouveau document PDF au format A4
+  const doc = new jsPDF({
+    orientation: data[0]?.length > 4 ? 'landscape' : 'portrait', 
+    unit: 'mm',
+    format: 'a4'
+  });
   
-  doc.text(title, 14, 15);
+  // Variables pour la mise en page
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  
+  // En-tête avec date et titre
+  const currentDate = new Date().toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  
+  // Couleurs professionnelles
+  const primaryColor: [number, number, number] = [25, 124, 168]; // Bleu Wanzo
+  const secondaryColor: [number, number, number] = [80, 80, 80]; // Gris foncé
+  const lightGrayColor: [number, number, number] = [150, 150, 150]; // Gris clair
+  
+  // Logo ou titre de l'institution
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text('WANZO FINANCE', margin, margin);
+  
+  // Date à droite
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.text(`Généré le: ${currentDate}`, pageWidth - margin, margin, { align: 'right' });
+  
+  // Ligne de séparation
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.line(margin, margin + 5, pageWidth - margin, margin + 5);
+  
+  // Titre du document
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.text(title, pageWidth / 2, margin + 15, { align: 'center' });
 
   // Ensure data is an array of strings for autoTable
   const bodyData = data.map(row => 
     row.map(cell => (cell === null || cell === undefined ? '' : String(cell)))
   );
 
+  // Configuration améliorée pour autoTable
   autoTable(doc, {
     head: [headers],
     body: bodyData,
-    startY: 20,
+    startY: margin + 25,
+    margin: { top: margin, bottom: margin, left: margin, right: margin },
     theme: 'grid',
-    headStyles: { fillColor: [22, 160, 133] },
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+      lineColor: [220, 220, 220],
+      lineWidth: 0.1,
+      font: 'helvetica',
+      overflow: 'linebreak'
+    },
+    headStyles: { 
+      fillColor: primaryColor,
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245]
+    },
+    columnStyles: {},
+    pageBreak: 'auto',
+    rowPageBreak: 'avoid',
+    showHead: 'everyPage',
+    showFoot: 'everyPage',
+    didDrawPage: () => {
+      // Pied de page
+      const footerY = pageHeight - 10;
+      doc.setFontSize(8);
+      doc.setTextColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2]);
+      doc.text(`${filename} - Wanzo Finance - Document généré automatiquement`, pageWidth / 2, footerY, { align: 'center' });
+      
+      // Pagination
+      doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth - margin, footerY, { align: 'right' });
+    }
   });
 
-  doc.save(filename);
+  // Enregistrer le PDF
+  doc.save(`${filename}.pdf`);
 };
 
 /**
  * Exporte un ordre de paiement au format PDF
  */
-// Importer le type depuis le composant PaymentOrderModal pour assurer la cohérence
-import { PaymentOrderData } from '../components/payment/PaymentOrderModal';
-
-// Type pour les ordres de paiement à exporter, étend PaymentOrderData
-type PaymentOrderExport = PaymentOrderData;
-
-export const exportPaymentOrderToPDF = (data: PaymentOrderExport) => {
+export const exportPaymentOrderToPDF = (data: PaymentOrderData) => {
   // TODO: Implement specialized PDF export for payment orders
   console.log('Export payment order to PDF', data);
-  
-  // Cette fonction sera implémentée avec une bibliothèque comme jsPDF ou PDF.js
-  // pour générer un PDF bien formaté qui ressemble exactement au design du modal
-  
-  // Exemple de logique:
-  // 1. Créer un nouveau document PDF
-  // 2. Ajouter l'en-tête Wanzo et le titre "ORDRE DE PAIEMENT"
-  // 3. Ajouter les informations du gestionnaire
-  // 4. Ajouter les informations du bénéficiaire
-  // 5. Ajouter les montants, motifs et références
-  // 6. Ajouter les avertissements et zones de signature
-  // 7. Générer le QR code et l'ajouter
-  // 8. Enregistrer ou ouvrir le PDF
   
   // Simuler un téléchargement après 1 seconde
   setTimeout(() => {

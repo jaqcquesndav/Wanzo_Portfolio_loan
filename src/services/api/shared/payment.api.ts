@@ -1,6 +1,6 @@
 // src/services/api/shared/payment.api.ts
 import { apiClient } from '../base.api';
-import type { PaymentOrder } from '../../../types/payment-orders';
+import type { PaymentOrderData } from '../../../components/payment/PaymentOrderModal';
 
 /**
  * API pour les opérations liées aux paiements
@@ -11,7 +11,7 @@ export const paymentApi = {
    */
   getAllPaymentOrders: (filters?: {
     portfolioId?: string;
-    status?: 'pending' | 'approved' | 'rejected' | 'processed';
+    status?: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid';
     fromDate?: string;
     toDate?: string;
   }) => {
@@ -21,35 +21,42 @@ export const paymentApi = {
     if (filters?.fromDate) params.append('fromDate', filters.fromDate);
     if (filters?.toDate) params.append('toDate', filters.toDate);
 
-    return apiClient.get<PaymentOrder[]>(`/payments?${params.toString()}`);
+    return apiClient.get<PaymentOrderData[]>(`/payments?${params.toString()}`);
   },
 
   /**
    * Récupère un ordre de paiement par son ID
    */
   getPaymentOrderById: (id: string) => {
-    return apiClient.get<PaymentOrder>(`/payments/${id}`);
+    return apiClient.get<PaymentOrderData>(`/payments/${id}`);
   },
 
   /**
    * Crée un nouvel ordre de paiement
    */
-  createPaymentOrder: (paymentOrder: Omit<PaymentOrder, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return apiClient.post<PaymentOrder>('/payments', paymentOrder);
+  createPaymentOrder: (paymentOrder: Omit<PaymentOrderData, 'id' | 'createdAt' | 'updatedAt'>) => {
+    return apiClient.post<PaymentOrderData>('/payments', paymentOrder);
+  },
+
+  /**
+   * Met à jour un ordre de paiement
+   */
+  updatePaymentOrder: (id: string, paymentOrder: Partial<PaymentOrderData>) => {
+    return apiClient.put<PaymentOrderData>(`/payments/${id}`, paymentOrder);
   },
 
   /**
    * Met à jour le statut d'un ordre de paiement
    */
-  updatePaymentStatus: (id: string, status: 'approved' | 'rejected' | 'processed', comments?: string) => {
-    return apiClient.put<PaymentOrder>(`/payments/${id}/status`, { status, comments });
+  updatePaymentStatus: (id: string, status: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid', comments?: string) => {
+    return apiClient.put<PaymentOrderData>(`/payments/${id}/status`, { status, comments });
   },
 
   /**
    * Annule un ordre de paiement
    */
   cancelPayment: (id: string, reason: string) => {
-    return apiClient.put<PaymentOrder>(`/payments/${id}/cancel`, { reason });
+    return apiClient.put<PaymentOrderData>(`/payments/${id}/cancel`, { reason });
   },
 
   /**
@@ -82,4 +89,11 @@ export const paymentApi = {
       };
     }>('/payments/reports', filters);
   },
+
+  /**
+   * Récupère les ordres de paiement par bénéficiaire
+   */
+  getPaymentOrdersByBeneficiary: (beneficiaryName: string) => {
+    return apiClient.get<PaymentOrderData[]>(`/payments/beneficiary/${encodeURIComponent(beneficiaryName)}`);
+  }
 };

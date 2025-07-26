@@ -11,20 +11,17 @@ import { FinancialProductsList } from '../components/portfolio/traditional/Finan
 import { FinancialProductForm } from '../components/portfolio/traditional/FinancialProductForm';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { FundingRequestsTable } from '../components/portfolio/traditional/FundingRequestsTable';
+import { CreditRequestsTable } from '../components/portfolio/traditional/CreditRequestsTable';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
-import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { CompanyDetails } from '../components/prospection/CompanyDetails';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
-import { mockFundingRequests } from '../data/mockFundingRequests';
-import { mockDisbursements } from '../data/mockDisbursements';
-import { mockRepayments } from '../data/mockRepayments';
 import { mockCompanies } from '../data/mockCompanies';
 import { mockCompanyDetails } from '../data/mockCompanyDetails';
 import { useNotification } from '../contexts/NotificationContext';
+import { useCreditRequests } from '../hooks/useCreditRequests';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
@@ -81,6 +78,19 @@ export default function TraditionalPortfolioDetails() {
 
   // Hook factorisé pour la persistance multi-type (localStorage)
   const { portfolio, loading, addOrUpdate } = usePortfolio(id, portfolioType as PortfolioType);
+  
+  // Hook pour les demandes de crédit
+  const { 
+    requests, 
+    loading: requestsLoading, 
+    changeRequestStatus,
+    getMemberName,
+    getCreditProductName
+  } = useCreditRequests();
+  
+  // Préparer les mappings pour les noms
+  const companyNames = Object.fromEntries(requests.map(req => [req.memberId, getMemberName(req.memberId)]));
+  const productNames = Object.fromEntries(requests.map(req => [req.productId, getCreditProductName(req.productId)]));
 
   // Hooks d'action (toujours avant tout return)
   const handleSaveSettings = useCallback(() => {
@@ -100,6 +110,7 @@ export default function TraditionalPortfolioDetails() {
     
     if (companyFound) {
       setSelectedCompany(companyFound);
+      setCompanyDetailModalOpen(true);
     } else if (companyName === 'TechInnovate Congo') {
       // Cas particulier pour TechInnovate Congo - conversion depuis mockCompanyDetails
       // Need to adapt the TechInnovate structure to match Company interface
@@ -357,55 +368,22 @@ export default function TraditionalPortfolioDetails() {
                 value={tabConfig.key}
                 currentValue={tab}
               >
-                <FundingRequestsTable
-                  requests={mockFundingRequests}
-                  onValidate={(requestId) => {
-                    // Chercher la demande concernée
-                    const request = mockFundingRequests.find(req => req.id === requestId);
-                    if (!request) {
-                      showNotification('Demande non trouvée', 'error');
-                      return;
-                    }
-                    
-                    // Simplement marquer la demande comme validée
-                    // Dans une application réelle, cela mettrait à jour la base de données
-                    request.status = 'validée'; // Mettre à jour le statut de la demande
-                    
-                    showNotification(`Demande ${requestId} validée. Elle peut maintenant être transformée en contrat.`, 'success');
+                {/* Utiliser le nouveau composant CreditRequestsTable avec les données nécessaires */}
+                <CreditRequestsTable 
+                  requests={requests} 
+                  loading={requestsLoading}
+                  companyNames={companyNames}
+                  productNames={productNames}
+                  onValidate={(id) => changeRequestStatus(id, 'approved')}
+                  onRefuse={(id) => changeRequestStatus(id, 'rejected')}
+                  onDisburse={(id) => changeRequestStatus(id, 'disbursed')}
+                  onView={(id) => navigate(`/portfolio/${id}/requests/${id}`)}
+                  onViewCompany={(memberId) => {
+                    const company = mockCompanies.find(c => c.id === memberId);
+                    setSelectedCompany(company || null);
+                    setCompanyDetailModalOpen(true);
                   }}
-                  onRefuse={(requestId) => {
-                    showNotification(`Demande ${requestId} refusée`, 'info');
-                  }}
-                  onDisburse={(requestId) => {
-                    // Chercher la demande concernée pour la création du contrat
-                    const request = mockFundingRequests.find(req => req.id === requestId);
-                    if (!request) {
-                      showNotification('Demande non trouvée', 'error');
-                      return;
-                    }
-                    
-                    // Vérifier que la demande est validée
-                    if (request.status !== 'validée') {
-                      showNotification('Seules les demandes validées peuvent être transformées en contrat', 'error');
-                      return;
-                    }
-                    
-                    // Créer un contrat à partir de la demande validée
-                    // Dans une vraie application, cela créerait un nouveau contrat dans la base de données
-                    
-                    // Pour simuler la création du contrat, on change le statut de la demande à "décaissée"
-                    request.status = 'décaissée';
-                    
-                    // Naviguer vers l'onglet des contrats
-                    setTab('contracts');
-                    
-                    showNotification(`Contrat créé avec succès à partir de la demande ${requestId}`, 'success');
-                  }}
-                  onView={(requestId) => {
-                    showNotification(`Demande ${requestId} sélectionnée`, 'info');
-                    // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/requests/${requestId}`)
-                  }}
-                  onViewCompany={handleViewCompany}
+                  onCreateContract={(id) => console.log('Créer contrat', id)}
                 />
               </TabsContent>
             );
@@ -418,13 +396,15 @@ export default function TraditionalPortfolioDetails() {
                 currentValue={tab}
               >
                 <DisbursementsTable
-                  disbursements={mockDisbursements}
-                  onConfirm={() => {}}
+                  portfolioId={id || ''}
                   onView={(disbursementId: string) => {
                     showNotification(`Décaissement ${disbursementId} sélectionné`, 'info');
                     // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/disbursements/${disbursementId}`)
                   }}
-                  onViewCompany={handleViewCompany}
+                  onViewCompany={(companyName: string) => {
+                    handleViewCompany(companyName);
+                    setCompanyDetailModalOpen(true);
+                  }}
                 />
               </TabsContent>
             );
@@ -437,8 +417,7 @@ export default function TraditionalPortfolioDetails() {
                 currentValue={tab}
               >
                 <RepaymentsTable
-                  repayments={mockRepayments}
-                  onMarkPaid={() => {}}
+                  portfolioId={id || ''}
                   onView={(repaymentId: string) => {
                     showNotification(`Remboursement ${repaymentId} sélectionné`, 'info');
                     // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/repayments/${repaymentId}`)
@@ -447,19 +426,11 @@ export default function TraditionalPortfolioDetails() {
                     // Naviguer vers l'échéancier du contrat associé
                     navigate(`/app/portfolio/${id}/contracts/${contractReference}/schedule`);
                   }}
-                  onViewCompany={handleViewCompany}
+                  onViewCompany={(companyName: string) => {
+                    handleViewCompany(companyName);
+                    setCompanyDetailModalOpen(true);
+                  }}
                 />
-              </TabsContent>
-            );
-          }
-          if (tabConfig.key === 'guarantees') {
-            return (
-              <TabsContent
-                key={tabConfig.key}
-                value={tabConfig.key}
-                currentValue={tab}
-              >
-                <GuaranteesList portfolioId={id || 'default'} />
               </TabsContent>
             );
           }
@@ -470,7 +441,13 @@ export default function TraditionalPortfolioDetails() {
                 value={tabConfig.key}
                 currentValue={tab}
               >
-                <CreditContractsList portfolioId={id || 'default'} />
+                <CreditContractsList 
+                  portfolioId={id || 'default'} 
+                  onViewCompany={(companyName: string) => {
+                    handleViewCompany(companyName);
+                    setCompanyDetailModalOpen(true);
+                  }}
+                />
               </TabsContent>
             );
           }

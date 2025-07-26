@@ -1,10 +1,10 @@
 // src/data/mockCreditContracts.ts
 import { CreditContract } from '../types/credit';
-import { mockFundingRequests } from './mockFundingRequests';
+import { mockCreditRequests } from './mockCreditRequests';
 
-// Générer des données de contrats de crédit réalistes basées sur les demandes de financement
-export const mockCreditContracts: CreditContract[] = mockFundingRequests
-  .filter(request => request.status === 'validée' || request.status === 'décaissée')
+// Générer des données de contrats de crédit réalistes basées sur les demandes de crédit
+export const mockCreditContracts: CreditContract[] = mockCreditRequests
+  .filter(request => request.status === 'approved' || request.status === 'disbursed')
   .map((request, index) => {
     const now = new Date();
     const startDate = new Date(now);
@@ -22,10 +22,10 @@ export const mockCreditContracts: CreditContract[] = mockFundingRequests
     const totalInstallments = 24 + Math.floor(Math.random() * 36); // Entre 24 et 60 mensualités
     const elapsedMonths = Math.floor((now.getTime() - startDate.getTime()) / (30 * 24 * 60 * 60 * 1000));
     const remainingInstallments = Math.max(0, totalInstallments - elapsedMonths);
-    const remainingAmount = (request.amount / totalInstallments) * remainingInstallments;
+    const remainingAmount = (request.requestAmount / totalInstallments) * remainingInstallments;
     
     const statuses: Array<CreditContract['status']> = ['active', 'closed', 'defaulted', 'suspended'];
-    const status = index < mockFundingRequests.length * 0.7 
+    const status = index < mockCreditRequests.length * 0.7 
       ? 'active' // 70% actifs 
       : statuses[Math.floor(Math.random() * statuses.length)];
     
@@ -34,12 +34,12 @@ export const mockCreditContracts: CreditContract[] = mockFundingRequests
       reference: `CRDT-${100000 + index}`,
       creditRequestId: `REQ-${100000 + index}`,
       memberId: `MEM-${100000 + index}`,
-      memberName: request.company,
+      memberName: request.memberId, // Updated from company to memberId
       productId: `PROD-${index % 5 + 1}`,
-      productName: request.product,
-      portfolioId: request.portfolioId,
-      amount: request.amount,
-      disbursedAmount: request.amount,
+      productName: request.productId, // Updated from product to productId
+      portfolioId: "default-portfolio", // Added a default value since portfolioId doesn't exist
+      amount: request.requestAmount, // Updated from amount to requestAmount
+      disbursedAmount: request.requestAmount, // Updated from amount to requestAmount
       remainingAmount: status === 'active' ? remainingAmount : 0,
       interestRate: 5 + Math.random() * 10, // Taux entre 5% et 15%
       startDate: startDate.toISOString(),
@@ -49,7 +49,7 @@ export const mockCreditContracts: CreditContract[] = mockFundingRequests
       status: status,
       delinquencyDays: status === 'defaulted' ? 30 + Math.floor(Math.random() * 90) : 0,
       riskClass: status === 'defaulted' ? 'doubtful' : status === 'suspended' ? 'watch' : 'standard',
-      guaranteesTotalValue: request.amount * (0.5 + Math.random() * 0.5),
+      guaranteesTotalValue: request.requestAmount * (0.5 + Math.random() * 0.5),
       scheduleId: `SCH-${100000 + index}`,
       documentUrl: `https://example.com/contracts/${100000 + index}.pdf`,
       isConsolidated: false,

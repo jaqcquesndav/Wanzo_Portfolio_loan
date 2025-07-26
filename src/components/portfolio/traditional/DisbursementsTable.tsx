@@ -10,62 +10,11 @@ import { PaymentOrderData } from '../../payment/PaymentOrderModal';
 import { PortfolioType } from '../../../contexts/portfolioTypes';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
-
-export interface Disbursement {
-  id: string;
-  company: string;
-  product: string;
-  amount: number;
-  status: 'en attente' | 'effectué';
-  date: string;
-  requestId?: string;
-  portfolioId: string;
-  contractReference: string;  // Référence du contrat associé (obligatoire)
-  
-  // Informations bancaires de l'ordre de virement
-  transactionReference?: string;  // Référence de transaction bancaire
-  valueDate?: string;  // Date de valeur
-  executionDate?: string;  // Date d'exécution
-  
-  // Informations du compte débité (compte de l'institution)
-  debitAccount: {
-    accountNumber: string;
-    accountName: string;
-    bankName: string;
-    bankCode: string;
-    branchCode?: string;
-  };
-  
-  // Informations du compte crédité (compte du bénéficiaire)
-  beneficiary: {
-    accountNumber: string;
-    accountName: string;  // Nom du titulaire du compte
-    bankName: string;
-    bankCode?: string;
-    branchCode?: string;
-    swiftCode?: string;
-    companyName: string;
-    address?: string;
-  };
-  
-  // Informations de paiement
-  paymentMethod?: 'virement' | 'transfert' | 'chèque' | 'espèces';
-  paymentReference?: string;
-  description?: string;  // Description ou motif du paiement
-  
-  // Informations spécifiques selon le type de portefeuille
-  investmentType?: 'prise de participation' | 'complément' | 'dividende' | 'cession';
-  leasingEquipmentDetails?: {
-    equipmentId?: string;
-    equipmentName?: string;
-    equipmentCategory?: string;
-    supplier?: string;
-  };
-}
+import { Disbursement } from '../../../types/disbursement';
+import { useDisbursements } from '../../../hooks/useDisbursements';
 
 interface DisbursementsTableProps {
-  disbursements: Disbursement[];
-  onConfirm: (id: string) => void;
+  portfolioId: string;
   onView: (id: string) => void;
   onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
   portfolioType?: PortfolioType;
@@ -85,8 +34,7 @@ const statusConfig = {
 };
 
 export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({ 
-  disbursements, 
-  onConfirm, 
+  portfolioId,
   onView,
   onViewCompany,
   portfolioType = 'traditional',
@@ -97,6 +45,15 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     bankName: "Banque principale"
   }
 }) => {
+  // Utiliser le hook useDisbursements pour la gestion des virements
+  const { 
+    disbursements, 
+    isLoading, 
+    error, 
+    confirmDisbursement,
+    refreshDisbursements
+  } = useDisbursements(portfolioId);
+  
   // Utiliser le contexte d'ordre de paiement
   const { showPaymentOrderModal } = usePaymentOrder();
   const { formatAmount } = useCurrencyContext();
@@ -261,15 +218,19 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     // Afficher le modal d'ordre de paiement pour que l'utilisateur puisse compléter les détails
     showPaymentOrderModal(paymentOrderData, portfolioType);
     
-    // Appeler la fonction de confirmation originale
-    onConfirm(disbursement.id);
+    // Confirmer le virement avec le service API
+    confirmDisbursement(disbursement.id, {
+      transactionReference: paymentOrderData.orderNumber,
+      executionDate: new Date().toISOString(),
+      valueDate: new Date().toISOString()
+    });
   };
   
   return (
     <div className="bg-white dark:bg-gray-800 shadow overflow-hidden">
       {/* En-tête avec recherche, filtres et options d'export */}
       <div className="p-4 flex flex-wrap items-center justify-between gap-4 border-b">
-        <h2 className="text-lg font-medium">{currentLabels.title}</h2>
+        <h2 className="text-lg font-medium">{currentLabels.title} (Institution → Entreprises)</h2>
         <div className="flex flex-1 md:flex-none items-center gap-3 ml-auto">
           {/* Recherche */}
           <div className="relative w-full md:w-64">
@@ -318,13 +279,38 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
             <Download className="h-4 w-4 mr-1" />
             PDF
           </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={refreshDisbursements}
+          >
+            Actualiser
+          </Button>
         </div>
       </div>
       
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHead>
+      {/* Indicateur de chargement */}
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-500">Chargement des virements...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          <p>Une erreur est survenue lors du chargement des virements.</p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="mt-2"
+            onClick={refreshDisbursements}
+          >
+            Réessayer
+          </Button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHead>
             <tr>
               <TableHeader onClick={() => handleSort('company')} className="cursor-pointer">
                 Entreprise 
@@ -437,6 +423,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
           </TableBody>
         </Table>
       </div>
+      )}
       
       {/* Pagination */}
       {totalPages > 1 && (

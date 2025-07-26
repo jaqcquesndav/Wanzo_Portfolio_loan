@@ -7,7 +7,11 @@ import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight } from
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
+import { useRepayments } from '../../../hooks/useRepayments';
 
+/**
+ * Interface représentant un remboursement (paiement d'une entreprise vers l'institution)
+ */
 export interface Repayment {
   id: string;
   company: string;
@@ -18,28 +22,30 @@ export interface Repayment {
   requestId?: string;
   portfolioId: string;
   contractReference: string;  // Référence du contrat associé (obligatoire)
+  transactionReference?: string; // Référence de la transaction bancaire
   
   // Informations bancaires
   paymentDate?: string;  // Date de paiement (si déjà payé)
   valueDate?: string;  // Date de valeur
-  transactionReference?: string;  // Référence de la transaction bancaire
   
-  // Informations du compte crédité (compte de l'institution)
+  // Informations du compte crédité (compte de l'institution - destination)
   creditAccount?: {
     accountNumber: string;
     accountName: string;
     bankName: string;
     bankCode: string;
     branchCode?: string;
+    portfolioName?: string; // Nom du portefeuille associé
   };
   
-  // Informations du compte débité (compte du client)
+  // Informations du compte débité (compte de l'entreprise - source)
   debitAccount?: {
     accountNumber: string;
     accountName: string;
     bankName: string;
     bankCode?: string;
     branchCode?: string;
+    companyName: string; // Nom de l'entreprise
   };
   
   // Informations du paiement
@@ -52,14 +58,24 @@ export interface Repayment {
   principal?: number;  // Montant principal
   interest?: number;  // Montant des intérêts
   penalties?: number;  // Pénalités de retard (le cas échéant)
+  
+  // Nouveaux champs demandés
+  receiptUrl?: string; // URL de la pièce justificative
+  remainingAmount?: number; // Montant restant à payer
+  remainingPercentage?: number; // Pourcentage du montant restant
+  slippage?: number; // Glissement (jours de retard ou d'avance)
+  
+  // Informations d'intégration avec les API externes
+  externalApiReference?: string; // Référence de l'API externe qui a traité ce remboursement
+  externalSystemId?: string; // Identifiant dans le système externe
+  externalStatus?: string; // Statut dans le système externe
 }
 
 interface RepaymentsTableProps {
-  repayments: Repayment[];
-  onMarkPaid: (id: string) => void;
+  portfolioId: string;
   onView: (id: string) => void;
-  onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
-  onViewSchedule?: (contractReference: string) => void; // Nouvelle prop pour naviguer vers l'échéancier
+  onViewCompany?: (company: string) => void; // Prop pour afficher les détails de l'entreprise
+  onViewSchedule?: (contractReference: string) => void; // Prop pour naviguer vers l'échéancier
 }
 
 // Configuration pour l'affichage des statuts
@@ -70,12 +86,19 @@ const statusConfig = {
 };
 
 export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({ 
-  repayments, 
-  onMarkPaid, 
+  portfolioId,
   onView,
   onViewCompany,
   onViewSchedule 
 }) => {
+  // Utiliser le hook useRepayments pour la gestion des remboursements
+  const { 
+    repayments,
+    loading: isLoading,
+    error,
+    markAsPaid,
+    refresh: refreshRepayments
+  } = useRepayments(undefined, portfolioId);
   // État pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'tous' | 'à venir' | 'payé' | 'retard'>('tous');
@@ -182,7 +205,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
     <div className="bg-white dark:bg-gray-800 shadow overflow-hidden">
       {/* En-tête avec recherche, filtres et options d'export */}
       <div className="p-4 flex flex-wrap items-center justify-between gap-4 border-b">
-        <h2 className="text-lg font-medium">Remboursements</h2>
+        <h2 className="text-lg font-medium">Remboursements (Entreprises → Institution)</h2>
         <div className="flex flex-1 md:flex-none items-center gap-3 ml-auto">
           {/* Recherche */}
           <div className="relative w-full md:w-64">
@@ -232,14 +255,46 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
             <Download className="h-4 w-4 mr-1" />
             PDF
           </Button>
+          {refreshRepayments && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={refreshRepayments}
+            >
+              Actualiser
+            </Button>
+          )}
         </div>
       </div>
       
-      {/* Table */}
+      {/* Indicateur de chargement ou erreur */}
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-500">Chargement des remboursements...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          <p>Une erreur est survenue lors du chargement des remboursements.</p>
+          {refreshRepayments && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2"
+              onClick={refreshRepayments}
+            >
+              Réessayer
+            </Button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Table */}
       <div className="overflow-x-auto">
         <Table>
           <TableHead>
             <tr>
+              <TableHeader>Référence Trans.</TableHeader>
               <TableHeader onClick={() => handleSort('company')} className="cursor-pointer">
                 Entreprise 
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
@@ -248,6 +303,8 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                 Produit
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
+              <TableHeader>Compte Source (Entreprise)</TableHeader>
+              <TableHeader>Compte Destination (Institution)</TableHeader>
               <TableHeader onClick={() => handleSort('contractReference')} className="cursor-pointer">
                 Référence Contrat
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
@@ -260,17 +317,26 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                 Montant
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
+              <TableHeader onClick={() => handleSort('remainingPercentage')} className="cursor-pointer">
+                Restant (%)
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('slippage')} className="cursor-pointer">
+                Glissement
+                <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHeader>
               <TableHeader onClick={() => handleSort('status')} className="cursor-pointer">
                 Statut
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
+              <TableHeader>Justificatif</TableHeader>
               <TableHeader align="center">Actions</TableHeader>
             </tr>
           </TableHead>
           <TableBody>
             {paginatedRepayments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                <TableCell colSpan={11} className="text-center py-8 text-gray-400">
                   {filteredRepayments.length === 0 ? 'Aucun remboursement' : 'Aucun résultat pour cette recherche'}
                 </TableCell>
               </TableRow>
@@ -282,6 +348,9 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <TableCell className="font-medium">
+                    {r.transactionReference || "-"}
+                  </TableCell>
+                  <TableCell>
                     <span 
                       className="hover:text-blue-600 hover:underline"
                       onClick={(e) => {
@@ -295,6 +364,32 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                     </span>
                   </TableCell>
                   <TableCell>{r.product}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">
+                        {r.debitAccount?.companyName || r.company}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {r.debitAccount?.accountNumber || "N/A"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {r.debitAccount?.bankName || "N/A"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">
+                        {r.creditAccount?.accountName || "Portefeuille"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {r.creditAccount?.accountNumber || "N/A"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {r.creditAccount?.bankName || "N/A"}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div 
                       className="text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline"
@@ -314,9 +409,59 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                   </TableCell>
                   <TableCell>{formatAmount(r.amount)}</TableCell>
                   <TableCell>
+                    {r.remainingPercentage !== undefined ? (
+                      <div className="flex items-center">
+                        <div className="w-16 bg-gray-200 rounded-full h-2.5 mr-2">
+                          <div 
+                            className={`h-2.5 rounded-full ${
+                              r.remainingPercentage <= 25 ? 'bg-green-500' : 
+                              r.remainingPercentage <= 50 ? 'bg-blue-500' : 
+                              r.remainingPercentage <= 75 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`} 
+                            style={{ width: `${100 - r.remainingPercentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm">{r.remainingPercentage}%</span>
+                      </div>
+                    ) : (
+                      <span>-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {r.slippage !== undefined ? (
+                      <span className={`${
+                        r.slippage > 0 ? 'text-red-600' : 
+                        r.slippage < 0 ? 'text-green-600' : 'text-gray-600'
+                      }`}>
+                        {r.slippage > 0 ? `+${r.slippage} jours` : 
+                         r.slippage < 0 ? `${r.slippage} jours` : 'À temps'}
+                      </span>
+                    ) : (
+                      <span>-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Badge variant={statusConfig[r.status].variant as "warning" | "success" | "error" | "secondary" | "primary" | "danger"}>
                       {statusConfig[r.status].label}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {r.receiptUrl ? (
+                      <a 
+                        href={r.receiptUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Voir
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center overflow-visible relative">
                     <div className="inline-block">
@@ -325,11 +470,26 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                           { label: 'Voir', onClick: () => onView(r.id) },
                           { 
                             label: 'Marquer comme payé', 
-                            onClick: () => onMarkPaid(r.id), 
+                            onClick: () => markAsPaid(r.id, {
+                              date: new Date().toISOString(),
+                              method: 'virement',
+                              reference: `REF-${Date.now()}`
+                            }), 
                             disabled: r.status !== 'à venir',
                             className: r.status === 'à venir' ? 'text-green-600 hover:text-green-800' : ''
                           },
-
+                          ...(r.status === 'payé' ? [
+                            { 
+                              label: 'Voir justificatif', 
+                              onClick: () => {
+                                if (r.receiptUrl) {
+                                  window.open(r.receiptUrl, '_blank');
+                                }
+                              }, 
+                              disabled: !r.receiptUrl,
+                              className: 'text-blue-600 hover:text-blue-800'
+                            }
+                          ] : [])
                         ].filter(Boolean) as { label: string; onClick: () => void, disabled?: boolean, className?: string }[]}
                       />
                     </div>
@@ -379,6 +539,8 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
             </Button>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

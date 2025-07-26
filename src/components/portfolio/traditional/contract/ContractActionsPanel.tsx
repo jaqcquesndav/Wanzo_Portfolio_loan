@@ -11,9 +11,10 @@ interface ContractActionsPanelProps {
   contract: CreditContract;
   onConfigure: () => void;
   onRefresh: () => void;
+  onEdit?: () => void;
 }
 
-export function ContractActionsPanel({ contract, onConfigure, onRefresh }: ContractActionsPanelProps) {
+export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit }: ContractActionsPanelProps) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<CreditContract['status'] | null>(null);
   const [statusReason, setStatusReason] = useState('');
@@ -61,51 +62,111 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh }: Contr
     <div className="bg-white rounded-lg shadow p-4">
       <h3 className="text-lg font-medium mb-4">Actions sur le contrat</h3>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-        {contract.status === 'active' && (
-          <>
+      {/* Section des actions principales */}
+      <div className="mb-4 border-b pb-4">
+        <h4 className="text-md font-medium mb-2 text-gray-700">Actions principales</h4>
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onConfigure}
+            className="bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+          >
+            Configurer
+          </Button>
+          
+          {onEdit && (
             <Button 
               variant="outline" 
               size="sm"
-              onClick={onConfigure}
+              onClick={onEdit}
+              className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
             >
-              Configurer
+              Éditer les paramètres
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => openStatusDialog('suspended')}
-            >
-              Suspendre
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => openStatusDialog('closed')}
-            >
-              Clôturer
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-amber-600"
-              onClick={() => openStatusDialog('defaulted')}
-            >
-              Marquer en défaut
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-red-600"
-              onClick={() => openStatusDialog('in_litigation')}
-            >
-              Mettre en contentieux
-            </Button>
-          </>
-        )}
-        
-        {contract.status === 'suspended' && (
-          <>
+          )}
+        </div>
+      </div>
+      
+      {/* Section des actions de gestion du statut */}
+      <div>
+        <h4 className="text-md font-medium mb-2 text-gray-700">Gestion du contrat</h4>
+        <div className="flex flex-wrap gap-2">
+          {contract.status === 'active' && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('suspended')}
+              >
+                Suspendre
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('closed')}
+              >
+                Clôturer
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-amber-600"
+                onClick={() => openStatusDialog('defaulted')}
+              >
+                Marquer en défaut
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-600"
+                onClick={() => openStatusDialog('in_litigation')}
+              >
+                Mettre en contentieux
+              </Button>
+            </>
+          )}
+          
+          {contract.status === 'suspended' && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('active')}
+              >
+                Réactiver
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('closed')}
+              >
+                Clôturer
+              </Button>
+            </>
+          )}
+          
+          {contract.status === 'defaulted' && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('active')}
+              >
+                Réactiver
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-600"
+                onClick={() => openStatusDialog('in_litigation')}
+              >
+                Mettre en contentieux
+              </Button>
+            </>
+          )}
+          
+          {contract.status === 'in_litigation' && (
             <Button 
               variant="outline" 
               size="sm"
@@ -113,18 +174,9 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh }: Contr
             >
               Réactiver
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => openStatusDialog('closed')}
-            >
-              Clôturer
-            </Button>
-          </>
-        )}
-        
-        {contract.status === 'defaulted' && (
-          <>
+          )}
+          
+          {contract.status === 'closed' && (
             <Button 
               variant="outline" 
               size="sm"
@@ -132,36 +184,8 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh }: Contr
             >
               Réactiver
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-red-600"
-              onClick={() => openStatusDialog('in_litigation')}
-            >
-              Mettre en contentieux
-            </Button>
-          </>
-        )}
-        
-        {contract.status === 'in_litigation' && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => openStatusDialog('active')}
-          >
-            Réactiver
-          </Button>
-        )}
-        
-        {contract.status === 'closed' && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => openStatusDialog('active')}
-          >
-            Réactiver
-          </Button>
-        )}
+          )}
+        </div>
       </div>
       
       {/* Dialogue de confirmation pour changement de statut */}

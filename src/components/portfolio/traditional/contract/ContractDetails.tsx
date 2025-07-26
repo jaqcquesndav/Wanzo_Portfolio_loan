@@ -1,5 +1,5 @@
 // components/portfolio/traditional/contract/ContractDetails.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditContract } from '../../../../types/credit';
 import { Card } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
@@ -7,6 +7,9 @@ import { Input } from '../../../ui/Form';
 import { CalendarIcon, DocumentIcon, UserIcon, BuildingOfficeIcon, CurrencyDollarIcon, ScaleIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
+import { GuaranteeCard } from '../guarantees/GuaranteeCard';
+import { Guarantee } from '../../../../types/guarantee';
+import { traditionalDataService } from '../../../../services/api/traditional/dataService';
 
 // Fonction utilitaire pour le formatage des dates
 const formatDate = (dateString?: string) => {
@@ -44,8 +47,21 @@ interface ContractDetailsProps {
 export default function ContractDetails({ contract, onUpdate }: ContractDetailsProps) {
   const [editMode, setEditMode] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<CreditContract>>({});
+  const [guarantees, setGuarantees] = useState<Guarantee[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
   const { showNotification } = useNotification();
   const { formatAmount } = useCurrencyContext();
+  
+  // Récupérer les garanties associées au contrat
+  useEffect(() => {
+    if (contract?.id) {
+      const contractGuarantees = traditionalDataService.getContractRelatedData<Guarantee>(
+        contract.id,
+        'GUARANTEES'
+      );
+      setGuarantees(contractGuarantees);
+    }
+  }, [contract?.id]);
   
   // Calculer la durée en mois entre la date de début et la date de fin
   const calculateTermInMonths = (): number => {
@@ -103,6 +119,28 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       ...editValues,
       [field]: value
     });
+    setHasChanges(true);
+  };
+  
+  // Sauvegarder toutes les modifications
+  const handleSaveAllChanges = async () => {
+    if (!onUpdate || !hasChanges) return;
+    
+    try {
+      // Appeler la fonction de mise à jour fournie avec toutes les modifications
+      await onUpdate(editValues);
+      
+      // Afficher une notification de succès
+      showNotification('Toutes les informations ont été mises à jour avec succès', 'success');
+      
+      // Réinitialiser
+      setEditValues({});
+      setHasChanges(false);
+      setEditMode(null);
+    } catch (error) {
+      showNotification('Erreur lors de la mise à jour', 'error');
+      console.error('Erreur lors de la mise à jour:', error);
+    }
   };
   
   // Fonction pour rendre un champ éditable
@@ -370,7 +408,22 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Informations générales */}
         <Card className="p-4">
-          <h3 className="text-lg font-medium mb-4">Informations générales</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Informations générales</h3>
+            
+            {/* Bouton d'enregistrement dans la carte des informations générales */}
+            {onUpdate && hasChanges && editMode === null && (
+              <Button 
+                onClick={handleSaveAllChanges}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm flex items-center"
+                size="sm"
+              >
+                <CheckIcon className="h-4 w-4 mr-1" />
+                Enregistrer
+              </Button>
+            )}
+          </div>
+          
           <dl className="grid grid-cols-1 gap-3">
             {generalInfoFields.map((item) => (
               item.editable 
@@ -488,6 +541,33 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
             </a>
           </p>
         </Card>
+      )}
+      
+      {/* Carte des garanties */}
+      <Card className="p-4 mt-4">
+        <h3 className="text-lg font-medium mb-4">Garanties associées</h3>
+        {guarantees.length > 0 ? (
+          <div className="space-y-4">
+            {guarantees.map(guarantee => (
+              <GuaranteeCard key={guarantee.id} guarantee={guarantee} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 italic">Aucune garantie associée à ce contrat</p>
+        )}
+      </Card>
+      
+      {/* Bouton flottant d'enregistrement des modifications */}
+      {onUpdate && hasChanges && (
+        <div className="fixed bottom-4 right-4 z-10">
+          <Button 
+            onClick={handleSaveAllChanges}
+            className="shadow-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <CheckIcon className="h-5 w-5 mr-2" />
+            Enregistrer les modifications
+          </Button>
+        </div>
       )}
     </div>
   );

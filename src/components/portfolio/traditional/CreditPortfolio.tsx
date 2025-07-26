@@ -1,19 +1,22 @@
 import { useState, useCallback } from 'react';
 import { Tab } from '../../../components/ui/Tab';
-import { CreditRequestsList } from './credit-request/CreditRequestsList';
+import { CreditRequestsTable } from './CreditRequestsTable';
 import { CreditContractsList } from './credit-contract/CreditContractsList';
-import { GuaranteeTypesList } from './guarantees/GuaranteeTypesList';
-import { FileText, File, Calendar, Shield, RefreshCw } from 'lucide-react';
+import { FileText, File, Calendar, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useCreditRequests } from '../../../hooks/useCreditRequests';
 import { useCreditContracts } from '../../../hooks/useCreditContracts';
 import { ScheduleManagementList } from './amortization/ScheduleManagementList';
+import { CompanyDetails } from '../../prospection/CompanyDetails';
+import { mockCompanies } from '../../../data/mockCompanies';
+import { useNotification } from '../../../contexts/NotificationContext';
+import { Company } from '../../../types/company';
 
 interface CreditPortfolioProps {
   portfolioId: string;
 }
 
-type TabId = 'requests' | 'contracts' | 'amortization' | 'guarantees';
+type TabId = 'requests' | 'contracts' | 'amortization';
 
 // Définition de notre propre interface TabProps pour ce composant
 interface CustomTabProps {
@@ -27,16 +30,80 @@ interface CustomTabProps {
 export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
   const [activeTab, setActiveTab] = useState<TabId>('requests');
   const [refreshKey, setRefreshKey] = useState(0);
-  const { resetToMockData: resetRequests } = useCreditRequests();
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyDetailModalOpen, setCompanyDetailModalOpen] = useState(false);
+  const { showNotification } = useNotification();
+  
+  // Utiliser les hooks au niveau du composant
+  const { 
+    requests, 
+    loading, 
+    resetToMockData: resetRequests,
+    getMemberName,
+    getCreditProductName,
+    changeRequestStatus
+  } = useCreditRequests();
   const { resetToMockData: resetContracts } = useCreditContracts(portfolioId);
   
+  // Préparer les mappings pour les noms
+  const companyNames = Object.fromEntries(requests.map(req => [req.memberId, getMemberName(req.memberId)]));
+  const productNames = Object.fromEntries(requests.map(req => [req.productId, getCreditProductName(req.productId)]));
+  
   console.log('CreditPortfolio - Using portfolioId:', portfolioId);
+  
+  // Fonction pour gérer l'affichage des détails d'une entreprise
+  const handleViewCompany = useCallback((companyNameOrId: string) => {
+    // Chercher l'entreprise dans mockCompanies par nom d'abord
+    let companyFound = mockCompanies.find(c => c.name === companyNameOrId);
+    
+    // Si non trouvé par nom, essayer par ID
+    if (!companyFound) {
+      companyFound = mockCompanies.find(c => c.id === companyNameOrId);
+    }
+    
+    // Si l'entreprise est trouvée par nom ou ID
+    if (companyFound) {
+      setSelectedCompany(companyFound);
+      setCompanyDetailModalOpen(true);
+    } else {
+      // Créer une entreprise de base avec le nom/id fourni
+      const basicCompany: Company = {
+        id: companyNameOrId,
+        name: companyNames[companyNameOrId] || companyNameOrId,
+        sector: 'Non spécifié',
+        size: 'small',
+        status: 'active',
+        annual_revenue: 0,
+        employee_count: 0,
+        financial_metrics: {
+          revenue_growth: 0,
+          profit_margin: 0,
+          cash_flow: 0,
+          debt_ratio: 0,
+          working_capital: 0,
+          credit_score: 0,
+          financial_rating: 'C'
+        },
+        esg_metrics: {
+          carbon_footprint: 0,
+          environmental_rating: 'C',
+          social_rating: 'C',
+          governance_rating: 'C'
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setSelectedCompany(basicCompany);
+      setCompanyDetailModalOpen(true);
+    }
+    
+    showNotification(`Détails de l'entreprise ${companyNames[companyNameOrId] || companyNameOrId} affichés`, 'info');
+  }, [showNotification, companyNames]);
   
   const tabs: CustomTabProps[] = [
     { id: 'requests', label: 'Demandes', icon: 'FileText' },
     { id: 'contracts', label: 'Contrats', icon: 'File' },
     { id: 'amortization', label: 'Échéanciers', icon: 'Calendar' },
-    { id: 'guarantees', label: 'Garanties', icon: 'Shield' },
   ];
   
   const handleRefresh = useCallback(async () => {
@@ -56,8 +123,6 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
         return <File className="w-4 h-4 mr-2" />;
       case 'Calendar':
         return <Calendar className="w-4 h-4 mr-2" />;
-      case 'Shield':
-        return <Shield className="w-4 h-4 mr-2" />;
       default:
         return null;
     }
@@ -67,13 +132,23 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
     // Utiliser refreshKey comme clé pour forcer le rechargement du composant
     switch (activeTab) {
       case 'requests':
-        return <CreditRequestsList key={`requests-${refreshKey}`} />;
+        return <CreditRequestsTable 
+          key={`requests-${refreshKey}`}
+          requests={requests}
+          loading={loading}
+          companyNames={companyNames}
+          productNames={productNames}
+          onValidate={(id) => changeRequestStatus(id, 'approved')}
+          onRefuse={(id) => changeRequestStatus(id, 'rejected')}
+          onDisburse={(id) => changeRequestStatus(id, 'disbursed')}
+          onView={(id) => console.log('Voir détails de la demande', id)}
+          onViewCompany={handleViewCompany}
+          onCreateContract={(id) => console.log('Créer contrat', id)}
+        />;
       case 'contracts':
-        return <CreditContractsList key={`contracts-${refreshKey}`} portfolioId={portfolioId} />;
+        return <CreditContractsList key={`contracts-${refreshKey}`} portfolioId={portfolioId} onViewCompany={handleViewCompany} />;
       case 'amortization':
         return <ScheduleManagementList key={`amortization-${refreshKey}`} portfolioId={portfolioId} />;
-      case 'guarantees':
-        return <GuaranteeTypesList key={`guarantees-${refreshKey}`} portfolioId={portfolioId} />;
       default:
         return null;
     }
@@ -110,6 +185,14 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
       <div className="p-4 bg-white rounded-lg shadow">
         {renderTabContent()}
       </div>
+      
+      {/* Modal pour les détails de l'entreprise */}
+      {selectedCompany && companyDetailModalOpen && (
+        <CompanyDetails
+          company={selectedCompany}
+          onClose={() => setCompanyDetailModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

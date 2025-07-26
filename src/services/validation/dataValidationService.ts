@@ -6,7 +6,7 @@
  * et offre des méthodes pour initialiser ou réinitialiser les données si nécessaire.
  */
 
-import { guaranteeStorageService } from '../storage/guaranteeStorageUnified';
+import { guaranteeService } from '../guaranteeService';
 import { Guarantee } from '../../types/guarantee';
 
 /**
@@ -22,7 +22,7 @@ export class DataValidationService {
     const issues: string[] = [];
     
     try {
-      const guarantees = await guaranteeStorageService.getAllGuarantees();
+      const guarantees = await guaranteeService.getAllGuarantees();
       
       // Vérifier que les données de garanties existent
       if (!guarantees || guarantees.length === 0) {
@@ -80,7 +80,7 @@ export class DataValidationService {
   async repairGuaranteeData(): Promise<{ success: boolean, message: string }> {
     try {
       // Réinitialiser les données de garanties
-      const success = await guaranteeStorageService.resetToMockData();
+      const success = await guaranteeService.resetToMockData();
       
       return {
         success,

@@ -27,9 +27,11 @@ En plus des portefeuilles, la documentation couvre également les autres modules
 - **Centrale de Risque** (`/api-docs/centrale-risque/`)
 - **Dashboard** (`/api-docs/dashboard/`)
 - **Institution** (`/api-docs/institution/`)
+- **Paiements** (`/api-docs/paiements/`)
 - **Prospection** (`/api-docs/prospection/`)
 - **Paramètres** (`/api-docs/parametres/`)
 - **Utilisateurs** (`/api-docs/utilisateurs/`)
+- **Virements** (`/api-docs/virements/`)
 
 ## Utilisation
 

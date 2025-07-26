@@ -9,7 +9,7 @@
 import { mockTraditionalPortfolios } from '../../data/mockTraditionalPortfolios';
 import { mockAmortizationSchedules, saveAmortizationSchedulesToLocalStorage } from '../../data/mockAmortizationSchedules';
 import type { PortfolioWithType } from '../../types/portfolioWithType';
-import { guaranteeStorageService } from './guaranteeStorageUnified';
+import { guaranteeService } from '../guaranteeService';
 import { centraleRisqueStorageService } from './centraleRisqueStorage';
 import { initCompaniesData, STORAGE_KEYS } from '../../scripts/initLocalStorage';
 import { dataValidationService } from '../validation/dataValidationService';
@@ -41,7 +41,7 @@ class MockDataInitializerService {
         this.initializeAmortizationSchedules();
         
         // Initialiser les garanties
-        await guaranteeStorageService.initializeDefaultData();
+        await guaranteeService.initializeDefaultData();
         
         // Initialiser les données d'entreprises
         initCompaniesData();

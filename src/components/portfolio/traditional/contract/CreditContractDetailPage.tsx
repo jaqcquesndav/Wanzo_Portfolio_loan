@@ -20,6 +20,7 @@ import { ContractDocuments } from './ContractDocuments';
 import { ContractRiskAnalysis } from './ContractRiskAnalysis';
 import { ContractActionsPanel } from './ContractActionsPanel';
 import { ConfigureContractForm } from './ConfigureContractForm';
+import { EditContractForm } from './EditContractForm';
 
 // Styles et utilitaires
 import { creditContractsStorageService } from '../../../../services/storage/creditContractsStorage';
@@ -31,6 +32,7 @@ export default function CreditContractDetailPage() {
   const { contracts, loading, error, fetchContracts } = useCreditContracts(portfolioId || 'default');
   const [activeTab, setActiveTab] = useState('details');
   const [isConfigureModalOpen, setIsConfigureModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { showNotification } = useNotification();
   
   // Trouver le contrat correspondant
@@ -139,6 +141,7 @@ export default function CreditContractDetailPage() {
         contract={contract}
         onConfigure={() => setIsConfigureModalOpen(true)}
         onRefresh={fetchContracts}
+        onEdit={() => setIsEditModalOpen(true)}
       />
       
       <div className="mt-6">
@@ -153,6 +156,11 @@ export default function CreditContractDetailPage() {
           </TabsList>
           
           <TabsContent value="details" currentValue={activeTab} className="p-4 bg-white rounded-md shadow">
+            <div className="flex justify-end mb-4">
+              <Button onClick={() => setIsEditModalOpen(true)} variant="outline">
+                Modifier les paramètres
+              </Button>
+            </div>
             <ContractDetails contract={contract} />
           </TabsContent>
           
@@ -204,6 +212,16 @@ export default function CreditContractDetailPage() {
         <ConfigureContractForm 
           isOpen={isConfigureModalOpen}
           onClose={() => setIsConfigureModalOpen(false)}
+          onUpdate={handleUpdateContract}
+          contract={contract}
+        />
+      )}
+      
+      {/* Formulaire d'édition des paramètres du contrat */}
+      {contract && (
+        <EditContractForm 
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
           onSave={handleUpdateContract}
           contract={contract}
         />

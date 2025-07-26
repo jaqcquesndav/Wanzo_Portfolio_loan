@@ -1,4 +1,4 @@
-import { Disbursement } from '../components/portfolio/traditional/DisbursementsTable';
+import { Disbursement } from '../types/disbursement';
 
 export const mockDisbursements: Disbursement[] = [
   {

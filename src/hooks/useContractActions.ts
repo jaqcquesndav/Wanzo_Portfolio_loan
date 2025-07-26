@@ -1,243 +1,150 @@
-import { useState, useEffect } from 'react';
+// src/hooks/useContractActions.ts
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditContract } from '../types/credit';
 import { useNotification } from '../contexts/useNotification';
 import { useCreditContracts } from './useCreditContracts';
-import { statusConfig } from '../utils/credit';
 
+// Interface pour les éléments d'échéancier
+interface ScheduleItem {
+  due_date: string;
+  principal_amount: number;
+  interest_amount: number;
+  total_amount: number;
+  status: string;
+}
+
+// Hook pour gérer les actions sur les contrats
 export const useContractActions = (portfolioId: string) => {
   const { updateContract, deleteContract } = useCreditContracts(portfolioId);
   const { showNotification } = useNotification();
   const navigate = useNavigate();
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [showConfirmStatusChange, setShowConfirmStatusChange] = useState(false);
-  const [contractToAction, setContractToAction] = useState<CreditContract | null>(null);
-  const [newStatusToApply, setNewStatusToApply] = useState<'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation' | null>(null);
-  const [pendingActions, setPendingActions] = useState<Array<{
-    type: 'status_change' | 'delete';
-    contractId: string;
-    data?: Partial<CreditContract>;
-  }>>([]);
-
-  // Surveiller l'état de la connexion
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Exécuter les actions en attente lorsque la connexion est rétablie
-  useEffect(() => {
-    const processPendingActions = async () => {
-      if (isOnline && pendingActions.length > 0) {
-        showNotification('Connexion rétablie. Traitement des actions en attente...', 'info');
-        
-        // Copier les actions pour éviter les problèmes de concurrence
-        const actionsToProcess = [...pendingActions];
-        
-        // Vider la liste des actions en attente
-        setPendingActions([]);
-        
-        // Traiter chaque action
-        for (const action of actionsToProcess) {
-          try {
-            if (action.type === 'status_change' && action.data) {
-              await updateContract(action.contractId, action.data);
-              showNotification(`Mise à jour du statut du contrat effectuée`, 'success');
-            } else if (action.type === 'delete') {
-              await deleteContract(action.contractId);
-              showNotification(`Suppression du contrat effectuée`, 'success');
-            }
-          } catch (error) {
-            console.error(`Échec de l'exécution de l'action en attente:`, error);
-            showNotification(`Une action n'a pas pu être exécutée. Veuillez réessayer manuellement.`, 'error');
-            // Remettre l'action dans la file d'attente
-            setPendingActions(prev => [...prev, action]);
-          }
-        }
-      }
-    };
-    
-    processPendingActions();
-  }, [isOnline, pendingActions, updateContract, deleteContract, showNotification]);
-
-  const handleStatusChange = async (contract: CreditContract, newStatus: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation') => {
-    if (!contract) {
-      showNotification('Impossible de modifier un contrat inexistant', 'error');
-      return;
-    }
-
-    if (newStatus === 'defaulted' || newStatus === 'in_litigation') {
-      setContractToAction(contract);
-      setNewStatusToApply(newStatus);
-      setShowConfirmStatusChange(true);
-      return;
-    }
-    
+  // Fonction pour récupérer un portefeuille par ID
+  const getPortfolioById = async (id: string) => {
     try {
-      if (!isOnline) {
-        // Mode hors ligne: ajouter à la file d'attente
-        setPendingActions(prev => [...prev, {
-          type: 'status_change',
-          contractId: contract.id,
-          data: { status: newStatus }
-        }]);
-        showNotification(`Mode hors ligne: Le statut du contrat ${contract.reference} sera changé en "${statusConfig[newStatus]?.label || newStatus}" lors de la prochaine connexion`, 'warning');
-        return;
-      }
-      
-      await updateContract(contract.id, { ...contract, status: newStatus });
-      showNotification(`Le statut du contrat ${contract.reference} a été changé en "${statusConfig[newStatus] ? statusConfig[newStatus].label : newStatus}"`, 'success');
+      // Simule un appel API
+      return {
+        id,
+        name: `Portefeuille ${id}`,
+        manager: { name: 'Gestionnaire par défaut' }
+      };
     } catch (error) {
-      console.error('Erreur lors du changement de statut:', error);
-      
-      // Fallback en mode hors ligne - simuler la mise à jour localement
-      setPendingActions(prev => [...prev, {
-        type: 'status_change',
-        contractId: contract.id,
-        data: { status: newStatus }
-      }]);
-      showNotification(`Mode hors ligne: Le statut du contrat ${contract.reference} sera changé en "${statusConfig[newStatus]?.label || newStatus}" lors de la prochaine connexion`, 'warning');
+      console.error(`Erreur lors de la récupération du portefeuille ${id}:`, error);
+      return null;
     }
   };
 
-  const confirmStatusChange = async () => {
-    if (!contractToAction || !newStatusToApply) {
-      showNotification('Données du contrat incomplètes, impossible de continuer', 'error');
-      return;
-    }
-    
+  // Fonction pour récupérer l'échéancier d'un contrat
+  const getContractSchedule = async (contractId: string): Promise<ScheduleItem[]> => {
     try {
-      if (!isOnline) {
-        // Mode hors ligne: ajouter à la file d'attente
-        setPendingActions(prev => [...prev, {
-          type: 'status_change',
-          contractId: contractToAction.id,
-          data: { status: newStatusToApply }
-        }]);
+      // Simule un appel API - génère un échéancier factice
+      const now = new Date();
+      const scheduleItems: ScheduleItem[] = [];
+      
+      for (let i = 0; i < 6; i++) {
+        const dueDate = new Date(now);
+        dueDate.setMonth(dueDate.getMonth() + i + 1);
         
-        showNotification(`Mode hors ligne: Le statut du contrat sera mis à jour lors de la prochaine connexion`, 'warning');
-        
-        // On ferme la modale
-        setContractToAction(null);
-        setNewStatusToApply(null);
-        setShowConfirmStatusChange(false);
-        return;
+        scheduleItems.push({
+          due_date: dueDate.toISOString(),
+          principal_amount: 50000,
+          interest_amount: 5000,
+          total_amount: 55000,
+          status: i === 0 ? 'paid' : (i === 1 ? 'partial' : 'pending')
+        });
       }
       
-      await updateContract(contractToAction.id, { ...contractToAction, status: newStatusToApply });
-      showNotification(`Le statut du contrat ${contractToAction.reference} a été changé en "${statusConfig[newStatusToApply] ? statusConfig[newStatusToApply].label : newStatusToApply}"`, 'success');
-      
-      setContractToAction(null);
-      setNewStatusToApply(null);
-      setShowConfirmStatusChange(false);
+      return scheduleItems;
     } catch (error) {
-      console.error('Erreur lors du changement de statut:', error);
-      
-      // Fallback en mode hors ligne
-      setPendingActions(prev => [...prev, {
-        type: 'status_change',
-        contractId: contractToAction.id,
-        data: { status: newStatusToApply }
-      }]);
-      
-      showNotification(`Mode hors ligne: Le statut du contrat sera mis à jour lors de la prochaine connexion`, 'warning');
-      
-      // On ferme quand même la modale pour ne pas bloquer l'utilisateur
-      setContractToAction(null);
-      setNewStatusToApply(null);
-      setShowConfirmStatusChange(false);
+      console.error(`Erreur lors de la récupération de l'échéancier du contrat ${contractId}:`, error);
+      return [];
     }
   };
 
-  const openDeleteConfirm = (contract: CreditContract) => {
-    if (!contract) {
-      showNotification('Impossible de supprimer un contrat inexistant', 'error');
-      return;
-    }
-    setContractToAction(contract);
-    setShowConfirmDelete(true);
-  };
-
-  const handleDeleteContract = async () => {
-    if (!contractToAction) {
-      showNotification('Données du contrat incomplètes, impossible de continuer', 'error');
-      return;
-    }
-    
-    try {
-      if (!isOnline) {
-        // Mode hors ligne: ajouter à la file d'attente
-        setPendingActions(prev => [...prev, {
-          type: 'delete',
-          contractId: contractToAction.id
-        }]);
-        
-        showNotification(`Mode hors ligne: La suppression du contrat sera effectuée lors de la prochaine connexion`, 'warning');
-        
-        // On ferme la modale
-        setContractToAction(null);
-        setShowConfirmDelete(false);
-        return;
-      }
-      
-      await deleteContract(contractToAction.id);
-      showNotification(`Le contrat ${contractToAction.reference} a été supprimé avec succès`, 'success');
-      
-      setContractToAction(null);
-      setShowConfirmDelete(false);
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-      
-      // Vérifier si l'erreur est due à un problème de connexion
-      if (error instanceof Error && error.message.includes('network') || !navigator.onLine) {
-        // Ajouter à la file d'attente
-        setPendingActions(prev => [...prev, {
-          type: 'delete',
-          contractId: contractToAction.id
-        }]);
-        
-        showNotification(`Mode hors ligne: La suppression du contrat sera effectuée lors de la prochaine connexion`, 'warning');
-        
-        // On ferme quand même la modale pour ne pas bloquer l'utilisateur
-        setContractToAction(null);
-        setShowConfirmDelete(false);
-      } else {
-        showNotification(`Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`, 'error');
-      }
-    }
-  };
-
-  const handleGeneratePDF = (contract: CreditContract) => {
+  // Fonction pour générer un PDF du contrat
+  const handleGeneratePDF = useCallback(async (contract: CreditContract) => {
     if (!contract) {
       showNotification('Impossible de générer un PDF pour un contrat inexistant', 'error');
       return;
     }
     
     try {
-      // TODO: Implémenter la génération de PDF
       if (!navigator.onLine) {
         showNotification(`Mode hors ligne: La génération du PDF pour le contrat ${contract.reference} est indisponible`, 'warning');
         return;
       }
       
       showNotification(`Génération du PDF pour le contrat ${contract.reference} en cours...`, 'info');
+      
+      // Obtenir les données du portefeuille
+      const portfolioDetails = await getPortfolioById(portfolioId);
+      
+      // Obtenir les données d'échéancier si disponibles
+      // Interface pour les données d'échéancier formatées
+      interface FormattedScheduleItem {
+        number: number;
+        dueDate: string;
+        principal: number;
+        interest: number;
+        total: number;
+        status: string;
+      }
+      
+      let scheduleData: FormattedScheduleItem[] = [];
+      try {
+        const schedule = await getContractSchedule(contract.id);
+        scheduleData = schedule.map((item, index: number) => ({
+          number: index + 1,
+          dueDate: item.due_date,
+          principal: item.principal_amount,
+          interest: item.interest_amount,
+          total: item.total_amount,
+          status: item.status
+        }));
+      } catch (error) {
+        console.warn('Échéancier non disponible:', error);
+        scheduleData = [];
+      }
+      
+      // Extraire le nom du gestionnaire du portfolio ou utiliser une valeur par défaut
+      let managerName = "Gestionnaire non spécifié";
+      if (portfolioDetails && typeof portfolioDetails.manager === 'object' && portfolioDetails.manager) {
+        managerName = portfolioDetails.manager.name || "Gestionnaire non spécifié";
+      } else if (portfolioDetails && typeof portfolioDetails.manager === 'string') {
+        managerName = portfolioDetails.manager;
+      }
+      
+      // Informations de l'institution (à adapter selon votre structure)
+      const institutionInfo = {
+        institutionName: "Wanzo Institution Financière",
+        institutionAddress: "01 BP 1234, Abidjan 01, Côte d'Ivoire",
+        institutionContact: "Tel: +225 27 20 xx xx xx | Email: contact@wanzo.com",
+        portfolioName: portfolioDetails?.name || "Portefeuille de prêts",
+        portfolioManager: managerName,
+        scheduleData
+      };
+      
+      // Importer dynamiquement la fonction d'export pour éviter les problèmes de dépendances circulaires
+      // Utiliser la nouvelle implémentation moderne pour un rendu de meilleure qualité
+      const { exportCreditContractToPDF } = await import('../utils/exportModern');
+      
+      // Générer le PDF
+      const result = await exportCreditContractToPDF(contract, institutionInfo);
+      
+      if (result.success) {
+        showNotification(`PDF du contrat ${contract.reference} généré avec succès`, 'success');
+      } else {
+        showNotification(`Erreur lors de la génération du PDF: ${result.message || 'Erreur inconnue'}`, 'error');
+      }
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
       showNotification(`Erreur lors de la génération du PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`, 'error');
     }
-  };
+  }, [portfolioId, showNotification]);
 
-  const handleViewSchedule = (contract: CreditContract) => {
+  // Fonction pour afficher l'échéancier d'un contrat
+  const handleViewSchedule = useCallback((contract: CreditContract) => {
     if (!contract) {
       showNotification('Impossible d\'afficher l\'échéancier d\'un contrat inexistant', 'error');
       return;
@@ -245,24 +152,13 @@ export const useContractActions = (portfolioId: string) => {
     
     navigate(`/app/traditional/portfolio/${portfolioId}/contracts/${contract.id}/schedule`);
     showNotification(`Navigation vers l'échéancier du contrat ${contract.reference}`, 'info');
-  };
+  }, [navigate, portfolioId, showNotification]);
   
+  // Retourne les fonctions du hook
   return {
-    showConfirmDelete,
-    showConfirmStatusChange,
-    contractToAction,
-    newStatusToApply,
-    handleStatusChange,
-    confirmStatusChange,
-    handleDeleteContract,
     handleGeneratePDF,
     handleViewSchedule,
-    openDeleteConfirm,
-    setShowConfirmDelete,
-    setContractToAction,
-    setShowConfirmStatusChange,
-    setNewStatusToApply,
-    isOnline,
-    pendingActions: pendingActions.length,
+    handleUpdateContract: updateContract,
+    handleDeleteContract: deleteContract
   };
 };

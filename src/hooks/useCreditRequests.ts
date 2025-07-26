@@ -5,7 +5,7 @@ import {
   mockCreditProducts,
   mockCreditManagers
 } from '../data';
-import { creditRequestsStorageService } from '../services/storage/creditRequestsStorage';
+import { creditRequestApi } from '../services/api/traditional/credit-request.api';
 
 export function useCreditRequests() {
   const [requests, setRequests] = useState<CreditRequest[]>([]);
@@ -15,11 +15,8 @@ export function useCreditRequests() {
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Récupérer les données depuis le localStorage
-      const data = await creditRequestsStorageService.getAllRequests();
+      // Appel au service API
+      const data = await creditRequestApi.getAllRequests();
       setRequests(data);
       setError(null);
     } catch (err) {
@@ -31,32 +28,23 @@ export function useCreditRequests() {
   }, []);
 
   useEffect(() => {
-    // Initialiser les données dans le localStorage lors du premier montage
-    creditRequestsStorageService.init();
     fetchRequests();
   }, [fetchRequests]);
 
   const addRequest = useCallback(async (request: Omit<CreditRequest, 'id' | 'createdAt' | 'status'>) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
       
-      const newRequest: CreditRequest = {
+      const newRequest = await creditRequestApi.createRequest({
         ...request,
-        id: `req-${Date.now()}`,
-        createdAt: new Date().toISOString(),
         status: 'pending',
-      };
-      
-      // Sauvegarder dans le localStorage
-      await creditRequestsStorageService.addRequest(newRequest);
+      } as Omit<CreditRequest, 'id' | 'createdAt'>);
       
       // Mettre à jour l'état local
       setRequests(prev => [...prev, newRequest]);
       return newRequest;
     } catch (err) {
-      setError('Erreur lors de l\'ajout de la demande de crédit');
+      setError("Erreur lors de l'ajout de la demande de crédit");
       console.error(err);
       throw err;
     } finally {
@@ -67,22 +55,32 @@ export function useCreditRequests() {
   const updateRequest = useCallback(async (id: string, updates: Partial<CreditRequest>) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Mettre à jour dans le localStorage
-      const updatedRequest = await creditRequestsStorageService.updateRequest(id, updates);
+      const updatedRequest = await creditRequestApi.updateRequest(id, updates);
       
       // Mettre à jour l'état local
-      setRequests(prev => 
-        prev.map(request => 
-          request.id === id ? { ...request, ...updates, updatedAt: new Date().toISOString() } : request
-        )
-      );
-      
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
       return updatedRequest;
     } catch (err) {
-      setError('Erreur lors de la mise à jour de la demande de crédit');
+      setError(`Erreur lors de la mise à jour de la demande de crédit ${id}`);
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const changeRequestStatus = useCallback(async (id: string, status: CreditRequestStatus) => {
+    try {
+      setLoading(true);
+      
+      const updatedRequest = await creditRequestApi.updateRequestStatus(id, status);
+      
+      // Mettre à jour l'état local
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
+      return updatedRequest;
+    } catch (err) {
+      setError(`Erreur lors du changement de statut de la demande de crédit ${id}`);
       console.error(err);
       throw err;
     } finally {
@@ -93,18 +91,17 @@ export function useCreditRequests() {
   const deleteRequest = useCallback(async (id: string) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Supprimer du localStorage
-      await creditRequestsStorageService.deleteRequest(id);
+      const success = await creditRequestApi.deleteRequest(id);
       
-      // Mettre à jour l'état local
-      setRequests(prev => prev.filter(request => request.id !== id));
+      if (success) {
+        // Mettre à jour l'état local
+        setRequests(prev => prev.filter(req => req.id !== id));
+      }
       
-      return true;
+      return success;
     } catch (err) {
-      setError('Erreur lors de la suppression de la demande de crédit');
+      setError(`Erreur lors de la suppression de la demande de crédit ${id}`);
       console.error(err);
       throw err;
     } finally {
@@ -112,61 +109,31 @@ export function useCreditRequests() {
     }
   }, []);
 
-  // Fonctions utilitaires pour récupérer des informations supplémentaires
-  const getMemberName = useCallback((memberId: string) => {
+  const resetToMockData = useCallback(async () => {
+    try {
+      await creditRequestApi.getAllRequests(); // Force un reset vers les données mockées
+      await fetchRequests(); // Recharger les données
+    } catch (err) {
+      console.error('Erreur lors de la réinitialisation des données:', err);
+      throw err;
+    }
+  }, [fetchRequests]);
+
+  // Utilitaires pour obtenir des informations liées
+  const getMemberName = useCallback((memberId: string): string => {
     const member = mockMembers.find(m => m.id === memberId);
     return member ? member.name : 'Client inconnu';
   }, []);
 
-  const getCreditProductName = useCallback((productId: string) => {
+  const getCreditProductName = useCallback((productId: string): string => {
     const product = mockCreditProducts.find(p => p.id === productId);
     return product ? product.name : 'Produit inconnu';
   }, []);
 
-  const getCreditManagerName = useCallback((managerId: string) => {
+  const getCreditManagerName = useCallback((managerId: string): string => {
     const manager = mockCreditManagers.find(m => m.id === managerId);
     return manager ? manager.name : 'Gestionnaire inconnu';
   }, []);
-
-  // Fonction pour changer le statut d'une demande
-  const changeRequestStatus = useCallback(async (requestId: string, newStatus: CreditRequestStatus, additionalData?: Partial<CreditRequest>) => {
-    try {
-      setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const updates = { 
-        ...additionalData, 
-        status: newStatus, 
-        updatedAt: new Date().toISOString() 
-      };
-      
-      // Mettre à jour dans le localStorage
-      const updatedRequest = await creditRequestsStorageService.updateRequest(requestId, updates);
-      
-      // Mettre à jour l'état local
-      setRequests(prev => 
-        prev.map(req => 
-          req.id === requestId 
-            ? { ...req, ...updates } 
-            : req
-        )
-      );
-      
-      return updatedRequest;
-    } catch (err) {
-      setError(`Erreur lors du changement de statut de la demande de crédit`);
-      console.error(err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Fonctions filtrantes pour les demandes
-  const getRequestsByStatus = useCallback((status: CreditRequestStatus) => {
-    return requests.filter(req => req.status === status);
-  }, [requests]);
 
   return {
     requests,
@@ -175,21 +142,11 @@ export function useCreditRequests() {
     fetchRequests,
     addRequest,
     updateRequest,
+    changeRequestStatus,
     deleteRequest,
+    resetToMockData,
     getMemberName,
     getCreditProductName,
-    getCreditManagerName,
-    changeRequestStatus,
-    getRequestsByStatus,
-    resetToMockData: async () => {
-      try {
-        await creditRequestsStorageService.resetToMockData();
-        fetchRequests();
-        return true;
-      } catch (err) {
-        console.error('Erreur lors de la réinitialisation des données', err);
-        return false;
-      }
-    }
+    getCreditManagerName
   };
 }

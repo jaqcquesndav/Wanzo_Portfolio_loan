@@ -1,0 +1,63 @@
+/* contract-print.css */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .credit-contract-pdf, .credit-contract-pdf * {
+    visibility: visible;
+  }
+  
+  .credit-contract-pdf {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    min-height: 297mm;
+    page-break-after: always;
+    box-shadow: none;
+    border: none;
+  }
+  
+  /* Éviter les sauts de page à l'intérieur d'éléments importants */
+  table {
+    page-break-inside: avoid;
+  }
+  
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+  }
+  
+  /* Cacher les éléments inutiles pour l'impression */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Style des tableaux pour l'impression */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+  }
+}
+
+/* Styles pour la prévisualisation et l'export */
+.credit-contract-pdf {
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* Définir la taille A4 pour l'impression */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}

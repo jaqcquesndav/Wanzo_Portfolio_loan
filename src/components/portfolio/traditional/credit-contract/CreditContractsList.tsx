@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
 import { Card } from '../../../ui/Card';
@@ -14,32 +14,89 @@ import { ActionMenu } from './ActionMenu';
 import { useContractActions } from '../../../../hooks/useContractActions';
 import { CreditContract } from '../../../../types/credit';
 
-export function CreditContractsList({ portfolioId = 'default' }: { portfolioId?: string }) {
+interface CreditContractsListProps {
+  portfolioId?: string;
+  onViewCompany?: (companyName: string) => void;
+}
+
+export function CreditContractsList({ 
+  portfolioId = 'default',
+  onViewCompany
+}: CreditContractsListProps) {
   const { contracts, loading, error, resetToMockData } = useCreditContracts(portfolioId);
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   
+  // États locaux pour gérer les modals et actions
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showConfirmStatusChange, setShowConfirmStatusChange] = useState(false);
+  const [contractToAction, setContractToAction] = useState<CreditContract | null>(null);
+  const [newStatusToApply, setNewStatusToApply] = useState<'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation' | null>(null);
+  
   const {
-    showConfirmDelete,
-    showConfirmStatusChange,
-    contractToAction,
-    newStatusToApply,
-    handleStatusChange,
-    confirmStatusChange,
-    handleDeleteContract,
     handleGeneratePDF,
     handleViewSchedule,
-    openDeleteConfirm,
-    setShowConfirmDelete,
-    setContractToAction,
-    setShowConfirmStatusChange,
-    setNewStatusToApply,
+    handleUpdateContract,
+    handleDeleteContract
   } = useContractActions(portfolioId);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number} | null>(null);
   
   const portalRoot = typeof document !== 'undefined' ? document.body : null;
+  
+  // Fonction pour gérer le changement de statut
+  const handleStatusChange = useCallback((contract: CreditContract, newStatus: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation') => {
+    setContractToAction(contract);
+    setNewStatusToApply(newStatus);
+    setShowConfirmStatusChange(true);
+    setOpenDropdown(null);
+  }, []);
+  
+  // Fonction pour confirmer le changement de statut
+  const confirmStatusChange = useCallback(() => {
+    if (!contractToAction || !newStatusToApply) return;
+    
+    handleUpdateContract(contractToAction.id, { status: newStatusToApply })
+      .then(() => {
+        showNotification(`Statut du contrat ${contractToAction.reference} changé en "${newStatusToApply}"`, 'success');
+      })
+      .catch(() => {
+        showNotification(`Erreur lors du changement de statut du contrat ${contractToAction.reference}`, 'error');
+      })
+      .finally(() => {
+        setContractToAction(null);
+        setNewStatusToApply(null);
+        setShowConfirmStatusChange(false);
+      });
+  }, [contractToAction, newStatusToApply, handleUpdateContract, showNotification]);
+  
+  // Fonction pour ouvrir la confirmation de suppression
+  const openDeleteConfirm = useCallback((contract: CreditContract) => {
+    setContractToAction(contract);
+    setShowConfirmDelete(true);
+  }, []);
+  
+  // Fonction pour exécuter la suppression
+  const executeDeleteContract = useCallback(() => {
+    if (!contractToAction) return;
+    
+    handleDeleteContract(contractToAction.id)
+      .then((success) => {
+        if (success) {
+          showNotification(`Contrat ${contractToAction.reference} supprimé avec succès`, 'success');
+        } else {
+          showNotification(`Erreur lors de la suppression du contrat ${contractToAction.reference}`, 'error');
+        }
+      })
+      .catch(() => {
+        showNotification(`Erreur lors de la suppression du contrat ${contractToAction.reference}`, 'error');
+      })
+      .finally(() => {
+        setContractToAction(null);
+        setShowConfirmDelete(false);
+      });
+  }, [contractToAction, handleDeleteContract, showNotification]);
   
   useEffect(() => {
     const handleClickOutside = () => {
@@ -142,7 +199,21 @@ export function CreditContractsList({ portfolioId = 'default' }: { portfolioId?:
                         onClick={(e) => handleRowClick(e, contract)}
                       >
                         <TableCell className="font-mono">{contract.reference}</TableCell>
-                        <TableCell>{contract.memberName}</TableCell>
+                        <TableCell>
+                          {onViewCompany ? (
+                            <div 
+                              className="cursor-pointer hover:text-blue-600 hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onViewCompany(contract.memberName);
+                              }}
+                            >
+                              {contract.memberName}
+                            </div>
+                          ) : (
+                            contract.memberName
+                          )}
+                        </TableCell>
                         <TableCell>{formatAmount(contract.amount)}</TableCell>
                         <TableCell>
                           <Badge 
@@ -224,7 +295,7 @@ export function CreditContractsList({ portfolioId = 'default' }: { portfolioId?:
         description={`Êtes-vous sûr de vouloir supprimer le contrat ${contractToAction?.reference} ? Cette action est irréversible.`}
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
-        onConfirm={handleDeleteContract}
+        onConfirm={executeDeleteContract}
         onClose={() => {
           setContractToAction(null);
           setShowConfirmDelete(false);

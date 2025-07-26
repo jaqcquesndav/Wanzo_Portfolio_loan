@@ -6,10 +6,11 @@ import { Badge } from '../../../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/Tabs';
 import { ContractDocumentsManager } from './ContractDocumentsManager';
 import { EditableAmortizationSchedule } from './EditableAmortizationSchedule';
-import { ContractActions } from './ContractActions';
+import { ContractActionsPanel } from './ContractActionsPanel';
 import { ContractDetails } from './ContractDetails';
 import { useNotification } from '../../../../contexts/NotificationContext';
-import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
+import { ConfigureContractForm } from './ConfigureContractForm';
+import { EditContractForm } from './EditContractForm';
 
 // Fonction utilitaire pour le formatage des montants
 // const formatAmount = (amount: number) => {
@@ -37,82 +38,8 @@ interface ContractDetailsResponsiveProps {
 export function ContractDetailsResponsive({ contract, onUpdateContract }: ContractDetailsResponsiveProps) {
   const [activeTab, setActiveTab] = useState('general');
   const { showNotification } = useNotification();
-  const { formatAmount } = useCurrencyContext();
-  
-  // Gestionnaire pour changer le statut du contrat
-  const handleStatusChange = async (newStatus: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation', reason: string) => {
-    // Nous ignorons le paramètre reason dans cette implémentation
-    void reason;
-    
-    try {
-      await onUpdateContract({
-        ...contract,
-        status: newStatus,
-        lastUpdated: new Date().toISOString()
-      });
-      
-      showNotification(
-        `Le statut du contrat a été changé en ${statusConfig[newStatus]?.label || newStatus}`,
-        'success'
-      );
-    } catch (error) {
-      console.error('Erreur lors du changement de statut:', error);
-      showNotification(
-        'Erreur lors du changement de statut',
-        'error'
-      );
-      throw error;
-    }
-  };
-  
-  // Gestionnaire pour enregistrer un remboursement
-  const handleRepayment = async (amount: number, date: string, description: string) => {
-    // Nous ignorons le paramètre description dans cette implémentation
-    void description;
-    
-    try {
-      // Simuler l'enregistrement d'un remboursement
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mise à jour du contrat (dans une application réelle, ce serait plus complexe)
-      const remainingAmount = Math.max(0, contract.remainingAmount - amount);
-      
-      await onUpdateContract({
-        ...contract,
-        remainingAmount,
-        lastPaymentDate: date,
-        lastUpdated: new Date().toISOString()
-      });
-      
-      showNotification(
-        `Remboursement de ${formatAmount(amount)} enregistré avec succès`,
-        'success'
-      );
-    } catch (error) {
-      console.error('Erreur lors de l\'enregistrement du remboursement:', error);
-      showNotification(
-        'Erreur lors de l\'enregistrement du remboursement',
-        'error'
-      );
-      throw error;
-    }
-  };
-  
-  // Gestionnaire pour exporter en PDF
-  const handleExportPdf = () => {
-    showNotification(
-      'Export PDF en cours...',
-      'info'
-    );
-    
-    // Simuler un export
-    setTimeout(() => {
-      showNotification(
-        'Le contrat a été exporté en PDF avec succès',
-        'success'
-      );
-    }, 1500);
-  };
+  const [isConfigureModalOpen, setIsConfigureModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   return (
     <div className="contract-details-responsive space-y-6">
@@ -138,12 +65,12 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
           </p>
         </div>
         
-        <ContractActions 
-          contractId={contract.id}
-          status={contract.status}
-          onStatusChange={handleStatusChange}
-          onRepayment={handleRepayment}
-          onExportPdf={handleExportPdf}
+        {/* Panneau d'actions du contrat */}
+        <ContractActionsPanel 
+          contract={contract}
+          onConfigure={() => setIsConfigureModalOpen(true)}
+          onRefresh={() => {}}
+          onEdit={() => setIsEditModalOpen(true)}
         />
       </div>
       
@@ -187,6 +114,26 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Formulaire de configuration du contrat */}
+      {contract && (
+        <ConfigureContractForm 
+          isOpen={isConfigureModalOpen}
+          onClose={() => setIsConfigureModalOpen(false)}
+          onUpdate={onUpdateContract}
+          contract={contract}
+        />
+      )}
+      
+      {/* Formulaire d'édition des paramètres du contrat */}
+      {contract && (
+        <EditContractForm 
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={onUpdateContract}
+          contract={contract}
+        />
+      )}
     </div>
   );
 }
