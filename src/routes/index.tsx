@@ -82,7 +82,7 @@ export const router = createBrowserRouter([
       { path: '', element: <Dashboard /> },
       // Traditional
       // Gérer le cas où "traditional" est répété dans l'URL (doit être avant les autres routes)
-      { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
+      { path: 'traditional/traditional/:id', element: <TraditionalPortfolioView /> },
       { path: 'traditional', element: <TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Route spécifique pour le cas particulier de trad-1/guarantees/G001

@@ -1,15 +1,16 @@
-// src/components/risk/InvestmentRiskTable.tsx
+// src/components/risk/InvestmentRiskTable.tsx.new
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { InvestmentRiskEntry } from '../../data/mockCentraleRisque';
-import { useFormatCurrency } from '../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 
 interface InvestmentRiskTableProps {
   data: InvestmentRiskEntry[];
 }
 
 export function InvestmentRiskTable({ data }: InvestmentRiskTableProps) {
-  const { formatCurrency } = useFormatCurrency();
+  // Use the useCurrencyContext hook directly to access the currency context
+  const { formatAmount } = useCurrencyContext();
   
   const columns: Column<InvestmentRiskEntry>[] = [
     {
@@ -30,11 +31,11 @@ export function InvestmentRiskTable({ data }: InvestmentRiskTableProps) {
     },
     {
       header: 'Montant investi',
-      accessor: (item) => formatCurrency(item.montantInvesti, undefined, 'USD')
+      accessor: (item) => formatAmount(item.montantInvesti)
     },
     {
       header: 'Valorisation',
-      accessor: (item) => formatCurrency(item.valorisation, undefined, 'USD')
+      accessor: (item) => formatAmount(item.valorisation)
     },
     {
       header: 'Statut',

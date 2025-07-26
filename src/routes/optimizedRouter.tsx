@@ -61,7 +61,7 @@ export function createOptimizedRouter() {
       children: [
         { path: '', element: <components.Dashboard /> },
         // Traditional Portfolio
-        { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
+        { path: 'traditional/traditional/:id', element: <components.TraditionalPortfolioView /> },
         { path: 'traditional', element: <components.TraditionalPortfolio /> },
         { path: 'traditional/:id', element: <components.TraditionalPortfolioDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         { path: 'traditional/trad-1/guarantees/G001', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },

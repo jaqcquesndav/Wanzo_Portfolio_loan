@@ -10,6 +10,7 @@ import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import { exportToExcel, exportToPDF } from '../../../utils/exports';
 import { Guarantee } from '../../../types/guarantee';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 interface GuaranteesTableProps {
   guarantees: Guarantee[];
@@ -61,6 +62,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const { formatAmount } = useCurrencyContext();
   const pageSize = 10;
 
   /* 
@@ -168,7 +170,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
       'Entreprise': g.company,
       'Type de garantie': guaranteeTypeConfig[g.type]?.label || g.type,
       'Sous-type': g.subType || 'N/A',
-      'Valeur': g.value.toLocaleString() + ' FCFA',
+      'Valeur': formatAmount(g.value),
       'Statut': statusConfig[g.status]?.label || g.status,
       'Date de création': new Date(g.created_at).toLocaleDateString(),
       'Date d\'expiration': g.expiry_date ? new Date(g.expiry_date).toLocaleDateString() : 'N/A',
@@ -189,7 +191,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
         g.id,
         g.company,
         guaranteeTypeConfig[g.type]?.label || g.type,
-        g.value.toLocaleString() + ' FCFA',
+        formatAmount(g.value),
         statusConfig[g.status]?.label || g.status,
         new Date(g.created_at).toLocaleDateString(),
       ]),
@@ -425,7 +427,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
                         <div className="text-xs text-gray-500 mt-1">{g.subType}</div>
                       )}
                     </TableCell>
-                    <TableCell>{g.value.toLocaleString()} FCFA</TableCell>
+                    <TableCell>{formatAmount(g.value)}</TableCell>
                     <TableCell>
                       <Badge variant={statusConfig[g.status].variant as "warning" | "success" | "error" | "secondary" | "primary" | "danger"}>
                         {statusConfig[g.status].label}

@@ -3,7 +3,6 @@ import { EnhancedDashboard } from '../components/dashboard/EnhancedDashboard';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
-import { isValidPortfolioType, getDefaultPortfolioType } from '../config/portfolioTypes';
 
 export default function Dashboard() {
   const { portfolioType } = useParams<{ portfolioType: 'traditional' | 'investment' | 'leasing' }>();
@@ -13,17 +12,16 @@ export default function Dashboard() {
 
   // S'assurer que le type de portefeuille dans l'URL est valide et synchronisé avec le contexte
   useEffect(() => {
-    if (!isValidPortfolioType(portfolioType)) {
-      // Rediriger vers un type valide si le type dans l'URL n'est pas valide
-      const defaultType = getDefaultPortfolioType(portfolioType);
-      console.warn(`Type de portefeuille invalide dans l'URL: ${portfolioType}, redirection vers: ${defaultType}`);
-      navigate(`/app/${defaultType}/dashboard`);
+    // Forcer le type 'traditional' car c'est le seul type valide maintenant
+    if (portfolioType !== 'traditional') {
+      console.warn(`Redirection vers traditional`);
+      navigate(`/app/traditional`);
       return;
     }
     
     // Synchroniser le contexte avec le type d'URL
-    setPortfolioType(portfolioType as 'traditional' | 'investment' | 'leasing');
-    console.log(`Dashboard synchronisé pour le type: ${portfolioType}`);
+    setPortfolioType('traditional');
+    console.log(`Dashboard synchronisé pour le type: traditional`);
   }, [portfolioType, setPortfolioType, navigate]);
 
   if (loading) {

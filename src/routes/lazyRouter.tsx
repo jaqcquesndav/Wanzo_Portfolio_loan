@@ -83,7 +83,7 @@ export const lazyRouter = createBrowserRouter([
       { path: '', element: <Dashboard /> },
       // Traditional
       // Gérer le cas où "traditional" est répété dans l'URL (doit être avant les autres routes)
-      { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
+      { path: 'traditional/traditional/:id', element: <LazySuspendedComponents.TraditionalPortfolioView /> },
       { path: 'traditional', element: <LazySuspendedComponents.TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <LazySuspendedComponents.TraditionalPortfolioDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
       { path: 'traditional/trad-1/guarantees/G001', element: <LazySuspendedComponents.GuaranteeDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
@@ -102,6 +102,11 @@ export const lazyRouter = createBrowserRouter([
       { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <LazySuspendedComponents.RepaymentDetails /> },
       { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <LazySuspendedComponents.GuaranteeDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
       { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: <LazySuspendedComponents.GuaranteeDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
+      
+      // Note: Les routes d'investment et leasing sont commentées car les composants ne sont pas disponibles
+      // Décommenter après avoir créé les composants correspondants
+      
+      /*
       // Investment
       { path: 'investment', element: <LazySuspendedComponents.InvestmentPortfolio /> },
       { path: 'investment/:id', element: <LazySuspendedComponents.InvestmentPortfolioDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
@@ -109,6 +114,7 @@ export const lazyRouter = createBrowserRouter([
       { path: 'subscriptions/:subscriptionId', element: <LazySuspendedComponents.InvestmentSubscriptionDetail /> },
       { path: 'valuations/:valuationId', element: <LazySuspendedComponents.InvestmentValuationDetail /> },
       { path: 'reporting/:reportId', element: <LazySuspendedComponents.InvestmentReportingDetail /> },
+      
       // Leasing
       { path: 'leasing', element: <LazySuspendedComponents.LeasingPortfolio /> },
       { path: 'leasing/:id', element: <LazySuspendedComponents.LeasingPortfolioDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
@@ -118,10 +124,16 @@ export const lazyRouter = createBrowserRouter([
       { path: 'maintenance/:maintenanceId', element: <LazySuspendedComponents.LeasingMaintenanceDetail />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
       { path: 'payments/:paymentId', element: <LazySuspendedComponents.LeasingPaymentDetail />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
       { path: 'reporting/:reportId', element: <LazySuspendedComponents.LeasingReportingDetail />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
+      */
+      
+      /*
+      // Pages supplémentaires de leasing qui n'existent pas encore
       { path: 'reservations', element: <LazySuspendedComponents.LeasingReservationsPage /> },
       { path: 'maintenance', element: <LazySuspendedComponents.LeasingMaintenancePage /> },
       { path: 'incidents', element: <LazySuspendedComponents.LeasingIncidentsPage /> },
       { path: 'movements', element: <LazySuspendedComponents.LeasingMovementsPage /> },
+      */
+      
       // Settings
       { path: 'settings', element: <LazySuspendedComponents.Settings /> },
       // Administration
@@ -137,9 +149,10 @@ export const lazyRouter = createBrowserRouter([
       { path: 'help', element: <LazySuspendedComponents.Help /> },
       // 404 Not Found pour les détails de portefeuille
       // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
-      { path: 'traditional/*', element: <LazySuspendedComponents.PortfolioNotFound /> },
-      { path: 'investment/*', element: <LazySuspendedComponents.PortfolioNotFound /> },
-      { path: 'leasing/*', element: <LazySuspendedComponents.PortfolioNotFound /> }
+      { path: 'traditional/*', element: <LazySuspendedComponents.PortfolioNotFound /> }
+      // Note: Les routes de fallback pour investment et leasing sont commentées
+      // { path: 'investment/*', element: <LazySuspendedComponents.PortfolioNotFound /> },
+      // { path: 'leasing/*', element: <LazySuspendedComponents.PortfolioNotFound /> }
     ]
   }
 ]);

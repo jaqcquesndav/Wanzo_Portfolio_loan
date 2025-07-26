@@ -9,6 +9,7 @@ import { usePaymentOrder } from '../../../hooks/usePaymentOrderContext';
 import { PaymentOrderData } from '../../payment/PaymentOrderModal';
 import { PortfolioType } from '../../../contexts/portfolioTypes';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 export interface Disbursement {
   id: string;
@@ -98,6 +99,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
 }) => {
   // Utiliser le contexte d'ordre de paiement
   const { showPaymentOrderModal } = usePaymentOrder();
+  const { formatAmount } = useCurrencyContext();
   
   // État pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
@@ -235,26 +237,25 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     // Créer les données initiales de l'ordre de paiement
     // L'utilisateur pourra compléter les détails dans le modal
     const paymentOrderData: PaymentOrderData = {
+      id: `payment-${Date.now()}`,
       orderNumber: `OP${Date.now().toString().slice(-8)}`,
-      portfolioManager: {
-        name: portfolioInfo.managerName,
-        accountNumber: portfolioInfo.accountNumber,
-        portfolioType: portfolioInfo.portfolioType,
-        bankName: portfolioInfo.bankName
-      },
+      date: new Date().toISOString(),
+      amount: disbursement.amount,
+      currency: 'FCFA',
       beneficiary: {
-        companyName: disbursement.company,
-        // Correction des propriétés de beneficiary
-        bank: disbursement.beneficiary?.bankName || '',
-        branch: disbursement.beneficiary?.branchCode || '',
+        name: disbursement.beneficiary?.accountName || disbursement.company,
         accountNumber: disbursement.beneficiary?.accountNumber || '',
+        bankName: disbursement.beneficiary?.bankName || '',
         swiftCode: disbursement.beneficiary?.swiftCode
       },
-      amount: disbursement.amount,
       reference: disbursement.id,
-      paymentReason: `${operationType} - ${disbursement.product}`,
-      createdAt: new Date(),
-      status: 'pending'
+      description: `${operationType} - ${disbursement.product}`,
+      portfolioId: disbursement.portfolioId,
+      portfolioName: portfolioInfo.portfolioType,
+      status: 'pending',
+      createdBy: 'current_user',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     // Afficher le modal d'ordre de paiement pour que l'utilisateur puisse compléter les détails
@@ -385,7 +386,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
                     <div onClick={() => onView(d.id)}>{d.product}</div>
                   </TableCell>
                   <TableCell>
-                    <div onClick={() => onView(d.id)}>{d.amount.toLocaleString()} FCFA</div>
+                    <div onClick={() => onView(d.id)}>{formatAmount(d.amount)}</div>
                   </TableCell>
                   <TableCell>
                     <div onClick={() => onView(d.id)}>

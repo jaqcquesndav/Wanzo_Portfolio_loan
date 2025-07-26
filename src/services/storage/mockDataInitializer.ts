@@ -7,8 +7,6 @@
  */
 
 import { mockTraditionalPortfolios } from '../../data/mockTraditionalPortfolios';
-import { mockInvestmentPortfolios } from '../../data/mockInvestmentPortfolios';
-import { mockLeasingPortfolios } from '../../data/mockLeasingPortfolios';
 import { mockAmortizationSchedules, saveAmortizationSchedulesToLocalStorage } from '../../data/mockAmortizationSchedules';
 import type { PortfolioWithType } from '../../types/portfolioWithType';
 import { guaranteeStorageService } from './guaranteeStorageUnified';
@@ -111,25 +109,15 @@ class MockDataInitializerService {
     if (!Array.isArray(mockTraditionalPortfolios)) {
       throw new Error("Les données mockTraditionalPortfolios ne sont pas un tableau");
     }
-    if (!Array.isArray(mockInvestmentPortfolios)) {
-      throw new Error("Les données mockInvestmentPortfolios ne sont pas un tableau");
-    }
-    if (!Array.isArray(mockLeasingPortfolios)) {
-      throw new Error("Les données mockLeasingPortfolios ne sont pas un tableau");
-    }
     
-    // Combiner toutes les données mockées
+    // Utiliser uniquement les portefeuilles traditionnels
     const allPortfolios: PortfolioWithType[] = [
-      ...mockTraditionalPortfolios,
-      ...mockInvestmentPortfolios,
-      ...mockLeasingPortfolios
+      ...mockTraditionalPortfolios
     ];
     
     // Log pour debug
     console.info(`Initialisation des données mock: ${allPortfolios.length} portefeuilles au total`);
     console.info(`- ${mockTraditionalPortfolios.length} portefeuilles traditionnels`);
-    console.info(`- ${mockInvestmentPortfolios.length} portefeuilles d'investissement`);
-    console.info(`- ${mockLeasingPortfolios.length} portefeuilles de leasing`);
     
     // Sauvegarder dans localStorage
     localStorage.setItem(this.PORTFOLIOS_KEY, JSON.stringify(allPortfolios));

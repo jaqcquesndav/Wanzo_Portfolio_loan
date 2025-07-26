@@ -24,6 +24,45 @@ export function useInitMockData() {
 
   // Initialisation au chargement du composant
   useEffect(() => {
+    // Forcer le nettoyage du localStorage pour supprimer les données obsolètes
+    localStorage.removeItem('portfolios');
+    localStorage.removeItem('mockDataVersion');
+    localStorage.removeItem('app_initialized');
+    sessionStorage.removeItem('app_initialized');
+    
+    // Créer directement un portefeuille traditionnel par défaut
+    const defaultPortfolio = {
+      id: 'trad-default',
+      name: 'Portefeuille PME par défaut',
+      type: 'traditional',
+      status: 'active',
+      target_amount: 500000000,
+      target_return: 12,
+      target_sectors: ['Commerce', 'Services', 'Agriculture'],
+      risk_profile: 'moderate',
+      products: [],
+      metrics: {
+        net_value: 450000000,
+        average_return: 10.5,
+        risk_portfolio: 8,
+        sharpe_ratio: 1.8,
+        volatility: 12,
+        alpha: 2.5,
+        beta: 0.85,
+        asset_allocation: [
+          { type: 'Crédit PME', percentage: 45 },
+          { type: 'Microfinance', percentage: 30 },
+          { type: 'Trésorerie', percentage: 25 }
+        ]
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      description: 'Portefeuille PME créé automatiquement',
+      manager_id: 'default-manager',
+      institution_id: 'default-institution'
+    };
+    localStorage.setItem('portfolios', JSON.stringify([defaultPortfolio]));
+    
     // Vérifier si on a déjà initialisé dans cette session
     const sessionInitialized = sessionStorage.getItem('app_initialized');
     if (sessionInitialized === 'true') {
@@ -119,7 +158,7 @@ export function useInitMockData() {
   const checkMockDataVersion = useCallback(() => {
     const currentVersion = localStorage.getItem('mockDataVersion');
     // Définir une version basée sur la date pour forcer le rechargement après les mises à jour
-    const requiredVersion = '2025-07-13';
+    const requiredVersion = '2025-07-26'; // Version mise à jour
     
     if (currentVersion !== requiredVersion) {
       console.log(`Mise à jour des données mock: version ${currentVersion || 'inconnue'} -> ${requiredVersion}`);

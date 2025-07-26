@@ -21,9 +21,12 @@ interface Filters {
  * @property {Filters} filters - Filtres actuellement appliqués
  * @property {Function} setFilters - Fonction pour mettre à jour les filtres
  * @property {Function} createPortfolio - Fonction pour créer un nouveau portefeuille
+ * @property {boolean} loading - Indique si les données sont en cours de chargement
+ * @property {Error|null} error - Erreur survenue lors du chargement des données
+ * @property {boolean} backendFailed - Indique si la connexion au backend a échoué
  */
 export function useTraditionalPortfolios() {
-  const { portfolios: allPortfolios, loading, refresh } = usePortfolios('traditional');
+  const { portfolios: allPortfolios, loading, error, backendFailed, refresh } = usePortfolios('traditional');
   const portfolios = allPortfolios.filter((p): p is TraditionalPortfolio => p.type === 'traditional');
   const [filters, setFilters] = useState<Filters>({
     status: '',
@@ -95,6 +98,8 @@ export function useTraditionalPortfolios() {
   return {
     portfolios,
     loading,
+    error,
+    backendFailed,
     filters,
     setFilters,
     filteredPortfolios,

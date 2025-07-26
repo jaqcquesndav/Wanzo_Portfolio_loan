@@ -7,6 +7,7 @@ export * from './payment.api';
 export * from './portfolio.api';
 export * from './risk.api';
 export * from './user.api';
+export * from './users.api';
 
 /**
  * Services API partagés
@@ -19,5 +20,6 @@ export * from './user.api';
  * - paymentApi: Gestion des paiements
  * - portfolioApi: Fonctionnalités communes aux portefeuilles
  * - riskApi: Gestion des risques
- * - userApi: Gestion des utilisateurs
+ * - userApi: Gestion des utilisateurs (profils, rôles, etc.)
+ * - usersApi: Gestion de la sécurité des utilisateurs (mot de passe, 2FA, etc.)
  */

@@ -13,7 +13,6 @@ import { Toaster } from 'react-hot-toast';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { AppLoading } from './components/ui/AppLoading';
 import { auth0Service } from './services/api/auth/auth0Service';
-import { useInitData } from './services/api/leasing';
 import { ConnectivityProvider } from './contexts/ConnectivityContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/api/reactQueryConfig';
@@ -24,9 +23,6 @@ import './services/api/tokenInterceptor';
 export default function App() {
   // Utilisation du hook pour initialiser les données mock
   const { loading, error, resetMockData, validationIssues } = useInitMockData();
-  
-  // Initialiser les données de leasing
-  useInitData();
 
   // Nettoyer le stockage au démarrage pour éviter les problèmes de quota
   React.useEffect(() => {

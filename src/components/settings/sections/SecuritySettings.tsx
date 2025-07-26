@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,7 +6,7 @@ import { FormField, Input } from '../../ui/Form';
 import { Button } from '../../ui/Button';
 import { Switch } from '../../ui/Switch';
 import { useNotification } from '../../../contexts/NotificationContext';
-import { usersApi } from '../../../services/api/users.api';
+import { usersApi } from '../../../services/api/shared/users.api';
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
@@ -43,7 +43,8 @@ export function SecuritySettings() {
       await usersApi.changePassword(data.currentPassword, data.newPassword);
       showNotification('Mot de passe mis à jour avec succès', 'success');
       reset();
-    } catch (error) {
+    } catch (err) {
+      console.error('Password change error:', err);
       showNotification('Erreur lors de la mise à jour du mot de passe', 'error');
     }
   };
@@ -59,7 +60,8 @@ export function SecuritySettings() {
         setTwoFactorEnabled(false);
         showNotification('Authentification à deux facteurs désactivée', 'success');
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Two factor toggle error:', err);
       showNotification('Erreur lors de la modification des paramètres', 'error');
     }
   };
@@ -71,7 +73,8 @@ export function SecuritySettings() {
       setTwoFactorEnabled(true);
       setIsVerifying(false);
       showNotification('Authentification à deux facteurs activée', 'success');
-    } catch (error) {
+    } catch (err) {
+      console.error('Verification code error:', err);
       showNotification('Code invalide', 'error');
     }
   };

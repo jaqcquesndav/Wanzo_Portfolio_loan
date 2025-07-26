@@ -80,10 +80,9 @@ export default function AuthCallback() {
           // Nettoyer les données d'authentification temporaires
           auth0Service.clearAuthTemp();
           
-          // Redirect to app
-          const portfolioType = localStorage.getItem('portfolioType') || 'leasing';
-          console.log(`Redirection vers /app/${portfolioType}...`);
-          navigate(`/app/${portfolioType}`);
+          // Redirect to app - only use traditional type
+          console.log(`Redirection vers /app/traditional...`);
+          navigate(`/app/traditional`);
         } else {
           console.error('Erreur lors de la récupération du token:', data);
           setErrorMessage('Erreur lors de la récupération du token.');

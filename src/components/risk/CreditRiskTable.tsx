@@ -1,8 +1,8 @@
-// src/components/risk/CreditRiskTable.tsx
+// src/components/risk/CreditRiskTable.tsx.new
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { CreditRiskEntry } from '../../data/mockCentraleRisque';
-import { useFormatCurrency } from '../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 import { convertScoreToRating, getCreditRatingClass } from '../../utils/creditScoreConverter';
 
 interface CreditRiskTableProps {
@@ -10,7 +10,8 @@ interface CreditRiskTableProps {
 }
 
 export function CreditRiskTable({ data }: CreditRiskTableProps) {
-  const { formatCurrency } = useFormatCurrency();
+  // Use the useCurrencyContext hook directly to access the currency context
+  const { formatAmount } = useCurrencyContext();
   
   const columns: Column<CreditRiskEntry>[] = [
     {
@@ -27,7 +28,7 @@ export function CreditRiskTable({ data }: CreditRiskTableProps) {
     },
     {
       header: 'Encours',
-      accessor: (item) => formatCurrency(item.encours, undefined, 'USD')
+      accessor: (item) => formatAmount(item.encours)
     },
     {
       header: 'Statut',

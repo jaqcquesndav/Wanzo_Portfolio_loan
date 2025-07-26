@@ -21,7 +21,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     isRecording,
     isApiMode,
     setRecording,
-    setApiMode,
+    // setApiMode, // Commenté car non utilisé, était inclus dans la demande de suppression
     addMessage,
     updateMessage,
     toggleLike,
@@ -272,89 +272,71 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                   </div>
                 </div>
                 
-                {/* Option pour activer/désactiver l'API */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Connexion API:</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">Mock</span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer"
-                        checked={isApiMode}
-                        onChange={() => setApiMode(!isApiMode)}
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-                    </label>
-                    <span className="text-xs text-gray-500">API</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Input */}
-              <div className="p-4 border-t">
-                <div className="flex flex-col space-y-2">
-                  <textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Écrivez votre message..."
-                    className="w-full pl-4 pr-4 py-2 border rounded-lg focus:ring-1 focus:ring-primary resize-none"
-                    rows={2}
-                  />
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
+                {/* Input */}
+                <div className="p-4 border-t">
+                  <div className="flex flex-col space-y-2">
+                    <textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Écrivez votre message..."
+                      className="w-full pl-4 pr-4 py-2 border rounded-lg focus:ring-1 focus:ring-primary resize-none"
+                      rows={2}
+                    />
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                        />
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                          title="Joindre un fichier"
+                        >
+                          <Paperclip className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                          title="Ajouter un emoji"
+                        >
+                          <Smile className="h-5 w-5" />
+                        </button>
+                        <button
+                          onMouseDown={() => setRecording(true)}
+                          onMouseUp={() => setRecording(false)}
+                          className={`p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white ${isRecording ? '!bg-red-100 !text-red-500 dark:!bg-red-900 dark:!text-red-400' : ''}`}
+                          title="Enregistrer un message vocal"
+                        >
+                          <Mic className="h-5 w-5" />
+                        </button>
+                      </div>
                       <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
-                        title="Joindre un fichier"
+                        onClick={handleSend}
+                        disabled={!newMessage.trim()}
+                        className="px-4 py-1.5 rounded-full bg-[#197ca8] hover:bg-[#1e90c3] text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                        title="Envoyer le message"
                       >
-                        <Paperclip className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
-                        title="Ajouter un emoji"
-                      >
-                        <Smile className="h-5 w-5" />
-                      </button>
-                      <button
-                        onMouseDown={() => setRecording(true)}
-                        onMouseUp={() => setRecording(false)}
-                        className={`p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white ${isRecording ? '!bg-red-100 !text-red-500 dark:!bg-red-900 dark:!text-red-400' : ''}`}
-                        title="Enregistrer un message vocal"
-                      >
-                        <Mic className="h-5 w-5" />
+                        <span>Envoyer</span>
+                        <Send className="h-4 w-4" />
                       </button>
                     </div>
-                    <button
-                      onClick={handleSend}
-                      disabled={!newMessage.trim()}
-                      className="px-4 py-1.5 rounded-full bg-[#197ca8] hover:bg-[#1e90c3] text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-                      title="Envoyer le message"
-                    >
-                      <span>Envoyer</span>
-                      <Send className="h-4 w-4" />
-                    </button>
                   </div>
+                  
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-24 right-4 z-10 shadow-lg rounded-lg">
+                      <EmojiPicker
+                        onSelect={(emoji) => {
+                          setNewMessage(prev => prev + emoji);
+                          setShowEmojiPicker(false);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                {showEmojiPicker && (
-                  <div className="absolute bottom-24 right-4 z-10 shadow-lg rounded-lg">
-                    <EmojiPicker
-                      onSelect={(emoji) => {
-                        setNewMessage(prev => prev + emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -364,7 +346,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
       <SourceSelector
         isOpen={showSourceSelector}
         onClose={() => setShowSourceSelector(false)}
-        currentPortfolioType={currentPortfolioType}
+        currentPortfolioType={currentPortfolioType as 'traditional'}
         selectedTask={selectedTask}
         selectedPortfolioId={currentPortfolioId}
         onSelect={(task, portfolioType, portfolioId) => {

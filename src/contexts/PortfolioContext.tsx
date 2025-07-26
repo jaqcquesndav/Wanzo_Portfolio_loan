@@ -14,12 +14,14 @@ interface PortfolioContextProps {
 export const PortfolioContext = createContext<PortfolioContextProps | undefined>(undefined);
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [portfolioType, setPortfolioTypeState] = useState<PortfolioType>(null);
+  const [portfolioType, setPortfolioTypeState] = useState<PortfolioType>('traditional');
   const [currentPortfolioId, setCurrentPortfolioIdState] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedType = storageManager.getItem('portfolioType');
-    if (storedType) setPortfolioTypeState(storedType as PortfolioType);
+    // Toujours mettre à jour le localStorage pour qu'il contienne 'traditional'
+    storageManager.setItem('portfolioType', 'traditional');
+    
+    // On lit quand même le portfolioId stocké
     const storedId = storageManager.getItem('currentPortfolioId');
     if (storedId) setCurrentPortfolioIdState(storedId);
   }, []);

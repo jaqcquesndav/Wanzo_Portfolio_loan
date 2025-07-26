@@ -1,7 +1,8 @@
+// src/components/prospection/CompanyListPaginated.tsx.new
 import { useState, useMemo, ReactNode } from 'react';
 import { Button } from '../ui/Button';
 import { Eye, TrendingUp, TrendingDown } from 'lucide-react';
-import { useFormatCurrency } from '../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 import type { Company } from '../../types/company';
 import { Select } from '../ui/form/Select';
 import { PaginatedTable } from '../ui/PaginatedTable';
@@ -19,7 +20,8 @@ export function CompanyListPaginated({
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [sizeFilter, setSizeFilter] = useState<string>('all');
   
-  const { formatCurrency, currentCurrency } = useFormatCurrency();
+  // Replace useFormatCurrency with useCurrencyContext
+  const { formatAmount } = useCurrencyContext();
   
   // Fonctions de tendance (simulées)
   const getTrendIcon = (trend: number) => {
@@ -122,7 +124,7 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {formatCurrency(c.annual_revenue, undefined, 'USD')}
+            {formatAmount(c.annual_revenue)}
             {getTrendIcon(trend)}
           </span>
         );
@@ -138,7 +140,7 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {c.financial_metrics.ebitda ? formatCurrency(c.financial_metrics.ebitda, undefined, 'USD') : '-'}
+            {c.financial_metrics.ebitda ? formatAmount(c.financial_metrics.ebitda) : '-'}
             {getTrendIcon(trend)}
           </span>
         );
@@ -211,7 +213,7 @@ export function CompanyListPaginated({
                 </div>
                 <div>
                   <span className="text-xs block text-gray-200">Taille du marché</span>
-                  <span className="font-semibold">{formatCurrency(marketSummary.marketSize, undefined, 'USD')}</span>
+                  <span className="font-semibold">{formatAmount(marketSummary.marketSize)}</span>
                 </div>
                 <div>
                   <span className="text-xs block text-gray-200">Employés</span>

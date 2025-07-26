@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import { SettingsTabs } from '../components/settings/SettingsTabs';
 
@@ -15,7 +15,9 @@ export default function Settings() {
       </div>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-        <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <Suspense fallback={<div>Chargement des paramètres...</div>}>
+          <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        </Suspense>
       </div>
     </div>
   );

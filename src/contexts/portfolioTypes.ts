@@ -1,2 +1,2 @@
 // src/contexts/portfolioTypes.ts
-export type PortfolioType = 'traditional' | null;
+export type PortfolioType = 'traditional' | 'investment' | 'leasing' | null;

@@ -1,5 +1,6 @@
 import { NavLink, useParams } from 'react-router-dom';
 import { X, BarChart2 } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
 import { SidebarPortfolios } from './SidebarPortfolios';
 import { Button } from '../ui/Button';
 import { navigation } from '../../config/navigation';
@@ -7,6 +8,8 @@ import { usePortfolioContext } from '../../contexts/usePortfolioContext';
 
 interface DynamicSidebarProps {
   onClose?: () => void;
+  onWidthChange?: (width: number) => void;
+  initialWidth?: number;
 }
 
 // TODO: Replace with real user/institution/permissions from Auth0 token or context
@@ -16,12 +19,89 @@ const demoUser = {
   email: 'demo@user.com',
 };
 
-export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
+export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: DynamicSidebarProps) {
   // Replace with real user/institution from Auth0 or context
   const user = demoUser;
   // const institution = demoInstitution; // Remove institution from sidebar
   const { portfolioType } = useParams();
   const { portfolioType: contextPortfolioType, currentPortfolioId } = usePortfolioContext();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const resizerRef = useRef<HTMLDivElement>(null);
+  
+  // État pour suivre si le sidebar est en mode compact (icônes seulement)
+  const [isCompact, setIsCompact] = useState(initialWidth ? initialWidth < 180 : false);
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    const resizer = resizerRef.current;
+    
+    if (!sidebar || !resizer) return;
+    
+    // Apply initial width if provided
+    if (initialWidth && initialWidth >= 72 && initialWidth <= 350) {
+      sidebar.style.width = `${initialWidth}px`;
+      
+      // Initialiser le mode compact si nécessaire
+      const isInitiallyCompact = initialWidth < 200;
+      setIsCompact(isInitiallyCompact);
+      sidebar.classList.toggle('compact-sidebar', isInitiallyCompact);
+    }
+    
+    let startX = 0;
+    let startWidth = 0;
+    
+    // Ensure cleanup happens if component unmounts during resize
+    const cleanupResizing = () => {
+      document.body.style.removeProperty('cursor');
+      document.body.classList.remove('resize-cursor');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    
+    const onMouseDown = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startX = e.clientX;
+      startWidth = parseInt(document.defaultView?.getComputedStyle(sidebar).width || '0', 10);
+      document.body.style.cursor = 'ew-resize';
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+    
+    const onMouseMove = (e: MouseEvent) => {
+      if (!sidebar) return;
+      
+      const width = startWidth + e.clientX - startX;
+      
+      // Limites de redimensionnement: minimum 64px (icônes), maximum 320px
+      if (width >= 72 && width <= 350) {
+        sidebar.style.width = `${width}px`;
+        
+        // Déterminer si nous sommes en mode compact (icônes seulement)
+        const newCompactState = width < 200;
+        if (newCompactState !== isCompact) {
+          setIsCompact(newCompactState);
+          sidebar.classList.toggle('compact-sidebar', newCompactState);
+        }
+        
+        // Notify parent component of width change
+        if (onWidthChange) {
+          onWidthChange(width);
+        }
+      }
+    };
+    
+    const onMouseUp = () => {
+      cleanupResizing();
+    };
+    
+    resizer.addEventListener('mousedown', onMouseDown);
+    
+    return () => {
+      resizer.removeEventListener('mousedown', onMouseDown);
+      cleanupResizing();
+    };
+  }, [initialWidth, onWidthChange, isCompact, setIsCompact]);
 
   if (!user) return null;
   // Prend le type de portefeuille de l'URL ou du contexte
@@ -32,12 +112,56 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
   const hasPermission = (..._args: unknown[]) => { return true; } // always allow for now
 
   return (
-    <div className="h-full flex flex-col bg-primary dark:bg-primary">
+    <div 
+      ref={sidebarRef}
+      className="h-full flex flex-col bg-primary dark:bg-primary overflow-hidden relative min-w-[72px] max-w-[350px] transition-all duration-200"
+    >
+      {/* Resizer handle */}
+      <div 
+        ref={resizerRef}
+        className="absolute top-0 right-0 h-full w-3 cursor-ew-resize z-50 hover:bg-primary-dark/30 transition-colors sidebar-resizer"
+        title="Redimensionner le panneau latéral"
+      >
+        {/* Visual indicator for the resizer */}
+        <div className="h-full w-[1px] bg-primary-dark/50 absolute left-1/2 transform -translate-x-1/2 resizer-indicator"></div>
+      </div>
+      
+      {/* Toggle button for compact mode - positioned at the bottom */}
+      <div 
+        className="absolute bottom-4 right-[-6px] z-50 bg-primary-dark hover:bg-primary rounded-full p-4 cursor-pointer shadow-lg border border-primary-dark/30 sidebar-toggle-btn"
+        onClick={() => {
+          const sidebar = sidebarRef.current;
+          if (!sidebar) return;
+          
+          const newWidth = isCompact ? 250 : 72;
+          const newCompactState = !isCompact;
+          
+          sidebar.style.width = `${newWidth}px`;
+          setIsCompact(newCompactState);
+          sidebar.classList.toggle('compact-sidebar', newCompactState);
+          
+          if (onWidthChange) {
+            onWidthChange(newWidth);
+          }
+        }}
+        title={isCompact ? "Développer" : "Réduire"}
+      >
+        {isCompact ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z" clipRule="evenodd" />
+          </svg>
+        )}
+      </div>
+      
       {/* Header */}
       <div className="p-4 border-b border-primary-dark">
         <div className="flex items-center justify-between">
           <NavLink 
-            to={`/app/${currentPortfolio || 'leasing'}`} 
+            to={`/app/${currentPortfolio || 'traditional'}`} 
             onClick={() => {
               if (currentPortfolio) {
                 localStorage.setItem('portfolioType', currentPortfolio);
@@ -46,8 +170,8 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
             }}
             className="flex items-center"
           >
-            <BarChart2 className="h-8 w-8 text-white" />
-            <div className="ml-2">
+            <BarChart2 className="h-7 w-7 text-white" />
+            <div className="ml-3 sidebar-brand-text">
               <h1 className="text-lg font-semibold text-white">
                 Wanzo
               </h1>
@@ -58,7 +182,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
               variant="ghost"
               size="sm"
               onClick={onClose}
-              icon={<X className="h-5 w-5 text-white" />}
+              icon={<X className="h-4 w-4 text-white" />}
               className="lg:hidden hover:bg-primary-dark"
             />
           )}
@@ -88,7 +212,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
           if (filteredItems.length === 0) return null;
           return (
             <div key={key}>
-              <h3 className="px-3 text-xs font-semibold text-primary-light uppercase tracking-wider">
+              <h3 className="px-3 text-sm font-semibold text-primary-light uppercase tracking-wider sidebar-label mb-2">
                 {section.label}
               </h3>
               <div className="mt-2 space-y-1">
@@ -125,7 +249,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                         if (onClose) onClose();
                       }}
                       className={({ isActive }) => `
-                        flex items-center px-3 py-2 text-sm font-medium rounded-md
+                        flex items-center px-4 py-2.5 text-base font-medium rounded-md
                         transition-colors duration-200
                         will-change-auto
                         ${isActive
@@ -135,7 +259,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                       `}
                       style={{ transition: 'background-color 0.2s, color 0.2s' }}
                     >
-                      <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                      <item.icon className="mr-3 h-6 w-6 flex-shrink-0" />
                       <span className="truncate">{item.name}</span>
                     </NavLink>
                   );
@@ -187,7 +311,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
             if (filteredItems.length === 0) return null;
             return (
               <div key={key}>
-                <h3 className="px-3 text-xs font-semibold text-primary-light uppercase tracking-wider">
+                <h3 className="px-3 text-sm font-semibold text-primary-light uppercase tracking-wider sidebar-label mb-2">
                   {section.label}
                 </h3>
                 <div className="mt-2 space-y-1">
@@ -218,7 +342,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                         to={to}
                         onClick={onClose}
                         className={({ isActive }) => `
-                          flex items-center px-3 py-2 text-sm font-medium rounded-md
+                          flex items-center px-4 py-2.5 text-base font-medium rounded-md
                           transition-colors duration-200
                           will-change-auto
                           ${isActive
@@ -228,7 +352,7 @@ export function DynamicSidebar({ onClose }: DynamicSidebarProps) {
                         `}
                         style={{ transition: 'background-color 0.2s, color 0.2s' }}
                       >
-                        <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                        <item.icon className="mr-3 h-6 w-6 flex-shrink-0" />
                         <span className="truncate">{item.name}</span>
                       </NavLink>
                     );

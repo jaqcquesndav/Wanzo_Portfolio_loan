@@ -10,6 +10,7 @@ import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import { exportToExcel, exportToPDF } from '../../../utils/exports';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 // Type pour un contrat de crédit
 export interface CreditContract {
@@ -59,6 +60,7 @@ export function CreditContractsTable({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const { showNotification } = useNotification();
+  const { formatAmount } = useCurrencyContext();
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<keyof CreditContract | null>(null);
@@ -152,12 +154,12 @@ export function CreditContractsTable({
       'Référence': contract.reference,
       'Entreprise': contract.company,
       'Produit': contract.product,
-      'Montant': contract.amount.toLocaleString() + ' FCFA',
+      'Montant': formatAmount(contract.amount),
       'Statut': statusConfig[contract.status].label,
       'Taux d\'intérêt': contract.interestRate + '%',
       'Date début': new Date(contract.startDate).toLocaleDateString(),
       'Date fin': new Date(contract.endDate).toLocaleDateString(),
-      'Montant restant': contract.remainingAmount ? contract.remainingAmount.toLocaleString() + ' FCFA' : 'N/A',
+      'Montant restant': contract.remainingAmount ? formatAmount(contract.remainingAmount) : 'N/A',
       'Prochain paiement': contract.nextPaymentDate ? new Date(contract.nextPaymentDate).toLocaleDateString() : 'N/A',
     }));
     
@@ -173,7 +175,7 @@ export function CreditContractsTable({
         contract.reference,
         contract.company,
         contract.product,
-        contract.amount.toLocaleString() + ' FCFA',
+        formatAmount(contract.amount),
         statusConfig[contract.status].label,
         new Date(contract.startDate).toLocaleDateString(),
         new Date(contract.endDate).toLocaleDateString(),
@@ -386,7 +388,7 @@ export function CreditContractsTable({
                     <TableCell className="font-mono">{contract.reference}</TableCell>
                     <TableCell className="font-medium">{contract.company}</TableCell>
                     <TableCell>{contract.product}</TableCell>
-                    <TableCell>{contract.amount.toLocaleString()} FCFA</TableCell>
+                    <TableCell>{formatAmount(contract.amount)}</TableCell>
                     <TableCell>
                       <Badge variant={
                         (statusConfig[contract.status] && statusConfig[contract.status].variant) 

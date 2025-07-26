@@ -9,6 +9,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '.
 import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
 import { exportToExcel, exportToPDF } from '../../../utils/exports';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 // Type amélioré pour une demande de financement PME
 export interface FundingRequest {
@@ -64,6 +65,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const { formatAmount } = useCurrencyContext();
   const pageSize = 10;
 
   // Compter les demandes par statut
@@ -153,7 +155,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
       'Référence': req.id,
       'Entreprise': req.company,
       'Produit': req.product,
-      'Montant': req.amount.toLocaleString() + ' FCFA',
+      'Montant': formatAmount(req.amount),
       'Statut': statusConfig[req.status].label,
       'Date': new Date(req.created_at).toLocaleDateString(),
       'Échéance': req.maturity || 'N/A',
@@ -172,7 +174,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
         req.id,
         req.company,
         req.product,
-        req.amount.toLocaleString() + ' FCFA',
+        formatAmount(req.amount),
         statusConfig[req.status].label,
         new Date(req.created_at).toLocaleDateString(),
       ]),
@@ -381,7 +383,7 @@ export const FundingRequestsTable: React.FC<FundingRequestsTableProps> = ({
                       </span>
                     </TableCell>
                     <TableCell>{req.product}</TableCell>
-                    <TableCell>{req.amount.toLocaleString()} FCFA</TableCell>
+                    <TableCell>{formatAmount(req.amount)}</TableCell>
                     <TableCell>
                       <Badge variant={statusConfig[req.status].variant}>
                         {statusConfig[req.status].label}

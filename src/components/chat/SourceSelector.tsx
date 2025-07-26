@@ -12,11 +12,9 @@ import {
 } from 'lucide-react';
 import { Task } from '../../hooks/useChatStore';
 import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
-import { useLeasingPortfolios } from '../../hooks/useLeasingPortfolios';
-import { useInvestmentPortfolios } from '../../hooks/useInvestmentPortfolios';
 
 // Définition des types de portefeuille
-type PortfolioType = 'traditional' | 'leasing' | 'investment';
+type PortfolioType = 'traditional';
 
 // Définition des catégories de sources
 type SourceCategory = 'portfolio' | 'prospection' | 'risk' | 'general';
@@ -146,8 +144,6 @@ export function SourceSelector({
 
   // Charger les données des portefeuilles
   const traditional = useTraditionalPortfolios();
-  const leasing = useLeasingPortfolios();
-  const investment = useInvestmentPortfolios();
 
   // Combiner tous les portefeuilles et les organiser par type
   useEffect(() => {
@@ -160,22 +156,10 @@ export function SourceSelector({
         name: p.name, 
         type: 'traditional' as const 
       }));
-    } else if (currentPortfolioType === 'leasing') {
-      allPortfolios = (leasing.portfolios || []).map(p => ({ 
-        id: p.id, 
-        name: p.name, 
-        type: 'leasing' as const 
-      }));
-    } else if (currentPortfolioType === 'investment') {
-      allPortfolios = (investment.portfolios || []).map(p => ({ 
-        id: p.id, 
-        name: p.name, 
-        type: 'investment' as const 
-      }));
     }
     
     setAvailablePortfolios(allPortfolios);
-  }, [traditional.portfolios, leasing.portfolios, investment.portfolios, currentPortfolioType]);
+  }, [traditional.portfolios, currentPortfolioType]);
 
   if (!isOpen) return null;
   
@@ -237,8 +221,6 @@ export function SourceSelector({
                   `}
                 >
                   {portfolio.type === 'traditional' && <CreditCard className="h-4 w-4 text-blue-600" />}
-                  {portfolio.type === 'leasing' && <Package className="h-4 w-4 text-amber-600" />}
-                  {portfolio.type === 'investment' && <Briefcase className="h-4 w-4 text-purple-600" />}
                   <span className="text-sm truncate">{portfolio.name}</span>
                 </button>
               ))}

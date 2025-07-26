@@ -4,12 +4,20 @@ import { DynamicHeader } from './DynamicHeader';
 import { DynamicSidebar } from './DynamicSidebar';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
 
+// Default sidebar width, matching DynamicSidebar default
+const DEFAULT_SIDEBAR_WIDTH = 250; 
+
 export default function Layout() {
   const { portfolioType: contextPortfolioType } = usePortfolioContext();
   const { portfolioType } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  // Track sidebar width for desktop version - load from localStorage if available
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const savedWidth = localStorage.getItem('sidebarWidth');
+    return savedWidth ? parseInt(savedWidth, 10) : DEFAULT_SIDEBAR_WIDTH;
+  });
 
   // Redirection automatique si le portefeuille n'est pas sélectionné
   useEffect(() => {
@@ -29,6 +37,12 @@ export default function Layout() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle sidebar width change
+  const handleSidebarWidthChange = (width: number) => {
+    setSidebarWidth(width);
+    localStorage.setItem('sidebarWidth', width.toString());
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -50,29 +64,55 @@ export default function Layout() {
           </aside>
         )}
 
-        {/* Sidebar - Version desktop - réduit la largeur pour donner plus d'espace au contenu */}
+        {/* Layout Desktop avec flex */}
         {!isMobile && (
-          <aside className="sticky top-16 h-[calc(100vh-4rem)] w-52 flex-shrink-0">
-            <DynamicSidebar />
-          </aside>
-        )}
+          <div className="flex w-full transition-all duration-150 relative">
+            {/* Sidebar Desktop */}
+            <aside 
+              className="sticky top-16 h-[calc(100vh-4rem)] flex-shrink-0"
+              style={{ 
+                width: `${sidebarWidth}px`,
+                transition: 'width 0.25s ease-out' 
+              }}
+            >
+              <DynamicSidebar 
+                initialWidth={sidebarWidth}
+                onWidthChange={handleSidebarWidthChange}
+              />
+            </aside>
 
-        {/* Overlay pour mobile */}
-        {sidebarOpen && isMobile && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-20"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Contenu principal - optimisé pour utiliser tout l'espace disponible */}
-        <main
-          className={`flex-1 min-h-screen transition-all duration-300 flex flex-col items-stretch justify-start`}
-        >
-          <div className="w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
-            <Outlet />
+            {/* Contenu principal - s'adapte à la largeur du sidebar */}
+            <main
+              className="flex-1 min-h-screen flex flex-col items-stretch justify-start"
+              style={{ transition: 'margin-left 0.25s ease-out' }}
+            >
+              <div className="w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
+                <Outlet />
+              </div>
+            </main>
           </div>
-        </main>
+        )}
+
+        {/* Version mobile du contenu principal */}
+        {isMobile && (
+          <>
+            {/* Overlay pour mobile */}
+            {sidebarOpen && (
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-50 z-20"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+            
+            <main
+              className="flex-1 min-h-screen transition-all duration-300 flex flex-col items-stretch justify-start"
+            >
+              <div className="w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
+                <Outlet />
+              </div>
+            </main>
+          </>
+        )}
       </div>
     </div>
   );

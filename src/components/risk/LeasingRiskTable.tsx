@@ -1,8 +1,8 @@
-// src/components/risk/LeasingRiskTable.tsx
+// src/components/risk/LeasingRiskTable.tsx.new
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { LeasingRiskEntry } from '../../data/mockCentraleRisque';
-import { useFormatCurrency } from '../../hooks/useFormatCurrency';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 import { convertScoreToRating, getCreditRatingClass } from '../../utils/creditScoreConverter';
 
 interface LeasingRiskTableProps {
@@ -10,7 +10,8 @@ interface LeasingRiskTableProps {
 }
 
 export function LeasingRiskTable({ data }: LeasingRiskTableProps) {
-  const { formatCurrency } = useFormatCurrency();
+  // Use the useCurrencyContext hook directly to access the currency context
+  const { formatAmount } = useCurrencyContext();
   
   const columns: Column<LeasingRiskEntry>[] = [
     {
@@ -31,7 +32,7 @@ export function LeasingRiskTable({ data }: LeasingRiskTableProps) {
     },
     {
       header: 'Valeur',
-      accessor: (item) => formatCurrency(item.valeurFinancement, undefined, 'USD')
+      accessor: (item) => formatAmount(item.valeurFinancement)
     },
     {
       header: 'Statut',

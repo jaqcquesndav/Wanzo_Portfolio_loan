@@ -67,24 +67,6 @@ export interface Portfolio {
     taux_rotation?: number;
     taux_provision?: number;
     taux_recouvrement?: number;
-    // --- Métriques spécifiques leasing ---
-    asset_utilization_rate?: number; // en %
-    average_residual_value?: number; // valeur résiduelle moyenne (en FCFA)
-    default_rate?: number; // taux de défaut de paiement (%)
-    avg_contract_duration_months?: number; // durée moyenne des contrats (mois)
-    assets_under_management?: number; // nombre d’actifs sous gestion
-    contract_renewal_rate?: number; // taux de renouvellement (%)
-    total_rent_billed?: number; // montant total des loyers facturés (FCFA)
-    collection_rate?: number; // taux de recouvrement (%)
-    // --- Métriques spécifiques investissement ---
-    nb_requests?: number;
-    nb_transactions?: number;
-    total_invested?: number;
-    total_exited?: number;
-    irr?: number;
-    multiple?: number;
-    avg_ticket?: number;
-    nb_companies?: number;
   };
   created_at: string;
   updated_at: string;
@@ -93,8 +75,6 @@ export interface Portfolio {
 export interface AssetDistribution {
   credit: number;
   microfinance: number;
-  leasing: number;
-  venture: number;
   treasury: number;
 }
 

@@ -4,9 +4,10 @@ import { MoreVertical } from 'lucide-react';
 interface PortfolioActionsDropdownProps {
   onAction: (action: string) => void;
   actions: { key: string; label: string }[];
+  buttonClassName?: string;
 }
 
-export function PortfolioActionsDropdown({ onAction, actions }: PortfolioActionsDropdownProps) {
+export function PortfolioActionsDropdown({ onAction, actions, buttonClassName }: PortfolioActionsDropdownProps) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -33,7 +34,7 @@ export function PortfolioActionsDropdown({ onAction, actions }: PortfolioActions
       <button
         ref={btnRef}
         onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
-        className="ml-2 text-primary-light hover:text-white opacity-80 hover:opacity-100 p-1 rounded-full focus:outline-none"
+        className={`ml-2 text-primary-light hover:text-white opacity-80 hover:opacity-100 p-1 rounded-full focus:outline-none ${buttonClassName || ''}`}
         aria-haspopup="true"
         aria-expanded={open}
         aria-label="Actions portefeuille"

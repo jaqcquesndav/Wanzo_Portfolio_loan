@@ -82,7 +82,7 @@ export function createLazyRouter() {
       children: [
         { path: '', element: <components.Dashboard /> },
         // Traditional Portfolio
-        { path: 'traditional/traditional/*', element: <Navigate to="/app/traditional" replace /> },
+        { path: 'traditional/traditional/:id', element: React.createElement(withSuspense(components.TraditionalPortfolioView)) },
         { path: 'traditional', element: React.createElement(withSuspense(components.TraditionalPortfolio)) },
         { path: 'traditional/:id', element: React.createElement(withSuspense(components.TraditionalPortfolioDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'traditional/trad-1/guarantees/G001', element: React.createElement(withSuspense(components.GuaranteeDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
@@ -101,6 +101,11 @@ export function createLazyRouter() {
         { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: React.createElement(withSuspense(components.RepaymentDetails)) },
         { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: React.createElement(withSuspense(components.GuaranteeDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: React.createElement(withSuspense(components.GuaranteeDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
+        
+        // Note: Les routes d'investment et leasing sont commentées car les composants ne sont pas disponibles
+        // Décommenter après avoir créé les composants correspondants
+        
+        /*
         // Investment
         { path: 'investment', element: React.createElement(withSuspense(components.InvestmentPortfolio)) },
         { path: 'investment/:id', element: React.createElement(withSuspense(components.InvestmentPortfolioDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
@@ -108,6 +113,7 @@ export function createLazyRouter() {
         { path: 'subscriptions/:subscriptionId', element: React.createElement(withSuspense(components.InvestmentSubscriptionDetail)) },
         { path: 'valuations/:valuationId', element: React.createElement(withSuspense(components.InvestmentValuationDetail)) },
         { path: 'reporting/:reportId', element: React.createElement(withSuspense(components.InvestmentReportingDetail)) },
+        
         // Leasing
         { path: 'leasing', element: React.createElement(withSuspense(components.LeasingPortfolio)) },
         { path: 'leasing/:id', element: React.createElement(withSuspense(components.LeasingPortfolioDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
@@ -117,8 +123,13 @@ export function createLazyRouter() {
         { path: 'maintenance/:maintenanceId', element: React.createElement(withSuspense(components.LeasingMaintenanceDetail)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'payments/:paymentId', element: React.createElement(withSuspense(components.LeasingPaymentDetail)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'reporting/:reportId', element: React.createElement(withSuspense(components.LeasingReportingDetail)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
+        */
         // Settings
-        { path: 'settings', element: React.createElement(withSuspense(components.Settings)) },
+        { 
+          path: 'settings', 
+          element: React.createElement(withSuspense(components.Settings)),
+          errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary))
+        },
         // Administration
         { path: 'users', element: React.createElement(withSuspense(components.Users)) },
         // { path: 'institution', element: React.createElement(withSuspense(components.InstitutionManagement)) },
@@ -131,9 +142,10 @@ export function createLazyRouter() {
         { path: 'docs', element: React.createElement(withSuspense(components.Documentation)) },
         { path: 'help', element: React.createElement(withSuspense(components.Help)) },
         // 404 Not Found pour les détails de portefeuille
-        { path: 'traditional/*', element: React.createElement(withSuspense(components.PortfolioNotFound)) },
-        { path: 'investment/*', element: React.createElement(withSuspense(components.PortfolioNotFound)) },
-        { path: 'leasing/*', element: React.createElement(withSuspense(components.PortfolioNotFound)) }
+        { path: 'traditional/*', element: React.createElement(withSuspense(components.PortfolioNotFound)) }
+        // Note: Les routes de fallback pour investment et leasing sont commentées
+        // { path: 'investment/*', element: React.createElement(withSuspense(components.PortfolioNotFound)) },
+        // { path: 'leasing/*', element: React.createElement(withSuspense(components.PortfolioNotFound)) }
       ]
     }
   ];

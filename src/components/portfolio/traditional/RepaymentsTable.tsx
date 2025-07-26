@@ -6,6 +6,7 @@ import { Input } from '../../ui/Input';
 import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 export interface Repayment {
   id: string;
@@ -79,6 +80,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'tous' | 'à venir' | 'payé' | 'retard'>('tous');
   const [sortBy, setSortBy] = useState<{ key: keyof Repayment; direction: 'asc' | 'desc' } | null>(null);
+  const { formatAmount } = useCurrencyContext();
   
   // État pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -151,10 +153,10 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
       'Référence Contrat': r.contractReference,
       'Échéance': new Date(r.dueDate).toLocaleDateString(),
       'Échéance N°': r.installmentNumber ? `${r.installmentNumber}/${r.totalInstallments}` : 'N/A',
-      'Montant': r.amount.toLocaleString() + ' FCFA',
-      'Principal': r.principal ? r.principal.toLocaleString() + ' FCFA' : 'N/A',
-      'Intérêts': r.interest ? r.interest.toLocaleString() + ' FCFA' : 'N/A',
-      'Pénalités': r.penalties ? r.penalties.toLocaleString() + ' FCFA' : '0',
+      'Montant': formatAmount(r.amount),
+      'Principal': r.principal ? formatAmount(r.principal) : 'N/A',
+      'Intérêts': r.interest ? formatAmount(r.interest) : 'N/A',
+      'Pénalités': r.penalties ? formatAmount(r.penalties) : '0',
       'Statut': statusConfig[r.status].label
     }));
     exportToExcel(dataToExport, 'Remboursements');
@@ -169,7 +171,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
         r.product,
         r.contractReference,
         new Date(r.dueDate).toLocaleDateString(),
-        r.amount.toLocaleString() + ' FCFA',
+        formatAmount(r.amount),
         statusConfig[r.status].label
       ]),
       filename: 'Remboursements'
@@ -310,7 +312,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{r.amount.toLocaleString()} FCFA</TableCell>
+                  <TableCell>{formatAmount(r.amount)}</TableCell>
                   <TableCell>
                     <Badge variant={statusConfig[r.status].variant as "warning" | "success" | "error" | "secondary" | "primary" | "danger"}>
                       {statusConfig[r.status].label}

@@ -24,7 +24,11 @@ export const GuaranteeDetails = lazy(() => import('../pages/GuaranteeDetails'));
 // Pages administratives et d'assistance
 export const Documentation = lazy(() => import('../pages/Documentation'));
 export const Help = lazy(() => import('../pages/Help'));
-export const Settings = lazy(() => import('../pages/Settings'));
+export const Settings = lazy(() => import('../pages/Settings').catch(error => {
+  console.error("Error loading Settings module:", error);
+  // Fallback à un composant simple en cas d'erreur
+  return { default: () => <div>Error loading Settings. Please try again later.</div> };
+}));
 export const CurrencySettings = lazy(() => import('../pages/CurrencySettings'));
 export const Users = lazy(() => import('../pages/Users'));
 export const Organization = lazy(() => import('../pages/Organization'));

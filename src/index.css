@@ -1,3 +1,4 @@
+/* stylelint-disable */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +7,78 @@
 .leaflet-container {
   width: 100%;
   height: 100%;
+}
+
+/* Style global pour le curseur de redimensionnement */
+.resize-cursor {
+  cursor: ew-resize !important;
+}
+
+/* Styles pour le sidebar compact */
+.compact-sidebar .sidebar-label,
+.compact-sidebar h3,
+.compact-sidebar .truncate {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  white-space: nowrap;
+}
+
+.compact-sidebar .sidebar-actions,
+.compact-sidebar nav h3,
+.compact-sidebar .sidebar-brand-text {
+  display: none;
+}
+
+.compact-sidebar nav a,
+.compact-sidebar .nav-item {
+  justify-content: center;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.compact-sidebar nav a svg,
+.compact-sidebar .nav-item svg {
+  margin-right: 0 !important;
+}
+
+.compact-sidebar .p-4 {
+  padding: 0.75rem !important;
+}
+
+/* Animation pour le bouton de toggle */
+@keyframes pulse-light {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.sidebar-toggle-btn {
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  animation: pulse-light 1.5s infinite;
+  transform: scale(1.05);
+}
+
+/* Style pour le redimensionneur du sidebar */
+.sidebar-resizer {
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-resizer:hover .resizer-indicator {
+  background-color: rgba(255, 255, 255, 0.5);
+  width: 2px;
+}
+
+.resizer-indicator {
+  transition: all 0.2s ease;
 }
 
 .leaflet-popup-content-wrapper {
