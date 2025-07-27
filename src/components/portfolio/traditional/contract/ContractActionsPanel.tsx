@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { CreditContract } from '../../../../types/credit';
 import { creditContractsStorageService } from '../../../../services/storage/creditContractsStorage';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { BanknotesIcon } from '@heroicons/react/24/outline';
+import { usePaymentOrder } from '../../../../hooks/usePaymentOrderContext';
+import { openPaymentOrder } from '../../../../utils/openPaymentOrder';
 
 interface ContractActionsPanelProps {
   contract: CreditContract;
@@ -19,6 +22,25 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
   const [selectedStatus, setSelectedStatus] = useState<CreditContract['status'] | null>(null);
   const [statusReason, setStatusReason] = useState('');
   const { showNotification } = useNotification();
+  const { showPaymentOrderModal } = usePaymentOrder();
+
+  // Ouvrir le modal de paiement pour créditer le client
+  const handleCreditClient = () => {
+    // Préparer les données pour le modal de paiement
+    openPaymentOrder(
+      {
+        action: 'validate_funding',
+        portfolioId: contract.portfolioId || 'default',
+        portfolioName: 'Portefeuille de crédit',
+        itemId: contract.id,
+        reference: contract.reference,
+        amount: contract.amount,
+        company: contract.memberName,
+        product: contract.productName
+      },
+      showPaymentOrderModal
+    );
+  };
 
   const handleStatusChange = async () => {
     if (!selectedStatus) return;
@@ -85,6 +107,16 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
               Éditer les paramètres
             </Button>
           )}
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleCreditClient}
+            className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100 flex items-center"
+          >
+            <BanknotesIcon className="h-4 w-4 mr-1" />
+            Créditer
+          </Button>
         </div>
       </div>
       
