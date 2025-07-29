@@ -56,6 +56,8 @@ export default defineConfig({
   },
   server: {
     // Optimisation du serveur de développement
+    port: 5174, // Changement du port par défaut (5173)
+    host: true, // Permettre l'accès depuis le réseau (0.0.0.0)
     hmr: {
       overlay: true,
     },
