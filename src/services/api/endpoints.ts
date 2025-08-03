@@ -262,16 +262,6 @@ export const API_ENDPOINTS = {
     delete: (id: string) => `/documents/${id}`
   },
 
-  // Analytics
-  analytics: {
-    dashboard: '/analytics/dashboard',
-    performance: '/analytics/performance',
-    risk: '/analytics/risk',
-    portfolio: '/analytics/portfolio',
-    trends: '/analytics/trends',
-    predictions: '/analytics/predictions'
-  },
-
   // Reports
   reports: {
     base: '/reports',
