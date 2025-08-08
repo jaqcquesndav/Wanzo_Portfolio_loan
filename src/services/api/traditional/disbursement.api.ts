@@ -12,7 +12,7 @@ export const disbursementApi = {
    */
   getDisbursementsByPortfolio: async (portfolioId: string): Promise<Disbursement[]> => {
     try {
-      return await apiClient.get<Disbursement[]>(`/portfolios/traditional/${portfolioId}/disbursements`);
+      return await apiClient.get<Disbursement[]>(`/portfolio_inst/portfolios/traditional/disbursements?portfolioId=${portfolioId}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for disbursements of portfolio ${portfolioId}`, error);
@@ -26,7 +26,7 @@ export const disbursementApi = {
    */
   getDisbursementsByContract: async (contractId: string): Promise<Disbursement[]> => {
     try {
-      return await apiClient.get<Disbursement[]>(`/portfolios/traditional/credit-contracts/${contractId}/disbursements`);
+      return await apiClient.get<Disbursement[]>(`/portfolio_inst/portfolios/traditional/disbursements?contractId=${contractId}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for disbursements of contract ${contractId}`, error);
@@ -39,7 +39,7 @@ export const disbursementApi = {
    */
   getDisbursementById: async (id: string): Promise<Disbursement | null> => {
     try {
-      return await apiClient.get<Disbursement>(`/portfolios/traditional/disbursements/${id}`);
+      return await apiClient.get<Disbursement>(`/portfolio_inst/portfolios/traditional/disbursements/${id}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for disbursement ${id}`, error);
@@ -53,7 +53,7 @@ export const disbursementApi = {
    */
   createDisbursement: async (disbursement: Omit<Disbursement, 'id'>): Promise<Disbursement> => {
     try {
-      return await apiClient.post<Disbursement>('/portfolios/traditional/disbursements', disbursement);
+      return await apiClient.post<Disbursement>('/portfolio_inst/portfolios/traditional/disbursements', disbursement);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for creating disbursement', error);
@@ -88,7 +88,7 @@ export const disbursementApi = {
    */
   updateDisbursement: async (id: string, updates: Partial<Disbursement>): Promise<Disbursement | null> => {
     try {
-      return await apiClient.put<Disbursement>(`/portfolios/traditional/disbursements/${id}`, updates);
+      return await apiClient.put<Disbursement>(`/portfolio_inst/portfolios/traditional/disbursements/${id}`, updates);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for updating disbursement ${id}`, error);

@@ -2,6 +2,18 @@
 
 Application de gestion de portefeuilles financiers pour les institutions.
 
+## Compatibilité avec l'API Backend
+
+Cette application frontend communique avec le backend via l'API Gateway sur le port 8000.
+La documentation complète de l'API est disponible dans [PORTFOLIO_API_DOCUMENTATION.md](./PORTFOLIO_API_DOCUMENTATION.md).
+
+Pour vérifier la compatibilité entre le frontend et le backend, exécutez :
+```bash
+node scripts/validate-api-compatibility.js
+```
+
+Pour plus d'informations sur les modifications récentes pour assurer la compatibilité, consultez [API_COMPATIBILITY.md](./docs/API_COMPATIBILITY.md).
+
 ## Fonctionnalités principales
 
 - Gestion des portefeuilles (traditionnels, d'investissement, leasing)
@@ -28,6 +40,10 @@ npm install
 npm run dev
 
 # Construction pour la production
+npm run build
+
+# Vérification de la compatibilité API
+node scripts/validate-api-compatibility.js
 npm run build
 ```
 

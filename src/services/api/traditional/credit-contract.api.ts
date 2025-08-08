@@ -27,7 +27,7 @@ export const creditContractApi = {
       if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
       if (filters?.dateTo) params.append('dateTo', filters.dateTo);
 
-      return await apiClient.get<CreditContract[]>(`/portfolios/traditional/credit-contracts?${params.toString()}`);
+      return await apiClient.get<CreditContract[]>(`/portfolio_inst/portfolios/traditional/credit-contracts?${params.toString()}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for credit contracts', error);
@@ -64,7 +64,7 @@ export const creditContractApi = {
    */
   getContractById: async (id: string) => {
     try {
-      return await apiClient.get<CreditContract>(`/portfolios/traditional/credit-contracts/${id}`);
+      return await apiClient.get<CreditContract>(`/portfolio_inst/portfolios/traditional/credit-contracts/${id}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for credit contract ${id}`, error);
@@ -81,7 +81,7 @@ export const creditContractApi = {
    */
   createContract: async (contract: Omit<CreditContract, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      return await apiClient.post<CreditContract>('/portfolios/traditional/credit-contracts', contract);
+      return await apiClient.post<CreditContract>('/portfolio_inst/portfolios/traditional/credit-contracts/from-request', contract);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for creating credit contract', error);

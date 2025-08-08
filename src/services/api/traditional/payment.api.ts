@@ -12,7 +12,7 @@ export const paymentApi = {
    */
   getPaymentsByContract: async (contractId: string) => {
     try {
-      return await apiClient.get<CreditPayment[]>(`/portfolios/traditional/credit-contracts/${contractId}/payments`);
+      return await apiClient.get<CreditPayment[]>(`/portfolio_inst/portfolios/traditional/repayments?contractId=${contractId}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for payments of contract ${contractId}`, error);
@@ -25,7 +25,7 @@ export const paymentApi = {
    */
   getPaymentsByPortfolio: async (portfolioId: string) => {
     try {
-      return await apiClient.get<CreditPayment[]>(`/portfolios/traditional/${portfolioId}/payments`);
+      return await apiClient.get<CreditPayment[]>(`/portfolio_inst/portfolios/traditional/repayments?portfolioId=${portfolioId}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for payments of portfolio ${portfolioId}`, error);
@@ -38,7 +38,7 @@ export const paymentApi = {
    */
   getLatePayments: async (portfolioId: string) => {
     try {
-      return await apiClient.get<CreditPayment[]>(`/portfolios/traditional/${portfolioId}/late-payments`);
+      return await apiClient.get<CreditPayment[]>(`/portfolio_inst/portfolios/traditional/repayments?portfolioId=${portfolioId}&status=late`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for late payments of portfolio ${portfolioId}`, error);
@@ -51,7 +51,7 @@ export const paymentApi = {
  */
   getPaymentById: async (id: string) => {
     try {
-      return await apiClient.get<CreditPayment>(`/portfolios/traditional/payments/${id}`);
+      return await apiClient.get<CreditPayment>(`/portfolio_inst/portfolios/traditional/repayments/${id}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for payment ${id}`, error);
@@ -152,7 +152,7 @@ export const paymentApi = {
    */
   recordPayment: async (payment: Omit<CreditPayment, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      return await apiClient.post<CreditPayment>('/portfolios/traditional/payments', payment);
+      return await apiClient.post<CreditPayment>('/portfolio_inst/portfolios/traditional/repayments', payment);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for recording payment', error);

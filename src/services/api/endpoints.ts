@@ -122,18 +122,52 @@ export const API_ENDPOINTS = {
 
   // Traditional Portfolios
   traditional: {
-    base: '/traditional',
-    getAll: '/traditional',
-    getById: (id: string) => `/traditional/${id}`,
-    create: '/traditional',
-    update: (id: string) => `/traditional/${id}`,
-    delete: (id: string) => `/traditional/${id}`,
+    base: '/portfolios/traditional',
+    getAll: '/portfolios/traditional',
+    getById: (id: string) => `/portfolios/traditional/${id}`,
+    create: '/portfolios/traditional',
+    update: (id: string) => `/portfolios/traditional/${id}`,
+    delete: (id: string) => `/portfolios/traditional/${id}`,
+    close: (id: string) => `/portfolios/traditional/${id}/close`,
+    products: (id: string) => `/portfolios/traditional/${id}/products`,
     contracts: {
-      base: (portfolioId: string) => `/traditional/${portfolioId}/contracts`,
-      getById: (portfolioId: string, contractId: string) => `/traditional/${portfolioId}/contracts/${contractId}`,
-      create: (portfolioId: string) => `/traditional/${portfolioId}/contracts`,
-      update: (portfolioId: string, contractId: string) => `/traditional/${portfolioId}/contracts/${contractId}`,
-      delete: (portfolioId: string, contractId: string) => `/traditional/${portfolioId}/contracts/${contractId}`
+      base: '/portfolio_inst/portfolios/traditional/credit-contracts',
+      getAll: '/portfolio_inst/portfolios/traditional/credit-contracts',
+      getById: (id: string) => `/portfolio_inst/portfolios/traditional/credit-contracts/${id}`,
+      create: '/portfolio_inst/portfolios/traditional/credit-contracts/from-request',
+    },
+    creditRequests: {
+      base: '/portfolios/traditional/credit-requests',
+      getAll: '/portfolios/traditional/credit-requests',
+      getById: (id: string) => `/portfolios/traditional/credit-requests/${id}`,
+      create: '/portfolios/traditional/credit-requests',
+      update: (id: string) => `/portfolios/traditional/credit-requests/${id}`,
+      delete: (id: string) => `/portfolios/traditional/credit-requests/${id}`
+    },
+    disbursements: {
+      base: '/portfolio_inst/portfolios/traditional/disbursements',
+      getAll: '/portfolio_inst/portfolios/traditional/disbursements',
+      getById: (id: string) => `/portfolio_inst/portfolios/traditional/disbursements/${id}`,
+      create: '/portfolio_inst/portfolios/traditional/disbursements',
+    },
+    repayments: {
+      base: '/portfolio_inst/portfolios/traditional/repayments',
+      getAll: '/portfolio_inst/portfolios/traditional/repayments',
+      getById: (id: string) => `/portfolio_inst/portfolios/traditional/repayments/${id}`,
+      create: '/portfolio_inst/portfolios/traditional/repayments',
+    },
+    paymentSchedules: {
+      base: '/portfolios/traditional/payment-schedules',
+      getAll: '/portfolios/traditional/payment-schedules',
+      getById: (id: string) => `/portfolios/traditional/payment-schedules/${id}`,
+      byContract: (contractId: string) => `/portfolios/traditional/payment-schedules/by-contract/${contractId}`
+    },
+    documents: {
+      base: '/portfolios/traditional/documents',
+      getAll: '/portfolios/traditional/documents',
+      getById: (id: string) => `/portfolios/traditional/documents/${id}`,
+      create: '/portfolios/traditional/documents',
+      delete: (id: string) => `/portfolios/traditional/documents/${id}`
     }
   },
 
