@@ -2,9 +2,11 @@
 
 Cette documentation décrit la structure des URLs et les endpoints disponibles pour communiquer avec le microservice Portfolio Institution via l'API Gateway.
 
+*Cette documentation est générée automatiquement à partir du code source du frontend.*
+
 ## Informations générales
 
-- **Base URL**: `http://localhost:8000/portfolio`
+- **Base URL**: `API (depuis les variables d`
 - **Port API Gateway**: 8000
 - **Port Microservice Portfolio Institution**: 3005 (interne)
 
@@ -21,7 +23,7 @@ Content-Type: application/json
 ## Structure des URLs
 
 Tous les endpoints du microservice sont accessibles via l'API Gateway à l'adresse suivante:
-`http://localhost:8000/portfolio/<endpoint>`
+`API (depuis les variables d/<endpoint>`
 
 ## Format des réponses
 
@@ -62,181 +64,164 @@ Les réponses suivent un format standardisé:
 
 ## Endpoints disponibles
 
-### 1. Portefeuilles traditionnels (Traditional Portfolios)
+### 1. Portefeuilles traditionnels
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolios/traditional` | Récupérer tous les portefeuilles traditionnels |
-| GET | `/portfolios/traditional/:id` | Récupérer un portefeuille par son ID |
-| POST | `/portfolios/traditional` | Créer un nouveau portefeuille |
-| PUT | `/portfolios/traditional/:id` | Mettre à jour un portefeuille |
-| DELETE | `/portfolios/traditional/:id` | Supprimer un portefeuille |
-| POST | `/portfolios/traditional/:id/close` | Clôturer un portefeuille |
-| GET | `/portfolios/traditional/:id/products` | Récupérer un portefeuille avec ses produits financiers |
+| GET | `/portfolios/traditional/contracts/${id}` | API pour les contrats de crédit/ export const creditApi = { / Récupère un contrat de crédit par son  |
+| GET | `/portfolios/traditional/contracts/${contractId}/schedule` | Récupère l'échéancier d'un contrat de crédit |
+| GET | `/portfolios/traditional/${portfolioId}/settings` | Type pour les paramètres de portefeuille traditionnel/ export interface TraditionalPortfolioSettings |
+| PUT | `/portfolios/traditional/${portfolioId}/settings` | Met à jour les paramètres d'un portefeuille |
+| POST | `/portfolios/traditional/${portfolioId}/settings/reset` | Réinitialise les paramètres d'un portefeuille aux valeurs par défaut |
+| GET | `/portfolios/traditional/${portfolioId}/products` | Récupère tous les produits financiers d'un portefeuille |
+| GET | `/portfolios/traditional/${portfolioId}/products/${productId}` | Récupère un produit financier par son ID |
+| POST | `/portfolios/traditional/${portfolioId}/products` | Crée un nouveau produit financier |
+| PUT | `/portfolios/traditional/${portfolioId}/products/${productId}` | Met à jour un produit financier |
+| DELETE | `/portfolios/traditional/${portfolioId}/products/${productId}` | Supprime un produit financier |
+| GET | `/portfolios/traditional?${params.toString()}` | API pour les portefeuilles traditionnels/ export const traditionalPortfolioApi = { / Récupère tous l |
+| GET | `/portfolios/traditional/${id}` | Récupère un portefeuille traditionnel par son ID |
+| POST | `/portfolios/traditional/${id}` | Crée un nouveau portefeuille traditionnel |
+| POST | `/portfolios/traditional/${id}/status` | Change le statut d'un portefeuille traditionnel |
+| DELETE | `/portfolios/traditional/${id}` | Supprime un portefeuille traditionnel |
+| GET | `/portfolios/traditional/${id}/performance?period=${period}` | Récupère les performances d'un portefeuille traditionnel |
+| GET | `/portfolios/traditional/${id}/activities?page=${page}&limit=${limit}` | Récupère l'historique des activités d'un portefeuille traditionnel |
+| PUT | `/portfolios/traditional/${id}` | PUT /portfolios/traditional/${id} |
 
-**Paramètres de requête pour GET /portfolios/traditional**:
-- `page`: Numéro de page pour la pagination (défaut: 1)
-- `limit`: Nombre d'éléments par page (défaut: 10)
-- `status`: Filtrer par statut ('active', 'closed', 'suspended')
-- `manager`: Filtrer par gestionnaire
-- `client`: Filtrer par client
-- `dateFrom`: Date de début au format YYYY-MM-DD
-- `dateTo`: Date de fin au format YYYY-MM-DD
-- `search`: Terme de recherche
-- `sortBy`: Champ de tri ('createdAt', 'name', 'totalAmount')
-- `sortOrder`: Ordre de tri ('asc', 'desc')
-
-### 2. Produits financiers (Financial Products)
-
-| Méthode | URL | Description |
-|---------|-----|-------------|
-| GET | `/financial-products` | Récupérer tous les produits financiers |
-| GET | `/financial-products/:id` | Récupérer un produit financier par son ID |
-| POST | `/financial-products` | Créer un nouveau produit financier |
-| PUT | `/financial-products/:id` | Mettre à jour un produit financier |
-| DELETE | `/financial-products/:id` | Supprimer un produit financier |
-
-**Paramètres de requête pour GET /financial-products**:
-- `page`: Numéro de page pour la pagination (défaut: 1)
-- `per_page`: Nombre d'éléments par page (défaut: 10)
-- `portfolio_id`: Filtrer par ID de portefeuille
-- `status`: Filtrer par statut du produit
-- `type`: Filtrer par type de produit
-- `search`: Terme de recherche
-- `min_interest_rate`: Taux d'intérêt minimum
-- `max_interest_rate`: Taux d'intérêt maximum
-
-### 3. Demandes de crédit (Credit Requests)
+### 2. Contrats de crédit
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolios/traditional/credit-requests` | Récupérer toutes les demandes de crédit |
-| GET | `/portfolios/traditional/credit-requests/:id` | Récupérer une demande de crédit par son ID |
-| POST | `/portfolios/traditional/credit-requests` | Créer une nouvelle demande de crédit |
-| PUT | `/portfolios/traditional/credit-requests/:id` | Mettre à jour une demande de crédit |
-| DELETE | `/portfolios/traditional/credit-requests/:id` | Supprimer une demande de crédit |
+| GET | `/portfolio_inst/portfolios/traditional/credit-contracts?${params.toString()}` | API pour les contrats de crédit/ export const creditContractApi = { / Récupère tous les contrats de  |
+| GET | `/portfolio_inst/portfolios/traditional/credit-contracts/${id}` | Récupère un contrat de crédit par son ID |
+| POST | `/portfolios/traditional/credit-contracts/${id}` | Crée un nouveau contrat de crédit |
+| POST | `/portfolios/traditional/credit-contracts/${id}/generate-document` | Génère le document du contrat de crédit |
+| POST | `/portfolios/traditional/credit-contracts/${id}/default` | Marque un contrat comme défaillant |
+| POST | `/portfolios/traditional/credit-contracts/${id}/restructure` | Restructure un contrat de crédit |
+| PUT | `/portfolios/traditional/credit-contracts/${id}` | PUT /portfolios/traditional/credit-contracts/${id} |
+| GET | `/portfolios/traditional/credit-contracts/${contractId}/payment-schedule` | Télécharge une pièce justificative pour un paiement @param paymentId ID du paiement @param file Fich |
 
-**Paramètres de requête pour GET /portfolios/traditional/credit-requests**:
-- `page`: Numéro de page pour la pagination (défaut: 1)
-- `limit`: Nombre d'éléments par page (défaut: 10)
-- `portfolioId`: Filtrer par ID de portefeuille
-- `status`: Filtrer par statut de la demande
-- `clientId`: Filtrer par ID client
-- `productType`: Filtrer par type de produit
-- `dateFrom`: Date de début au format YYYY-MM-DD
-- `dateTo`: Date de fin au format YYYY-MM-DD
-- `search`: Terme de recherche
-- `sortBy`: Champ de tri
-- `sortOrder`: Ordre de tri ('asc', 'desc')
-
-### 4. Contrats de crédit (Credit Contracts)
+### 3. Demandes de crédit
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolio_inst/portfolios/traditional/credit-contracts` | Récupérer tous les contrats de crédit |
-| GET | `/portfolio_inst/portfolios/traditional/credit-contracts/:id` | Récupérer un contrat par son ID |
-| POST | `/portfolio_inst/portfolios/traditional/credit-contracts/from-request` | Créer un nouveau contrat à partir d'une demande approuvée |
+| GET | `/portfolios/traditional/credit-requests/${id}` | API pour les demandes de crédit/ export const creditRequestApi = { / Récupère toutes les demandes de |
+| PATCH | `/portfolios/traditional/credit-requests/${id}/status` | Met à jour le statut d'une demande de crédit |
+| PATCH | `/portfolios/traditional/credit-requests/${id}` | Met à jour une demande de crédit |
+| DELETE | `/portfolios/traditional/credit-requests/${id}` | Supprime une demande de crédit |
 
-**Paramètres de requête pour GET /portfolio_inst/portfolios/traditional/credit-contracts**:
-- `portfolioId`: Filtrer par ID de portefeuille
-- `status`: Filtrer par statut du contrat
-- `clientId`: Filtrer par ID client
-- `productType`: Filtrer par type de produit
-- `dateFrom`: Date de début au format YYYY-MM-DD
-- `dateTo`: Date de fin au format YYYY-MM-DD
-- `search`: Terme de recherche
-- `sortBy`: Champ de tri
-- `sortOrder`: Ordre de tri ('asc', 'desc')
-
-### 5. Décaissements (Disbursements)
+### 4. Décaissements
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolio_inst/portfolios/traditional/disbursements` | Récupérer tous les décaissements |
-| GET | `/portfolio_inst/portfolios/traditional/disbursements/:id` | Récupérer un décaissement par son ID |
-| POST | `/portfolio_inst/portfolios/traditional/disbursements` | Créer un nouveau décaissement |
+| GET | `/portfolio_inst/portfolios/traditional/disbursements?portfolioId=${portfolioId}` | API pour les virements et déboursements/ export const disbursementApi = { / Récupère tous les vireme |
+| GET | `/portfolio_inst/portfolios/traditional/disbursements?contractId=${contractId}` | Récupère tous les virements pour un contrat |
+| GET | `/portfolio_inst/portfolios/traditional/disbursements/${id}` | Récupère un virement par son ID |
+| PUT | `/portfolio_inst/portfolios/traditional/disbursements/${id}` | Met à jour un virement existant |
+| POST | `/portfolios/traditional/disbursements/${id}/confirm` | Confirme un virement (change son statut en "effectué") |
+| POST | `/portfolios/traditional/disbursements/${id}/cancel` | Annule un virement |
 
-**Paramètres de requête pour GET /portfolio_inst/portfolios/traditional/disbursements**:
-- `contractId`: Filtrer par ID de contrat
-- `status`: Filtrer par statut du décaissement
-- `dateFrom`: Date de début au format YYYY-MM-DD
-- `dateTo`: Date de fin au format YYYY-MM-DD
-
-### 6. Remboursements (Repayments)
+### 5. Remboursements
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolio_inst/portfolios/traditional/repayments` | Récupérer tous les remboursements |
-| GET | `/portfolio_inst/portfolios/traditional/repayments/:id` | Récupérer un remboursement par son ID |
-| POST | `/portfolio_inst/portfolios/traditional/repayments` | Enregistrer un nouveau remboursement |
+| GET | `/payments/${id}` | GET /payments/${id} |
+| GET | `/payments/beneficiary/${encodeURIComponent(beneficiaryName)}` | GET /payments/beneficiary/${encodeURIComponent(beneficiaryName)} |
+| PUT | `/payments/${id}` | PUT /payments/${id} |
+| PUT | `/payments/${id}/status` | PUT /payments/${id}/status |
+| PUT | `/payments/${id}/cancel` | PUT /payments/${id}/cancel |
+| GET | `/portfolio_inst/portfolios/traditional/repayments?contractId=${contractId}` | API pour les paiements de crédit/ export const paymentApi = { / Récupère tous les paiements pour un  |
+| GET | `/portfolio_inst/portfolios/traditional/repayments?portfolioId=${portfolioId}` | Récupère tous les paiements pour un portefeuille |
+| GET | `/portfolio_inst/portfolios/traditional/repayments?portfolioId=${portfolioId}&status=late` | Récupère tous les paiements en retard pour un portefeuille |
+| GET | `/portfolio_inst/portfolios/traditional/repayments/${id}` | Récupère un paiement par son ID |
+| GET | `/portfolios/traditional/payments/${paymentId}/receipt` | Récupère un document justificatif par son ID de paiement |
+| GET | `/portfolios/traditional/payments/${paymentId}/receipt/download` | Télécharge un document justificatif |
+| POST | `/portfolios/traditional/payments/${id}` | Enregistre un nouveau paiement |
+| POST | `/portfolios/traditional/payments/${id}/cancel` | Annule un paiement |
+| POST | `/portfolios/traditional/payments/${id}/generate-receipt` | Génère un reçu de paiement |
+| GET | `/portfolios/traditional/payments/${id}/has-receipt` | Vérifie si un paiement possède un justificatif |
+| GET | `/portfolios/traditional/payments/${paymentId}/supporting-document` | Télécharge un justificatif de paiement |
+| PUT | `/portfolios/traditional/payments/${id}` | PUT /portfolios/traditional/payments/${id} |
 
-**Paramètres de requête pour GET /portfolio_inst/portfolios/traditional/repayments**:
-- `contractId`: Filtrer par ID de contrat
-- `status`: Filtrer par statut du remboursement
-- `dateFrom`: Date de début au format YYYY-MM-DD
-- `dateTo`: Date de fin au format YYYY-MM-DD
-
-### 7. Échéanciers de paiement (Payment Schedules)
-
-| Méthode | URL | Description |
-|---------|-----|-------------|
-| GET | `/portfolios/traditional/payment-schedules` | Récupérer tous les échéanciers de paiement |
-| GET | `/portfolios/traditional/payment-schedules/:id` | Récupérer un échéancier de paiement par son ID |
-| GET | `/portfolios/traditional/payment-schedules/by-contract/:contractId` | Récupérer l'échéancier de paiement d'un contrat |
-
-### 8. Documents
-
-| Méthode | URL | Description |
-|---------|-----|-------------|
-| GET | `/portfolios/traditional/documents` | Récupérer tous les documents |
-| GET | `/portfolios/traditional/documents/:id` | Récupérer un document par son ID |
-| POST | `/portfolios/traditional/documents` | Télécharger un nouveau document |
-| DELETE | `/portfolios/traditional/documents/:id` | Supprimer un document |
-
-### 9. Virements
+### 6. Documents
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/virements` | Récupérer tous les virements |
-| GET | `/virements/:id` | Récupérer un virement par son ID |
-| POST | `/virements` | Créer un nouveau virement |
+| POST | `/prospection/opportunities/${opportunityId}/documents` | POST /prospection/opportunities/${opportunityId}/documents |
 
-### 10. Prospection
+### 7. Utilisateurs
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/prospection/prospects` | Récupérer tous les prospects |
-| GET | `/prospection/prospects/:id` | Récupérer un prospect par son ID |
-| POST | `/prospection/prospects` | Créer un nouveau prospect |
-| PUT | `/prospection/prospects/:id` | Mettre à jour un prospect |
-| DELETE | `/prospection/prospects/:id` | Supprimer un prospect |
-| GET | `/prospection/stats` | Récupérer les statistiques de prospection |
-| POST | `/prospection/prospects/:id/analysis` | Analyser un prospect |
+| GET | `/users/${id}` | GET /users/${id} |
+| POST | `/users/${id}/reset-password` | POST /users/${id}/reset-password |
+| POST | `/users/${userId}/portfolios` | POST /users/${userId}/portfolios |
+| PUT | `/users/${id}` | PUT /users/${id} |
+| DELETE | `/users/${id}` | DELETE /users/${id} |
+| DELETE | `/users/${userId}/portfolios/${portfolioId}` | DELETE /users/${userId}/portfolios/${portfolioId} |
 
-### 11. Paramètres (Settings)
-
-| Méthode | URL | Description |
-|---------|-----|-------------|
-| GET | `/settings` | Récupérer tous les paramètres |
-| PUT | `/settings/:key` | Mettre à jour un paramètre |
-| GET | `/settings/webhooks` | Récupérer les configurations de webhooks |
-| POST | `/settings/webhooks` | Créer une nouvelle configuration de webhook |
-| GET | `/settings/api-keys` | Récupérer les clés API |
-| POST | `/settings/api-keys` | Créer une nouvelle clé API |
-| DELETE | `/settings/api-keys/:id` | Supprimer une clé API |
-| GET | `/settings/system/status` | Vérifier l'état du système |
-
-### 12. Utilisateurs (Users)
+### 8. Entreprises
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/users` | Récupérer tous les utilisateurs |
-| GET | `/users/:id` | Récupérer un utilisateur par son ID |
-| POST | `/users` | Créer un nouvel utilisateur |
-| PUT | `/users/:id` | Mettre à jour un utilisateur |
-| DELETE | `/users/:id` | Désactiver un utilisateur |
-| GET | `/admin/users` | Administration des utilisateurs (admin uniquement) |
-| POST | `/admin/users` | Créer un utilisateur avec des privilèges avancés (admin uniquement) |
+| GET | `/companies/${id}` | GET /companies/${id} |
+| GET | `/companies/search?q=${encodeURIComponent(searchTerm)}` | GET /companies/search?q=${encodeURIComponent(searchTerm)} |
+| PUT | `/companies/${id}` | PUT /companies/${id} |
+| DELETE | `/companies/${id}` | DELETE /companies/${id} |
+
+### 9. Gestion des risques
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/risk/central/company/${companyId}` | GET /risk/central/company/${companyId} |
+| PUT | `/risk/central/entries/${id}` | PUT /risk/central/entries/${id} |
+| GET | `/risk/credit/${companyId}` | GET /risk/credit/${companyId} |
+| GET | `/risk/leasing/${companyId}` | GET /risk/leasing/${companyId} |
+| GET | `/risk/investment/${companyId}` | GET /risk/investment/${companyId} |
+| POST | `/risk/${type}` | POST /risk/${type} |
+| PUT | `/risk/${type}/${id}` | PUT /risk/${type}/${id} |
+
+### 10. Paiements
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/payments?${params.toString()}` | GET /payments?${params.toString()} |
+
+### 11. Paramètres
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/settings/webhooks/${id}/test` | POST /settings/webhooks/${id}/test |
+| PUT | `/settings/webhooks/${id}` | PUT /settings/webhooks/${id} |
+| DELETE | `/settings/api-keys/${id}` | DELETE /settings/api-keys/${id} |
+| DELETE | `/settings/webhooks/${id}` | DELETE /settings/webhooks/${id} |
+
+### 12. Prospection
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/prospection/opportunities/${opportunityId}/activities` | POST /prospection/opportunities/${opportunityId}/activities |
+| PUT | `/prospection/opportunities/${id}` | PUT /prospection/opportunities/${id} |
+| DELETE | `/prospection/opportunities/${id}` | DELETE /prospection/opportunities/${id} |
+
+### 13. Chat et notifications
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/chat/messages/${messageId}/rating` | POST /chat/messages/${messageId}/rating |
+| DELETE | `/chat/contexts/${id}` | DELETE /chat/contexts/${id} |
+
+### 14. Autres
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| DELETE | `${API_CONFIG.endpoints.messages.deleteConversation}/${conversationId}` | DELETE ${API_CONFIG.endpoints.messages.deleteConversation}/${conversationId} |
+| PUT | `/institution/managers/${id}` | PUT /institution/managers/${id} |
+| DELETE | `/institution/managers/${id}` | DELETE /institution/managers/${id} |
+| GET | `/portfolios?type=${type}` | GET /portfolios?type=${type} |
+| GET | `/portfolios/${id}` | GET /portfolios/${id} |
+| DELETE | `/portfolios/${id}` | DELETE /portfolios/${id} |
+| POST | `req-${Date.now()}` | Crée une nouvelle demande de crédit |
+| POST | `DISB-${Date.now()}-${Math.floor(Math.random() * 1000)}` | Crée un nouveau virement |
 
 ## Exemples d'utilisation
 
@@ -245,7 +230,7 @@ Les réponses suivent un format standardisé:
 ```javascript
 const fetchPortfolios = async () => {
   try {
-    const response = await fetch('http://localhost:8000/portfolio/portfolios/traditional?page=1&limit=10&status=active', {
+    const response = await fetch('API (depuis les variables d/portfolios/traditional?page=1&limit=10&status=active', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -266,29 +251,29 @@ const fetchPortfolios = async () => {
 };
 ```
 
-### Créer un nouveau produit financier
+### Créer un nouveau contrat de crédit
 
 ```javascript
-const createFinancialProduct = async (productData) => {
+const createCreditContract = async (contractData) => {
   try {
-    const response = await fetch('http://localhost:8000/portfolio/financial-products', {
+    const response = await fetch('API (depuis les variables d/portfolio_inst/portfolios/traditional/credit-contracts/from-request', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(productData)
+      body: JSON.stringify(contractData)
     });
     
     const result = await response.json();
     
     if (result.success) {
-      return result.product;
+      return result.data;
     } else {
       throw new Error(result.message);
     }
   } catch (error) {
-    console.error('Erreur lors de la création du produit financier:', error);
+    console.error('Erreur lors de la création du contrat:', error);
     throw error;
   }
 };
@@ -299,7 +284,7 @@ const createFinancialProduct = async (productData) => {
 ```javascript
 const recordRepayment = async (repaymentData) => {
   try {
-    const response = await fetch('http://localhost:8000/portfolio/portfolio_inst/portfolios/traditional/repayments', {
+    const response = await fetch('API (depuis les variables d/portfolio_inst/portfolios/traditional/repayments', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

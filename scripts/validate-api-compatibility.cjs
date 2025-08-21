@@ -10,70 +10,107 @@
 
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
+
+// Fonction pour obtenir tous les fichiers correspondant au pattern (remplacement de glob)
+function getFiles(dir, pattern) {
+  const files = [];
+  
+  function walkDir(currentDir) {
+    const items = fs.readdirSync(currentDir);
+    
+    for (const item of items) {
+      const fullPath = path.join(currentDir, item);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+        walkDir(fullPath);
+      } else if (stat.isFile() && (item.endsWith('.ts') || item.endsWith('.tsx'))) {
+        files.push(fullPath);
+      }
+    }
+  }
+  
+  walkDir(dir);
+  return files;
+}
 
 // Chemins des fichiers à analyser
 const API_DOCS_PATH = path.join(__dirname, '..', 'PORTFOLIO_API_DOCUMENTATION.md');
 const API_CONFIG_PATH = path.join(__dirname, '..', 'src', 'config', 'api.ts');
-const API_FILES_GLOB = path.join(__dirname, '..', 'src', 'services', 'api', '**', '*.ts');
+const API_FILES_DIR = path.join(__dirname, '..', 'src', 'services', 'api');
 
 // Fonction pour extraire les endpoints de la documentation
 function extractEndpointsFromDocumentation(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const endpoints = [];
   
-  // Extraction des tableaux d'endpoints dans la documentation
-  const sections = content.split(/^### \d+\.\s+/gm);
+  // Pattern pour extraire les tableaux d'endpoints
+  const lines = content.split('\n');
+  let inTable = false;
   
-  sections.forEach(section => {
-    const tableMatches = section.match(/\| Méthode \| URL \| Description \|[\s\S]*?\n\n/g);
-    if (tableMatches) {
-      tableMatches.forEach(table => {
-        const lines = table.split('\n').filter(line => line.trim().startsWith('|'));
-        // Skip header and separator rows
-        const endpointLines = lines.slice(2);
-        
-        endpointLines.forEach(line => {
-          const columns = line.split('|').map(col => col.trim());
-          if (columns.length >= 4) {
-            const method = columns[1].trim();
-            const url = columns[2].trim().replace(/`/g, '');
-            if (url && !url.includes('...')) {
-              endpoints.push({
-                method,
-                url,
-                description: columns[3].trim()
-              });
-            }
-          }
-        });
-      });
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Détecter le début d'un tableau d'endpoints
+    if (line.includes('| Méthode | URL | Description |')) {
+      inTable = true;
+      i++; // Skip separator line
+      continue;
     }
-  });
+    
+    // Détecter la fin du tableau
+    if (inTable && (line === '' || !line.startsWith('|'))) {
+      inTable = false;
+      continue;
+    }
+    
+    // Extraire les endpoints du tableau
+    if (inTable && line.startsWith('|')) {
+      const columns = line.split('|').map(col => col.trim()).filter(col => col !== '');
+      if (columns.length >= 3) {
+        const method = columns[0].trim();
+        const url = columns[1].trim().replace(/`/g, '');
+        const description = columns[2].trim();
+        
+        // Vérifier que c'est une ligne d'endpoint valide
+        if (method && url && !url.includes('---') && !method.includes('Méthode')) {
+          endpoints.push({
+            method,
+            url,
+            description
+          });
+        }
+      }
+    }
+  }
   
   return endpoints;
 }
 
 // Fonction pour extraire l'URL de base de la configuration API
 function extractBaseUrl(filePath) {
-  const content = fs.readFileSync(filePath, 'utf8');
-  const baseUrlMatch = content.match(/baseUrl:\s*.*?['"]([^'"]*)['"]/);
-  return baseUrlMatch ? baseUrlMatch[1] : null;
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const baseUrlMatch = content.match(/baseUrl:\s*.*?['"`]([^'"`]*)['"`]/);
+    return baseUrlMatch ? baseUrlMatch[1] : 'URL non trouvée';
+  } catch (error) {
+    return 'Fichier de configuration non trouvé';
+  }
 }
 
 // Fonction pour extraire les appels API du code source
-function extractApiCalls(globPattern) {
-  const files = glob.sync(globPattern);
+function extractApiCalls(apiFilesDir) {
+  const files = getFiles(apiFilesDir);
   const apiCalls = [];
   
   files.forEach(file => {
     const content = fs.readFileSync(file, 'utf8');
     
     // Recherche des appels apiClient.get, apiClient.post, apiClient.put, apiClient.delete
-    const getMatches = content.matchAll(/apiClient\.get<[^>]*>\(`([^`]+)`/g);
-    const postMatches = content.matchAll(/apiClient\.post<[^>]*>\(`?([^`\)]+)`?/g);
-    const putMatches = content.matchAll(/apiClient\.put<[^>]*>\(`([^`]+)`/g);
-    const deleteMatches = content.matchAll(/apiClient\.delete\(`([^`]+)`/g);
+    const getMatches = [...content.matchAll(/apiClient\.get<[^>]*>\(`([^`]+)`/g)];
+    const postMatches = [...content.matchAll(/apiClient\.post<[^>]*>\(`?([^`\)]+)`?/g)];
+    const putMatches = [...content.matchAll(/apiClient\.put<[^>]*>\(`([^`]+)`/g)];
+    const deleteMatches = [...content.matchAll(/apiClient\.delete\(`([^`]+)`/g)];
     
     // Analyser les correspondances et ajouter à apiCalls
     for (const match of getMatches) {
@@ -231,7 +268,7 @@ function validateApiCompatibility() {
   // Extraire les données
   const docEndpoints = extractEndpointsFromDocumentation(API_DOCS_PATH);
   const baseUrl = extractBaseUrl(API_CONFIG_PATH);
-  const apiCalls = extractApiCalls(API_FILES_GLOB);
+  const apiCalls = extractApiCalls(API_FILES_DIR);
   
   // Comparer les endpoints
   const results = compareEndpoints(docEndpoints, apiCalls, baseUrl);
