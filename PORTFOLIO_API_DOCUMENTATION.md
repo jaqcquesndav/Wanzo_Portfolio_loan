@@ -6,7 +6,9 @@ Cette documentation décrit la structure des URLs et les endpoints disponibles p
 
 ## Informations générales
 
-- **Base URL**: `API (depuis les variables d`
+- **Base URL**: `http://localhost:8000`
+- **Préfixe API Portfolio**: `/portfolio/api/v1`
+- **URL complète**: `http://localhost:8000/portfolio/api/v1`
 - **Port API Gateway**: 8000
 - **Port Microservice Portfolio Institution**: 3005 (interne)
 
@@ -23,7 +25,13 @@ Content-Type: application/json
 ## Structure des URLs
 
 Tous les endpoints du microservice sont accessibles via l'API Gateway à l'adresse suivante:
-`API (depuis les variables d/<endpoint>`
+`http://localhost:8000/portfolio/api/v1/<endpoint>`
+
+**Structure complète**:
+- **Base**: `http://localhost:8000`
+- **Préfixe Portfolio**: `/portfolio/api/v1`
+- **Endpoint**: `/<votre-endpoint>`
+- **URL finale**: `http://localhost:8000/portfolio/api/v1/<votre-endpoint>`
 
 ## Format des réponses
 
@@ -85,7 +93,6 @@ Les réponses suivent un format standardisé:
 | DELETE | `/portfolios/traditional/${id}` | Supprime un portefeuille traditionnel |
 | GET | `/portfolios/traditional/${id}/performance?period=${period}` | Récupère les performances d'un portefeuille traditionnel |
 | GET | `/portfolios/traditional/${id}/activities?page=${page}&limit=${limit}` | Récupère l'historique des activités d'un portefeuille traditionnel |
-| PUT | `/portfolios/traditional/${id}` | PUT /portfolios/traditional/${id} |
 
 ### 2. Contrats de crédit
 
@@ -230,7 +237,7 @@ Les réponses suivent un format standardisé:
 ```javascript
 const fetchPortfolios = async () => {
   try {
-    const response = await fetch('API (depuis les variables d/portfolios/traditional?page=1&limit=10&status=active', {
+    const response = await fetch('http://localhost:8000/portfolio/api/v1/portfolios/traditional?page=1&limit=10&status=active', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -256,7 +263,7 @@ const fetchPortfolios = async () => {
 ```javascript
 const createCreditContract = async (contractData) => {
   try {
-    const response = await fetch('API (depuis les variables d/portfolio_inst/portfolios/traditional/credit-contracts/from-request', {
+    const response = await fetch('http://localhost:8000/portfolio/api/v1/portfolios/traditional/credit-contracts/from-request', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -284,7 +291,7 @@ const createCreditContract = async (contractData) => {
 ```javascript
 const recordRepayment = async (repaymentData) => {
   try {
-    const response = await fetch('API (depuis les variables d/portfolio_inst/portfolios/traditional/repayments', {
+    const response = await fetch('http://localhost:8000/portfolio/api/v1/portfolios/traditional/repayments', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

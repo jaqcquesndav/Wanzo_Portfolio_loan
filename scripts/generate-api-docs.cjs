@@ -163,7 +163,7 @@ function categorizeEndpoints(endpoints) {
 }
 
 // Fonction pour générer la documentation markdown
-function generateMarkdownDoc(categories, baseUrl) {
+function generateMarkdownDoc(categories, baseUrl, apiPrefix) {
   let markdown = `# Documentation de l'API du microservice Portfolio Institution
 
 Cette documentation décrit la structure des URLs et les endpoints disponibles pour communiquer avec le microservice Portfolio Institution via l'API Gateway.
@@ -173,6 +173,8 @@ Cette documentation décrit la structure des URLs et les endpoints disponibles p
 ## Informations générales
 
 - **Base URL**: \`${baseUrl}\`
+- **Préfixe API Portfolio**: \`${apiPrefix}\`
+- **URL complète**: \`${baseUrl}${apiPrefix}\`
 - **Port API Gateway**: 8000
 - **Port Microservice Portfolio Institution**: 3005 (interne)
 
@@ -189,7 +191,13 @@ Content-Type: application/json
 ## Structure des URLs
 
 Tous les endpoints du microservice sont accessibles via l'API Gateway à l'adresse suivante:
-\`${baseUrl}/<endpoint>\`
+\`${baseUrl}${apiPrefix}/<endpoint>\`
+
+**Structure complète**:
+- **Base**: \`${baseUrl}\`
+- **Préfixe Portfolio**: \`${apiPrefix}\`
+- **Endpoint**: \`/<votre-endpoint>\`
+- **URL finale**: \`${baseUrl}${apiPrefix}/<votre-endpoint>\`
 
 ## Format des réponses
 
@@ -274,7 +282,7 @@ Les réponses suivent un format standardisé:
 \`\`\`javascript
 const fetchPortfolios = async () => {
   try {
-    const response = await fetch('${baseUrl}/portfolios/traditional?page=1&limit=10&status=active', {
+    const response = await fetch('${baseUrl}${apiPrefix}/portfolios/traditional?page=1&limit=10&status=active', {
       headers: {
         'Authorization': \`Bearer \${token}\`,
         'Content-Type': 'application/json'
@@ -300,7 +308,7 @@ const fetchPortfolios = async () => {
 \`\`\`javascript
 const createCreditContract = async (contractData) => {
   try {
-    const response = await fetch('${baseUrl}/portfolio_inst/portfolios/traditional/credit-contracts/from-request', {
+    const response = await fetch('${baseUrl}${apiPrefix}/portfolios/traditional/credit-contracts/from-request', {
       method: 'POST',
       headers: {
         'Authorization': \`Bearer \${token}\`,
@@ -328,7 +336,7 @@ const createCreditContract = async (contractData) => {
 \`\`\`javascript
 const recordRepayment = async (repaymentData) => {
   try {
-    const response = await fetch('${baseUrl}/portfolio_inst/portfolios/traditional/repayments', {
+    const response = await fetch('${baseUrl}${apiPrefix}/portfolios/traditional/repayments', {
       method: 'POST',
       headers: {
         'Authorization': \`Bearer \${token}\`,
@@ -367,20 +375,40 @@ function generateApiDocumentation() {
   console.log('📂 Catégorisation des endpoints...');
   const categories = categorizeEndpoints(endpoints);
   
-  // Extraire l'URL de base
-  let baseUrl = 'http://localhost:8000/portfolio';
+  // Extraire l'URL de base et le préfixe API
+  let baseUrl = 'http://localhost:8000';
+  let apiPrefix = '/portfolio/api/v1';
+  
   try {
     const configContent = fs.readFileSync(configPath, 'utf8');
-    const baseUrlMatch = configContent.match(/baseUrl:\s*.*?['"`]([^'"`]*)['"`]/);
-    if (baseUrlMatch) {
-      baseUrl = baseUrlMatch[1];
+    
+    // Essayer de lire la valeur par défaut dans la config
+    const defaultUrlMatch = configContent.match(/import\.meta\.env\.VITE_API_URL\s*\|\|\s*['"`]([^'"`]*)['"`]/);
+    if (defaultUrlMatch) {
+      baseUrl = defaultUrlMatch[1];
+    }
+    
+    // Lire le préfixe API
+    const prefixMatch = configContent.match(/portfolioApiPrefix:\s*['"`]([^'"`]*)['"`]/);
+    if (prefixMatch) {
+      apiPrefix = prefixMatch[1];
+    }
+    
+    // Essayer de lire depuis le fichier .env
+    const envPath = path.join(__dirname, '..', '.env');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const envMatch = envContent.match(/VITE_API_URL\s*=\s*(.+)/);
+      if (envMatch) {
+        baseUrl = envMatch[1].trim();
+      }
     }
   } catch (error) {
     console.warn('⚠️  Impossible de lire la configuration API, utilisation de l\'URL par défaut');
   }
   
   console.log('📝 Génération de la documentation...');
-  const documentation = generateMarkdownDoc(categories, baseUrl);
+  const documentation = generateMarkdownDoc(categories, baseUrl, apiPrefix);
   
   console.log('💾 Sauvegarde de la documentation...');
   fs.writeFileSync(outputPath, documentation, 'utf8');
@@ -394,6 +422,8 @@ function generateApiDocumentation() {
   console.log(`   - Total des endpoints trouvés: ${totalEndpoints}`);
   console.log(`   - Catégories avec endpoints: ${categoriesWithEndpoints.length}`);
   console.log(`   - URL de base: ${baseUrl}`);
+  console.log(`   - Préfixe API: ${apiPrefix}`);
+  console.log(`   - URL complète: ${baseUrl}${apiPrefix}`);
   console.log(`   - Fichier généré: ${outputPath}`);
   
   console.log('\n📋 Répartition par catégorie:');
