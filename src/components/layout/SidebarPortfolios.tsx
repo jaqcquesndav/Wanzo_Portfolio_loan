@@ -104,11 +104,11 @@ export function SidebarPortfolios() {
             ) : (
               <ChevronRight className="w-4 h-4 mr-2" />
             )}
-            <div className="font-semibold text-sm uppercase tracking-wider sidebar-label mb-2">Portefeuilles</div>
+            <div className="font-semibold text-sm uppercase tracking-wider sidebar-label mb-2 text-primary-light dark:text-gray-400">Portefeuilles</div>
           </div>
           <button
             onClick={handleAddPortfolio}
-            className="w-5 h-5 flex items-center justify-center rounded-sm text-primary-light hover:text-white hover:bg-primary-dark transition-colors"
+            className="w-5 h-5 flex items-center justify-center rounded-sm text-primary-light dark:text-gray-400 hover:text-white hover:bg-primary-dark dark:hover:bg-gray-700 transition-colors"
             aria-label="Ajouter un portefeuille"
           >
             <Plus size={14} />
@@ -137,8 +137,8 @@ export function SidebarPortfolios() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`flex justify-between items-center py-2.5 px-4 rounded-md text-primary-light hover:bg-primary-dark hover:text-white cursor-pointer transition-colors duration-150 ${
-                              currentPortfolioId === portfolio.id ? 'bg-primary-dark text-white' : 'bg-transparent'
+                            className={`flex justify-between items-center py-2.5 px-4 rounded-md text-primary-light dark:text-gray-300 hover:bg-primary-dark dark:hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-150 ${
+                              currentPortfolioId === portfolio.id ? 'bg-primary-dark dark:bg-gray-700 text-white shadow-sm' : 'bg-transparent'
                             }`}
                             onClick={() => navigate(`/app/${portfolioType}/${portfolioType}/${portfolio.id}`)}
                           >

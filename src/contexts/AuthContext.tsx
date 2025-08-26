@@ -70,14 +70,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Simuler la récupération des données de l'institution
             const mockInstitution: Institution = {
               id: "123456",
-              name: "Banque Congolaise de Développement",
+              name: "Institution Financière",
               type: "bank",
               status: "active",
-              license_number: "BCC-20250101",
+              license_number: "FIN-20250101",
               license_type: "Full Banking License",
-              address: "25 Boulevard Nyiragongo, Goma",
+              address: "123 Avenue Principale, Ville",
               phone: "+243970456789",
-              email: "contact@bancongo.cd",
+              email: "contact@institution.cd",
               website: "https://www.bancongo.cd",
               legal_representative: "Patrice Lumumba",
               tax_id: "TX123456789",

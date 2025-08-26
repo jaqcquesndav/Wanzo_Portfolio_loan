@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Filter, Search, Star, X } from 'lucide-react';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
 import { Card } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
 import { Badge } from '../../../ui/Badge';
+import { Input } from '../../../ui/Input';
+import { Select } from '../../../ui/Select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/Table';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
 import { ErrorDisplay } from '../../../common/ErrorDisplay';
@@ -42,6 +45,25 @@ export function CreditContractsList({
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number} | null>(null);
+  
+  // États pour le filtrage et la recherche
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [amountRangeFilter, setAmountRangeFilter] = useState({min: '', max: ''});
+  const [dateRangeFilter, setDateRangeFilter] = useState({start: '', end: ''});
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // États pour les filtres favoris
+  const [savedFilters, setSavedFilters] = useState<Array<{
+    id: string;
+    name: string;
+    searchTerm: string;
+    statusFilter: string;
+    amountRangeFilter: {min: string; max: string};
+    dateRangeFilter: {start: string; end: string};
+  }>>([]);
+  const [showSaveFilterModal, setShowSaveFilterModal] = useState(false);
+  const [filterName, setFilterName] = useState('');
   
   const portalRoot = typeof document !== 'undefined' ? document.body : null;
   
@@ -97,6 +119,99 @@ export function CreditContractsList({
         setShowConfirmDelete(false);
       });
   }, [contractToAction, handleDeleteContract, showNotification]);
+  
+  // Fonctions pour gérer les filtres favoris
+  const saveCurrentFilter = () => {
+    if (!filterName.trim()) {
+      showNotification('Veuillez entrer un nom pour le filtre', 'warning');
+      return;
+    }
+
+    const newFilter = {
+      id: Date.now().toString(),
+      name: filterName.trim(),
+      searchTerm,
+      statusFilter,
+      amountRangeFilter: {...amountRangeFilter},
+      dateRangeFilter: {...dateRangeFilter},
+    };
+
+    setSavedFilters(prev => [...prev, newFilter]);
+    setFilterName('');
+    setShowSaveFilterModal(false);
+    showNotification(`Filtre "${newFilter.name}" sauvegardé`, 'success');
+  };
+
+  const applySavedFilter = (filter: typeof savedFilters[0]) => {
+    setSearchTerm(filter.searchTerm);
+    setStatusFilter(filter.statusFilter);
+    setAmountRangeFilter(filter.amountRangeFilter);
+    setDateRangeFilter(filter.dateRangeFilter);
+    showNotification(`Filtre "${filter.name}" appliqué`, 'success');
+  };
+
+  const deleteSavedFilter = (filterId: string) => {
+    setSavedFilters(prev => prev.filter(f => f.id !== filterId));
+    showNotification('Filtre supprimé', 'success');
+  };
+
+  const resetAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setAmountRangeFilter({min: '', max: ''});
+    setDateRangeFilter({start: '', end: ''});
+    showNotification('Tous les filtres ont été réinitialisés', 'success');
+  };
+
+  const hasActiveFilters = searchTerm || statusFilter || dateRangeFilter.start || dateRangeFilter.end || 
+    amountRangeFilter.min || amountRangeFilter.max;
+
+  // Logique de filtrage avec useMemo pour optimiser les performances
+  const filteredContracts = useMemo(() => {
+    let filtered = [...contracts];
+    
+    // Appliquer le filtre de recherche
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(contract => 
+        contract.reference?.toLowerCase().includes(term) ||
+        contract.memberName?.toLowerCase().includes(term) ||
+        contract.productName?.toLowerCase().includes(term) ||
+        contract.id?.toLowerCase().includes(term)
+      );
+    }
+    
+    // Appliquer le filtre de statut
+    if (statusFilter) {
+      filtered = filtered.filter(contract => contract.status === statusFilter);
+    }
+    
+    // Appliquer le filtre de montant
+    if (amountRangeFilter.min || amountRangeFilter.max) {
+      filtered = filtered.filter(contract => {
+        const amount = contract.amount || 0;
+        const min = amountRangeFilter.min ? parseFloat(amountRangeFilter.min) : 0;
+        const max = amountRangeFilter.max ? parseFloat(amountRangeFilter.max) : Infinity;
+        return amount >= min && amount <= max;
+      });
+    }
+    
+    // Appliquer le filtre de date
+    if (dateRangeFilter.start || dateRangeFilter.end) {
+      filtered = filtered.filter(contract => {
+        if (!contract.startDate) return false;
+        const contractDate = new Date(contract.startDate);
+        const startDate = dateRangeFilter.start ? new Date(dateRangeFilter.start) : null;
+        const endDate = dateRangeFilter.end ? new Date(dateRangeFilter.end) : null;
+        
+        if (startDate && contractDate < startDate) return false;
+        if (endDate && contractDate > endDate) return false;
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [contracts, searchTerm, statusFilter, amountRangeFilter, dateRangeFilter]);
   
   useEffect(() => {
     const handleClickOutside = () => {
@@ -172,13 +287,221 @@ export function CreditContractsList({
               </div>
             </div>
             
+            {/* Barre de recherche et filtres */}
+            <div className="mb-4 space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                {/* Barre de recherche */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="Rechercher par référence, client, produit..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
+                
+                {/* Boutons d'actions */}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center"
+                  >
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filtres {showFilters ? 'actifs' : ''}
+                    {hasActiveFilters && (
+                      <Badge variant="danger" className="ml-2 px-2 py-0 text-xs">
+                        {[searchTerm, statusFilter, dateRangeFilter.start, amountRangeFilter.min].filter(Boolean).length}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  {/* Filtres favoris */}
+                  {savedFilters.length > 0 && (
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSaveFilterModal(!showSaveFilterModal)}
+                        className="flex items-center"
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Favoris ({savedFilters.length})
+                      </Button>
+                      
+                      {showSaveFilterModal && (
+                        <div className="absolute top-full right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-10 min-w-64">
+                          <div className="p-2">
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Filtres sauvegardés
+                            </div>
+                            {savedFilters.map((filter) => (
+                              <div key={filter.id} className="flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded px-2">
+                                <button
+                                  onClick={() => applySavedFilter(filter)}
+                                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 flex-1 text-left"
+                                >
+                                  {filter.name}
+                                </button>
+                                <button
+                                  onClick={() => deleteSavedFilter(filter.id)}
+                                  className="text-red-500 hover:text-red-700 ml-2"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resetAllFilters}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Effacer
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Filtres avancés */}
+              {showFilters && (
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Statut
+                      </label>
+                      <Select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                      >
+                        <option value="">Tous les statuts</option>
+                        <option value="active">Actif</option>
+                        <option value="closed">Fermé</option>
+                        <option value="defaulted">En défaut</option>
+                        <option value="suspended">Suspendu</option>
+                        <option value="in_litigation">En litige</option>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Montant Min
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={amountRangeFilter.min}
+                        onChange={(e) => setAmountRangeFilter(prev => ({...prev, min: e.target.value}))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Montant Max
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="∞"
+                        value={amountRangeFilter.max}
+                        onChange={(e) => setAmountRangeFilter(prev => ({...prev, max: e.target.value}))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Date début
+                      </label>
+                      <Input
+                        type="date"
+                        value={dateRangeFilter.start}
+                        onChange={(e) => setDateRangeFilter(prev => ({...prev, start: e.target.value}))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Date fin
+                      </label>
+                      <Input
+                        type="date"
+                        value={dateRangeFilter.end}
+                        onChange={(e) => setDateRangeFilter(prev => ({...prev, end: e.target.value}))}
+                      />
+                    </div>
+                    
+                    <div className="md:col-span-2 lg:col-span-3 flex items-end gap-2">
+                      {hasActiveFilters && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (hasActiveFilters) {
+                              setShowSaveFilterModal(true);
+                            }
+                          }}
+                          className="flex items-center"
+                        >
+                          <Star className="w-4 h-4 mr-2" />
+                          Sauvegarder ce filtre
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Modal pour sauvegarder un filtre */}
+                  {showSaveFilterModal && hasActiveFilters && (
+                    <div className="mt-4 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Nom du filtre..."
+                          value={filterName}
+                          onChange={(e) => setFilterName(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={saveCurrentFilter}
+                          disabled={!filterName.trim()}
+                        >
+                          Sauvegarder
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowSaveFilterModal(false);
+                            setFilterName('');
+                          }}
+                        >
+                          Annuler
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
             {portfolioId && portfolioId !== 'qf3081zdd' && (
               <div className="bg-blue-50 p-3 rounded-md mb-4 text-sm">
                 <p>Note: Ces données sont générées pour le portefeuille avec l'ID: <strong>{portfolioId}</strong></p>
               </div>
             )}
             
-            {contracts.length > 0 ? (
+            {filteredContracts.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHead>
@@ -192,7 +515,7 @@ export function CreditContractsList({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {contracts.map((contract) => (
+                    {filteredContracts.map((contract) => (
                       <TableRow 
                         key={contract.id} 
                         className="interactive-table-row"
@@ -268,8 +591,15 @@ export function CreditContractsList({
                 <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun contrat trouvé</h3>
-                <p className="mt-1 text-sm text-gray-500">Commencez par créer un nouveau contrat de crédit.</p>
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  {hasActiveFilters ? 'Aucun contrat ne correspond aux critères de recherche' : 'Aucun contrat trouvé'}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {hasActiveFilters 
+                    ? 'Essayez de modifier vos critères de recherche ou de supprimer certains filtres.' 
+                    : 'Commencez par créer un nouveau contrat de crédit.'
+                  }
+                </p>
                 <div className="mt-6">
                   <Button
                     variant="primary"

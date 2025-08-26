@@ -1,4 +1,4 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, useLocation } from 'react-router-dom';
 import { X, BarChart2 } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { SidebarPortfolios } from './SidebarPortfolios';
@@ -25,6 +25,7 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
   // const institution = demoInstitution; // Remove institution from sidebar
   const { portfolioType } = useParams();
   const { portfolioType: contextPortfolioType, currentPortfolioId } = usePortfolioContext();
+  const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   
@@ -108,13 +109,35 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
   const currentPortfolio = portfolioType || contextPortfolioType;
 
   // Permissions logic can be re-implemented here if needed
+  // Function to determine if a navigation item is active
+  const isNavItemActive = (itemHref: string, to: string) => {
+    const currentPath = location.pathname;
+    
+    // Special case for dashboard - consider active if on main app route
+    if (itemHref === '/dashboard' && currentPath === `/app/${currentPortfolio}`) {
+      return true;
+    }
+    
+    // For other routes, check if current path starts with the 'to' path
+    if (to === currentPath) {
+      return true;
+    }
+    
+    // Check if we're on a sub-route of the nav item
+    if (currentPath.startsWith(to + '/')) {
+      return true;
+    }
+    
+    return false;
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const hasPermission = (..._args: unknown[]) => { return true; } // always allow for now
 
   return (
     <div 
       ref={sidebarRef}
-      className="h-full flex flex-col bg-primary dark:bg-primary overflow-hidden relative min-w-[72px] max-w-[350px] transition-all duration-200"
+      className="h-full flex flex-col bg-primary dark:bg-gray-800 overflow-hidden relative min-w-[72px] max-w-[350px] transition-all duration-200 border-r border-primary-dark dark:border-gray-700"
     >
       {/* Resizer handle */}
       <div 
@@ -158,7 +181,7 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
       </div>
       
       {/* Header */}
-      <div className="p-4 border-b border-primary-dark">
+      <div className="p-4 border-b border-primary-dark dark:border-gray-700">
         <div className="flex items-center justify-between">
           <NavLink 
             to={`/app/${currentPortfolio || 'traditional'}`} 
@@ -170,9 +193,9 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
             }}
             className="flex items-center"
           >
-            <BarChart2 className="h-7 w-7 text-white" />
+            <BarChart2 className="h-7 w-7 text-white dark:text-gray-200" />
             <div className="ml-3 sidebar-brand-text">
-              <h1 className="text-lg font-semibold text-white">
+              <h1 className="text-lg font-semibold text-white dark:text-gray-200">
                 Wanzo
               </h1>
             </div>
@@ -182,8 +205,8 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
               variant="ghost"
               size="sm"
               onClick={onClose}
-              icon={<X className="h-4 w-4 text-white" />}
-              className="lg:hidden hover:bg-primary-dark"
+              icon={<X className="h-4 w-4 text-white dark:text-gray-200" />}
+              className="lg:hidden hover:bg-primary-dark/60 dark:hover:bg-gray-700"
             />
           )}
         </div>
@@ -212,7 +235,7 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
           if (filteredItems.length === 0) return null;
           return (
             <div key={key}>
-              <h3 className="px-3 text-sm font-semibold text-primary-light uppercase tracking-wider sidebar-label mb-2">
+              <h3 className="px-3 text-sm font-semibold text-primary-light dark:text-gray-400 uppercase tracking-wider sidebar-label mb-2">
                 {section.label}
               </h3>
               <div className="mt-2 space-y-1">
@@ -237,6 +260,7 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
                       }
                     }
                   }
+                  const isActive = isNavItemActive(item.href, to);
                   return (
                     <NavLink
                       key={item.name}
@@ -248,13 +272,13 @@ export function DynamicSidebar({ onClose, onWidthChange, initialWidth = 250 }: D
                         }
                         if (onClose) onClose();
                       }}
-                      className={({ isActive }) => `
+                      className={`
                         flex items-center px-4 py-2.5 text-base font-medium rounded-md
                         transition-colors duration-200
                         will-change-auto
                         ${isActive
-                          ? 'bg-primary-dark text-white'
-                          : 'text-primary-light hover:bg-primary-dark hover:text-white'
+                          ? 'bg-primary-dark/80 dark:bg-gray-700 text-white shadow-sm'
+                          : 'text-primary-light dark:text-gray-300 hover:bg-primary-dark/60 dark:hover:bg-gray-700 hover:text-white'
                         }
                       `}
                       style={{ transition: 'background-color 0.2s, color 0.2s' }}

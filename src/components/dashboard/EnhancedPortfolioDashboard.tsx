@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Calendar, Filter, HelpCircle, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, Calendar, Filter, HelpCircle, RefreshCw, BarChart3, X } from 'lucide-react';
 import { usePortfolioType } from '../../hooks/usePortfolioType';
 import { useDashboardMetrics } from '../../hooks/useDashboardMetrics';
 import { PerformanceIndicatorCard } from './PerformanceIndicatorCard';
@@ -13,6 +13,7 @@ import { useOperations } from '../../hooks/useOperations';
 import { useConnectivity } from '../../hooks/useConnectivity';
 import { usePortfolioSectors } from '../../hooks/usePortfolioSectors';
 import { formatCurrency } from '../../utils/formatters';
+import { MultiSegmentSpinner } from '../ui/MultiSegmentSpinner';
 
 interface EnhancedPortfolioDashboardProps {
   portfolioTypeFromProps?: 'traditional' | 'investment' | 'leasing' | null | undefined;
@@ -82,6 +83,7 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('1m');
   const [showBenchmark, setShowBenchmark] = useState(true);
   const [showPortfolioSelector, setShowPortfolioSelector] = useState(false);
+  const [showSectorModal, setShowSectorModal] = useState(false);
   const { isOnline } = useConnectivity();
   
   // Récupérer les données de répartition sectorielle
@@ -340,108 +342,228 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Opérations récentes
-              </h3>
-              
-              <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="hidden sm:flex"
-                  onClick={() => refreshOperations()}
-                  disabled={!isOnline}
-                >
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  <span>Actualiser</span>
-                </Button>
-                
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="flex items-center"
-                  onClick={() => navigate(`/portfolio/${portfolioType}/operations`)}
-                >
-                  <span>Détails</span>
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
+      {/* Section Tableau des opérations récentes - Pleine largeur */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Opérations récentes
+          </h3>
+          
+          <div className="flex space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden sm:flex"
+              onClick={() => setShowSectorModal(true)}
+            >
+              <BarChart3 className="h-4 w-4 mr-1" />
+              <span>Analyse sectorielle</span>
+            </Button>
             
-            {operationsError && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm">
-                <p>
-                  Une erreur s'est produite lors du chargement des opérations.
-                  {!isOnline && " Vous êtes actuellement hors ligne. Les données affichées peuvent ne pas être à jour."}
-                </p>
-              </div>
-            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden sm:flex"
+              onClick={() => refreshOperations()}
+              disabled={!isOnline}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              <span>Actualiser</span>
+            </Button>
             
-            <RecentOperationsTable
-              operations={operations}
-              portfolioType={portfolioType as PortfolioType}
-              isLoading={operationsLoading}
-              limit={5}
-            />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="flex items-center"
+              onClick={() => navigate(`/portfolio/${portfolioType}/operations`)}
+            >
+              <span>Détails</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
         
-        <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 h-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Répartition par secteur
-            </h3>
-            
-            <div className="space-y-3">
-              {sectorLoading ? (
-                // Affichage pendant le chargement
-                <div className="space-y-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-8"></div>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5"></div>
+        {operationsError && (
+          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm">
+            <p>
+              Une erreur s'est produite lors du chargement des opérations.
+              {!isOnline && " Vous êtes actuellement hors ligne. Les données affichées peuvent ne pas être à jour."}
+            </p>
+          </div>
+        )}
+        
+        <RecentOperationsTable
+          operations={operations}
+          portfolioType={portfolioType as PortfolioType}
+          isLoading={operationsLoading}
+          limit={8}
+        />
+      </div>
+
+      {/* Modal d'analyse sectorielle */}
+      {showSectorModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Overlay */}
+            <div 
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              onClick={() => setShowSectorModal(false)}
+            ></div>
+
+            {/* Modal content */}
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-primary to-primary-hover px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <BarChart3 className="h-6 w-6 text-white" />
                     </div>
-                  ))}
-                </div>
-              ) : (
-                // Affichage des secteurs réels
-                Object.entries(sectorDistribution).map(([sector, percentage]) => (
-                  <div key={sector} className="relative">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: getSectorColor(sector) }}></div>
-                        <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                          {sector}
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {percentage}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                      <div 
-                        className="h-1.5 rounded-full" 
-                        style={{ 
-                          width: `${percentage}%`,
-                          backgroundColor: getSectorColor(sector)
-                        }}
-                      ></div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">
+                        Analyse de répartition sectorielle
+                      </h3>
+                      <p className="text-primary-light/80 text-sm">
+                        Vue détaillée de la distribution par secteur d'activité
+                      </p>
                     </div>
                   </div>
-                ))
-              )}
+                  <button
+                    onClick={() => setShowSectorModal(false)}
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5 text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 py-6">
+                {sectorLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <MultiSegmentSpinner size="large" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Répartition visuelle */}
+                    <div className="lg:col-span-2 space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Répartition détaillée
+                      </h4>
+                      <div className="space-y-4">
+                        {Object.entries(sectorDistribution)
+                          .sort(([,a], [,b]) => b - a)
+                          .map(([sector, percentage]) => (
+                          <div key={sector} className="group">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-3">
+                                <div 
+                                  className="w-4 h-4 rounded-full ring-2 ring-white shadow-sm" 
+                                  style={{ backgroundColor: getSectorColor(sector) }}
+                                ></div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {sector}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-lg font-bold text-gray-900 dark:text-white">
+                                  {percentage.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                              <div 
+                                className="h-3 rounded-full transition-all duration-700 ease-out shadow-sm"
+                                style={{ 
+                                  width: `${percentage}%`,
+                                  background: `linear-gradient(90deg, ${getSectorColor(sector)}, ${getSectorColor(sector)}dd)`
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Statistiques et insights */}
+                    <div className="space-y-6">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Statistiques clés
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        <div className="bg-gradient-to-br from-primary-light to-white dark:from-gray-700 dark:to-gray-800 rounded-xl p-4 border border-primary/10">
+                          <p className="text-xs uppercase tracking-wide text-primary font-medium mb-1">
+                            Secteur dominant
+                          </p>
+                          <p className="text-xl font-bold text-gray-900 dark:text-white">
+                            {Object.entries(sectorDistribution).length > 0 
+                              ? Object.entries(sectorDistribution).reduce((a, b) => a[1] > b[1] ? a : b)[0]
+                              : 'Aucun'
+                            }
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {Object.entries(sectorDistribution).length > 0 
+                              ? `${Object.entries(sectorDistribution).reduce((a, b) => a[1] > b[1] ? a : b)[1].toFixed(1)}% du portefeuille`
+                              : 'Aucune donnée'
+                            }
+                          </p>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-green-50 to-white dark:from-gray-700 dark:to-gray-800 rounded-xl p-4 border border-green-200/50">
+                          <p className="text-xs uppercase tracking-wide text-green-600 font-medium mb-1">
+                            Diversification
+                          </p>
+                          <p className="text-xl font-bold text-gray-900 dark:text-white">
+                            {Object.keys(sectorDistribution).length} secteurs
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {Object.keys(sectorDistribution).length >= 5 
+                              ? 'Bonne diversification' 
+                              : 'Diversification limitée'
+                            }
+                          </p>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-amber-50 to-white dark:from-gray-700 dark:to-gray-800 rounded-xl p-4 border border-amber-200/50">
+                          <p className="text-xs uppercase tracking-wide text-amber-600 font-medium mb-1">
+                            Concentration
+                          </p>
+                          <p className="text-xl font-bold text-gray-900 dark:text-white">
+                            {Object.entries(sectorDistribution).length > 0 
+                              ? `${(Object.entries(sectorDistribution)
+                                  .sort(([,a], [,b]) => b - a)
+                                  .slice(0, 3)
+                                  .reduce((sum, [, percentage]) => sum + percentage, 0)).toFixed(1)}%`
+                              : '0%'
+                            }
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Top 3 secteurs
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3">
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => setShowSectorModal(false)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Fermer
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

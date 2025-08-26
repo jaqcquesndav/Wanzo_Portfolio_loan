@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { CreditPortfolio } from '../components/portfolio/traditional/CreditPortfolio';
+import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
 
 interface Portfolio {
   id: string;
@@ -39,7 +40,7 @@ export function TraditionalPortfolioView() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <MultiSegmentSpinner size="large" />
       </div>
     );
   }
