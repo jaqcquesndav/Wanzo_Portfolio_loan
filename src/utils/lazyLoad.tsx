@@ -1,5 +1,5 @@
 import React, { ComponentType, Suspense } from 'react';
-import { AppLoading } from '../components/ui/AppLoading';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 /**
  * HOC pour le lazy loading des composants React
@@ -10,7 +10,7 @@ export function withLazyLoading<C extends ComponentType<any>>(
   LazyComponent: React.LazyExoticComponent<C>
 ): (props: React.ComponentProps<C>) => JSX.Element {
   return (props: React.ComponentProps<C>) => (
-    <Suspense fallback={<AppLoading message="Chargement du module..." />}>
+    <Suspense fallback={<LoadingScreen message="Chargement du module..." />}>
       <LazyComponent {...props} />
     </Suspense>
   );

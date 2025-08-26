@@ -13,7 +13,7 @@ import { useOperations } from '../../hooks/useOperations';
 import { useConnectivity } from '../../hooks/useConnectivity';
 import { usePortfolioSectors } from '../../hooks/usePortfolioSectors';
 import { formatCurrency } from '../../utils/formatters';
-import { MultiSegmentSpinner } from '../ui/MultiSegmentSpinner';
+import { Spinner } from '../ui/Spinner';
 
 interface EnhancedPortfolioDashboardProps {
   portfolioTypeFromProps?: 'traditional' | 'investment' | 'leasing' | null | undefined;
@@ -441,7 +441,7 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
               <div className="px-6 py-6">
                 {sectorLoading ? (
                   <div className="flex items-center justify-center h-64">
-                    <MultiSegmentSpinner size="large" />
+                    <Spinner size="lg" />
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

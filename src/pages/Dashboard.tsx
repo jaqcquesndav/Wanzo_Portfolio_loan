@@ -3,7 +3,7 @@ import { EnhancedDashboard } from '../components/dashboard/EnhancedDashboard';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
-import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
+import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
 
 export default function Dashboard() {
   const { portfolioType } = useParams<{ portfolioType: 'traditional' | 'investment' | 'leasing' }>();
@@ -27,8 +27,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <MultiSegmentSpinner size="medium" />
+      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6">
+        <DashboardSkeleton />
       </div>
     );
   }

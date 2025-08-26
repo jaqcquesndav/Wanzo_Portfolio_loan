@@ -1,6 +1,6 @@
 // src/utils/lazySuspense.tsx
 import React from 'react';
-import { AppLoading } from '../components/ui/AppLoading';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 import * as lazyComponents from '../routes/lazyRoutes';
 
 /**
@@ -8,7 +8,7 @@ import * as lazyComponents from '../routes/lazyRoutes';
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const withSuspense = <P extends Record<string, any>>(Component: React.ComponentType<P>) => (props: P) => (
-  <React.Suspense fallback={<AppLoading message="Chargement du module..." />}>
+  <React.Suspense fallback={<LoadingScreen message="Chargement du module..." />}>
     <Component {...props} />
   </React.Suspense>
 );
@@ -26,28 +26,6 @@ export const LazySuspendedComponents = {
   TraditionalPortfolioDetails: withSuspense(lazyComponents.TraditionalPortfolioDetails),
   TraditionalPortfolioView: withSuspense(lazyComponents.TraditionalPortfolioView),
 
-  // Portfolios d'investissement
-  InvestmentPortfolio: withSuspense(lazyComponents.InvestmentPortfolio),
-  InvestmentPortfolioDetails: withSuspense(lazyComponents.InvestmentPortfolioDetails),
-  InvestmentAssetDetail: withSuspense(lazyComponents.InvestmentAssetDetail),
-  InvestmentSubscriptionDetail: withSuspense(lazyComponents.InvestmentSubscriptionDetail),
-  InvestmentValuationDetail: withSuspense(lazyComponents.InvestmentValuationDetail),
-  InvestmentReportingDetail: withSuspense(lazyComponents.InvestmentReportingDetail),
-
-  // Portfolios de leasing
-  LeasingPortfolio: withSuspense(lazyComponents.LeasingPortfolio),
-  LeasingPortfolioDetails: withSuspense(lazyComponents.LeasingPortfolioDetails),
-  LeasingEquipmentDetail: withSuspense(lazyComponents.LeasingEquipmentDetail),
-  LeasingContractDetail: withSuspense(lazyComponents.LeasingContractDetail),
-  LeasingIncidentDetail: withSuspense(lazyComponents.LeasingIncidentDetail),
-  LeasingMaintenanceDetail: withSuspense(lazyComponents.LeasingMaintenanceDetail),
-  LeasingPaymentDetail: withSuspense(lazyComponents.LeasingPaymentDetail),
-  LeasingReportingDetail: withSuspense(lazyComponents.LeasingReportingDetail),
-  LeasingReservationsPage: withSuspense(lazyComponents.LeasingReservationsPage),
-  LeasingMaintenancePage: withSuspense(lazyComponents.LeasingMaintenancePage),
-  LeasingIncidentsPage: withSuspense(lazyComponents.LeasingIncidentsPage),
-  LeasingMovementsPage: withSuspense(lazyComponents.LeasingMovementsPage),
-
   // Détails des opérations
   CreditRequestDetails: withSuspense(lazyComponents.CreditRequestDetails),
   CreditContractDetail: withSuspense(lazyComponents.CreditContractDetail),
@@ -60,8 +38,9 @@ export const LazySuspendedComponents = {
   Documentation: withSuspense(lazyComponents.Documentation),
   Help: withSuspense(lazyComponents.Help),
   Settings: withSuspense(lazyComponents.Settings),
+  CurrencySettings: withSuspense(lazyComponents.CurrencySettings),
   Users: withSuspense(lazyComponents.Users),
-  InstitutionManagement: withSuspense(lazyComponents.InstitutionManagement),
+  Organization: withSuspense(lazyComponents.Organization),
   InstitutionValidation: withSuspense(lazyComponents.InstitutionValidation),
   CentralRisque: withSuspense(lazyComponents.CentralRisque),
   PortfolioNotFound: withSuspense(lazyComponents.PortfolioNotFound),

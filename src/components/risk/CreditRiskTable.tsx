@@ -7,9 +7,10 @@ import { convertScoreToRating, getCreditRatingClass } from '../../utils/creditSc
 
 interface CreditRiskTableProps {
   data: CreditRiskEntry[];
+  loading?: boolean;
 }
 
-export function CreditRiskTable({ data }: CreditRiskTableProps) {
+export function CreditRiskTable({ data, loading = false }: CreditRiskTableProps) {
   // Use the useCurrencyContext hook directly to access the currency context
   const { formatAmount } = useCurrencyContext();
   
@@ -71,6 +72,8 @@ export function CreditRiskTable({ data }: CreditRiskTableProps) {
       columns={columns}
       keyField="id"
       emptyMessage="Aucune donnée de risque crédit trouvée"
+      loading={loading}
+      loadingRows={8}
     />
   );
 }

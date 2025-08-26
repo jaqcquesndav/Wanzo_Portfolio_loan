@@ -7,9 +7,10 @@ import { convertScoreToRating, getCreditRatingClass } from '../../utils/creditSc
 
 interface LeasingRiskTableProps {
   data: LeasingRiskEntry[];
+  loading?: boolean;
 }
 
-export function LeasingRiskTable({ data }: LeasingRiskTableProps) {
+export function LeasingRiskTable({ data, loading = false }: LeasingRiskTableProps) {
   // Use the useCurrencyContext hook directly to access the currency context
   const { formatAmount } = useCurrencyContext();
   
@@ -72,6 +73,8 @@ export function LeasingRiskTable({ data }: LeasingRiskTableProps) {
       data={data}
       columns={columns}
       keyField="id"
+      loading={loading}
+      loadingRows={8}
       emptyMessage="Aucune donnée de risque leasing trouvée"
     />
   );

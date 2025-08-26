@@ -1,6 +1,6 @@
 // src/utils/withSuspense.tsx
 import { Suspense } from 'react';
-import { AppLoading } from '../components/ui/AppLoading';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 /**
  * HOC pour ajouter Suspense à n'importe quel composant lazy
@@ -10,7 +10,7 @@ export function withSuspense(Component: any) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function WithSuspense(props: any) {
     return (
-      <Suspense fallback={<AppLoading message="Chargement du module..." />}>
+      <Suspense fallback={<LoadingScreen message="Chargement du module..." />}>
         <Component {...props} />
       </Suspense>
     );

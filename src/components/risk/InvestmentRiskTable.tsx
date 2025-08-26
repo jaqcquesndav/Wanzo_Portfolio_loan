@@ -6,9 +6,10 @@ import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 
 interface InvestmentRiskTableProps {
   data: InvestmentRiskEntry[];
+  loading?: boolean;
 }
 
-export function InvestmentRiskTable({ data }: InvestmentRiskTableProps) {
+export function InvestmentRiskTable({ data, loading = false }: InvestmentRiskTableProps) {
   // Use the useCurrencyContext hook directly to access the currency context
   const { formatAmount } = useCurrencyContext();
   
@@ -62,6 +63,8 @@ export function InvestmentRiskTable({ data }: InvestmentRiskTableProps) {
       data={data}
       columns={columns}
       keyField="id"
+      loading={loading}
+      loadingRows={8}
       emptyMessage="Aucune donnée de risque investissement trouvée"
     />
   );

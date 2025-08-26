@@ -1,7 +1,7 @@
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { Shield, Lock, ArrowRight } from '../components/ui/icons';
-import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
+import { Spinner } from '../components/ui/Spinner';
 import { useState } from 'react';
 
 export default function PortfolioTypeSelector() {
@@ -90,7 +90,7 @@ export default function PortfolioTypeSelector() {
           >
             {isLoading ? (
               <>
-                <MultiSegmentSpinner size="small" />
+                <Spinner size="sm" />
                 <span>Redirection vers Auth0...</span>
               </>
             ) : (

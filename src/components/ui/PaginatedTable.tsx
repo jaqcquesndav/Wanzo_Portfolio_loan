@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Pagination } from './Pagination';
 import { useTablePagination } from '../../hooks/useTablePagination';
 import { Column } from './TableTypes';
+import { SimpleTableSkeleton } from './TableSkeleton';
 
 interface PaginatedTableProps<T> {
   data: T[];
@@ -16,6 +17,8 @@ interface PaginatedTableProps<T> {
   tdClassName?: string;
   trClassName?: string;
   emptyMessage?: string;
+  loading?: boolean;
+  loadingRows?: number;
 }
 
 export function PaginatedTable<T>({
@@ -30,7 +33,9 @@ export function PaginatedTable<T>({
   thClassName = 'px-4 py-2',
   tdClassName = 'px-4 py-2',
   trClassName = 'border-t',
-  emptyMessage = 'Aucune donnée disponible'
+  emptyMessage = 'Aucune donnée disponible',
+  loading = false,
+  loadingRows = 5
 }: PaginatedTableProps<T>) {
   const {
     paginatedData,
@@ -64,7 +69,9 @@ export function PaginatedTable<T>({
             </tr>
           </thead>
           <tbody className={tbodyClassName}>
-            {paginatedData.length === 0 ? (
+            {loading ? (
+              <SimpleTableSkeleton columns={columns.length} rows={loadingRows} />
+            ) : paginatedData.length === 0 ? (
               <tr>
                 <td 
                   colSpan={columns.length} 

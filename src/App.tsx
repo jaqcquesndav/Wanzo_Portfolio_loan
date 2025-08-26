@@ -11,7 +11,7 @@ import { GlobalPaymentOrderModal } from './components/payment/GlobalPaymentOrder
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { AppLoading } from './components/ui/AppLoading';
+import { LoadingScreen } from './components/ui/LoadingScreen';
 import { auth0Service } from './services/api/auth/auth0Service';
 import { ConnectivityProvider } from './contexts/ConnectivityContext';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -89,7 +89,7 @@ export default function App() {
 
   // Afficher l'écran de chargement pendant l'initialisation
   if (loading) {
-    return <AppLoading message="Préparation de votre environnement..." />;
+    return <LoadingScreen message="Préparation de votre environnement..." />;
   }
 
   // Afficher un indicateur de chargement si nécessaire

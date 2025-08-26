@@ -1,6 +1,6 @@
 // src/utils/lazy-components.tsx
 import { Suspense, lazy } from 'react';
-import { AppLoading } from '../components/ui/AppLoading';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 /**
  * Fonction qui crée un composant lazy avec un Suspense
@@ -11,7 +11,7 @@ export function createLazyComponent<P extends Record<string, unknown>>(path: str
   
   // Crée un composant qui enveloppe le composant lazy avec un Suspense
   const SuspendedComponent = (props: P) => (
-    <Suspense fallback={<AppLoading message="Chargement du module..." />}>
+    <Suspense fallback={<LoadingScreen message="Chargement du module..." />}>
       <LazyComp {...props} />
     </Suspense>
   );

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { CreditPortfolio } from '../components/portfolio/traditional/CreditPortfolio';
-import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 interface Portfolio {
   id: string;
@@ -39,9 +39,11 @@ export function TraditionalPortfolioView() {
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-48">
-        <MultiSegmentSpinner size="large" />
-      </div>
+      <LoadingScreen 
+        message="Chargement du portefeuille..." 
+        overlay={false} 
+        className="h-48"
+      />
     );
   }
   

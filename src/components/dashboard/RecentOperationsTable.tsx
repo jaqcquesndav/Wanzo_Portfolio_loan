@@ -6,7 +6,7 @@ import { formatDate } from '../../utils/formatters';
 import { Badge } from '../ui/Badge';
 import type { PortfolioType } from '../../types/portfolio';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
-import { MultiSegmentSpinner } from '../ui/MultiSegmentSpinner';
+import { TableSkeleton } from '../ui/TableSkeleton';
 
 // Types d'opérations spécifiques pour chaque type de portefeuille
 export type TraditionalOperation = {
@@ -257,9 +257,13 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Opérations récentes</h3>
         </div>
-        <div className="flex justify-center items-center h-64">
-          <MultiSegmentSpinner size="medium" />
-        </div>
+        <TableSkeleton 
+          rows={5} 
+          columns={6} 
+          showHeader={false}
+          showSpinner={true}
+          className="border-0 shadow-none"
+        />
       </div>
     );
   }

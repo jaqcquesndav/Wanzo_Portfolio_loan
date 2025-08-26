@@ -8,6 +8,7 @@ import { AddRiskEntryForm } from '../components/risk/AddRiskEntryForm';
 import { CreditRiskTable } from '../components/risk/CreditRiskTable';
 import { LeasingRiskTable } from '../components/risk/LeasingRiskTable';
 import { InvestmentRiskTable } from '../components/risk/InvestmentRiskTable';
+import { RiskSkeleton } from '../components/ui/RiskSkeleton';
 
 // Type pour les filtres
 interface FilterState {
@@ -314,25 +315,34 @@ export default function CentralRisque() {
         {/* Contenu des onglets */}
         <TabsContent value="credit" currentValue={activeTab}>
           {loadingCredit ? (
-            <div className="text-center py-8">Chargement des données...</div>
+            <RiskSkeleton activeTab="credit" />
           ) : (
-            <CreditRiskTable data={filterData(creditData, searchTerm, filters)} />
+            <CreditRiskTable 
+              data={filterData(creditData, searchTerm, filters)} 
+              loading={loadingCredit}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="leasing" currentValue={activeTab}>
           {loadingLeasing ? (
-            <div className="text-center py-8">Chargement des données...</div>
+            <RiskSkeleton activeTab="leasing" />
           ) : (
-            <LeasingRiskTable data={filterData(leasingData, searchTerm, filters)} />
+            <LeasingRiskTable 
+              data={filterData(leasingData, searchTerm, filters)} 
+              loading={loadingLeasing}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="investment" currentValue={activeTab}>
           {loadingInvestment ? (
-            <div className="text-center py-8">Chargement des données...</div>
+            <RiskSkeleton activeTab="investment" />
           ) : (
-            <InvestmentRiskTable data={filterData(investmentData, searchTerm, filters)} />
+            <InvestmentRiskTable 
+              data={filterData(investmentData, searchTerm, filters)} 
+              loading={loadingInvestment}
+            />
           )}
         </TabsContent>
       </Tabs>

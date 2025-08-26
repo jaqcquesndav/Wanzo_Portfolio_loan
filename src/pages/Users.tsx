@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users as UsersIcon, UserPlus, Shield, Building } from 'lucide-react';
 import { UsersList } from '../components/users/UsersList';
 import { UserFilters } from '../components/users/UserFilters';
@@ -6,9 +6,11 @@ import { CreateUserModal } from '../components/users/CreateUserModal';
 import { UserForm } from '../components/users/UserForm';
 import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/ui/Pagination';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { User, UserRole } from '../types/users';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/useAuth';
+import { useLoading } from '../hooks/useLoading';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -81,20 +83,32 @@ const mockUsers: User[] = [
 ];
 
 export default function Users() {
-  const [users] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [view] = useState<'grid' | 'table'>('table'); // Suppression de setView car non utilisé
+  const [view] = useState<'grid' | 'table'>('table');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   
   const { showNotification } = useNotification();
   const { user: currentUser } = useAuth();
+  const { isLoading, withLoading } = useLoading();
   
   // Pendant le développement, considérons l'utilisateur connecté comme Admin
-  const currentUserIsAdmin = true; // Dans un environnement de production, utiliser: currentUser?.role === 'Admin'
-  const financialInstitutionId = 'fin-001'; // Normalement récupéré depuis le contexte d'authentification
+  const currentUserIsAdmin = true;
+  const financialInstitutionId = 'fin-001';
+
+  // Charger les utilisateurs au montage du composant
+  useEffect(() => {
+    const loadUsers = async () => {
+      // Simuler un appel API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setUsers(mockUsers);
+    };
+
+    withLoading(loadUsers);
+  }, [withLoading]);
 
   const filteredUsers = users.filter(user => {
     // Recherche sur nom complet, prénom, nom, ou email
@@ -122,8 +136,12 @@ export default function Users() {
 
   const handleUpdateUser = async (userData: Partial<User>) => {
     try {
-      // API call would go here
-      console.log('Mise à jour de l\'utilisateur avec les données :', userData);
+      await withLoading(async () => {
+        // API call would go here
+        console.log('Mise à jour de l\'utilisateur avec les données :', userData);
+        // Simuler délai API
+        await new Promise(resolve => setTimeout(resolve, 500));
+      });
       showNotification('Utilisateur mis à jour avec succès', 'success');
       setEditingUser(null);
     } catch (err) {
@@ -145,13 +163,21 @@ export default function Users() {
     }
     
     try {
-      // API call would go here
+      await withLoading(async () => {
+        // API call would go here
+        await new Promise(resolve => setTimeout(resolve, 500));
+      });
       showNotification('Utilisateur supprimé avec succès', 'success');
     } catch (err) {
       showNotification('Erreur lors de la suppression', 'error');
       console.error(err);
     }
   };
+
+  // Affichage du chargement pendant le chargement initial
+  if (isLoading && users.length === 0) {
+    return <LoadingScreen message="Chargement des utilisateurs..." />;
+  }
 
   return (
     <div className="space-y-6">
@@ -166,6 +192,7 @@ export default function Users() {
           <Button
             onClick={() => setShowCreateModal(true)}
             icon={<UserPlus className="h-5 w-5" />}
+            isLoading={isLoading}
           >
             Nouvel utilisateur
           </Button>

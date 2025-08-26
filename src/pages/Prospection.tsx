@@ -13,7 +13,7 @@ import { useProspection } from '../hooks/useProspection';
 import type { Company } from '../types/company';
 import { mockCompanies } from '../data/mockCompanies';
 import { mockCompanyDetails } from '../data/mockCompanyDetails';
-import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
+import { ProspectionSkeleton } from '../components/ui/ProspectionSkeleton';
 
 export default function Prospection() {
   // Suppression du mode card/grid, on ne garde que le tableau (list) et la map
@@ -70,8 +70,8 @@ export default function Prospection() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <MultiSegmentSpinner size="medium" />
+      <div className="space-y-6 flex flex-col">
+        <ProspectionSkeleton view={view} />
       </div>
     );
   }

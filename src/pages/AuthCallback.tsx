@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppLoading } from '../components/ui/AppLoading';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { auth0Service } from '../services/api/auth/auth0Service';
 
 export default function AuthCallback() {
@@ -113,5 +113,5 @@ export default function AuthCallback() {
     );
   }
 
-  return <AppLoading message="Finalisation de votre connexion..." />;
+  return <LoadingScreen message="Finalisation de votre connexion..." />;
 }

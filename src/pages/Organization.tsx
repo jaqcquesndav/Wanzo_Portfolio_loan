@@ -2,7 +2,7 @@ import { Building2 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { formatDate } from '../utils/formatters';
 import { useOrganization } from '../hooks/useOrganization';
-import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 export default function Organization() {
   const { institutionData, isLoading } = useOrganization();
@@ -10,10 +10,11 @@ export default function Organization() {
   // Affichage du chargement
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <MultiSegmentSpinner size="medium" />
-        <span className="ml-4 text-gray-600">Chargement des données de l'institution...</span>
-      </div>
+      <LoadingScreen 
+        message="Chargement des données de l'institution..." 
+        overlay={false} 
+        className="py-12"
+      />
     );
   }
   

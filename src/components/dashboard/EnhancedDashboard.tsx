@@ -2,7 +2,7 @@
 import React from 'react';
 import { DashboardMetrics } from '../../types/dashboard';
 import EnhancedPortfolioDashboard from './EnhancedPortfolioDashboard';
-import { MultiSegmentSpinner } from '../ui/MultiSegmentSpinner';
+import { Spinner } from '../ui/Spinner';
 
 interface EnhancedDashboardProps {
   portfolioType: 'traditional' | 'investment' | 'leasing' | null | undefined;
@@ -23,7 +23,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center items-center h-24">
-        <MultiSegmentSpinner size="small" />
+        <Spinner size="md" />
       </div>
     );
   }

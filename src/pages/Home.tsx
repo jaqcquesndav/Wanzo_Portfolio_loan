@@ -7,7 +7,7 @@ import { PortfolioDetailsModal } from '../components/home/PortfolioDetailsModal'
 import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioModal';
 import { usePortfolioMetrics } from '../hooks/usePortfolioMetrics';
 import type { Portfolio } from '../types/portfolio';
-import { MultiSegmentSpinner } from '../components/ui/MultiSegmentSpinner';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 export default function Home() {
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
@@ -47,9 +47,11 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <MultiSegmentSpinner size="medium" />
-      </div>
+      <LoadingScreen 
+        message="Chargement de l'accueil..." 
+        overlay={false} 
+        className="h-64"
+      />
     );
   }
 
