@@ -1,13 +1,10 @@
 import { useEffect } from 'react';
-import { EnhancedDashboard } from '../components/dashboard/EnhancedDashboard';
-import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
+import { ProfessionalCreditDashboard } from '../components/dashboard/ProfessionalCreditDashboard';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
-import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
 
 export default function Dashboard() {
   const { portfolioType } = useParams<{ portfolioType: 'traditional' | 'investment' | 'leasing' }>();
-  const { metrics, loading, error } = useDashboardMetrics(portfolioType);
   const { setPortfolioType } = usePortfolioContext();
   const navigate = useNavigate();
 
@@ -25,32 +22,11 @@ export default function Dashboard() {
     console.log(`Dashboard synchronisé pour le type: traditional`);
   }, [portfolioType, setPortfolioType, navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6">
-        <DashboardSkeleton />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 dark:bg-red-900 p-4 rounded-lg">
-        <p className="text-red-800 dark:text-red-200">
-          Une erreur est survenue lors du chargement des données
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6 space-y-6">
-      <EnhancedDashboard
-        portfolioType={portfolioType}
-        metrics={metrics}
-        loading={loading}
-        error={error}
-      />
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6">
+      <div className="container mx-auto px-4">        
+        <ProfessionalCreditDashboard />
+      </div>
     </div>
   );
 }

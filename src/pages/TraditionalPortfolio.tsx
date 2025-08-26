@@ -12,6 +12,7 @@ import { useNotification } from '../contexts/useNotification';
 import { useTraditionalPortfolios } from '../hooks/useTraditionalPortfolios';
 import { ConnectionError } from '../components/common/ConnectionError';
 import { WelcomeNewUser } from '../components/common/WelcomeNewUser';
+import { PortfoliosSkeleton } from '../components/ui/PortfoliosSkeleton';
 import type { DefaultPortfolioFormData } from '../components/portfolio/DefaultPortfolioForm';
 
 const ITEMS_PER_PAGE = 9;
@@ -85,22 +86,12 @@ export default function TraditionalPortfolio() {
 
   // Afficher un indicateur de chargement
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <PortfoliosSkeleton />;
   }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Afficher différents états en fonction des conditions */}
-      {loading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
       {!loading && error && backendFailed && (
         <ConnectionError onRetry={refresh} />
       )}

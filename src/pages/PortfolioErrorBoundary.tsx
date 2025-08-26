@@ -1,5 +1,4 @@
-import React from 'react';
-import { useRouteError } from 'react-router-dom';
+import { useRouteError, Link } from 'react-router-dom';
 import { ResetMockDataButton } from '../components/ResetMockDataButton';
 
 export default function PortfolioErrorBoundary() {
@@ -24,7 +23,7 @@ export default function PortfolioErrorBoundary() {
         <ResetMockDataButton />
       </div>
       
-      <a href="/app" className="text-primary underline">Retour à la liste des portefeuilles</a>
+      <Link to="/app/traditional" className="text-primary underline">Retour à la liste des portefeuilles</Link>
     </div>
   );
 }

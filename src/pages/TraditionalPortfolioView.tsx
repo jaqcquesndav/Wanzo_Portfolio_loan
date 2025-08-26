@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { CreditPortfolio } from '../components/portfolio/traditional/CreditPortfolio';
-import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { PortfolioDetailsSkeleton } from '../components/ui/PortfolioDetailsSkeleton';
 
 interface Portfolio {
   id: string;
@@ -38,13 +38,7 @@ export function TraditionalPortfolioView() {
   }, [id]);
   
   if (loading) {
-    return (
-      <LoadingScreen 
-        message="Chargement du portefeuille..." 
-        overlay={false} 
-        className="h-48"
-      />
-    );
+    return <PortfolioDetailsSkeleton />;
   }
   
   if (!portfolio) {

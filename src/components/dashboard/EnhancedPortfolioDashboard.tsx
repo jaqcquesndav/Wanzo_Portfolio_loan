@@ -134,7 +134,7 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
             {!isOnline && " Vous êtes actuellement hors ligne. Veuillez vérifier votre connexion Internet."}
           </p>
           <div className="mt-6">
-            <Button onClick={() => window.location.reload()}>
+            <Button onClick={() => refreshOperations()}>
               Réessayer
             </Button>
           </div>

@@ -7,7 +7,7 @@ import { PortfolioDetailsModal } from '../components/home/PortfolioDetailsModal'
 import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioModal';
 import { usePortfolioMetrics } from '../hooks/usePortfolioMetrics';
 import type { Portfolio } from '../types/portfolio';
-import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
 
 export default function Home() {
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
@@ -46,13 +46,7 @@ export default function Home() {
   };
 
   if (loading) {
-    return (
-      <LoadingScreen 
-        message="Chargement de l'accueil..." 
-        overlay={false} 
-        className="h-64"
-      />
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {

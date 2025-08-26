@@ -2,20 +2,14 @@ import { Building2 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { formatDate } from '../utils/formatters';
 import { useOrganization } from '../hooks/useOrganization';
-import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { OrganizationSkeleton } from '../components/ui/OrganizationSkeleton';
 
 export default function Organization() {
   const { institutionData, isLoading } = useOrganization();
 
   // Affichage du chargement
   if (isLoading) {
-    return (
-      <LoadingScreen 
-        message="Chargement des données de l'institution..." 
-        overlay={false} 
-        className="py-12"
-      />
-    );
+    return <OrganizationSkeleton />;
   }
   
   // Affichage si aucune institution n'est configurée

@@ -6,7 +6,7 @@ import { CreateUserModal } from '../components/users/CreateUserModal';
 import { UserForm } from '../components/users/UserForm';
 import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/ui/Pagination';
-import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { UsersSkeleton } from '../components/ui/UsersSkeleton';
 import { User, UserRole } from '../types/users';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/useAuth';
@@ -176,7 +176,7 @@ export default function Users() {
 
   // Affichage du chargement pendant le chargement initial
   if (isLoading && users.length === 0) {
-    return <LoadingScreen message="Chargement des utilisateurs..." />;
+    return <UsersSkeleton />;
   }
 
   return (
