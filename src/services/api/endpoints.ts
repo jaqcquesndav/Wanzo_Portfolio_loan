@@ -131,10 +131,10 @@ export const API_ENDPOINTS = {
     close: (id: string) => `/portfolios/traditional/${id}/close`,
     products: (id: string) => `/portfolios/traditional/${id}/products`,
     contracts: {
-      base: '/portfolio_inst/portfolios/traditional/credit-contracts',
-      getAll: '/portfolio_inst/portfolios/traditional/credit-contracts',
-      getById: (id: string) => `/portfolio_inst/portfolios/traditional/credit-contracts/${id}`,
-      create: '/portfolio_inst/portfolios/traditional/credit-contracts/from-request',
+      base: '/portfolios/traditional/credit-contracts',
+      getAll: '/portfolios/traditional/credit-contracts',
+      getById: (id: string) => `/portfolios/traditional/credit-contracts/${id}`,
+      create: '/portfolios/traditional/credit-contracts/from-request',
     },
     creditRequests: {
       base: '/portfolios/traditional/credit-requests',
@@ -145,16 +145,16 @@ export const API_ENDPOINTS = {
       delete: (id: string) => `/portfolios/traditional/credit-requests/${id}`
     },
     disbursements: {
-      base: '/portfolio_inst/portfolios/traditional/disbursements',
-      getAll: '/portfolio_inst/portfolios/traditional/disbursements',
-      getById: (id: string) => `/portfolio_inst/portfolios/traditional/disbursements/${id}`,
-      create: '/portfolio_inst/portfolios/traditional/disbursements',
+      base: '/portfolios/traditional/disbursements',
+      getAll: '/portfolios/traditional/disbursements',
+      getById: (id: string) => `/portfolios/traditional/disbursements/${id}`,
+      create: '/portfolios/traditional/disbursements',
     },
     repayments: {
-      base: '/portfolio_inst/portfolios/traditional/repayments',
-      getAll: '/portfolio_inst/portfolios/traditional/repayments',
-      getById: (id: string) => `/portfolio_inst/portfolios/traditional/repayments/${id}`,
-      create: '/portfolio_inst/portfolios/traditional/repayments',
+      base: '/portfolios/traditional/repayments',
+      getAll: '/portfolios/traditional/repayments',
+      getById: (id: string) => `/portfolios/traditional/repayments/${id}`,
+      create: '/portfolios/traditional/repayments',
     },
     paymentSchedules: {
       base: '/portfolios/traditional/payment-schedules',

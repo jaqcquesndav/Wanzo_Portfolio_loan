@@ -22,6 +22,12 @@ export default defineConfig({
       'react-hot-toast',
       '@heroicons/react',
       'lucide-react',
+      'plotly.js/dist/plotly',
+      'react-plotly.js',
+    ],
+    exclude: [
+      'plotly.js/dist/plotly-basic',
+      'plotly.js/dist/plotly-gl2d',
     ],
     // Force la re-optimisation en cas de problème
     force: false,
@@ -37,6 +43,15 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
+          // Charts chunk for data visualization libraries
+          if (id.includes('node_modules/plotly.js/') || 
+              id.includes('node_modules/react-plotly.js/') ||
+              id.includes('node_modules/chart.js/') ||
+              id.includes('node_modules/react-chartjs-2/') ||
+              id.includes('node_modules/recharts/')) {
+            return 'charts';
+          }
+          
           // Vendor chunk for core React libraries
           if (id.includes('node_modules/react/') || 
               id.includes('node_modules/react-dom/') || 
