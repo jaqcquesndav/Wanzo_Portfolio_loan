@@ -63,7 +63,7 @@ Récupère les indicateurs clés de performance (KPIs) spécifiques aux portefeu
 #### Requête
 
 ```
-GET /dashboard/portfolio-type/traditional/kpis
+GET /portfolio/api/v1/dashboard
 ```
 
 #### Réponse
@@ -110,7 +110,7 @@ Récupère les données de performance pour un portefeuille traditionnel spécif
 #### Requête
 
 ```
-GET /dashboard/portfolio/{portfolioId}/performance?type=traditional&period={period}
+GET /portfolio/api/v1/dashboard/portfolio/{portfolioId}/performance?type={type}&period={period}
 ```
 
 #### Paramètres de requête
@@ -154,7 +154,7 @@ Récupère les données de tendance pour tous les portefeuilles, y compris le ty
 #### Requête
 
 ```
-GET /dashboard/trends?period={period}
+GET /portfolio/api/v1/dashboard/trends?period={period}
 ```
 
 #### Paramètres de requête

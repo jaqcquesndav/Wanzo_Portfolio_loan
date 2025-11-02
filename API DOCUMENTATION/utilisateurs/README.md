@@ -120,7 +120,7 @@ export interface Permission {
 
 Récupère la liste des utilisateurs avec pagination et filtrage.
 
-**Endpoint** : `GET /users`
+**Endpoint** : `GET /portfolio/api/v1/users`
 
 **Paramètres de requête** :
 - `page` (optionnel) : Numéro de la page
@@ -163,7 +163,7 @@ Récupère la liste des utilisateurs avec pagination et filtrage.
 
 Récupère les détails complets d'un utilisateur spécifique.
 
-**Endpoint** : `GET /users/{id}`
+**Endpoint** : `GET /portfolio/api/v1/users/{id}`
 
 **Paramètres de chemin** :
 - `id` : Identifiant unique de l'utilisateur
@@ -220,7 +220,7 @@ Récupère les détails complets d'un utilisateur spécifique.
 
 Crée un nouvel utilisateur dans le système.
 
-**Endpoint** : `POST /users`
+**Endpoint** : `POST /portfolio/api/v1/users`
 
 **Corps de la requête** :
 
@@ -260,7 +260,7 @@ Crée un nouvel utilisateur dans le système.
 
 Met à jour les informations d'un utilisateur existant.
 
-**Endpoint** : `PUT /users/{id}`
+**Endpoint** : `PUT /portfolio/api/v1/users/{id}`
 
 **Paramètres de chemin** :
 - `id` : Identifiant unique de l'utilisateur
@@ -296,7 +296,7 @@ Met à jour les informations d'un utilisateur existant.
 
 Supprime un utilisateur du système.
 
-**Endpoint** : `DELETE /users/{id}`
+**Endpoint** : `DELETE /portfolio/api/v1/users/{id}`
 
 **Paramètres de chemin** :
 - `id` : Identifiant unique de l'utilisateur
@@ -307,7 +307,7 @@ Supprime un utilisateur du système.
 
 Réinitialise le mot de passe d'un utilisateur et envoie un email avec les instructions.
 
-**Endpoint** : `POST /users/{id}/reset-password`
+**Endpoint** : `POST /portfolio/api/v1/users/{id}/reset-password`
 
 **Paramètres de chemin** :
 - `id` : Identifiant unique de l'utilisateur
@@ -325,7 +325,7 @@ Réinitialise le mot de passe d'un utilisateur et envoie un email avec les instr
 
 Assigne un portefeuille à un utilisateur avec un rôle spécifique.
 
-**Endpoint** : `POST /users/{userId}/portfolios`
+**Endpoint** : `POST /portfolio/api/v1/users/{userId}/portfolios`
 
 **Paramètres de chemin** :
 - `userId` : Identifiant unique de l'utilisateur
@@ -354,7 +354,7 @@ Assigne un portefeuille à un utilisateur avec un rôle spécifique.
 
 Supprime l'assignation d'un portefeuille à un utilisateur.
 
-**Endpoint** : `DELETE /users/{userId}/portfolios/{portfolioId}`
+**Endpoint** : `DELETE /portfolio/api/v1/users/{userId}/portfolios/{portfolioId}`
 
 **Paramètres de chemin** :
 - `userId` : Identifiant unique de l'utilisateur
@@ -366,7 +366,7 @@ Supprime l'assignation d'un portefeuille à un utilisateur.
 
 Récupère les informations sur l'utilisateur actuellement authentifié.
 
-**Endpoint** : `GET /users/me`
+**Endpoint** : `GET /portfolio/api/v1/users/me`
 
 **Réponse** :
 
@@ -402,7 +402,7 @@ Récupère les informations sur l'utilisateur actuellement authentifié.
 
 Met à jour les préférences de l'utilisateur actuellement authentifié.
 
-**Endpoint** : `PUT /users/me/preferences`
+**Endpoint** : `PUT /portfolio/api/v1/users/me/preferences`
 
 **Corps de la requête** :
 
@@ -443,7 +443,7 @@ Met à jour les préférences de l'utilisateur actuellement authentifié.
 
 Récupère la liste des rôles disponibles dans le système.
 
-**Endpoint** : `GET /users/roles`
+**Endpoint** : `GET /portfolio/api/v1/users/roles`
 
 **Réponse** :
 
@@ -474,7 +474,7 @@ Récupère la liste des rôles disponibles dans le système.
 
 Récupère la liste des permissions disponibles dans le système.
 
-**Endpoint** : `GET /users/permissions`
+**Endpoint** : `GET /portfolio/api/v1/users/permissions`
 
 **Réponse** :
 
@@ -499,7 +499,7 @@ Récupère la liste des permissions disponibles dans le système.
 
 Récupère les logs d'activité des utilisateurs avec filtrage.
 
-**Endpoint** : `GET /users/activity`
+**Endpoint** : `GET /portfolio/api/v1/users/activity`
 
 **Paramètres de requête** :
 - `userId` (optionnel) : Filtre par utilisateur

@@ -2,6 +2,9 @@
 
 Ce document décrit les endpoints pour la gestion des virements (décaissements) dans le cadre des portefeuilles traditionnels.
 
+> **Note importante** : Ces endpoints sont spécifiques aux déboursements de crédits traditionnels (Institution → Client). 
+> Pour les ordres de paiement génériques applicables à tous types de portefeuilles, consultez la [documentation des paiements](../paiements/README.md).
+
 ## Liste des virements
 
 Récupère la liste des virements pour un portefeuille traditionnel spécifique.

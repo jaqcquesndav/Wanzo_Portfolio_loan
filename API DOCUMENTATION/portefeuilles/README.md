@@ -8,8 +8,8 @@ Les portefeuilles traditionnels sont organisés en plusieurs modules :
 
 1. **[Demandes de Financement](./demandes/README.md)** - Gestion des demandes de financement
 2. **[Contrats de Crédit](./contrats/README.md)** - Gestion des contrats de crédit
-3. **[Virements](./virements/README.md)** - Gestion des virements (disbursements)
-4. **[Remboursements](./remboursements/README.md)** - Gestion des remboursements
+3. **[Déboursements](./virements/README.md)** - Gestion des déboursements/virements spécifiques aux crédits
+4. **[Remboursements](./remboursements/README.md)** - Gestion des remboursements des clients
 5. **[Garanties](./garanties/README.md)** - Gestion des garanties
 6. **[Paramètres](./parametres/README.md)** - Configuration des paramètres du portefeuille
 
