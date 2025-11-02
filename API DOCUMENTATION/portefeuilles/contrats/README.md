@@ -24,9 +24,9 @@ Récupère la liste des contrats de crédit pour un portefeuille traditionnel sp
 [
   {
     "id": "CC-00001",
-    "portfolio_id": "TP-00001",
+    "portfolioId": "TP-00001",
     "contract_number": "CONT-2025-001",
-    "client_id": "CL-00001",
+    "clientId": "CL-00001",
     "company_name": "Entreprise ABC",
     "product_type": "Crédit PME",
     "amount": 50000.00,
@@ -41,9 +41,9 @@ Récupère la liste des contrats de crédit pour un portefeuille traditionnel sp
   },
   {
     "id": "CC-00002",
-    "portfolio_id": "TP-00001",
+    "portfolioId": "TP-00001",
     "contract_number": "CONT-2025-002",
-    "client_id": "CL-00002",
+    "clientId": "CL-00002",
     "company_name": "Société XYZ",
     "product_type": "Crédit Investissement",
     "amount": 75000.00,
@@ -72,9 +72,9 @@ Récupère les détails complets d'un contrat de crédit spécifique.
 ```json
 {
   "id": "CC-00001",
-  "portfolio_id": "TP-00001",
+  "portfolioId": "TP-00001",
   "contract_number": "CONT-2025-001",
-  "client_id": "CL-00001",
+  "clientId": "CL-00001",
   "company_name": "Entreprise ABC",
   "product_type": "Crédit PME",
   "amount": 50000.00,
@@ -121,7 +121,10 @@ Récupère les détails complets d'un contrat de crédit spécifique.
       "principal_amount": 3750.00,
       "interest_amount": 833.33,
       "total_amount": 4583.33,
-      "status": "pending"
+      "status": "pending",
+      "installment_number": 1,
+      "remaining_amount": 46250.00,
+      "remaining_percentage": 92.5
     },
     {
       "id": "PAY-00002",
@@ -129,7 +132,10 @@ Récupère les détails complets d'un contrat de crédit spécifique.
       "principal_amount": 3750.00,
       "interest_amount": 781.25,
       "total_amount": 4531.25,
-      "status": "pending"
+      "status": "pending",
+      "installment_number": 2,
+      "remaining_amount": 42500.00,
+      "remaining_percentage": 85.0
     }
   ],
   "documents": [
@@ -156,8 +162,8 @@ Crée un nouveau contrat de crédit dans un portefeuille traditionnel.
 
 ```json
 {
-  "portfolio_id": "TP-00001",
-  "client_id": "CL-00001",
+  "portfolioId": "TP-00001",
+  "clientId": "CL-00001",
   "company_name": "Entreprise ABC",
   "product_type": "Crédit PME",
   "contract_number": "CONT-2025-003",
@@ -168,6 +174,7 @@ Crée un nouveau contrat de crédit dans un portefeuille traditionnel.
   "status": "active",
   "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution...",
   "funding_request_id": "FR-00003",
+  "amortization_method": "linear",
   "payment_schedule": [
     {
       "id": "PAY-00003",
@@ -175,7 +182,10 @@ Crée un nouveau contrat de crédit dans un portefeuille traditionnel.
       "principal_amount": 3750.00,
       "interest_amount": 833.33,
       "total_amount": 4583.33,
-      "status": "pending"
+      "status": "pending",
+      "installment_number": 1,
+      "remaining_amount": 46250.00,
+      "remaining_percentage": 92.5
     },
     {
       "id": "PAY-00004",
@@ -183,7 +193,10 @@ Crée un nouveau contrat de crédit dans un portefeuille traditionnel.
       "principal_amount": 3750.00,
       "interest_amount": 781.25,
       "total_amount": 4531.25,
-      "status": "pending"
+      "status": "pending",
+      "installment_number": 2,
+      "remaining_amount": 42500.00,
+      "remaining_percentage": 85.0
     }
   ],
   "guarantees": [
@@ -203,8 +216,8 @@ Crée un nouveau contrat de crédit dans un portefeuille traditionnel.
 ```json
 {
   "id": "CC-00003",
-  "portfolio_id": "TP-00001",
-  "client_id": "CL-00001",
+  "portfolioId": "TP-00001",
+  "clientId": "CL-00001",
   "company_name": "Entreprise ABC",
   "product_type": "Crédit PME",
   "contract_number": "CONT-2025-003",
@@ -215,6 +228,7 @@ Crée un nouveau contrat de crédit dans un portefeuille traditionnel.
   "status": "active",
   "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution...",
   "funding_request_id": "FR-00003",
+  "amortization_method": "linear",
   "created_at": "2025-07-25T15:00:00.000Z",
   "updated_at": "2025-07-25T15:00:00.000Z"
 }

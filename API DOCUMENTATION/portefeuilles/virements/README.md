@@ -306,7 +306,7 @@ Annule un virement en attente.
 
 Crée plusieurs virements en une seule opération.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/disbursements/batch`
+**Endpoint** : `POST /portfolios/traditional/disbursements/batch`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -378,7 +378,7 @@ Crée plusieurs virements en une seule opération.
 
 Récupère les détails d'un lot de virements et les virements associés.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/disbursements/batch/{batchId}`
+**Endpoint** : `GET /portfolios/traditional/disbursements/batch/{batchId}`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -439,7 +439,7 @@ Récupère les détails d'un lot de virements et les virements associés.
 
 Ajoute un nouveau document à un virement existant.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/disbursements/{disbursementId}/documents`
+**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/documents`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel

@@ -8,7 +8,7 @@ Cette API permet de gérer les garanties associées aux contrats de crédit dans
 
 Récupère la liste des garanties associées à un contrat de crédit spécifique.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees`
+**Endpoint** : `GET /portfolios/traditional/credit-contracts/{contractId}/guarantees`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -87,7 +87,7 @@ Récupère la liste des garanties associées à un contrat de crédit spécifiqu
 
 Récupère les détails complets d'une garantie spécifique.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees/{guaranteeId}`
+**Endpoint** : `GET /portfolios/traditional/credit-contracts/{contractId}/guarantees/{guaranteeId}`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -165,7 +165,7 @@ Récupère les détails complets d'une garantie spécifique.
 
 Ajoute une nouvelle garantie à un contrat de crédit existant.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees`
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{contractId}/guarantees`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -230,7 +230,7 @@ Ajoute une nouvelle garantie à un contrat de crédit existant.
 
 Met à jour les informations d'une garantie existante.
 
-**Endpoint** : `PUT /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees/{guaranteeId}`
+**Endpoint** : `PUT /portfolios/traditional/credit-contracts/{contractId}/guarantees/{guaranteeId}`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -273,7 +273,7 @@ Met à jour les informations d'une garantie existante.
 
 Valide une garantie après vérification.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees/{guaranteeId}/validate`
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{contractId}/guarantees/{guaranteeId}/validate`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -312,7 +312,7 @@ Valide une garantie après vérification.
 
 Rejette une garantie qui ne répond pas aux critères.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees/{guaranteeId}/reject`
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{contractId}/guarantees/{guaranteeId}/reject`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -348,7 +348,7 @@ Rejette une garantie qui ne répond pas aux critères.
 
 Enregistre une nouvelle évaluation de la valeur d'une garantie.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees/{guaranteeId}/revaluate`
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{contractId}/guarantees/{guaranteeId}/revaluate`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -415,7 +415,7 @@ Enregistre une nouvelle évaluation de la valeur d'une garantie.
 
 Ajoute un nouveau document à une garantie existante.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/guarantees/{guaranteeId}/documents`
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{contractId}/guarantees/{guaranteeId}/documents`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -453,7 +453,7 @@ Ajoute un nouveau document à une garantie existante.
 
 Récupère la liste des types de garanties disponibles pour le portefeuille.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/guarantee-types`
+**Endpoint** : `GET /portfolios/traditional/guarantee-types`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -562,7 +562,7 @@ Récupère la liste des types de garanties disponibles pour le portefeuille.
 
 Récupère des statistiques sur les garanties d'un portefeuille traditionnel.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/guarantees/stats`
+**Endpoint** : `GET /portfolios/traditional/guarantees/stats`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel

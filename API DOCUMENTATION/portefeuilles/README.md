@@ -41,7 +41,36 @@ Récupère la liste des portefeuilles traditionnels avec pagination et filtrage.
     "target_return": 12,
     "target_sectors": ["Commerce", "Services", "Agriculture"],
     "risk_profile": "moderate",
-    "products": [],
+    "products": [
+      {
+        "id": "prod-1",
+        "name": "Crédit PME Standard",
+        "type": "credit",
+        "description": "Crédit pour petites et moyennes entreprises",
+        "minAmount": 1000000,
+        "maxAmount": 50000000,
+        "duration": {
+          "min": 12,
+          "max": 60
+        },
+        "interestRate": {
+          "type": "fixed",
+          "value": 12.5
+        },
+        "requirements": ["Garantie bancaire", "Business plan"],
+        "acceptedGuarantees": ["Hypothèque", "Nantissement"],
+        "isPublic": true,
+        "status": "active",
+        "created_at": "2024-01-01T00:00:00.000Z",
+        "updated_at": "2024-03-15T00:00:00.000Z"
+      }
+    ],
+    "manager": {
+      "id": "mgr-123",
+      "name": "Jean Dupont",
+      "email": "jean.dupont@exemple.com",
+      "phone": "+243810123456"
+    },
     "metrics": {
       "net_value": 450000000,
       "average_return": 10.5,
@@ -66,12 +95,6 @@ Récupère la liste des portefeuilles traditionnels avec pagination et filtrage.
       "taux_impayes": 2.1,
       "taux_couverture": 98.5
     },
-    "manager": {
-      "id": "mgr-123",
-      "name": "Jean Dupont",
-      "email": "jean.dupont@exemple.com",
-      "phone": "+243810123456"
-    },
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-03-15T00:00:00.000Z"
   }
@@ -90,12 +113,16 @@ Crée un nouveau portefeuille traditionnel.
 {
   "name": "Nouveau Portefeuille PME",
   "description": "Portefeuille de crédits pour PME",
-  "manager_id": "mgr-123",
-  "institution_id": "inst-456",
+  "type": "traditional",
   "target_amount": 200000000,
   "target_return": 15,
   "target_sectors": ["Commerce", "Artisanat", "Agriculture"],
-  "risk_profile": "moderate"
+  "risk_profile": "moderate",
+  "manager": {
+    "id": "mgr-123",
+    "name": "Jean Dupont",
+    "email": "jean.dupont@exemple.com"
+  }
 }
 ```
 
@@ -106,8 +133,6 @@ Crée un nouveau portefeuille traditionnel.
   "id": "trad-3",
   "name": "Nouveau Portefeuille PME",
   "description": "Portefeuille de crédits pour PME",
-  "manager_id": "mgr-123",
-  "institution_id": "inst-456",
   "type": "traditional",
   "status": "active",
   "target_amount": 200000000,
@@ -123,7 +148,15 @@ Crée un nouveau portefeuille traditionnel.
     "volatility": 0,
     "alpha": 0,
     "beta": 0,
-    "asset_allocation": []
+    "asset_allocation": [],
+    "performance_curve": [],
+    "returns": [],
+    "benchmark": []
+  },
+  "manager": {
+    "id": "mgr-123",
+    "name": "Jean Dupont",
+    "email": "jean.dupont@exemple.com"
   },
   "created_at": "2025-08-03T15:30:00.000Z",
   "updated_at": "2025-08-03T15:30:00.000Z"
@@ -146,8 +179,6 @@ Récupère les détails complets d'un portefeuille traditionnel spécifique.
   "id": "trad-1",
   "name": "Portefeuille PME Nord-Kivu",
   "description": "Portefeuille de crédits pour PME",
-  "manager_id": "mgr-123",
-  "institution_id": "inst-456",
   "type": "traditional",
   "status": "active",
   "target_amount": 500000000,
@@ -169,6 +200,8 @@ Récupère les détails complets d'un portefeuille traditionnel spécifique.
       { "type": "Trésorerie", "percentage": 25 }
     ],
     "performance_curve": [100, 110, 120, 115, 130, 128, 140],
+    "returns": [100, 110, 120, 115, 130, 128, 140],
+    "benchmark": [100, 108, 115, 112, 125, 122, 135],
     "balance_AGE": {
       "total": 120000000,
       "echeance_0_30": 70000000,
@@ -177,13 +210,27 @@ Récupère les détails complets d'un portefeuille traditionnel spécifique.
       "echeance_91_plus": 5000000
     },
     "taux_impayes": 2.1,
-    "taux_couverture": 98.5
+    "taux_couverture": 98.5,
+    "nb_credits": 45,
+    "total_credits": 450000000,
+    "avg_credit": 10000000,
+    "nb_clients": 35,
+    "taux_rotation": 15.5,
+    "taux_provision": 2.5,
+    "taux_recouvrement": 97.8
   },
   "manager": {
     "id": "mgr-123",
     "name": "Jean Dupont",
     "email": "jean.dupont@exemple.com",
-    "phone": "+243810123456"
+    "phone": "+243810123456",
+    "role": "Gestionnaire de Portefeuille",
+    "department": "Crédit Traditionnel"
+  },
+  "management_fees": {
+    "setup_fee": 250000,
+    "annual_fee": 500000,
+    "performance_fee": 2.5
   },
   "created_at": "2024-01-01T00:00:00.000Z",
   "updated_at": "2024-03-15T00:00:00.000Z"
@@ -258,7 +305,7 @@ Met à jour les informations d'un portefeuille traditionnel existant.
 
 Supprime un portefeuille traditionnel du système.
 
-**Endpoint** : `DELETE /portfolio_inst/portfolios/traditional/{id}`
+**Endpoint** : `DELETE /portfolios/traditional/{id}`
 
 **Paramètres de chemin** :
 - `id` : Identifiant unique du portefeuille
@@ -268,54 +315,15 @@ Supprime un portefeuille traditionnel du système.
 ```json
 {
   "success": true,
-  "data": {
-    "message": "Portefeuille supprimé avec succès"
-  }
+  "message": "Portefeuille supprimé avec succès"
 }
 ```
 
-## Clôture d'un portefeuille traditionnel
+## Changement de statut d'un portefeuille traditionnel
 
-Change le statut d'un portefeuille traditionnel à 'closed'.
+Change le statut d'un portefeuille traditionnel.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{id}/close`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Corps de la requête** :
-
-```json
-{
-  "closureReason": "Objectifs atteints",
-  "closureNotes": "Tous les prêts ont été remboursés, portefeuille fermé selon le plan."
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "portfolio123",
-    "status": "closed",
-    "closureReason": "Objectifs atteints",
-    "closureNotes": "Tous les prêts ont été remboursés, portefeuille fermé selon le plan.",
-    "closedAt": "2025-07-24T16:00:00.000Z",
-    "closedBy": {
-      "id": "user123",
-      "name": "Jean Dupont"
-    }
-  }
-}
-```
-
-## Suspension d'un portefeuille traditionnel
-
-Change le statut d'un portefeuille traditionnel à 'suspended'.
-
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{id}/suspend`
+**Endpoint** : `POST /portfolios/traditional/{id}/status`
 
 **Paramètres de chemin** :
 - `id` : Identifiant unique du portefeuille
@@ -324,141 +332,24 @@ Change le statut d'un portefeuille traditionnel à 'suspended'.
 
 ```json
 {
-  "suspensionReason": "Révision des taux d'intérêt",
-  "suspensionNotes": "Suspension temporaire pour réviser la structure des taux d'intérêt."
+  "status": "inactive"
 }
 ```
+
+**Statuts valides** :
+- `active` : Actif
+- `inactive` : Inactif 
+- `pending` : En attente
+- `archived` : Archivé
 
 **Réponse réussie** (200 OK) :
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "portfolio123",
-    "status": "suspended",
-    "suspensionReason": "Révision des taux d'intérêt",
-    "suspensionNotes": "Suspension temporaire pour réviser la structure des taux d'intérêt.",
-    "suspendedAt": "2025-07-24T16:30:00.000Z",
-    "suspendedBy": {
-      "id": "user123",
-      "name": "Jean Dupont"
-    }
-  }
-}
-```
-
-## Réactivation d'un portefeuille traditionnel
-
-Change le statut d'un portefeuille traditionnel suspendu ou fermé à 'active'.
-
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{id}/reactivate`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Corps de la requête** :
-
-```json
-{
-  "reactivationReason": "Révision des taux terminée",
-  "reactivationNotes": "Nouvelle structure de taux approuvée, portefeuille réactivé."
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "portfolio123",
-    "status": "active",
-    "reactivationReason": "Révision des taux terminée",
-    "reactivationNotes": "Nouvelle structure de taux approuvée, portefeuille réactivé.",
-    "reactivatedAt": "2025-07-24T17:00:00.000Z",
-    "reactivatedBy": {
-      "id": "user123",
-      "name": "Jean Dupont"
-    }
-  }
-}
-```
-
-## Tableau de bord d'un portefeuille traditionnel
-
-Récupère les données de tableau de bord pour un portefeuille traditionnel spécifique.
-
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{id}/dashboard`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Paramètres de requête** :
-- `period` (optionnel) : Période d'analyse (week, month, quarter, year, all). Défaut: month
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "portfolio123",
-    "name": "Portefeuille PME 2025",
-    "period": "month",
-    "summary": {
-      "totalLoans": 30,
-      "activeLoans": 25,
-      "disbursedAmount": 4500000.00,
-      "outstandingAmount": 3800000.00,
-      "repaidAmount": 700000.00,
-      "overdueAmount": 50000.00
-    },
-    "performance": {
-      "delinquencyRate": 1.8,
-      "defaultRate": 0.5,
-      "interestIncomeRate": 10.2,
-      "profitability": 8.4
-    },
-    "trends": {
-      "disbursements": [
-        { "date": "2025-06-24", "amount": 200000.00 },
-        { "date": "2025-06-30", "amount": 150000.00 },
-        { "date": "2025-07-10", "amount": 300000.00 },
-        { "date": "2025-07-15", "amount": 250000.00 }
-      ],
-      "repayments": [
-        { "date": "2025-06-25", "amount": 50000.00 },
-        { "date": "2025-07-01", "amount": 100000.00 },
-        { "date": "2025-07-10", "amount": 75000.00 },
-        { "date": "2025-07-20", "amount": 125000.00 }
-      ],
-      "outstandingBalance": [
-        { "date": "2025-06-24", "amount": 3500000.00 },
-        { "date": "2025-07-01", "amount": 3550000.00 },
-        { "date": "2025-07-10", "amount": 3775000.00 },
-        { "date": "2025-07-20", "amount": 3800000.00 }
-      ]
-    },
-    "riskAnalysis": {
-      "loanSizeDistribution": [
-        { "range": "0-10000", "count": 5, "amount": 25000.00 },
-        { "range": "10001-50000", "count": 10, "amount": 300000.00 },
-        { "range": "50001-100000", "count": 8, "amount": 600000.00 },
-        { "range": "100001+", "count": 7, "amount": 2875000.00 }
-      ],
-      "sectorDistribution": [
-        { "sector": "Agriculture", "count": 8, "amount": 1000000.00 },
-        { "sector": "Commerce", "count": 10, "amount": 2000000.00 },
-        { "sector": "Services", "count": 7, "amount": 1500000.00 }
-      ],
-      "delinquencyByDuration": [
-        { "duration": "1-30 jours", "count": 3, "amount": 30000.00 },
-        { "duration": "31-90 jours", "count": 1, "amount": 15000.00 },
-        { "duration": "91+ jours", "count": 1, "amount": 5000.00 }
-      ]
-    }
-  }
+  "id": "trad-1",
+  "name": "Portefeuille PME Nord-Kivu",
+  "status": "inactive",
+  "updated_at": "2025-08-03T16:00:00.000Z"
 }
 ```
 

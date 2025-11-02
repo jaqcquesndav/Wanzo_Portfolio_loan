@@ -8,7 +8,7 @@ Cette API permet de gérer les déboursements (virements de fonds) associés aux
 
 Récupère la liste des déboursements effectués pour un contrat de crédit spécifique.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements`
+**Endpoint** : `GET /portfolios/traditional/disbursements`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -31,18 +31,32 @@ Récupère la liste des déboursements effectués pour un contrat de crédit sp�
   "data": [
     {
       "id": "disbursement1",
-      "contract_id": "contract123",
-      "contract_number": "CONT-2025-001",
-      "client_id": "client789",
-      "company_name": "Entreprise ABC",
-      "disbursement_date": "2025-01-15T09:30:00.000Z",
+      "company": "Entreprise ABC",
+      "product": "Crédit d'investissement",
       "amount": 50000.00,
-      "currency": "XOF",
-      "status": "executed",
-      "method": "bank_transfer",
-      "reference": "TRX-12345678",
-      "created_at": "2025-01-14T15:20:00.000Z",
-      "updated_at": "2025-01-15T09:30:00.000Z"
+      "status": "effectué",
+      "date": "2025-01-15T09:30:00.000Z",
+      "portfolioId": "portfolio123",
+      "contractReference": "CONT-2025-001",
+      "transactionReference": "TRX-12345678",
+      "executionDate": "2025-01-15T09:30:00.000Z",
+      "valueDate": "2025-01-15T09:30:00.000Z",
+      "debitAccount": {
+        "accountNumber": "00123456789",
+        "accountName": "Compte Principal Institution",
+        "bankName": "BCEAO",
+        "bankCode": "BC001"
+      },
+      "beneficiary": {
+        "accountNumber": "98765432100",
+        "accountName": "Compte Entreprise ABC",
+        "bankName": "Banque Commerciale",
+        "bankCode": "BC002",
+        "companyName": "Entreprise ABC",
+        "address": "123 Rue Principale, Dakar"
+      },
+      "paymentMethod": "virement",
+      "description": "Déboursement crédit d'investissement"
     }
   ],
   "meta": {
@@ -58,7 +72,7 @@ Récupère la liste des déboursements effectués pour un contrat de crédit sp�
 
 Récupère les détails complets d'un déboursement spécifique.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/{disbursementId}`
+**Endpoint** : `GET /portfolios/traditional/disbursements/{disbursementId}`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -72,23 +86,33 @@ Récupère les détails complets d'un déboursement spécifique.
   "success": true,
   "data": {
     "id": "disbursement1",
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "client_id": "client789",
-    "company_name": "Entreprise ABC",
-    "request_date": "2025-01-14T15:20:00.000Z",
-    "approval_date": "2025-01-14T16:45:00.000Z",
-    "disbursement_date": "2025-01-15T09:30:00.000Z",
+    "company": "Entreprise ABC",
+    "product": "Crédit d'investissement",
     "amount": 50000.00,
-    "currency": "XOF",
-    "status": "executed",
-    "method": "bank_transfer",
-    "reference": "TRX-12345678",
-    "transfer_details": {
-      "bank_name": "Ecobank",
-      "account_number": "CI123456789012345",
-      "account_name": "Entreprise ABC",
-      "swift_code": "ECOCCIAB",
+    "status": "effectué",
+    "date": "2025-01-15T09:30:00.000Z",
+    "portfolioId": "portfolio123",
+    "contractReference": "CONT-2025-001",
+    "transactionReference": "TRX-12345678",
+    "executionDate": "2025-01-15T09:30:00.000Z",
+    "valueDate": "2025-01-15T09:30:00.000Z",
+    "debitAccount": {
+      "accountNumber": "00123456789",
+      "accountName": "Compte Principal Institution",
+      "bankName": "BCEAO",
+      "bankCode": "BC001"
+    },
+    "beneficiary": {
+      "accountNumber": "CI123456789012345",
+      "accountName": "Entreprise ABC",
+      "bankName": "Ecobank",
+      "bankCode": "BC002",
+      "swiftCode": "ECOCCIAB",
+      "companyName": "Entreprise ABC",
+      "address": "123 Rue Principale, Abidjan"
+    },
+    "paymentMethod": "virement",
+    "description": "Premier déboursement du crédit d'investissement"
       "bank_address": "Avenue Houdaille, Plateau, Abidjan",
       "correspondent_bank": null
     },
@@ -157,7 +181,7 @@ Récupère les détails complets d'un déboursement spécifique.
 
 Crée une nouvelle demande de déboursement pour un contrat de crédit.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements`
+**Endpoint** : `POST /portfolios/traditional/disbursements`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -222,7 +246,7 @@ Crée une nouvelle demande de déboursement pour un contrat de crédit.
 
 Approuve une demande de déboursement en attente.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/{disbursementId}/approve`
+**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/approve`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -282,7 +306,7 @@ Approuve une demande de déboursement en attente.
 
 Rejette une demande de déboursement en attente.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/{disbursementId}/reject`
+**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/reject`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -324,7 +348,7 @@ Rejette une demande de déboursement en attente.
 
 Marque un déboursement approuvé comme exécuté.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/{disbursementId}/execute`
+**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/execute`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -387,7 +411,7 @@ Marque un déboursement approuvé comme exécuté.
 
 Annule un déboursement approuvé mais non encore exécuté.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/{disbursementId}/cancel`
+**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/cancel`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -427,7 +451,7 @@ Annule un déboursement approuvé mais non encore exécuté.
 
 Ajoute un nouveau document à un déboursement existant.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/{disbursementId}/documents`
+**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/documents`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -465,7 +489,7 @@ Ajoute un nouveau document à un déboursement existant.
 
 Crée un plan de déboursement par tranches pour un contrat de crédit.
 
-**Endpoint** : `POST /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/schedule`
+**Endpoint** : `POST /portfolios/traditional/disbursements/schedule`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -584,7 +608,7 @@ Crée un plan de déboursement par tranches pour un contrat de crédit.
 
 Récupère des statistiques sur les déboursements d'un contrat spécifique.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/contracts/{contractId}/disbursements/stats`
+**Endpoint** : `GET /portfolios/traditional/disbursements/stats`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
@@ -636,7 +660,7 @@ Récupère des statistiques sur les déboursements d'un contrat spécifique.
 
 Récupère des statistiques sur les déboursements d'un portefeuille traditionnel.
 
-**Endpoint** : `GET /portfolio_inst/portfolios/traditional/{portfolioId}/disbursements/stats`
+**Endpoint** : `GET /portfolios/traditional/disbursements/stats`
 
 **Paramètres de chemin** :
 - `portfolioId` : Identifiant unique du portefeuille traditionnel
