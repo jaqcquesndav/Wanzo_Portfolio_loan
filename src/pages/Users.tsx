@@ -10,80 +10,11 @@ import { UsersSkeleton } from '../components/ui/UsersSkeleton';
 import { User, UserRole } from '../types/users';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/useAuth';
-import { useLoading } from '../hooks/useLoading';
+import { useUsersApi } from '../hooks/useUsersApi';
 
 const ITEMS_PER_PAGE = 9;
 
-// Données utilisateur simulées avec la nouvelle structure
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'john@example.com',
-    emailVerified: true,
-    name: 'John Doe',
-    givenName: 'John',
-    familyName: 'Doe',
-    role: 'Admin',
-    phone: '+1234567890',
-    address: '123 Main St, City',
-    idNumber: 'AB123456',
-    idType: 'passport',
-    idStatus: 'verified',
-    userType: 'financial_institution',
-    financialInstitutionId: 'fin-001',
-    isCompanyOwner: true,
-    createdAt: '2024-01-15',
-    updatedAt: '2024-06-01',
-    language: 'fr',
-    permissions: ['manage_users', 'view_reports', 'edit_settings'],
-    tokenBalance: 100
-  },
-  {
-    id: '2',
-    email: 'jane@example.com',
-    name: 'Jane Smith',
-    givenName: 'Jane',
-    familyName: 'Smith',
-    role: 'Portfolio_Manager',
-    phone: '+3456789012',
-    userType: 'financial_institution',
-    financialInstitutionId: 'fin-001',
-    isCompanyOwner: false,
-    createdAt: '2024-02-01',
-    language: 'en'
-  },
-  {
-    id: '3',
-    email: 'robert@example.com',
-    name: 'Robert Brown',
-    givenName: 'Robert',
-    familyName: 'Brown',
-    role: 'Auditor',
-    phone: '+5678901234',
-    userType: 'financial_institution',
-    financialInstitutionId: 'fin-001',
-    isCompanyOwner: false,
-    createdAt: '2024-03-15',
-    language: 'fr'
-  },
-  {
-    id: '4',
-    email: 'maria@example.com',
-    name: 'Maria Garcia',
-    givenName: 'Maria',
-    familyName: 'Garcia',
-    role: 'User',
-    phone: '+6789012345',
-    userType: 'sme',
-    companyId: 'comp-001',
-    isCompanyOwner: true,
-    createdAt: '2024-04-10',
-    language: 'fr'
-  }
-];
-
 export default function Users() {
-  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -93,22 +24,44 @@ export default function Users() {
   
   const { showNotification } = useNotification();
   const { user: currentUser } = useAuth();
-  const { isLoading, withLoading } = useLoading();
+  
+  // Utiliser le hook API pour gérer les utilisateurs
+  const {
+    users,
+    loading,
+    error,
+    pagination,
+    loadUsers,
+    updateUser,
+    deleteUser
+  } = useUsersApi();
   
   // Pendant le développement, considérons l'utilisateur connecté comme Admin
   const currentUserIsAdmin = true;
   const financialInstitutionId = 'fin-001';
 
-  // Charger les utilisateurs au montage du composant
+  // Charger les utilisateurs avec filtres
   useEffect(() => {
-    const loadUsers = async () => {
-      // Simuler un appel API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUsers(mockUsers);
+    const filters: {
+      role?: UserRole;
+      search?: string;
+      page?: number;
+      limit?: number;
+    } = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE
     };
-
-    withLoading(loadUsers);
-  }, [withLoading]);
+    
+    if (selectedRole !== 'all') {
+      filters.role = selectedRole;
+    }
+    
+    if (searchTerm.trim()) {
+      filters.search = searchTerm.trim();
+    }
+    
+    loadUsers(filters);
+  }, [currentPage, selectedRole, searchTerm, loadUsers]);
 
   const filteredUsers = users.filter(user => {
     // Recherche sur nom complet, prénom, nom, ou email
@@ -124,29 +77,21 @@ export default function Users() {
     return matchesSearch && matchesRole;
   });
 
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = pagination.totalPages || Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers;
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
   };
 
   const handleUpdateUser = async (userData: Partial<User>) => {
+    if (!editingUser) return;
+    
     try {
-      await withLoading(async () => {
-        // API call would go here
-        console.log('Mise à jour de l\'utilisateur avec les données :', userData);
-        // Simuler délai API
-        await new Promise(resolve => setTimeout(resolve, 500));
-      });
-      showNotification('Utilisateur mis à jour avec succès', 'success');
+      await updateUser(editingUser.id, userData);
       setEditingUser(null);
     } catch (err) {
-      showNotification('Erreur lors de la mise à jour', 'error');
-      console.error(err);
+      console.error('Erreur lors de la mise à jour:', err);
     }
   };
 
@@ -163,20 +108,25 @@ export default function Users() {
     }
     
     try {
-      await withLoading(async () => {
-        // API call would go here
-        await new Promise(resolve => setTimeout(resolve, 500));
-      });
-      showNotification('Utilisateur supprimé avec succès', 'success');
+      await deleteUser(userId);
     } catch (err) {
-      showNotification('Erreur lors de la suppression', 'error');
-      console.error(err);
+      console.error('Erreur lors de la suppression:', err);
     }
   };
 
   // Affichage du chargement pendant le chargement initial
-  if (isLoading && users.length === 0) {
+  if (loading && users.length === 0) {
     return <UsersSkeleton />;
+  }
+
+  // Affichage des erreurs
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 mb-4">Erreur lors du chargement des utilisateurs</div>
+        <Button onClick={() => loadUsers()}>Réessayer</Button>
+      </div>
+    );
   }
 
   return (
@@ -192,7 +142,7 @@ export default function Users() {
           <Button
             onClick={() => setShowCreateModal(true)}
             icon={<UserPlus className="h-5 w-5" />}
-            isLoading={isLoading}
+            isLoading={loading}
           >
             Nouvel utilisateur
           </Button>
@@ -256,6 +206,8 @@ export default function Users() {
           onSuccess={() => {
             setShowCreateModal(false);
             showNotification('Utilisateur créé avec succès', 'success');
+            // Recharger la liste des utilisateurs après création
+            loadUsers();
           }}
           currentUserIsAdmin={currentUserIsAdmin}
           financialInstitutionId={financialInstitutionId}

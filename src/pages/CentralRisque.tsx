@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { Button } from '../components/ui/Button';
-import { Download, ChevronDown, CreditCard, Truck, TrendingUp, Filter, Plus } from 'lucide-react';
-import { useCentraleRisque } from '../hooks/useCentraleRisque';
-import type { CreditRiskEntry, LeasingRiskEntry, InvestmentRiskEntry } from '../data/mockCentraleRisque';
+import { Download, CreditCard, Truck, TrendingUp, Filter, Plus } from 'lucide-react';
+import { useCentraleRisqueComplete } from '../hooks/useCentraleRisqueApi';
+import type { 
+  CreditRiskEntry, 
+  LeasingRiskEntry, 
+  InvestmentRiskEntry 
+} from '../data/mockCentraleRisque';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { AddRiskEntryForm } from '../components/risk/AddRiskEntryForm';
 import { CreditRiskTable } from '../components/risk/CreditRiskTable';
 import { LeasingRiskTable } from '../components/risk/LeasingRiskTable';
 import { InvestmentRiskTable } from '../components/risk/InvestmentRiskTable';
 import { RiskSkeleton } from '../components/ui/RiskSkeleton';
+import { CentraleRisqueAdapter } from '../adapters/centraleRisqueAdapter';
 
 // Type pour les filtres
 interface FilterState {
@@ -25,65 +30,51 @@ export default function CentralRisque() {
   // État pour le modal d'ajout
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
-  // Utiliser les hooks pour charger les données
-  const { 
-    data: creditData, 
-    loading: loadingCredit, 
-    error: errorCredit,
-    refresh: refreshCredit
-  } = useCentraleRisque<CreditRiskEntry>('credit');
-  
-  const { 
-    data: leasingData, 
-    loading: loadingLeasing, 
-    error: errorLeasing,
-    refresh: refreshLeasing
-  } = useCentraleRisque<LeasingRiskEntry>('leasing');
-  
-  const { 
-    data: investmentData, 
-    loading: loadingInvestment, 
-    error: errorInvestment,
-    refresh: refreshInvestment
-  } = useCentraleRisque<InvestmentRiskEntry>('investment');
-  
-  // États pour la recherche et le filtrage
-  const [searchTerm, setSearchTerm] = useState('');
+  // États pour les filtres
   const [filters, setFilters] = useState<FilterState>({});
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Utiliser le hook API pour charger les données
+  const { 
+    entries,
+    loading,
+    error,
+    refetch
+  } = useCentraleRisqueComplete();
 
-  // Fonction pour filtrer les données
-  const filterData = <T extends { companyName: string; sector: string; institution?: string; statut?: string; coteCredit?: string }>(
-    data: T[],
-    searchTerm: string,
-    filters: FilterState
-  ): T[] => {
+  // Transformer les données API vers le format attendu par les composants
+  const creditData: CreditRiskEntry[] = entries ? CentraleRisqueAdapter.getCreditData(entries) : [];
+  const leasingData: LeasingRiskEntry[] = entries ? CentraleRisqueAdapter.getLeasingData(entries) : [];
+  const investmentData: InvestmentRiskEntry[] = entries ? CentraleRisqueAdapter.getInvestmentData(entries) : [];
+
+  // Appliquer les filtres et la recherche
+  const applyFilters = (data: CreditRiskEntry[] | LeasingRiskEntry[] | InvestmentRiskEntry[]) => {
     return data.filter(item => {
-      // Filtre par recherche
-      const matchesSearch = !searchTerm || 
-        item.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sector.toLowerCase().includes(searchTerm.toLowerCase());
-
-      // Filtre par critères
-      const matchesInstitution = !filters.institution || 
-        item.institution === filters.institution;
+      // Filtre par terme de recherche
+      if (searchTerm && !item.companyName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
       
-      const matchesStatut = !filters.statut || 
-        item.statut === filters.statut;
+      // Filtre par institution
+      if (filters.institution && item.institution !== filters.institution) {
+        return false;
+      }
       
-      const matchesCoteCredit = !filters.coteCredit || 
-        item.coteCredit === filters.coteCredit;
+      // Filtre par statut
+      if (filters.statut && item.statut !== filters.statut) {
+        return false;
+      }
       
-      const matchesSecteur = !filters.secteur || 
-        item.sector === filters.secteur;
-
-      return matchesSearch && matchesInstitution && matchesStatut && 
-             matchesCoteCredit && matchesSecteur;
+      return true;
     });
   };
 
-  // Fonction pour gérer le filtrage
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
+  const filteredCreditData = applyFilters(creditData) as CreditRiskEntry[];
+  const filteredLeasingData = applyFilters(leasingData) as LeasingRiskEntry[];
+  const filteredInvestmentData = applyFilters(investmentData) as InvestmentRiskEntry[];
+
+  // Fonction pour mettre à jour les filtres
+  const updateFilter = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({
       ...prev,
       [key]: value === 'Tous' ? undefined : value
@@ -96,6 +87,12 @@ export default function CentralRisque() {
     setSearchTerm('');
   };
 
+  // Extraire les options uniques pour les filtres
+  const getUniqueOptions = (data: CreditRiskEntry[] | LeasingRiskEntry[] | InvestmentRiskEntry[], key: keyof CreditRiskEntry | keyof LeasingRiskEntry | keyof InvestmentRiskEntry): string[] => {
+    const options = Array.from(new Set(data.map(item => String(item[key as keyof typeof item]))));
+    return ['Tous', ...options];
+  };
+
   // Fonction pour exporter les données
   const exportData = () => {
     let dataToExport;
@@ -103,15 +100,15 @@ export default function CentralRisque() {
     
     switch (activeTab) {
       case 'credit':
-        dataToExport = creditData;
+        dataToExport = filteredCreditData;
         filename = 'centrale-risque-credit.json';
         break;
       case 'leasing':
-        dataToExport = leasingData;
+        dataToExport = filteredLeasingData;
         filename = 'centrale-risque-leasing.json';
         break;
       case 'investment':
-        dataToExport = investmentData;
+        dataToExport = filteredInvestmentData;
         filename = 'centrale-risque-investment.json';
         break;
     }
@@ -129,30 +126,16 @@ export default function CentralRisque() {
     URL.revokeObjectURL(url);
   };
 
-  // Extraire les options uniques pour les filtres
-  const getUniqueOptions = (data: CreditRiskEntry[] | LeasingRiskEntry[] | InvestmentRiskEntry[], key: keyof CreditRiskEntry | keyof LeasingRiskEntry | keyof InvestmentRiskEntry): string[] => {
-    const options = Array.from(new Set(data.map(item => String(item[key as keyof typeof item]))));
-    return ['Tous', ...options];
-  };
-
   // Afficher un message d'erreur si nécessaire
-  if (
-    (activeTab === 'credit' && errorCredit) ||
-    (activeTab === 'leasing' && errorLeasing) ||
-    (activeTab === 'investment' && errorInvestment)
-  ) {
+  if (error) {
     return (
       <div className="container mx-auto p-6">
         <h1 className="text-2xl font-bold mb-6">Centrale de Risque</h1>
         <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700">
-          Une erreur est survenue lors du chargement des données.
+          Une erreur est survenue lors du chargement des données: {String(error)}
           <button 
             className="ml-4 underline" 
-            onClick={() => {
-              if (activeTab === 'credit') refreshCredit();
-              if (activeTab === 'leasing') refreshLeasing();
-              if (activeTab === 'investment') refreshInvestment();
-            }}
+            onClick={() => refetch()}
           >
             Réessayer
           </button>
@@ -182,9 +165,8 @@ export default function CentralRisque() {
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onSuccess={() => {
-          if (activeTab === 'credit') refreshCredit();
-          if (activeTab === 'leasing') refreshLeasing();
-          if (activeTab === 'investment') refreshInvestment();
+          refetch();
+          setIsAddModalOpen(false);
         }}
         riskType={activeTab}
       />
@@ -224,124 +206,90 @@ export default function CentralRisque() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Barre de recherche et filtres */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Rechercher une entreprise..."
-              className="w-full p-2 border rounded-md"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
-          >
-            <Filter className="h-4 w-4" />
-            Filtres
-            <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          </Button>
-        </div>
+        {/* Filtres et contrôles */}
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <div className="flex flex-wrap gap-4 mb-4">
+            <div className="flex-1 min-w-[200px]">
+              <input
+                type="text"
+                placeholder="Rechercher par nom de société..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              {/* Filtre Institution */}
+              <select
+                value={filters.institution || 'Tous'}
+                onChange={(e) => updateFilter('institution', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {getUniqueOptions(
+                  activeTab === 'credit' ? creditData : activeTab === 'leasing' ? leasingData : investmentData,
+                  'institution'
+                ).map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
 
-        {/* Panneau de filtres */}
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-md">
-            {/* Filtres spécifiques pour chaque type de risque */}
-            {activeTab === 'credit' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Institution</label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={filters.institution || 'Tous'}
-                    onChange={(e) => handleFilterChange('institution', e.target.value)}
-                  >
-                    {getUniqueOptions(creditData, 'institution').map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Statut</label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={filters.statut || 'Tous'}
-                    onChange={(e) => handleFilterChange('statut', e.target.value)}
-                  >
-                    {getUniqueOptions(creditData, 'statut').map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Cote crédit</label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={filters.coteCredit || 'Tous'}
-                    onChange={(e) => handleFilterChange('coteCredit', e.target.value)}
-                  >
-                    {getUniqueOptions(creditData, 'coteCredit').map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Secteur</label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={filters.secteur || 'Tous'}
-                    onChange={(e) => handleFilterChange('secteur', e.target.value)}
-                  >
-                    {getUniqueOptions(creditData, 'sector').map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            )}
+              {/* Filtre Statut */}
+              <select
+                value={filters.statut || 'Tous'}
+                onChange={(e) => updateFilter('statut', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {getUniqueOptions(
+                  activeTab === 'credit' ? creditData : activeTab === 'leasing' ? leasingData : investmentData,
+                  'statut'
+                ).map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
 
-            {/* Bouton pour réinitialiser les filtres */}
-            <div className="col-span-1 md:col-span-4 flex justify-end">
-              <Button variant="outline" onClick={resetFilters}>
-                Réinitialiser les filtres
+              <Button 
+                onClick={resetFilters} 
+                variant="outline" 
+                className="flex items-center gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                Réinitialiser
               </Button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Contenu des onglets */}
+        {/* Tables de données */}
         <TabsContent value="credit" currentValue={activeTab}>
-          {loadingCredit ? (
-            <RiskSkeleton activeTab="credit" />
+          {loading ? (
+            <RiskSkeleton />
           ) : (
             <CreditRiskTable 
-              data={filterData(creditData, searchTerm, filters)} 
-              loading={loadingCredit}
+              data={filteredCreditData}
+              loading={loading}
             />
           )}
         </TabsContent>
 
         <TabsContent value="leasing" currentValue={activeTab}>
-          {loadingLeasing ? (
-            <RiskSkeleton activeTab="leasing" />
+          {loading ? (
+            <RiskSkeleton />
           ) : (
             <LeasingRiskTable 
-              data={filterData(leasingData, searchTerm, filters)} 
-              loading={loadingLeasing}
+              data={filteredLeasingData}
+              loading={loading}
             />
           )}
         </TabsContent>
 
         <TabsContent value="investment" currentValue={activeTab}>
-          {loadingInvestment ? (
-            <RiskSkeleton activeTab="investment" />
+          {loading ? (
+            <RiskSkeleton />
           ) : (
             <InvestmentRiskTable 
-              data={filterData(investmentData, searchTerm, filters)} 
-              loading={loadingInvestment}
+              data={filteredInvestmentData}
+              loading={loading}
             />
           )}
         </TabsContent>

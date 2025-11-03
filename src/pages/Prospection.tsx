@@ -1,77 +1,134 @@
-import { useState } from 'react';
-// import { Plus } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { CompanyFilters } from '../components/prospection/CompanyFilters';
-// import { CompanyCard } from '../components/prospection/CompanyCard';
 import { CompanyListPaginated } from '../components/prospection/CompanyListPaginated';
 import { CompanyMap } from '../components/prospection/CompanyMap';
 import { ViewToggle } from '../components/prospection/ViewToggle';
 import { CompanyDetails } from '../components/prospection/CompanyDetails';
 import { MeetingScheduler } from '../components/prospection/MeetingScheduler';
-// import { NewCompanyModal } from '../components/prospection/NewCompanyModal';
-// import { Button } from '../components/ui/Button';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useProspection } from '../hooks/useProspection';
+import { companyApi } from '../services/api/shared/company.api';
 import type { Company } from '../types/company';
-import { mockCompanies } from '../data/mockCompanies';
-import { mockCompanyDetails } from '../data/mockCompanyDetails';
 import { ProspectionSkeleton } from '../components/ui/ProspectionSkeleton';
+import { Building2 } from 'lucide-react';
+import { useErrorBoundary } from '../hooks/useErrorBoundary';
 
 export default function Prospection() {
-  // Suppression du mode card/grid, on ne garde que le tableau (list) et la map
   const [view, setView] = useState<'list' | 'map'>('list');
   const [searchTerm, setSearchTerm] = useState('');
-  // const [filters, setFilters] = useState({});
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { addError } = useErrorBoundary();
   
-  // Utilisation du hook useProspection qui charge les données du localStorage
+  // Rate limiting et circuit breaker
+  const lastApiCall = useRef<number>(0);
+  const rateLimitBackoff = useRef<number>(0);
+  const apiCallInProgress = useRef<boolean>(false);
+  
+  // Utilisation du hook useProspection pour la gestion d'état local
   const {
-    companies,
-    loading,
     selectedCompany,
     setSelectedCompany,
     showMeetingScheduler,
     setShowMeetingScheduler,
-  } = useProspection(mockCompanies); // Fournir mockCompanies comme fallback
+  } = useProspection([]);
 
-  // Merge enriched details if TechInnovate Sénégal is selected
+  // Fonction pour vérifier si on peut faire un appel API
+  const canCallApi = useCallback(() => {
+    const now = Date.now();
+    const timeSinceLastCall = now - lastApiCall.current;
+    const minInterval = Math.max(10000, rateLimitBackoff.current); // Minimum 10 secondes pour Prospection
+    
+    return timeSinceLastCall >= minInterval && !apiCallInProgress.current;
+  }, []);
 
-  const handleViewDetails = (company: Company) => {
-    if (company.name === 'TechInnovate Sénégal') {
-      // Map enriched details to match Company type
-      setSelectedCompany({
-        ...company,
-        ...mockCompanyDetails,
-        sector: 'Technologies', // match mockCompanies
-        status: 'active', // match CompanyStatus type
-        financial_metrics: {
-          revenue_growth: mockCompanyDetails.financial_metrics?.revenue_growth ?? company.financial_metrics.revenue_growth,
-          profit_margin: company.financial_metrics.profit_margin,
-          cash_flow: company.financial_metrics.cash_flow,
-          debt_ratio: company.financial_metrics.debt_ratio,
-          working_capital: company.financial_metrics.working_capital,
-          credit_score: company.financial_metrics.credit_score,
-          financial_rating: company.financial_metrics.financial_rating,
-          ebitda: company.financial_metrics.ebitda,
-        },
-      });
-    } else {
+  // Charger les entreprises depuis l'API avec rate limiting
+  const loadCompanies = useCallback(async () => {
+    if (!canCallApi()) {
+      console.log('Rate limit actif, chargement différé');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      apiCallInProgress.current = true;
+      lastApiCall.current = Date.now();
+      
+      const companiesData = await companyApi.getAllCompanies();
+      setCompanies(companiesData);
+      
+      // Reset du backoff en cas de succès
+      rateLimitBackoff.current = 0;
+      
+    } catch (err) {
+      console.error('Erreur lors du chargement des entreprises:', err);
+      
+      if (err instanceof Error && err.message.includes('429')) {
+        rateLimitBackoff.current = Math.min(rateLimitBackoff.current * 2 || 15000, 120000); // Jusqu'à 2 minutes
+        addError({
+          id: `prospection-rate-limit-${Date.now()}`,
+          message: 'Trop de requêtes pour le chargement des entreprises. Réessai automatique différé.',
+          type: 'rate_limit',
+          timestamp: Date.now(),
+          details: err,
+          retryable: true
+        });
+      } else {
+        setError('Impossible de charger les entreprises');
+      }
+    } finally {
+      setLoading(false);
+      apiCallInProgress.current = false;
+    }
+  }, [canCallApi, addError]);
+
+  // Charger les données au montage
+  useEffect(() => {
+    loadCompanies();
+  }, [loadCompanies]);
+
+  // Gérer la sélection d'une entreprise avec chargement des détails
+  const handleViewDetails = async (company: Company) => {
+    try {
+      // Charger les détails complets de l'entreprise
+      const detailedCompany = await companyApi.getCompanyById(company.id);
+      setSelectedCompany(detailedCompany);
+    } catch (err) {
+      console.error('Erreur lors du chargement des détails:', err);
+      // Fallback sur les données de base
       setSelectedCompany(company);
     }
   };
 
+  // Filtrer les entreprises
   const filteredCompanies = companies.filter(company => {
-    let matches = true;
-
     if (searchTerm) {
-      matches = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                company.sector.toLowerCase().includes(searchTerm.toLowerCase());
+      return company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             company.sector.toLowerCase().includes(searchTerm.toLowerCase());
     }
-
-    return matches;
+    return true;
   });
 
+  // Gestion des états de chargement et d'erreur
   if (loading) {
     return (
       <div className="space-y-6 flex flex-col">
         <ProspectionSkeleton view={view} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 flex flex-col">
+        <ErrorState
+          error={error}
+          onRetry={loadCompanies}
+          size="lg"
+        />
       </div>
     );
   }
@@ -88,7 +145,6 @@ export default function Prospection() {
           </p>
         </div>
         <div className="flex items-center space-x-4 mt-2 md:mt-0">
-          {/* On ne propose plus que la vue liste et map */}
           <ViewToggle view={view} onViewChange={v => setView(v as 'list' | 'map')} />
         </div>
       </div>
@@ -100,7 +156,17 @@ export default function Prospection() {
         />
       </div>
 
-      {view === 'map' ? (
+      {filteredCompanies.length === 0 ? (
+        <EmptyState
+          icon={Building2}
+          title="Aucune entreprise trouvée"
+          description={searchTerm 
+            ? `Aucune entreprise ne correspond à "${searchTerm}"`
+            : 'Aucune entreprise n\'est disponible pour la prospection'
+          }
+          size="lg"
+        />
+      ) : view === 'map' ? (
         <CompanyMap
           companies={filteredCompanies}
           onSelectCompany={handleViewDetails}
@@ -130,8 +196,6 @@ export default function Prospection() {
           onSchedule={async () => {}}
         />
       )}
-
-      {/* Suppression du modal d'ajout d'entreprise */}
     </div>
   );
 }

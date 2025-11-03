@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import { companyApi } from '../services/api/shared/company.api';
 import type { Company } from '../types/company';
 import { useCompaniesData } from './useCompaniesData';
+import { useErrorBoundary } from './useErrorBoundary';
 
 // Type de base pour les paramètres de réunion
 interface MeetingData {
@@ -21,87 +22,187 @@ export function useProspection(initialCompanies: Company[] = []) {
   const [showMeetingScheduler, setShowMeetingScheduler] = useState(false);
   const [showNewCompanyModal, setShowNewCompanyModal] = useState(false);
   const { showNotification } = useNotification();
+  const { addError } = useErrorBoundary();
   
   // Utiliser le hook useCompaniesData pour accéder aux données d'entreprises du localStorage
   const { companies: localStorageCompanies, loading: loadingLocalStorage } = useCompaniesData();
+  
+  // Références pour éviter les appels multiples et gérer le rate limiting
+  const apiCallAttempted = useRef(false);
+  const lastApiCall = useRef<number>(0);
+  const rateLimitBackoff = useRef<number>(0);
+  const consecutiveFailures = useRef<number>(0);
+  const circuitBreakerOpen = useRef<boolean>(false);
+
+  // Fonction pour vérifier si on peut faire un appel API (rate limiting + circuit breaker)
+  const canCallApi = useCallback(() => {
+    // Circuit breaker: arrêter complètement les appels après trop d'échecs
+    if (circuitBreakerOpen.current) {
+      console.log('Circuit breaker activé, API désactivée temporairement');
+      return false;
+    }
+    
+    const now = Date.now();
+    const timeSinceLastCall = now - lastApiCall.current;
+    const minInterval = Math.max(5000, rateLimitBackoff.current); // Minimum 5 secondes, plus si rate limited
+    
+    return timeSinceLastCall >= minInterval;
+  }, []);
+
+  // Fonction pour gérer les erreurs de rate limiting
+  const handleRateLimitError = useCallback((error: unknown) => {
+    consecutiveFailures.current += 1;
+    rateLimitBackoff.current = Math.min(rateLimitBackoff.current * 2 || 10000, 60000); // Exponential backoff jusqu'à 1 minute
+    
+    // Ouvrir le circuit breaker après 5 échecs consécutifs
+    if (consecutiveFailures.current >= 5) {
+      circuitBreakerOpen.current = true;
+      console.warn('Circuit breaker activé après', consecutiveFailures.current, 'échecs consécutifs');
+      
+      // Réinitialiser le circuit breaker après 5 minutes
+      setTimeout(() => {
+        circuitBreakerOpen.current = false;
+        consecutiveFailures.current = 0;
+        rateLimitBackoff.current = 0;
+        console.log('Circuit breaker réinitialisé');
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+    
+    addError({
+      id: `rate-limit-${Date.now()}`,
+      message: consecutiveFailures.current >= 5 
+        ? 'API temporairement désactivée en raison de trop nombreuses requêtes. Réessai automatique dans 5 minutes.'
+        : 'Trop de requêtes. Réessai automatique dans quelques secondes.',
+      type: 'rate_limit',
+      timestamp: Date.now(),
+      details: error,
+      retryable: consecutiveFailures.current < 5
+    });
+    
+    console.warn('Taux de requêtes dépassé, backoff activé pour:', rateLimitBackoff.current, 'ms');
+  }, [addError]);
+
+  // Fonction pour réinitialiser les compteurs en cas de succès
+  const handleApiSuccess = useCallback(() => {
+    consecutiveFailures.current = 0;
+    rateLimitBackoff.current = 0;
+    circuitBreakerOpen.current = false;
+  }, []);
 
   // Définir loadCompanies avec useCallback pour éviter les dépendances cycliques
   const loadCompanies = useCallback(async (baseCompanies: Company[] | unknown[]) => {
+    // Éviter les appels multiples simultanés
+    if (apiCallAttempted.current) {
+      console.log('Appel API déjà en cours, ignorer...');
+      return;
+    }
+    
     try {
       setLoading(true);
-      // Toujours utiliser les données de base pour garantir que toutes les entreprises sont visibles
-      // dans l'espace de prospection, qui est un espace public
       let allCompanies = [...baseCompanies] as Company[];
       
-      try {
-        // Tenter de charger des données supplémentaires depuis l'API si disponible
-        const apiData = await companyApi.getAllCompanies();
-        // Combine les données d'API avec les données de base, en évitant les doublons par ID
-        const apiIds = new Set(apiData.map((company: Company) => company.id));
-        const uniqueBaseCompanies = allCompanies.filter(company => !apiIds.has(company.id));
-        allCompanies = [...apiData, ...uniqueBaseCompanies];
-      } catch {
-        // En cas d'échec de l'API, utiliser uniquement les données de base
-        // Aucune notification d'erreur car les données de base sont disponibles
-        console.warn('Impossible de charger les données depuis l\'API, utilisation des données de base');
+      // Vérifier le rate limiting avant d'appeler l'API
+      if (canCallApi()) {
+        apiCallAttempted.current = true;
+        lastApiCall.current = Date.now();
+        
+        try {
+          // Tenter de charger des données supplémentaires depuis l'API si disponible
+          const apiData = await companyApi.getAllCompanies();
+          
+          // Reset du backoff en cas de succès
+          handleApiSuccess();
+          
+          // Combine les données d'API avec les données de base, en évitant les doublons par ID
+          const apiIds = new Set(apiData.map((company: Company) => company.id));
+          const uniqueBaseCompanies = allCompanies.filter(company => !apiIds.has(company.id));
+          allCompanies = [...apiData, ...uniqueBaseCompanies];
+          
+        } catch (error: unknown) {
+          // Gestion spécifique des erreurs 429
+          if (error instanceof Error && error.message.includes('429')) {
+            handleRateLimitError(error);
+          } else {
+            // Autres erreurs API - ne pas montrer de notification intrusive
+            console.warn('Impossible de charger les données depuis l\'API, utilisation des données de base');
+          }
+        } finally {
+          apiCallAttempted.current = false;
+        }
+      } else {
+        console.log('Rate limit actif, utilisation des données de base uniquement');
       }
       
       setCompanies(allCompanies);
-    } catch {
+    } catch (err) {
       showNotification('Erreur lors du chargement des entreprises', 'error');
       // En cas d'erreur, utiliser au moins les données initiales
       setCompanies(baseCompanies as Company[]);
+      console.error('Erreur dans loadCompanies:', err);
     } finally {
       setLoading(false);
     }
-  }, [showNotification]);
+  }, [showNotification, canCallApi, handleRateLimitError, handleApiSuccess]);
+
+  // Séparer la logique de formatage des données
+  const formatCompanies = useCallback((dataToFormat: unknown[]): Company[] => {
+    return dataToFormat.map(company => {
+      // Si c'est déjà un objet Company complet, le retourner tel quel
+      if (typeof company === 'object' && company !== null && 'financial_metrics' in company && 'esg_metrics' in company) {
+        return company as Company;
+      }
+      
+      // Sinon, créer un objet Company minimal avec les données disponibles
+      const comp = company as Record<string, unknown>;
+      return {
+        id: String(comp.id || ''),
+        name: String(comp.name || ''),
+        sector: String(comp.sector || ''),
+        status: String(comp.status || ''),
+        size: 'small' as const,
+        annual_revenue: typeof comp.annual_revenue === 'number' ? comp.annual_revenue : 0,
+        employee_count: typeof comp.employee_count === 'number' ? comp.employee_count : 0,
+        website_url: '',
+        pitch_deck_url: '',
+        financial_metrics: {
+          revenue_growth: 0,
+          profit_margin: 0,
+          cash_flow: 0,
+          debt_ratio: 0,
+          working_capital: 0,
+          credit_score: 0,
+          financial_rating: 'C' as const
+        },
+        esg_metrics: {
+          carbon_footprint: 0,
+          environmental_rating: 'C' as const,
+          social_rating: 'C' as const,
+          governance_rating: 'C' as const,
+          gender_ratio: {
+            male: 50,
+            female: 50
+          }
+        },
+        created_at: '',
+        updated_at: ''
+      } as Company;
+    });
+  }, []);
 
   useEffect(() => {
-    // Si les données du localStorage sont chargées, les utiliser
-    if (!loadingLocalStorage && localStorageCompanies.length > 0) {
-      // Convertir les données du localStorage au format Company
-      const formattedCompanies = localStorageCompanies.map(company => {
-        // Créer un objet Company minimal avec les données disponibles
-        return {
-          id: company.id,
-          name: company.name,
-          sector: company.sector,
-          status: company.status,
-          size: 'small', // Valeur par défaut
-          annual_revenue: typeof company.annual_revenue === 'number' ? company.annual_revenue : 0,
-          employee_count: typeof company.employee_count === 'number' ? company.employee_count : 0,
-          website_url: '',
-          pitch_deck_url: '',
-          financial_metrics: {
-            revenue_growth: 0,
-            profit_margin: 0,
-            cash_flow: 0,
-            debt_ratio: 0,
-            working_capital: 0,
-            credit_score: 0,
-            financial_rating: 'C'
-          },
-          esg_metrics: {
-            carbon_footprint: 0,
-            environmental_rating: 'C',
-            social_rating: 'C',
-            governance_rating: 'C',
-            gender_ratio: {
-              male: 50,
-              female: 50
-            }
-          },
-          created_at: '',
-          updated_at: ''
-        } as Company;
-      });
+    // Éviter les effets multiples - utiliser une seule source de données
+    if (!loadingLocalStorage) {
+      const dataToUse = localStorageCompanies.length > 0 ? localStorageCompanies : initialCompanies;
       
-      loadCompanies(formattedCompanies);
-    } else {
-      // Sinon, utiliser les données initiales
-      loadCompanies(initialCompanies);
+      if (dataToUse.length > 0) {
+        const formattedCompanies = formatCompanies(dataToUse);
+        loadCompanies(formattedCompanies);
+      } else {
+        setLoading(false);
+      }
     }
-  }, [loadingLocalStorage, localStorageCompanies, initialCompanies, loadCompanies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingLocalStorage, localStorageCompanies, initialCompanies, formatCompanies]); // loadCompanies volontairement exclu pour éviter la boucle
 
   const handleContact = async (company: Company) => {
     try {

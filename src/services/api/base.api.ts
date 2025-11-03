@@ -62,7 +62,8 @@ export const apiClient = {
       // Applique les intercepteurs de requête
       const modifiedConfig = await interceptorManager.applyRequestInterceptors(requestConfig);
       
-      const url = `${modifiedConfig.baseUrl || API_CONFIG.baseUrl}${modifiedConfig.url}`;
+      // Construit l'URL finale directement (base URL contient déjà le préfixe)
+      const url = `${modifiedConfig.baseUrl || API_CONFIG.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
       
       const response = await fetch(url, {
         ...modifiedConfig,

@@ -1,6 +1,5 @@
 // src/services/api/traditional/credit-request.api.ts
 import { apiClient } from '../base.api';
-import { buildPortfolioApiUrl } from '../../../config/api';
 import { CreditRequest, CreditRequestStatus } from '../../../types/credit';
 import { creditRequestsStorageService } from '../../storage/creditRequestsStorage';
 
@@ -25,7 +24,7 @@ export const creditRequestApi = {
     }
   ): Promise<CreditRequest[]> => {
     try {
-      let endpoint = buildPortfolioApiUrl('/portfolios/traditional/credit-requests');
+      let endpoint = '/portfolios/traditional/credit-requests';
       const queryParams = new URLSearchParams();
       
       if (portfolioId) {
@@ -58,7 +57,7 @@ export const creditRequestApi = {
    */
   getRequestById: async (id: string): Promise<CreditRequest | undefined> => {
     try {
-      return await apiClient.get<CreditRequest>(buildPortfolioApiUrl(`/portfolios/traditional/credit-requests/${id}`));
+      return await apiClient.get<CreditRequest>(`/portfolios/traditional/credit-requests/${id}`);
     } catch (error) {
       console.warn(`Fallback to localStorage for credit request ${id}`, error);
       return creditRequestsStorageService.getRequestById(id);
@@ -70,7 +69,7 @@ export const creditRequestApi = {
    */
   createRequest: async (request: Omit<CreditRequest, 'id' | 'createdAt' | 'status'>): Promise<CreditRequest> => {
     try {
-      return await apiClient.post<CreditRequest>(buildPortfolioApiUrl('/portfolios/traditional/credit-requests'), request);
+      return await apiClient.post<CreditRequest>('/portfolios/traditional/credit-requests', request);
     } catch (error) {
       console.warn('Fallback to localStorage for creating credit request', error);
       // Pour le fallback, nous devons créer un ID et définir le statut et la date nous-mêmes
@@ -89,7 +88,7 @@ export const creditRequestApi = {
    */
   updateRequestStatus: async (id: string, status: CreditRequestStatus): Promise<CreditRequest> => {
     try {
-      return await apiClient.patch<CreditRequest>(buildPortfolioApiUrl(`/portfolios/traditional/credit-requests/${id}/status`), { status });
+      return await apiClient.patch<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/status`, { status });
     } catch (error) {
       console.warn(`Fallback to localStorage for updating credit request ${id} status`, error);
       const updatedRequest = await creditRequestsStorageService.updateRequestStatus(id, status);
@@ -105,7 +104,7 @@ export const creditRequestApi = {
    */
   updateRequest: async (id: string, updates: Partial<CreditRequest>): Promise<CreditRequest> => {
     try {
-      return await apiClient.patch<CreditRequest>(buildPortfolioApiUrl(`/portfolios/traditional/credit-requests/${id}`), updates);
+      return await apiClient.patch<CreditRequest>(`/portfolios/traditional/credit-requests/${id}`, updates);
     } catch (error) {
       console.warn(`Fallback to localStorage for updating credit request ${id}`, error);
       const updatedRequest = await creditRequestsStorageService.updateRequest(id, updates);
@@ -121,7 +120,7 @@ export const creditRequestApi = {
    */
   deleteRequest: async (id: string): Promise<boolean> => {
     try {
-      await apiClient.delete(buildPortfolioApiUrl(`/portfolios/traditional/credit-requests/${id}`));
+      await apiClient.delete(`/portfolios/traditional/credit-requests/${id}`);
       return true;
     } catch (error) {
       console.warn(`Fallback to localStorage for deleting credit request ${id}`, error);
@@ -134,7 +133,7 @@ export const creditRequestApi = {
    */
   resetToMockData: async (): Promise<CreditRequest[]> => {
     try {
-      await apiClient.post(buildPortfolioApiUrl('/portfolios/traditional/credit-requests/reset'));
+      await apiClient.post('/portfolios/traditional/credit-requests/reset');
       return await creditRequestApi.getAllRequests();
     } catch (error) {
       console.warn('Fallback to localStorage for resetting credit requests', error);

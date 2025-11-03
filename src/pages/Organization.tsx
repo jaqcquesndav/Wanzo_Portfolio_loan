@@ -1,11 +1,17 @@
 import { Building2 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { formatDate } from '../utils/formatters';
-import { useOrganization } from '../hooks/useOrganization';
+import { useInstitutionApi } from '../hooks/useInstitutionApi';
 import { OrganizationSkeleton } from '../components/ui/OrganizationSkeleton';
+import { useEffect } from 'react';
 
 export default function Organization() {
-  const { institutionData, isLoading } = useOrganization();
+  const { institution, loading: isLoading, refetch } = useInstitutionApi();
+
+  // Charger l'institution au montage du composant
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   // Affichage du chargement
   if (isLoading) {
@@ -13,7 +19,7 @@ export default function Organization() {
   }
   
   // Affichage si aucune institution n'est configurée
-  if (!institutionData) {
+  if (!institution) {
     return (
       <div className="text-center py-12">
         <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -41,23 +47,18 @@ export default function Organization() {
           <div className="flex justify-between items-start mb-6">
             <div>
               <Badge variant="success">
-                {institutionData.type}
+                {institution.type}
               </Badge>
-              {institutionData.sector && (
-                <Badge variant="secondary" className="ml-2 border border-gray-300 dark:border-gray-600 bg-transparent">
-                  {institutionData.sector}
-                </Badge>
-              )}
               <h2 className="mt-2 text-xl font-semibold text-gray-900 dark:text-white">
-                {institutionData.name}
+                {institution.name}
               </h2>
               <p className="text-sm text-gray-500">
-                {institutionData.legalForm || ""}
+                {institution.license_number ? `Licence: ${institution.license_number}` : ""}
               </p>
             </div>
             <div className="text-sm text-gray-500 flex flex-col items-end">
-              <span>Créée le {formatDate(institutionData.creationDate || institutionData.createdAt)}</span>
-              <span>Dernière mise à jour le {formatDate(institutionData.updatedAt)}</span>
+              <span>Créée le {formatDate(institution.created_at)}</span>
+              <span>Dernière mise à jour le {formatDate(institution.updated_at)}</span>
             </div>
           </div>
 
@@ -65,40 +66,55 @@ export default function Organization() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Informations générales</h3>
               <dl className="mt-2 space-y-2">
-                {institutionData.legalForm && (
+                {institution.license_type && (
                   <div>
-                    <dt className="text-sm text-gray-500">Forme juridique</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institutionData.legalForm}</dd>
+                    <dt className="text-sm text-gray-500">Type de licence</dt>
+                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institution.license_type}</dd>
                   </div>
                 )}
                 
-                {institutionData.headquartersAddress && (
+                {institution.address && (
                   <div>
-                    <dt className="text-sm text-gray-500">Adresse du siège</dt>
+                    <dt className="text-sm text-gray-500">Adresse</dt>
                     <dd className="text-sm font-medium text-gray-900 dark:text-white">
-                      {institutionData.headquartersAddress.street}, <br />
-                      {institutionData.headquartersAddress.city}, {institutionData.headquartersAddress.country}
+                      {institution.address}
                     </dd>
                   </div>
                 )}
                 
-                {institutionData.contactPerson && (
+                {institution.legal_representative && (
                   <div>
-                    <dt className="text-sm text-gray-500">Personne de contact</dt>
+                    <dt className="text-sm text-gray-500">Représentant légal</dt>
                     <dd className="text-sm font-medium text-gray-900 dark:text-white">
-                      {institutionData.contactPerson.name}, {institutionData.contactPerson.title}<br />
-                      {institutionData.contactPerson.email}<br />
-                      {institutionData.contactPerson.phone}
+                      {institution.legal_representative}
                     </dd>
                   </div>
                 )}
                 
-                {institutionData.website && (
+                {institution.phone && (
+                  <div>
+                    <dt className="text-sm text-gray-500">Téléphone</dt>
+                    <dd className="text-sm font-medium text-gray-900 dark:text-white">
+                      {institution.phone}
+                    </dd>
+                  </div>
+                )}
+                
+                {institution.email && (
+                  <div>
+                    <dt className="text-sm text-gray-500">Email</dt>
+                    <dd className="text-sm font-medium text-gray-900 dark:text-white">
+                      {institution.email}
+                    </dd>
+                  </div>
+                )}
+                
+                {institution.website && (
                   <div>
                     <dt className="text-sm text-gray-500">Site web</dt>
                     <dd className="text-sm font-medium text-gray-900 dark:text-white">
-                      <a href={institutionData.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {institutionData.website}
+                      <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {institution.website}
                       </a>
                     </dd>
                   </div>
@@ -109,39 +125,34 @@ export default function Organization() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Informations réglementaires</h3>
               <dl className="mt-2 space-y-2">
-                {institutionData.approvalNumber && (
+                {institution.license_number && (
                   <div>
-                    <dt className="text-sm text-gray-500">N° d'agrément</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institutionData.approvalNumber}</dd>
+                    <dt className="text-sm text-gray-500">N° de licence</dt>
+                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institution.license_number}</dd>
                   </div>
                 )}
                 
-                {institutionData.taxId && (
+                {institution.tax_id && (
                   <div>
                     <dt className="text-sm text-gray-500">N° Impôt</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institutionData.taxId}</dd>
+                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institution.tax_id}</dd>
                   </div>
                 )}
                 
-                {institutionData.natId && (
+                {institution.regulatory_status && (
                   <div>
-                    <dt className="text-sm text-gray-500">IDNAT</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institutionData.natId}</dd>
+                    <dt className="text-sm text-gray-500">Statut réglementaire</dt>
+                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institution.regulatory_status}</dd>
                   </div>
                 )}
                 
-                {institutionData.rccm && (
+                {institution.status && (
                   <div>
-                    <dt className="text-sm text-gray-500">RCCM</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{institutionData.rccm}</dd>
-                  </div>
-                )}
-                
-                {institutionData.capital && (
-                  <div>
-                    <dt className="text-sm text-gray-500">Capital</dt>
+                    <dt className="text-sm text-gray-500">Statut</dt>
                     <dd className="text-sm font-medium text-gray-900 dark:text-white">
-                      {new Intl.NumberFormat('fr-FR').format(institutionData.capital.amount)} {institutionData.capital.currency}
+                      <Badge variant={institution.status === 'active' ? 'success' : 'warning'}>
+                        {institution.status}
+                      </Badge>
                     </dd>
                   </div>
                 )}
@@ -149,39 +160,26 @@ export default function Organization() {
             </div>
           </div>
           
-          {institutionData.branches && institutionData.branches.length > 0 && (
+          {institution.documents && institution.documents.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Succursales</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Documents</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {institutionData.branches.map((branch, index) => (
+                {institution.documents.map((document, index) => (
                   <div key={index} className="p-3 border rounded-md border-gray-200 dark:border-gray-700">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {branch.street}<br />
-                      {branch.city}, {branch.country}
+                      {document.name}
                     </p>
+                    <p className="text-xs text-gray-500">
+                      {document.type}
+                    </p>
+                    {document.url && (
+                      <a href={document.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
+                        Télécharger
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-          
-          {institutionData.primaryActivity && (
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Activités</h3>
-              <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                <span className="font-semibold">Principale:</span> {institutionData.primaryActivity}
-              </p>
-              
-              {institutionData.secondaryActivities && institutionData.secondaryActivities.length > 0 && (
-                <>
-                  <p className="text-sm text-gray-500 mb-1">Secondaires:</p>
-                  <ul className="list-disc list-inside text-sm text-gray-900 dark:text-white pl-2">
-                    {institutionData.secondaryActivities.map((activity, index) => (
-                      <li key={index}>{activity}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
             </div>
           )}
         </div>

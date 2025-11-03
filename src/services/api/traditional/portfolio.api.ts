@@ -1,6 +1,5 @@
 // src/services/api/traditional/portfolio.api.ts
 import { apiClient } from '../base.api';
-import { buildPortfolioApiUrl } from '../../../config/api';
 import type { TraditionalPortfolio } from '../../../types/traditional-portfolio';
 import { traditionalDataService } from './dataService';
 
@@ -25,7 +24,7 @@ export const traditionalPortfolioApi = {
       if (filters?.minAmount) params.append('minAmount', filters.minAmount.toString());
       if (filters?.sector) params.append('sector', filters.sector);
 
-      return await apiClient.get<TraditionalPortfolio[]>(buildPortfolioApiUrl(`/portfolios/traditional?${params.toString()}`));
+      return await apiClient.get<TraditionalPortfolio[]>(`/portfolios/traditional?${params.toString()}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for traditional portfolios', error);
@@ -56,7 +55,7 @@ export const traditionalPortfolioApi = {
    */
   getPortfolioById: async (id: string) => {
     try {
-      return await apiClient.get<TraditionalPortfolio>(buildPortfolioApiUrl(`/portfolios/traditional/${id}`));
+      return await apiClient.get<TraditionalPortfolio>(`/portfolios/traditional/${id}`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for traditional portfolio ${id}`, error);
@@ -73,7 +72,7 @@ export const traditionalPortfolioApi = {
    */
   createPortfolio: async (portfolio: Omit<TraditionalPortfolio, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      return await apiClient.post<TraditionalPortfolio>(buildPortfolioApiUrl('/portfolios/traditional'), portfolio);
+      return await apiClient.post<TraditionalPortfolio>('/portfolios/traditional', portfolio);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for creating traditional portfolio', error);
@@ -93,7 +92,7 @@ export const traditionalPortfolioApi = {
    */
   updatePortfolio: async (id: string, updates: Partial<TraditionalPortfolio>) => {
     try {
-      return await apiClient.put<TraditionalPortfolio>(buildPortfolioApiUrl(`/portfolios/traditional/${id}`), updates);
+      return await apiClient.put<TraditionalPortfolio>(`/portfolios/traditional/${id}`, updates);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for updating traditional portfolio ${id}`, error);
@@ -118,7 +117,7 @@ export const traditionalPortfolioApi = {
    */
   changeStatus: async (id: string, status: 'active' | 'inactive' | 'pending' | 'archived') => {
     try {
-      return await apiClient.post<TraditionalPortfolio>(buildPortfolioApiUrl(`/portfolios/traditional/${id}/status`), { status });
+      return await apiClient.post<TraditionalPortfolio>(`/portfolios/traditional/${id}/status`, { status });
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for changing status of traditional portfolio ${id}`, error);
@@ -143,7 +142,7 @@ export const traditionalPortfolioApi = {
    */
   deletePortfolio: async (id: string) => {
     try {
-      return await apiClient.delete(buildPortfolioApiUrl(`/portfolios/traditional/${id}`));
+      return await apiClient.delete(`/portfolios/traditional/${id}`);
     } catch (error) {
       // Pas de fallback pour la suppression
       console.error(`Error deleting traditional portfolio ${id}`, error);
@@ -156,7 +155,7 @@ export const traditionalPortfolioApi = {
    */
   getPortfolioPerformance: async (id: string, period: 'monthly' | 'quarterly' | 'yearly') => {
     try {
-      return await apiClient.get(buildPortfolioApiUrl(`/portfolios/traditional/${id}/performance?period=${period}`));
+      return await apiClient.get(`/portfolios/traditional/${id}/performance?period=${period}`);
     } catch (error) {
       // Pas de fallback pour les performances
       console.error(`Error getting performance for traditional portfolio ${id}`, error);
@@ -169,7 +168,7 @@ export const traditionalPortfolioApi = {
    */
   getActivityHistory: async (id: string, page = 1, limit = 10) => {
     try {
-      return await apiClient.get(buildPortfolioApiUrl(`/portfolios/traditional/${id}/activities?page=${page}&limit=${limit}`));
+      return await apiClient.get(`/portfolios/traditional/${id}/activities?page=${page}&limit=${limit}`);
     } catch (error) {
       // Pas de fallback pour l'historique
       console.error(`Error getting activity history for traditional portfolio ${id}`, error);
