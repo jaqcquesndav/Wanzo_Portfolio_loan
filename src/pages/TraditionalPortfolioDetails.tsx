@@ -5,11 +5,10 @@ import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
-import { PortfolioSettingsEditModal } from '../components/portfolio/traditional/PortfolioSettingsEditModal';
 import { PortfolioSettingsPanel } from '../components/portfolio/traditional/PortfolioSettingsPanel';
 import { Plus, CreditCard } from 'lucide-react';
 import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
-import { FinancialProductForm } from '../components/portfolio/traditional/FinancialProductForm';
+import { ProductForm } from '../components/portfolio/traditional/ProductForm';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { CreditRequestsTable } from '../components/portfolio/traditional/CreditRequestsTable';
@@ -27,7 +26,7 @@ import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
 import type { FinancialProduct } from '../types/traditional-portfolio';
-import type { ProductFormData } from '../components/portfolio/traditional/FinancialProductForm';
+import type { ProductFormData } from '../components/portfolio/traditional/ProductForm';
 import type { Company } from '../types/company';
 // import CreditRequestDetails from './CreditRequestDetails';
 // import DisbursementDetails from './DisbursementDetails';
@@ -38,7 +37,6 @@ import type { Company } from '../types/company';
 // import { useAuth } from '../contexts/AuthContext';
 
 export default function TraditionalPortfolioDetails() {
-  const [showEditModal, setShowEditModal] = useState(false);
   // Hooks React (toujours en haut, avant tout return ou condition)
   const { id, portfolioType = 'traditional' } = useParams();
   const navigate = useNavigate();
@@ -191,7 +189,7 @@ export default function TraditionalPortfolioDetails() {
         status: 'active',
         created_at: now,
         updated_at: now,
-        type: data.type as 'credit' | 'savings' | 'investment'
+        type: data.type
       };
       const products: FinancialProduct[] = [...portfolio.products, newProduct];
       await addOrUpdate({ products });
@@ -290,23 +288,15 @@ export default function TraditionalPortfolioDetails() {
                 currentValue={tab}
               >
                 {portfolio && (
-                  <>
-                    <PortfolioSettingsDisplay
-                      portfolio={portfolio as TraditionalPortfolio}
-                      onEdit={() => setShowEditModal(true)}
-                      onAddProduct={() => setShowProductForm(true)}
-                      onDelete={() => {
-                        // TODO: brancher la suppression réelle ici
-                        showNotification('Portefeuille supprimé (simulation)', 'success');
-                      }}
-                    />
-                    <PortfolioSettingsEditModal
-                      open={showEditModal}
-                      portfolio={portfolio as TraditionalPortfolio}
-                      onSave={handleSaveSettings}
-                      onClose={() => setShowEditModal(false)}
-                    />
-                  </>
+                  <PortfolioSettingsDisplay
+                    portfolio={portfolio as TraditionalPortfolio}
+                    onEdit={() => {}} // Édition intégrée dans le composant
+                    onAddProduct={() => setShowProductForm(true)}
+                    onDelete={() => {
+                      // TODO: brancher la suppression réelle ici
+                      showNotification('Portefeuille supprimé (simulation)', 'success');
+                    }}
+                  />
                 )}
               </TabsContent>
             );
@@ -465,7 +455,7 @@ export default function TraditionalPortfolioDetails() {
               <h2 className="text-xl font-semibold">Nouveau produit financier</h2>
             </div>
             <div className="p-6">
-              <FinancialProductForm
+              <ProductForm
                 onSubmit={handleCreateProduct}
                 onCancel={() => setShowProductForm(false)}
               />

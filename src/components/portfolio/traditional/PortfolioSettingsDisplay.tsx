@@ -1,40 +1,66 @@
 ﻿import { useState } from 'react';
 import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Label } from '../../ui/Label';
+import { Select } from '../../ui/Select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
 import { ConfirmModal } from '../../ui/ConfirmModal';
 import { BankAccountsPanel } from '../shared/BankAccountsPanel';
-import { PortfolioManagementPanel } from '../shared/PortfolioManagementPanel';
 import { ExportPortfolioData } from '../shared/ExportPortfolioData';
 import { ProductList } from './ProductList';
 import { PortfolioDocumentsSection } from '../shared/PortfolioDocumentsSection';
+import { BCCParametersPanel, BCCSurveillancePanel } from './bcc-components';
+import { Save, X, Edit3, Plus } from 'lucide-react';
 import type { Portfolio } from '../../../types/portfolio';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
 
 interface PortfolioSettingsDisplayProps {
   portfolio: Portfolio;
-  onEdit: () => void;
+  onEdit: (updatedPortfolio: Partial<Portfolio>) => void;
   onDelete: () => void;
-  onAddProduct?: () => void; // Nouvelle prop optionnelle pour ajouter un produit
+  onAddProduct?: () => void;
 }
 
 export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddProduct }: PortfolioSettingsDisplayProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPortfolio, setEditedPortfolio] = useState<Partial<Portfolio>>({});
+  
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setEditedPortfolio({
+      name: portfolio.name,
+      risk_profile: portfolio.risk_profile,
+      target_amount: portfolio.target_amount,
+      target_return: portfolio.target_return,
+      target_sectors: portfolio.target_sectors,
+      status: portfolio.status
+    });
+  };
+
+  const handleSaveEdit = () => {
+    onEdit(editedPortfolio);
+    setIsEditing(false);
+    setEditedPortfolio({});
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedPortfolio({});
+  };
+
+  const updateField = (field: keyof Portfolio, value: string | number | Date | string[]) => {
+    setEditedPortfolio(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
   
   const handleExport = (format: string, dataType: string) => {
     console.log(`Exporting portfolio data in ${format} format, data type: ${dataType}`);
     // Implement actual export functionality here
-  };
-  
-  const handleAddProduct = () => {
-    if (onAddProduct) {
-      onAddProduct();
-    } else {
-      console.log("Ajouter un nouveau produit financier");
-      // Fallback si onAddProduct n'est pas fourni
-      onEdit();
-    }
   };
   
   const handleProductEdit = (product: FinancialProduct) => {
@@ -55,12 +81,25 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-primary">Paramètres du portefeuille</h2>
         <div className="flex gap-3">
           <ExportPortfolioData portfolio={portfolio} onExport={handleExport} />
-          <Button variant="primary" onClick={onEdit}>
-            éditer les paramètres
-          </Button>
+          {!isEditing ? (
+            <Button variant="primary" onClick={handleStartEdit}>
+              <Edit3 className="h-4 w-4 mr-2" />
+              Modifier les paramètres
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="primary" onClick={handleSaveEdit}>
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button variant="secondary" onClick={handleCancelEdit}>
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -69,32 +108,134 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
           <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Général</TabsTrigger>
           <TabsTrigger value="products" currentValue={activeTab} onValueChange={setActiveTab}>Produits</TabsTrigger>
           <TabsTrigger value="accounts" currentValue={activeTab} onValueChange={setActiveTab}>Comptes bancaires</TabsTrigger>
-          <TabsTrigger value="management" currentValue={activeTab} onValueChange={setActiveTab}>Gestion</TabsTrigger>
+          <TabsTrigger value="bcc-parameters" currentValue={activeTab} onValueChange={setActiveTab}>Paramètres BCC</TabsTrigger>
+          <TabsTrigger value="bcc-surveillance" currentValue={activeTab} onValueChange={setActiveTab}>Surveillance BCC</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" currentValue={activeTab}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 flex flex-col gap-4">
-              <h3 className="text-lg font-bold text-primary mb-2">Informations générales</h3>
-              <div className="flex flex-col gap-1 text-base text-gray-800 dark:text-gray-100">
-                <div><span className="font-semibold">Nom :</span> {portfolio.name}</div>
-                {'description' in portfolio && (
-                  <div><span className="font-semibold">Description :</span> {portfolio.description ? String(portfolio.description) : <span className="italic text-gray-400">Aucune</span>}</div>
-                )}
-                <div>
-                  <span className="font-semibold">Statut :</span> 
-                  <span className="ml-1">{getPortfolioStatusLabel(portfolio.status)}</span>
+              <h3 className="text-lg font-semibold">Informations générales</h3>
+              <div className="flex flex-col gap-4 text-base text-gray-800 dark:text-gray-100">
+                
+                {/* Nom du portefeuille */}
+                <div className="space-y-2">
+                  <Label htmlFor="portfolio-name">Nom du portefeuille</Label>
+                  {isEditing ? (
+                    <Input
+                      id="portfolio-name"
+                      value={editedPortfolio.name || portfolio.name}
+                      onChange={(e) => updateField('name', e.target.value)}
+                      placeholder="Nom du portefeuille"
+                    />
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      {portfolio.name}
+                    </div>
+                  )}
                 </div>
-                <div><span className="font-semibold">Profil de risque :</span> {portfolio.risk_profile}</div>
-                <div><span className="font-semibold">étape d'investissement :</span> {portfolio.investment_stage ? portfolio.investment_stage : <span className="italic text-gray-400">Non renseignée</span>}</div>
+
+                {/* Statut */}
+                <div className="space-y-2">
+                  <Label htmlFor="portfolio-status">Statut</Label>
+                  {isEditing ? (
+                    <Select 
+                      id="portfolio-status"
+                      value={editedPortfolio.status || portfolio.status} 
+                      onChange={(e) => updateField('status', e.target.value)}
+                    >
+                      <option value="active">Actif</option>
+                      <option value="inactive">Inactif</option>
+                      <option value="pending">En attente</option>
+                      <option value="archived">Archivé</option>
+                    </Select>
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      {getPortfolioStatusLabel(portfolio.status)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Profil de risque */}
+                <div className="space-y-2">
+                  <Label htmlFor="portfolio-risk">Profil de risque</Label>
+                  {isEditing ? (
+                    <Select 
+                      id="portfolio-risk"
+                      value={editedPortfolio.risk_profile || portfolio.risk_profile} 
+                      onChange={(e) => updateField('risk_profile', e.target.value)}
+                    >
+                      <option value="conservative">Conservateur</option>
+                      <option value="moderate">Modéré</option>
+                      <option value="aggressive">Agressif</option>
+                    </Select>
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      {portfolio.risk_profile}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+            
             <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 flex flex-col gap-4">
-              <h3 className="text-lg font-bold text-primary mb-2">Objectifs</h3>
-              <div className="flex flex-col gap-1 text-base text-gray-800 dark:text-gray-100">
-                <div><span className="font-semibold">Objectif de collecte :</span> {portfolio.target_amount?.toLocaleString()} FCFA</div>
-                <div><span className="font-semibold">Objectif de rendement :</span> {portfolio.target_return}%</div>
-                <div><span className="font-semibold">Secteurs visés :</span> {portfolio.target_sectors?.length ? portfolio.target_sectors.join(', ') : <span className="italic text-gray-400">Aucun</span>}</div>
+              <h3 className="text-lg font-semibold">Objectifs</h3>
+              <div className="flex flex-col gap-4 text-base text-gray-800 dark:text-gray-100">
+                
+                {/* Objectif de collecte */}
+                <div className="space-y-2">
+                  <Label htmlFor="target-amount">Objectif de collecte (FCFA)</Label>
+                  {isEditing ? (
+                    <Input
+                      id="target-amount"
+                      type="number"
+                      value={editedPortfolio.target_amount || portfolio.target_amount || ''}
+                      onChange={(e) => updateField('target_amount', Number(e.target.value))}
+                      placeholder="Montant cible"
+                    />
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      {portfolio.target_amount?.toLocaleString()} FCFA
+                    </div>
+                  )}
+                </div>
+
+                {/* Objectif de rendement */}
+                <div className="space-y-2">
+                  <Label htmlFor="target-return">Objectif de rendement (%)</Label>
+                  {isEditing ? (
+                    <Input
+                      id="target-return"
+                      type="number"
+                      step="0.1"
+                      value={editedPortfolio.target_return || portfolio.target_return || ''}
+                      onChange={(e) => updateField('target_return', Number(e.target.value))}
+                      placeholder="Rendement cible"
+                    />
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      {portfolio.target_return}%
+                    </div>
+                  )}
+                </div>
+
+                {/* Secteurs visés */}
+                <div className="space-y-2">
+                  <Label htmlFor="target-sectors">Secteurs visés</Label>
+                  {isEditing ? (
+                    <Input
+                      id="target-sectors"
+                      value={editedPortfolio.target_sectors?.join(', ') || portfolio.target_sectors?.join(', ') || ''}
+                      onChange={(e) => updateField('target_sectors', e.target.value.split(', ').filter(s => s.trim()))}
+                      placeholder="Agriculture, Industrie, Services..."
+                    />
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      {portfolio.target_sectors?.length ? portfolio.target_sectors.join(', ') : 
+                       <span className="italic text-gray-400">Aucun secteur défini</span>}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -119,12 +260,26 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
         <TabsContent value="products" currentValue={activeTab}>
           <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-primary">Produits financiers</h3>
+              <h3 className="text-lg font-semibold">Produits financiers</h3>
               <Button 
-                variant="primary" 
-                onClick={handleAddProduct}
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  if (isEditing) {
+                    // Gérer l'ajout de produit en mode édition
+                    if (onAddProduct) {
+                      onAddProduct();
+                    } else {
+                      console.log("Ajouter un nouveau produit financier");
+                    }
+                  } else {
+                    handleStartEdit();
+                  }
+                }}
+                disabled={!isEditing && !onAddProduct}
               >
                 Ajouter un produit
+                <Plus className="w-4 h-4 ml-1" />
               </Button>
             </div>
             
@@ -137,13 +292,26 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
               />
             ) : (
               <div className="text-center py-12 text-gray-500">
-                <p>Aucun produit financier n'a encore été cRéé dans ce portefeuille.</p>
+                <p>Aucun produit financier n'a encore été créé dans ce portefeuille.</p>
                 <Button
-                  variant="outline"
-                  onClick={handleAddProduct}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    if (isEditing) {
+                      if (onAddProduct) {
+                        onAddProduct();
+                      } else {
+                        console.log("Créer un nouveau produit financier");
+                      }
+                    } else {
+                      handleStartEdit();
+                    }
+                  }}
                   className="mt-4"
+                  disabled={!isEditing && !onAddProduct}
                 >
-                  CRéer un produit
+                  Créer un produit
+                  <Plus className="w-4 h-4 ml-1" />
                 </Button>
               </div>
             )}
@@ -153,19 +321,34 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
         <TabsContent value="accounts" currentValue={activeTab}>
           <BankAccountsPanel
             accounts={portfolio.bank_accounts || []}
-            onAdd={() => onEdit()} // Redirect to edit mode to add accounts
-            onEdit={() => onEdit()} // Redirect to edit mode to edit accounts
-            onDelete={() => onEdit()} // Redirect to edit mode to delete accounts
-            readOnly={true}
+            onAdd={() => {
+              if (isEditing) {
+                // Gérer l'ajout de compte en mode édition
+                console.log("Ajouter un compte bancaire");
+              } else {
+                handleStartEdit();
+              }
+            }}
+            onEdit={() => {
+              if (!isEditing) {
+                handleStartEdit();
+              }
+            }}
+            onDelete={() => {
+              if (!isEditing) {
+                handleStartEdit();
+              }
+            }}
+            readOnly={!isEditing}
           />
         </TabsContent>
 
-        <TabsContent value="management" currentValue={activeTab}>
-          <PortfolioManagementPanel
-            portfolio={portfolio}
-            onUpdate={() => onEdit()} // Redirect to edit mode
-            readOnly={true}
-          />
+        <TabsContent value="bcc-parameters" currentValue={activeTab}>
+          <BCCParametersPanel />
+        </TabsContent>
+
+        <TabsContent value="bcc-surveillance" currentValue={activeTab}>
+          <BCCSurveillancePanel />
         </TabsContent>
       </Tabs>
       <ConfirmModal

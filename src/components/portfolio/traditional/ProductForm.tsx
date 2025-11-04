@@ -1,5 +1,4 @@
-﻿import React from 'react';
-import { useForm } from 'react-hook-form';
+﻿import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormField, Input, Select, TextArea } from '../../ui/Form';
@@ -7,7 +6,7 @@ import { Button } from '../../ui/Button';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
-  type: z.enum(['credit', 'savings', 'investment']),
+  type: z.enum(['credit_personnel', 'credit_immobilier', 'credit_auto', 'credit_professionnel', 'microcredit', 'credit_consommation']),
   description: z.string().min(20, 'La description doit contenir au moins 20 caractères'),
   minAmount: z.number().min(0),
   maxAmount: z.number().min(0),
@@ -26,6 +25,8 @@ const productSchema = z.object({
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
+
+export type { ProductFormData };
 
 interface ProductFormProps {
   product?: ProductFormData;
@@ -53,11 +54,15 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           <Input {...register('name')} />
         </FormField>
 
-        <FormField label="Type de produit" error={errors.type?.message}>
+        <FormField label="Type de crédit" error={errors.type?.message}>
           <Select {...register('type')}>
-            <option value="credit">cRédit</option>
-            <option value="savings">épargne</option>
-            <option value="investment">Investissement</option>
+            <option value="">Sélectionner un type de crédit</option>
+            <option value="credit_personnel">Crédit Personnel</option>
+            <option value="credit_immobilier">Crédit Immobilier</option>
+            <option value="credit_auto">Crédit Automobile</option>
+            <option value="credit_professionnel">Crédit Professionnel</option>
+            <option value="microcredit">Microcrédit</option>
+            <option value="credit_consommation">Crédit à la Consommation</option>
           </Select>
         </FormField>
 

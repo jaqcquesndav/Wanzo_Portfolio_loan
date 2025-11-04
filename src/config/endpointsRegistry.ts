@@ -522,6 +522,112 @@ export const ENDPOINTS_REGISTRY: Record<string, EndpointInfo> = {
 
 
 
+  // ===== PARAMÈTRES APPLICATION =====
+  'settings.getApplication': {
+    method: 'GET',
+    path: '/settings',
+    description: 'Récupération des paramètres de l\'application',
+    category: 'Settings',
+    authenticated: true,
+    responses: {
+      200: 'Paramètres de l\'application (général, sécurité, notifications)',
+      403: 'Accès non autorisé'
+    }
+  },
+
+  'settings.updateGeneral': {
+    method: 'PUT',
+    path: '/settings/general',
+    description: 'Mise à jour des paramètres généraux de l\'application',
+    category: 'Settings',
+    authenticated: true,
+    parameters: {
+      body: 'GeneralSettingsUpdate'
+    },
+    responses: {
+      200: 'Paramètres généraux mis à jour',
+      422: 'Données invalides'
+    }
+  },
+
+  'settings.updateSecurity': {
+    method: 'PUT',
+    path: '/settings/security',
+    description: 'Mise à jour des paramètres de sécurité',
+    category: 'Settings',
+    authenticated: true,
+    parameters: {
+      body: 'SecuritySettingsUpdate'
+    },
+    responses: {
+      200: 'Paramètres de sécurité mis à jour',
+      422: 'Données invalides'
+    }
+  },
+
+  'settings.updateNotifications': {
+    method: 'PUT',
+    path: '/settings/notifications',
+    description: 'Mise à jour des paramètres de notification',
+    category: 'Settings',
+    authenticated: true,
+    parameters: {
+      body: 'NotificationSettingsUpdate'
+    },
+    responses: {
+      200: 'Paramètres de notification mis à jour',
+      422: 'Données invalides'
+    }
+  },
+
+  // ===== PARAMÈTRES PORTEFEUILLE =====
+  'portfolioSettings.get': {
+    method: 'GET',
+    path: '/portfolios/traditional/{id}/settings',
+    description: 'Récupération des paramètres d\'un portefeuille traditionnel',
+    category: 'Portfolio Settings',
+    authenticated: true,
+    parameters: {
+      path: ['id']
+    },
+    responses: {
+      200: 'Paramètres du portefeuille',
+      404: 'Portefeuille non trouvé'
+    }
+  },
+
+  'portfolioSettings.update': {
+    method: 'PUT',
+    path: '/portfolios/traditional/{id}/settings',
+    description: 'Mise à jour des paramètres d\'un portefeuille traditionnel',
+    category: 'Portfolio Settings',
+    authenticated: true,
+    parameters: {
+      path: ['id'],
+      body: 'PortfolioSettingsUpdate'
+    },
+    responses: {
+      200: 'Paramètres du portefeuille mis à jour',
+      404: 'Portefeuille non trouvé',
+      422: 'Données invalides'
+    }
+  },
+
+  'portfolioSettings.reset': {
+    method: 'POST',
+    path: '/portfolios/traditional/{id}/settings/reset',
+    description: 'Réinitialisation des paramètres d\'un portefeuille aux valeurs par défaut',
+    category: 'Portfolio Settings',
+    authenticated: true,
+    parameters: {
+      path: ['id']
+    },
+    responses: {
+      200: 'Paramètres réinitialisés',
+      404: 'Portefeuille non trouvé'
+    }
+  },
+
   // ===== TABLEAU DE BORD =====
   'dashboard.metrics.ohada': {
     method: 'GET',

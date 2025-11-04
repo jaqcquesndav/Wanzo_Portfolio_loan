@@ -1,20 +1,20 @@
 import { Switch } from '../../ui/Switch';
-import { Button } from '../../ui/Button';
-import { useNotification } from '../../../contexts/useNotification';
-import { useNotificationSettings } from '../hooks/useNotificationSettings';
+import { useApplicationSettings } from '../../../hooks/useSettingsApi';
 
 export function NotificationSettings() {
-  const { showNotification } = useNotification();
-  const { settings, updateSetting } = useNotificationSettings();
+  const { settings, updateNotificationSettings, loading } = useApplicationSettings();
 
-  const handleSave = async () => {
+  const handleToggle = async (setting: string, value: boolean) => {
+    if (!settings) return;
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      showNotification('Préférences de notification mises à jour', 'success');
-    } catch {
-      showNotification('Erreur lors de la mise à jour des préférences', 'error');
+      await updateNotificationSettings({ [setting]: value });
+    } catch (error) {
+      console.error('Error updating notification setting:', error);
     }
   };
+
+  if (!settings) return <div>Chargement...</div>;
 
   return (
     <div className="space-y-6">
@@ -22,29 +22,25 @@ export function NotificationSettings() {
         <NotificationOption
           title="Notifications par email"
           description="Recevoir des notifications par email"
-          checked={settings.email}
-          onChange={value => updateSetting('email', value)}
+          checked={settings.notifications.emailEnabled}
+          onChange={value => handleToggle('emailEnabled', value)}
+          disabled={loading}
         />
         <NotificationOption
           title="Notifications push"
           description="Recevoir des notifications push"
-          checked={settings.push}
-          onChange={value => updateSetting('push', value)}
+          checked={settings.notifications.pushEnabled}
+          onChange={value => handleToggle('pushEnabled', value)}
+          disabled={loading}
         />
         <NotificationOption
-          title="Notifications SMS"
-          description="Recevoir des notifications par SMS"
-          checked={settings.sms}
-          onChange={value => updateSetting('sms', value)}
-        />
-        <NotificationOption
-          title="Communications marketing"
-          description="Recevoir des offres et actualités"
-          checked={settings.marketing}
-          onChange={value => updateSetting('marketing', value)}
+          title="Notifications de bureau"
+          description="Recevoir des notifications sur le bureau"
+          checked={settings.notifications.desktopEnabled}
+          onChange={value => handleToggle('desktopEnabled', value)}
+          disabled={loading}
         />
       </div>
-      <Button onClick={handleSave}>Enregistrer les préférences</Button>
     </div>
   );
 }
@@ -54,14 +50,15 @@ interface NotificationOptionProps {
   description: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
 }
 
 function NotificationOption({ title, description, checked, onChange }: NotificationOptionProps) {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-sm font-medium text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-500">{description}</p>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white">{title}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
       </div>
       <Switch checked={checked} onChange={onChange} />
     </div>

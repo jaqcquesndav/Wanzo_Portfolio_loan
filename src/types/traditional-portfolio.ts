@@ -4,7 +4,7 @@ import type { Portfolio } from './portfolio';
 export interface FinancialProduct {
   id: string;
   name: string;
-  type: 'credit' | 'savings' | 'investment';
+  type: 'credit_personnel' | 'credit_immobilier' | 'credit_auto' | 'credit_professionnel' | 'microcredit' | 'credit_consommation';
   description: string;
   minAmount: number;
   maxAmount: number;

@@ -34,7 +34,6 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
   const [targetReturn, setTargetReturn] = useState(portfolio.target_return);
   const [targetSectors, setTargetSectors] = useState<string[]>(portfolio.target_sectors || []);
   const [riskProfile, setRiskProfile] = useState<Portfolio['risk_profile']>(portfolio.risk_profile);
-  const [investmentStage, setInvestmentStage] = useState(portfolio.investment_stage || '');
   const [saving, setSaving] = useState(false);
 
   const handleSectorChange = (sector: string) => {
@@ -55,7 +54,6 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
         target_return: Number(targetReturn),
         target_sectors: targetSectors,
         risk_profile: riskProfile,
-        investment_stage: investmentStage,
       };
       if ('description' in portfolio) {
         data.description = description;
@@ -147,15 +145,6 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">étape d'investissement</label>
-          <input
-            className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
-            value={investmentStage}
-            onChange={e => setInvestmentStage(e.target.value)}
-            placeholder="ex: Amorçage, Croissance, Maturité"
-          />
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-4">

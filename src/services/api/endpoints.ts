@@ -171,5 +171,14 @@ export const API_ENDPOINTS = {
       updateWidget: (userId: string, widgetId: string) => `/preferences/${userId}/widget/${widgetId}`,
       reset: (userId: string) => `/preferences/${userId}/reset`
     }
+  },
+
+  // Synchronization
+  sync: {
+    base: '/sync',
+    pull: '/sync/pull',
+    push: '/sync/push',
+    status: '/sync/status',
+    reset: '/sync/reset'
   }
 } as const;
