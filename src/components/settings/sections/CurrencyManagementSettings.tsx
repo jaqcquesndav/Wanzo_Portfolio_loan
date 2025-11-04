@@ -2,7 +2,7 @@ import * as React from 'react';
 import { FormField, Select, Input } from '../../ui/Form';
 import { Button, Tab } from '../../ui';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 import { usePreferences } from '../hooks/usePreferences';
 import { usePermissions } from '../../../hooks/usePermissions';
 

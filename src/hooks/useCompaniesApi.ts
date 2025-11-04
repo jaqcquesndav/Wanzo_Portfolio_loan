@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { companyApi } from '../services/api/shared/company.api';
 import type { Company } from '../types/company';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 /**
  * Hook pour récupérer toutes les entreprises via l'API

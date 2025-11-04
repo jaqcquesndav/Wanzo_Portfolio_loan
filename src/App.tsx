@@ -9,6 +9,7 @@ import { SYNC_ENABLED } from './config/sync';
 import { PaymentOrderProvider } from './contexts/PaymentOrderContext';
 import { GlobalPaymentOrderModal } from './components/payment/GlobalPaymentOrderModal';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { ErrorBoundaryProvider } from './contexts/ErrorBoundaryContext';
 import { Toaster } from 'react-hot-toast';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { LoadingScreen } from './components/ui/LoadingScreen';
@@ -107,10 +108,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ConnectivityProvider>
-        <PortfolioProvider>
-          <NotificationProvider>
-            <CurrencyProvider>
-              <PaymentOrderProvider>
+        <ErrorBoundaryProvider>
+          <PortfolioProvider>
+            <NotificationProvider>
+              <CurrencyProvider>
+                <PaymentOrderProvider>
                 {hasValidationIssues && (
                   <div className="fixed top-0 left-0 right-0 bg-amber-50 border-b border-amber-200 p-2 z-50">
                     <div className="container mx-auto flex items-center justify-between">
@@ -137,6 +139,7 @@ export default function App() {
             </CurrencyProvider>
           </NotificationProvider>
         </PortfolioProvider>
+        </ErrorBoundaryProvider>
       </ConnectivityProvider>
     </QueryClientProvider>
   );

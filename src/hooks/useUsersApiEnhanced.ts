@@ -4,7 +4,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { userApi } from '../services/api/shared/user.api';
 import type { User, UserRole, UserType } from '../types/user';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 interface LoadUsersParams {
   role?: UserRole;

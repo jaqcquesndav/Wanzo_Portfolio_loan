@@ -5,7 +5,7 @@ import { Input, Select, TextArea } from '../../../ui/Form';
 import { Card } from '../../../ui/Card';
 import { CreditContract } from '../../../../types/credit';
 import { Guarantee, GuaranteeType } from '../../../../types/guarantee';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../ui/Dialog';
 import { DocumentIcon, UserIcon, CurrencyDollarIcon, ScaleIcon, ShieldCheckIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { guaranteeService } from '../../../../services/guaranteeService';

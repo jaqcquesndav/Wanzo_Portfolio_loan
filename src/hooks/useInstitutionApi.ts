@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { institutionApi } from '../services/api/shared/institution.api';
 import type { Institution, InstitutionManager } from '../types/institution';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 /**
  * Hook principal pour la gestion de l'institution courante

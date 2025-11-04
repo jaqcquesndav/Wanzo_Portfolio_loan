@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userApi, type UserDetails, type UserActivity, type UserRoleDetails } from '../services/api/shared/user.api';
 import type { User, UserSettings, UserRole, UserType, Permission } from '../types/user';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 /**
  * Hook principal pour la gestion des utilisateurs via l'API

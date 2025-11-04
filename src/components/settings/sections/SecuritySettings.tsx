@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { FormField, Input } from '../../ui/Form';
 import { Button } from '../../ui/Button';
 import { Switch } from '../../ui/Switch';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 import { usersApi } from '../../../services/api/shared/users.api';
 
 const passwordSchema = z.object({

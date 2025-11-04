@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Disbursement } from '../types/disbursement';
 import { disbursementApi } from '../services/api/traditional/disbursement.api';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 interface UseDisbursementsResult {
   disbursements: Disbursement[];

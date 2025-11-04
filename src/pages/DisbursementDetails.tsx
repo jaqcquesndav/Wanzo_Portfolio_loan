@@ -4,10 +4,10 @@ import { Button } from '../components/ui/Button';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 // import { HistoryTimeline } from '../components/common/HistoryTimeline';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 // TODO: Replace with real data fetching logic
 import { mockDisbursements } from '../data/mockDisbursements';
-import type { Disbursement } from '../components/portfolio/traditional/DisbursementsTable';
+import type { Disbursement } from '../types/disbursement';
 
 export default function DisbursementDetails({ id: propId }: { id?: string }) {
   const { disbursementId, portfolioId } = useParams();

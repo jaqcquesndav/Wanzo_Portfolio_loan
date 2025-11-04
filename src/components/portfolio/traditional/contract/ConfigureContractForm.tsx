@@ -4,7 +4,7 @@ import { Button } from '../../../ui/Button';
 import { Input, Select } from '../../../ui/Form';
 import { Modal } from '../../../ui/Modal';
 import { CreditContract } from '../../../../types/credit';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 
 interface ConfigureContractFormProps {
   contract: CreditContract;

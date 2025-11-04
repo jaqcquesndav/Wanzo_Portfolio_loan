@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { chatApi } from '../services/api/shared/chat.api';
 import type { Message } from '../types/chat';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 /**
  * Interface pour les messages de chat conformes à l'API
@@ -60,7 +60,7 @@ export function useChatApi(contextId?: string) {
   // Envoyer un message
   const sendMessage = useCallback(async (content: string, metadata?: {
     portfolioId?: string;
-    portfolioType?: 'traditional' | 'investment' | 'leasing';
+    portfolioType?: 'traditional';
     companyId?: string;
     entityType?: string;
     entityId?: string;
@@ -141,7 +141,7 @@ export function useChatApi(contextId?: string) {
     title?: string;
     metadata?: {
       portfolioId?: string;
-      portfolioType?: 'traditional' | 'investment' | 'leasing';
+      portfolioType?: 'traditional';
       companyId?: string;
       entityType?: string;
       entityId?: string;
@@ -209,7 +209,7 @@ export function useChatApi(contextId?: string) {
  */
 export function useChatSuggestions(contextId?: string, filters?: {
   portfolioId?: string;
-  portfolioType?: 'traditional' | 'investment' | 'leasing';
+  portfolioType?: 'traditional';
   companyId?: string;
   currentScreenPath?: string;
 }) {

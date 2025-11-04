@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../ui/Tabs';
 import { Separator } from '../../../ui/Separator';
 import { Button } from '../../../ui/Button';
 import { ArrowLeft } from 'lucide-react';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 
 // Composants pour les différentes sections
 import { ContractOverview } from './ContractOverview';

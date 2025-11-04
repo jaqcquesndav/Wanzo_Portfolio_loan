@@ -9,7 +9,7 @@ import { useCreditContracts } from '../../../hooks/useCreditContracts';
 import { ScheduleManagementList } from './amortization/ScheduleManagementList';
 import { CompanyDetails } from '../../prospection/CompanyDetails';
 import { mockCompanies } from '../../../data/mockCompanies';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 import { Company } from '../../../types/company';
 
 interface CreditPortfolioProps {

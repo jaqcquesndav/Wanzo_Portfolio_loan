@@ -1,37 +1,106 @@
-import React, { createContext, useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { NotificationType, Notification } from '../types/notifications';
 import NotificationContainer from '../components/notifications/NotificationContainer';
 import { notificationsApi } from '../services/api/shared/notifications.api';
-
-// R�exporter le hook useNotification depuis le fichier d�di�
-export { useNotification } from './useNotification';
-
-interface NotificationContextType {
-  notifications: Notification[];
-  showNotification: (message: string, type: NotificationType, duration?: number) => void;
-  removeNotification: (id: string) => void;
-}
-
-export const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+import { NotificationContext } from './notificationContextTypes';
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // Rate limiting state
+  const apiCallInProgress = useRef(false);
+  const lastApiCall = useRef<number>(0);
+  const backoffDelay = useRef<number>(1000); // Start with 1 second
+  const pendingOperations = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  // D�clarer removeNotification avant de l'utiliser
-  const removeNotification = async (id: string) => {
-    try {
-      // Tente de supprimer la notification via l'API
-      await notificationsApi.deleteNotification(id);
-    } catch (err) {
-      console.error('Erreur lors de la suppression de la notification:', err);
-    } finally {
-      // Supprime de l'UI dans tous les cas
-      setNotifications(prev => prev.filter(notification => notification.id !== id));
+  // Helper function to check if we can make API calls
+  const canCallApi = useCallback((): boolean => {
+    const now = Date.now();
+    if (apiCallInProgress.current) {
+      return false;
     }
-  };
+    if (now - lastApiCall.current < backoffDelay.current) {
+      return false;
+    }
+    return true;
+  }, []);
 
-  const showNotification = async (message: string, type: NotificationType, duration = 5000) => {
-    // G�n�ration d'un ID local temporaire
+  // Handle rate limit errors with exponential backoff
+  const handleRateLimitError = useCallback(() => {
+    backoffDelay.current = Math.min(backoffDelay.current * 2, 30000); // Max 30 seconds
+    setTimeout(() => {
+      backoffDelay.current = Math.max(backoffDelay.current / 2, 1000); // Gradually reduce
+    }, backoffDelay.current);
+  }, []);
+
+  // Debounced API call with rate limiting
+  const debouncedApiCall = useCallback(
+    (operation: 'create' | 'delete', notificationData: { id?: string; type?: NotificationType; message?: string; duration?: number }, delay: number = 2000) => {
+      const operationKey = `${operation}-${notificationData.id || notificationData.type}`;
+      
+      // Clear existing timeout for this operation
+      const existingTimeout = pendingOperations.current.get(operationKey);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      // Set new debounced timeout
+      const timeout = setTimeout(async () => {
+        if (!canCallApi()) {
+          // Retry later if rate limited
+          setTimeout(() => debouncedApiCall(operation, notificationData, delay * 1.5), backoffDelay.current);
+          return;
+        }
+
+        try {
+          apiCallInProgress.current = true;
+          lastApiCall.current = Date.now();
+
+          if (operation === 'create' && notificationData.type && notificationData.message) {
+            // Ensure required properties are present
+            const notificationPayload = {
+              type: notificationData.type,
+              message: notificationData.message,
+              duration: notificationData.duration
+            };
+            await notificationsApi.createNotification(notificationPayload);
+          } else if (operation === 'delete' && notificationData.id) {
+            await notificationsApi.deleteNotification(notificationData.id);
+          }
+          
+          // Reset backoff on success
+          backoffDelay.current = 1000;
+        } catch (error: unknown) {
+          if (error && typeof error === 'object' && 'response' in error) {
+            const httpError = error as { response?: { status?: number } };
+            if (httpError.response?.status === 429) {
+              handleRateLimitError();
+            }
+          }
+          // Don't throw error to avoid disrupting user experience
+          console.warn('Notification API sync failed, continuing with local state:', error);
+        } finally {
+          apiCallInProgress.current = false;
+          pendingOperations.current.delete(operationKey);
+        }
+      }, delay);
+
+      pendingOperations.current.set(operationKey, timeout);
+    },
+    [canCallApi, handleRateLimitError]
+  );
+
+  // Declare removeNotification before using it
+  const removeNotification = useCallback((id: string) => {
+    // Remove from UI immediately (optimistic update)
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    
+    // Debounced API sync - don't flood the server
+    debouncedApiCall('delete', { id }, 3000); // 3 second debounce for deletions
+  }, [debouncedApiCall]);
+
+  const showNotification = useCallback((message: string, type: NotificationType, duration = 5000) => {
+    // Generate a local temporary ID
     const id = Math.random().toString(36).substring(2);
     const notification: Notification = { 
       id, 
@@ -42,39 +111,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       read: false
     };
     
-    // Ajout imm�diat pour l'UI (optimistic update)
+    // Immediate addition for UI (optimistic update)
     setNotifications(prev => [...prev, notification]);
 
-    try {
-      // Tente de cr�er la notification via l'API
-      const response = await notificationsApi.createNotification({
-        type,
-        message,
-        duration
-      });
-      
-      // Remplace la notification temporaire par celle de l'API
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, id: response.id } : n)
-      );
-      
-      // Supprime apr�s la dur�e sp�cifi�e
-      if (duration > 0) {
-        setTimeout(() => {
-          removeNotification(response.id);
-        }, duration);
-      }
-    } catch (err) {
-      console.error('Erreur lors de la cr�ation de la notification:', err);
-      
-      // Si l'API �choue, garde la notification locale et la supprime apr�s la dur�e
-      if (duration > 0) {
-        setTimeout(() => {
-          removeNotification(id);
-        }, duration);
-      }
+    // Debounced API sync - don't flood the server
+    debouncedApiCall('create', { type, message, duration }, 1000); // 1 second debounce for creations
+    
+    // Remove after specified duration (local removal only)
+    if (duration > 0) {
+      setTimeout(() => {
+        removeNotification(id);
+      }, duration);
     }
-  };
+  }, [debouncedApiCall, removeNotification]);
 
   return (
     <NotificationContext.Provider value={{ notifications, showNotification, removeNotification }}>

@@ -1,6 +1,6 @@
 // src/hooks/useApiRequest.ts
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 interface UseApiRequestOptions {
   retryCount?: number;

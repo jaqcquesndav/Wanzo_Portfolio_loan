@@ -1,7 +1,6 @@
-import React from 'react';
 import { Switch } from '../../ui/Switch';
 import { Button } from '../../ui/Button';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 import { useNotificationSettings } from '../hooks/useNotificationSettings';
 
 export function NotificationSettings() {
@@ -12,7 +11,7 @@ export function NotificationSettings() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       showNotification('Préférences de notification mises à jour', 'success');
-    } catch (error) {
+    } catch {
       showNotification('Erreur lors de la mise à jour des préférences', 'error');
     }
   };

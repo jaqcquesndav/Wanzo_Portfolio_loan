@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { companyApi } from '../services/api/shared/company.api';
 import type { Company } from '../types/company';
 import { useCompaniesData } from './useCompaniesData';

@@ -3,7 +3,7 @@ import { FormField, Select } from '../../ui/Form';
 import { Button } from '../../ui/Button';
 import { useTheme } from '../../../hooks/useTheme';
 import { usePreferences } from '../hooks/usePreferences';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 export function PreferencesSettings() {

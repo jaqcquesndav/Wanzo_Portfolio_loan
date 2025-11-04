@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 // import { HistoryTimeline } from '../components/common/HistoryTimeline';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { creditRequestApi } from '../services/api/traditional/credit-request.api';
 import type { CreditRequest } from '../types/credit';
 

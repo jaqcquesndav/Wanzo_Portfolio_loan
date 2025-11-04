@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 // import { HistoryTimeline } from '../components/common/HistoryTimeline';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { guaranteeStorageService } from '../services/storage/guaranteeStorageUnified';
 import type { Guarantee } from '../types/guarantee';
 

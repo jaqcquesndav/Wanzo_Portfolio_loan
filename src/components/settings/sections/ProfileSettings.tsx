@@ -1,10 +1,9 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormField, Input } from '../../ui/Form';
 import { Button } from '../../ui/Button';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/useNotification';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -21,11 +20,11 @@ export function ProfileSettings() {
     resolver: zodResolver(profileSchema)
   });
 
-  const onSubmit = async (data: ProfileFormData) => {
+  const onSubmit = async () => {
     try {
       // API call would go here
       showNotification('Profil mis à jour avec succès', 'success');
-    } catch (error) {
+    } catch {
       showNotification('Erreur lors de la mise à jour du profil', 'error');
     }
   };

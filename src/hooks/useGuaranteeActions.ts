@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Guarantee } from '../types/guarantee';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { useGuarantees } from './useGuarantees';
 import { dataValidationService } from '../services/validation/dataValidationService';
 

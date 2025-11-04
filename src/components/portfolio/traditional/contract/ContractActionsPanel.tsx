@@ -5,7 +5,7 @@ import { Button } from '../../../ui/Button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../ui/Dialog';
 import { CreditContract } from '../../../../types/credit';
 import { creditContractsStorageService } from '../../../../services/storage/creditContractsStorage';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 import { BanknotesIcon } from '@heroicons/react/24/outline';
 import { usePaymentOrder } from '../../../../hooks/usePaymentOrderContext';
 import { openPaymentOrder } from '../../../../utils/openPaymentOrder';

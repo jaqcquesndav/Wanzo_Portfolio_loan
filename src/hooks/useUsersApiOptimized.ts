@@ -4,7 +4,7 @@
 import { useCallback, useMemo, useEffect } from 'react';
 import { userApi } from '../services/api/shared/user.api';
 import type { User, UserRole } from '../types/user';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { useApiRequest, useApiList } from './useApiRequest';
 
 interface UserFilters {

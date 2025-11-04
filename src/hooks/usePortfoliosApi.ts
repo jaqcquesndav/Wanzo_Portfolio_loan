@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sharedPortfolioApi } from '../services/api/shared/portfolio.api';
 import type { Portfolio } from '../types/portfolio';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 /**
  * Hook principal pour la gestion des portefeuilles via l'API
@@ -31,8 +31,8 @@ export function usePortfoliosApi() {
     }
   }, []);
 
-  // Charger les portefeuilles par type
-  const loadPortfoliosByType = useCallback(async (type: 'traditional' | 'investment' | 'leasing') => {
+  // Charger les portefeuilles par type (traditional seulement)
+  const loadPortfoliosByType = useCallback(async (type: 'traditional') => {
     try {
       setLoading(true);
       setError(null);
@@ -219,7 +219,7 @@ export function usePortfoliosPerformanceStats() {
  * Hook compatible avec l'ancien usePortfolios (localStorage)
  * Fournit une interface de migration progressive
  */
-export function usePortfoliosApiCompat(type?: 'traditional' | 'investment' | 'leasing') {
+export function usePortfoliosApiCompat(type?: 'traditional') {
   const {
     portfolios,
     loading,
@@ -231,7 +231,7 @@ export function usePortfoliosApiCompat(type?: 'traditional' | 'investment' | 'le
 
   // Charger les portefeuilles selon le type demandé
   useEffect(() => {
-    if (type) {
+    if (type && type === 'traditional') {
       loadPortfoliosByType(type);
     } else {
       loadAllPortfolios();
@@ -243,6 +243,6 @@ export function usePortfoliosApiCompat(type?: 'traditional' | 'investment' | 'le
     loading,
     error,
     deletePortfolio,
-    refetch: () => type ? loadPortfoliosByType(type) : loadAllPortfolios()
+    refetch: () => type && type === 'traditional' ? loadPortfoliosByType(type) : loadAllPortfolios()
   };
 }

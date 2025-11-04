@@ -8,7 +8,7 @@ import {
   Banknote, PauseCircle, PlayCircle, AlertTriangle, 
   CheckCircle, History, Calendar, DollarSign, FileText
 } from 'lucide-react';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 
 // Type pour les différents statuts de contrat
 type ContractStatus = 'active' | 'suspended' | 'defaulted' | 'in_litigation' | 'closed';

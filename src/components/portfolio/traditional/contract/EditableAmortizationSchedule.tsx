@@ -9,7 +9,7 @@ import { Modal } from '../../../ui/Modal';
 import { Tabs, TabsList, TabsTrigger } from '../../../ui/Tabs';
 import { SimpleSelect } from '../../../ui/SimpleSelect';
 import { Save, Edit, Download, Printer, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 import useAmortizationSchedules from '../../../../hooks/useAmortizationSchedules';
 import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 import { AmortizationScheduleItem } from '../../../../types/amortization';

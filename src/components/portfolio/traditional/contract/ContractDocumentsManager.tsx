@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { DocumentManager } from '../../../common/DocumentManager';
 import { PortfolioDocument } from '../../../../types/document';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 
 interface ContractDocumentsManagerProps {
   contractId: string;

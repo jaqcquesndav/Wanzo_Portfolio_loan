@@ -10,7 +10,7 @@ import { Select } from '../../../ui/Select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/Table';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
 import { ErrorDisplay } from '../../../common/ErrorDisplay';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 import { ConfirmDialog } from '../../../ui/ConfirmDialog';
 import { formatAmount, formatDate, statusConfig } from '../../../../utils/credit';
 import { ActionMenu } from './ActionMenu';

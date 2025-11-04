@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/ui/Pagination';
 import { UsersSkeleton } from '../components/ui/UsersSkeleton';
 import { User, UserRole } from '../types/users';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { useAuth } from '../contexts/useAuth';
 import { useUsersApi } from '../hooks/useUsersApi';
 

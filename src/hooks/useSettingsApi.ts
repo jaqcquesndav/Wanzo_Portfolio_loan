@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { settingsApi } from '../services/api/shared/settings.api';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 /**
  * Types pour les paramètres de l'application

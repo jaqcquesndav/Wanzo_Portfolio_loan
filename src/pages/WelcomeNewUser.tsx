@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { useTraditionalPortfolios } from '../hooks/useTraditionalPortfolios';
 import type { DefaultPortfolioFormData } from '../components/portfolio/DefaultPortfolioForm';
 import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioModal';

@@ -1,19 +1,16 @@
 import type { Portfolio } from '../types/portfolio';
-import type { LeasingPortfolioFull } from '../types/leasing-portfolio-full';
 
 const STORAGE_KEYS = {
   PORTFOLIOS: 'portfolios'
 } as const;
 
 export const storage = {
-  getPortfolios(): (Portfolio | LeasingPortfolioFull)[] {
+  getPortfolios(): Portfolio[] {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
       console.log('[DEBUG][storage.getPortfolios] Valeur brute localStorage:', stored);
       const portfolios = stored ? JSON.parse(stored) : [];
       console.log('[DEBUG][storage.getPortfolios] Après parse:', portfolios);
-      // S'assurer que tous les portfolios ont un tableau products
-      // On retourne tel quel, chaque type a ses propres propriétés
       return portfolios;
     } catch (error) {
       console.error('Error getting portfolios:', error);
@@ -21,7 +18,7 @@ export const storage = {
     }
   },
 
-  savePortfolio(portfolio: Portfolio | LeasingPortfolioFull) {
+  savePortfolio(portfolio: Portfolio) {
     try {
       const portfolios = this.getPortfolios();
       portfolios.push(portfolio);
@@ -32,7 +29,7 @@ export const storage = {
     }
   },
 
-  updatePortfolio(updatedPortfolio: Portfolio | LeasingPortfolioFull) {
+  updatePortfolio(updatedPortfolio: Portfolio) {
     try {
       const portfolios = this.getPortfolios();
       const index = portfolios.findIndex(p => p.id === updatedPortfolio.id);

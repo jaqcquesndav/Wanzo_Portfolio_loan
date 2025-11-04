@@ -5,7 +5,7 @@ import { Card } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Form';
 import { CalendarIcon, DocumentIcon, UserIcon, BuildingOfficeIcon, CurrencyDollarIcon, ScaleIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 import { GuaranteeCard } from '../guarantees/GuaranteeCard';
 import { Guarantee } from '../../../../types/guarantee';

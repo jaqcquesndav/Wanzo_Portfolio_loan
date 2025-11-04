@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 // import { HistoryTimeline } from '../components/common/HistoryTimeline';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import type { Repayment } from '../components/portfolio/traditional/RepaymentsTable';
 // TODO: Replace with real data fetching logic
 import { mockRepayments } from '../data/mockRepayments';

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { storage } from '../utils/storage';
 import type { Portfolio } from '../types/portfolio';
 import type { FinancialProduct } from '../types/traditional-portfolio';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 export function useTraditionalPortfolio(id: string) {
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
@@ -25,7 +25,7 @@ export function useTraditionalPortfolio(id: string) {
     };
 
     loadPortfolio();
-  }, [id]);
+  }, [id, showNotification]);
 
   const addProduct = async (productData: Partial<FinancialProduct>) => {
     if (!portfolio) {

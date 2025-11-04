@@ -5,7 +5,7 @@ import { Breadcrumb } from '../components/common/Breadcrumb';
 import { ArrowLeft } from 'lucide-react';
 import { ContractDetailsResponsive } from '../components/portfolio/traditional/contract/ContractDetailsResponsive';
 import { creditContractsStorageService } from '../services/storage/creditContractsStorage';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 import { CreditContract } from '../types/credit';
 
 export default function CreditContractDetail() {

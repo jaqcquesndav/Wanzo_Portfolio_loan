@@ -8,7 +8,7 @@ import { ContractDocumentsManager } from './ContractDocumentsManager';
 import { EditableAmortizationSchedule } from './EditableAmortizationSchedule';
 import { ContractActionsPanel } from './ContractActionsPanel';
 import { ContractDetails } from './ContractDetails';
-import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNotification } from '../../../../contexts/useNotification';
 import { ConfigureContractForm } from './ConfigureContractForm';
 import { EditContractForm } from './EditContractForm';
 
