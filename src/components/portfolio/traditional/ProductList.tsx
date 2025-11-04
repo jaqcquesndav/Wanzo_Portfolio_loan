@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Edit2, Trash2, Eye } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
@@ -117,7 +117,7 @@ export function ProductList({ products, onEdit, onDelete, onView }: ProductListP
               onClick={prevPage}
               disabled={currentPage === 1}
             >
-              Précédent
+              PRécédent
             </Button>
             <span className="flex items-center px-3 py-1 text-sm">
               Page {currentPage} sur {totalPages}

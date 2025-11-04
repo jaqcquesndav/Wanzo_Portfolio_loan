@@ -57,7 +57,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showNotification } = useNotification();
 
-  // Calculer la duré©e en mois entre la date de dé©but et la date de fin
+  // Calculer la duRé©e en mois entre la date de dû©but et la date de fin
   function calculateTermInMonths(startDateStr: string, endDateStr: string): number {
     if (!startDateStr || !endDateStr) return 0;
     
@@ -68,7 +68,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
            (endDate.getMonth() - startDate.getMonth());
   }
 
-  // Mettre à jour la durée lorsque les dates changent
+  // Mettre à jour la Durée lorsque les dates changent
   useEffect(() => {
     if (formData.start_date && formData.end_date) {
       const durationMonths = calculateTermInMonths(formData.start_date, formData.end_date);
@@ -199,7 +199,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
           }
         }));
         
-        // Supprimer les garanties qui ont é©té© retiré©es
+        // Supprimer les garanties qui ont é©té© retiRé©es
         const existingGuarantees = await guaranteeService.getGuaranteesByContractId(contract.id);
         const guaranteeIds = guarantees.map(g => g.id);
         
@@ -245,7 +245,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                   disabled
                   className="bg-gray-100"
                 />
-                <p className="text-xs text-gray-500 mt-1">La ré©fé©rence du contrat ne peut pas éªtre modifié©e</p>
+                <p className="text-xs text-gray-500 mt-1">La Ré©fé©rence du contrat ne peut pas éªtre modifié©e</p>
               </div>
               
               <div>
@@ -288,17 +288,17 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
             </div>
           </Card>
           
-          {/* Informations financié¨res */}
+          {/* Informations financières */}
           <Card className="p-4">
             <div className="flex items-center mb-4">
               <CurrencyDollarIcon className="h-5 w-5 text-gray-500 mr-2" />
-              <h3 className="text-lg font-medium">Informations financié¨res</h3>
+              <h3 className="text-lg font-medium">Informations financières</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Montant accordé©
+                  Montant accordû©
                 </label>
                 <Input
                   type="number"
@@ -313,7 +313,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Montant restant dé»
+                  Montant restant dû»
                 </label>
                 <Input
                   type="number"
@@ -328,7 +328,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Taux d'inté©réªt (%)
+                  Taux d'inté©Réªt (%)
                 </label>
                 <Input
                   type="number"
@@ -354,7 +354,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                   className="block w-full"
                 >
                   <option value="linear">Liné©aire (constant)</option>
-                  <option value="degressive">Dé©gressive</option>
+                  <option value="degressive">dû©gressive</option>
                   <option value="progressive">Progressive</option>
                   <option value="balloon">Paiement ballon</option>
                 </Select>
@@ -362,7 +362,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duré©e (mois)
+                  DuRé©e (mois)
                 </label>
                 <Input
                   type="number"
@@ -378,7 +378,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pé©riode de gré¢ce (mois)
+                  Pé©riode de gRé¢ce (mois)
                 </label>
                 <Input
                   type="number"
@@ -446,8 +446,8 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 >
                   <option value="active">Actif</option>
                   <option value="suspended">Suspendu</option>
-                  <option value="completed">Clé´turé©</option>
-                  <option value="defaulted">En dé©faut</option>
+                  <option value="completed">Clé´tuRé©</option>
+                  <option value="defaulted">En dû©faut</option>
                   <option value="in_litigation">En contentieux</option>
                 </Select>
               </div>
@@ -473,7 +473,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Montant dé©caissé©
+                  Montant dû©caissé©
                 </label>
                 <Input
                   type="number"
@@ -518,7 +518,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                         <div className="font-medium">{guarantee.type.charAt(0).toUpperCase() + guarantee.type.slice(1).replace('_', ' ')}</div>
                         <div className="text-sm text-gray-500">
                           Valeur: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(guarantee.value)}
-                          {guarantee.details?.contract_number && ` â€¢ Ré©f: ${guarantee.details.contract_number}`}
+                          {guarantee.details?.contract_number && ` ¢ Ré©f: ${guarantee.details.contract_number}`}
                         </div>
                       </div>
                       <Button 
@@ -560,11 +560,11 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                     <option value="immobilier">Immobilier</option>
                     <option value="caution_bancaire">Caution bancaire</option>
                     <option value="fonds_garantie">Fonds de garantie</option>
-                    <option value="assurance_credit">Assurance cré©dit</option>
+                    <option value="assurance_credit">Assurance cRé©dit</option>
                     <option value="nantissement">Nantissement</option>
                     <option value="gage">Gage</option>
                     <option value="hypotheque">Hypothé¨que</option>
-                    <option value="depot_especes">Dé©pé´t espé¨ces</option>
+                    <option value="depot_especes">dû©pé´t espé¨ces</option>
                     <option value="autre">Autre</option>
                   </Select>
                 </div>
@@ -595,9 +595,9 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                   >
                     <option value="active">Active</option>
                     <option value="pending">En attente</option>
-                    <option value="libé©ré©e">Libé©ré©e</option>
+                    <option value="libé©Ré©e">Libé©Ré©e</option>
                     <option value="saisie">Saisie</option>
-                    <option value="expiré©e">Expiré©e</option>
+                    <option value="expiRé©e">ExpiRé©e</option>
                   </Select>
                 </div>
               </div>
@@ -614,7 +614,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                       ...prev, 
                       details: { ...prev.details, contract_number: e.target.value } 
                     }))}
-                    placeholder="Numé©ro de ré©fé©rence (facultatif)"
+                    placeholder="Numé©ro de Ré©fé©rence (facultatif)"
                   />
                 </div>
                 
@@ -662,6 +662,9 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
     </Dialog>
   );
 }
+
+
+
 
 
 

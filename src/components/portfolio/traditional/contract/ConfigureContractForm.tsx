@@ -15,7 +15,7 @@ interface ConfigureContractFormProps {
 
 export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: ConfigureContractFormProps) {
   const [formData, setFormData] = useState({
-    interest_rate: contract.interest_rate.toString(),
+    interest_rate: (contract.interest_rate || 0).toString(),
     start_date: contract.start_date || new Date().toISOString().split('T')[0],
     end_date: contract.end_date || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0],
     amortization_method: contract.amortization_method || 'linear',
@@ -24,13 +24,13 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showNotification } = useNotification();
 
-  // Gestionnaire sÃ©parÃ© pour les Ã©lÃ©ments input
+  // Gestionnaire sépaRé pour les éléments input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Gestionnaire sÃ©parÃ© pour les Ã©lÃ©ments select
+  // Gestionnaire sépaRé pour les éléments select
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -49,7 +49,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
       };
       
       await onUpdate(updatedData);
-      showNotification('Contrat configurÃ© avec succÃ¨s', 'success');
+      showNotification('Contrat configuRé© avec succé¨s', 'success');
       onClose();
     } catch (error) {
       showNotification('Erreur lors de la configuration du contrat', 'error');
@@ -64,7 +64,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Taux d'intÃ©rÃªt (%)
+            Taux d'inté©Réªt (%)
           </label>
           <Input
             type="number"
@@ -80,7 +80,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date de dÃ©but
+            Date de dû©but
           </label>
           <Input
             type="date"
@@ -106,7 +106,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            MÃ©thode d'amortissement
+            Mé©thode d'amortissement
           </label>
           <Select
             name="amortization_method"
@@ -114,8 +114,8 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
             onChange={handleSelectChange}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
           >
-            <option value="linear">LinÃ©aire (constant)</option>
-            <option value="degressive">DÃ©gressive</option>
+            <option value="linear">Liné©aire (constant)</option>
+            <option value="degressive">dû©gressive</option>
             <option value="progressive">Progressive</option>
             <option value="balloon">Paiement ballon</option>
           </Select>
@@ -133,4 +133,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
     </Modal>
   );
 }
+
+
+
 

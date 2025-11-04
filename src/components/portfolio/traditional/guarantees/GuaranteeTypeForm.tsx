@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { GuaranteeType } from '../../../../types/credit';
 import { Button } from '../../../ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../ui/Dialog';
@@ -37,7 +37,7 @@ export function GuaranteeTypeForm({ isOpen, onClose, onSubmit, initialData }: Gu
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Modifier le type de garantie' : 'Créer un type de garantie'}</DialogTitle>
+          <DialogTitle>{initialData ? 'Modifier le type de garantie' : 'CRéer un type de garantie'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -71,7 +71,7 @@ export function GuaranteeTypeForm({ isOpen, onClose, onSubmit, initialData }: Gu
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting || !name}>
-              {initialData ? 'Mettre à jour' : 'Créer'}
+              {initialData ? 'Mettre à jour' : 'CRéer'}
             </Button>
           </DialogFooter>
         </form>
@@ -79,3 +79,4 @@ export function GuaranteeTypeForm({ isOpen, onClose, onSubmit, initialData }: Gu
     </Dialog>
   );
 }
+

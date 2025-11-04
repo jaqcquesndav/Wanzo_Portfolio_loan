@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/ContractSchedule.tsx
+﻿// components/portfolio/traditional/contract/ContractSchedule.tsx
 import { useState, useEffect } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../../ui/Table';
 import { Button } from '../../../ui/Button';
@@ -38,8 +38,8 @@ export function ContractSchedule({ contractId }: ContractScheduleProps) {
   const { formatAmount } = useCurrencyContext();
   
   useEffect(() => {
-    // Dans une application réelle, vous feriez un appel API ici
-    // Simulation de données pour la démo
+    // Dans une application Réelle, vous feriez un appel API ici
+    // Simulation de données pour la dûmo
     const generateMockSchedule = () => {
       setLoading(true);
       
@@ -63,7 +63,7 @@ export function ContractSchedule({ contractId }: ContractScheduleProps) {
         const principal = monthlyPayment - interest;
         remainingBalance -= principal;
         
-        // Déterminer le statut
+        // dûterminer le statut
         let status: ScheduleInstallment['status'] = 'upcoming';
         let paymentDate: string | undefined = undefined;
         
@@ -110,7 +110,7 @@ export function ContractSchedule({ contractId }: ContractScheduleProps) {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Échéancier de remboursement</h2>
+        <h2 className="text-xl font-semibold">échéancier de remboursement</h2>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
@@ -188,3 +188,6 @@ export function ContractSchedule({ contractId }: ContractScheduleProps) {
     </div>
   );
 }
+
+
+

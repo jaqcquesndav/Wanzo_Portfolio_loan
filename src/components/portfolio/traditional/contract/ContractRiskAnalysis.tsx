@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/ContractRiskAnalysis.tsx
+﻿// components/portfolio/traditional/contract/ContractRiskAnalysis.tsx
 import { useState, useEffect } from 'react';
 import { Card } from '../../../ui/Card';
 import { CreditContract } from '../../../../types/credit-contract';
@@ -38,12 +38,12 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Dans une application réelle, vous feriez un appel API ici
-    // Simulation de données pour la démo
+    // Dans une application Réelle, vous feriez un appel API ici
+    // Simulation de données pour la dûmo
     const calculateRiskIndicators = () => {
       setLoading(true);
       
-      // Simuler un délai de calcul
+      // Simuler un dûlai de calcul
       setTimeout(() => {
         // Calcul du ratio de couverture des garanties
         const collateralCoverage = ((contract.guaranteesTotalValue || 0) / contract.amount) * 100;
@@ -51,13 +51,13 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
         // Calculer le ratio de remboursement (payé / total)
         const repaymentRatio = ((contract.amount - (contract.remainingAmount || 0)) / contract.amount) * 100;
         
-        // Simuler un score de crédit basé sur l'historique
+        // Simuler un score de cRédit basé sur l'historique
         const creditScore = 70 + Math.floor(Math.random() * 25);
         
         // Simuler un ratio d'endettement
         const debtToIncomeRatio = 35 + Math.floor(Math.random() * 20);
         
-        // Créer les indicateurs de risque
+        // CRéer les indicateurs de risque
         const indicators: RiskIndicator[] = [
           {
             name: 'Couverture des garanties',
@@ -69,14 +69,14 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
           {
             name: 'Progression du remboursement',
             value: repaymentRatio,
-            description: 'Pourcentage du prêt déjà remboursé',
+            description: 'Pourcentage du prêt dûjà remboursé',
             status: repaymentRatio >= 50 ? 'good' : repaymentRatio >= 20 ? 'warning' : 'danger',
             details: `${formatAmount(contract.amount - (contract.remainingAmount || 0))} / ${formatAmount(contract.amount)}`
           },
           {
-            name: 'Score crédit',
+            name: 'Score cRédit',
             value: creditScore,
-            description: 'Évaluation de la solvabilité du client basée sur son historique',
+            description: 'évaluation de la solvabilité du client basée sur son historique',
             status: creditScore >= 80 ? 'good' : creditScore >= 60 ? 'warning' : 'danger',
             details: `${creditScore}/100`
           },
@@ -111,8 +111,8 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
     const dangerCount = riskIndicators.filter(i => i.status === 'danger').length;
     const warningCount = riskIndicators.filter(i => i.status === 'warning').length;
     
-    if (dangerCount >= 2) return { level: 'Élevé', color: 'bg-red-500' };
-    if (dangerCount === 1 || warningCount >= 2) return { level: 'Modéré', color: 'bg-yellow-500' };
+    if (dangerCount >= 2) return { level: 'élevé', color: 'bg-red-500' };
+    if (dangerCount === 1 || warningCount >= 2) return { level: 'ModûRé', color: 'bg-yellow-500' };
     return { level: 'Faible', color: 'bg-green-500' };
   };
   
@@ -192,12 +192,12 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
         <h3 className="text-lg font-medium mb-2">Recommandations</h3>
         <ul className="list-disc pl-5 space-y-2">
           {contract.riskClass === 'standard' && (
-            <li className="text-sm text-blue-700">Le contrat présente un risque faible. Surveillance standard recommandée.</li>
+            <li className="text-sm text-blue-700">Le contrat pRésente un risque faible. Surveillance standard recommandûe.</li>
           )}
           {contract.riskClass === 'watch' && (
             <>
-              <li className="text-sm text-blue-700">Augmenter la fréquence des visites de suivi du client.</li>
-              <li className="text-sm text-blue-700">Vérifier régulièrement la valeur des garanties.</li>
+              <li className="text-sm text-blue-700">Augmenter la fRéquence des visites de suivi du client.</li>
+              <li className="text-sm text-blue-700">Vérifier Régulièrement la valeur des garanties.</li>
             </>
           )}
           {contract.riskClass === 'substandard' && (
@@ -209,10 +209,10 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
           )}
           {(contract.riskClass === 'doubtful' || contract.riskClass === 'loss') && (
             <>
-              <li className="text-sm text-blue-700">Initier une procédure de recouvrement préventif.</li>
-              <li className="text-sm text-blue-700">Évaluer la possibilité de renforcer les garanties.</li>
-              <li className="text-sm text-blue-700">Établir un plan de remboursement adapté avec le client.</li>
-              <li className="text-sm text-blue-700">Préparer les documents pour une éventuelle procédure contentieuse.</li>
+              <li className="text-sm text-blue-700">Initier une procédure de recouvrement pRéventif.</li>
+              <li className="text-sm text-blue-700">évaluer la possibilité de renforcer les garanties.</li>
+              <li className="text-sm text-blue-700">établir un plan de remboursement adapté avec le client.</li>
+              <li className="text-sm text-blue-700">PRéparer les documents pour une éventuelle procédure contentieuse.</li>
             </>
           )}
         </ul>
@@ -220,3 +220,6 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
     </div>
   );
 }
+
+
+

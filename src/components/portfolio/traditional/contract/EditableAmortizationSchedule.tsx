@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/contract/EditableAmortizationSchedule.tsx
+﻿// src/components/portfolio/traditional/contract/EditableAmortizationSchedule.tsx
 import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/Table';
 import { Badge } from '../../../ui/Badge';
@@ -67,9 +67,9 @@ export function EditableAmortizationSchedule({
     remainingBalance: 0
   });
   const [activeTab, setActiveTab] = useState('all');
-  // État pour la méthode d'amortissement
+  // état pour la Méthode d'amortissement
   const [selectedAmortizationMethod, setSelectedAmortizationMethod] = useState<'linear' | 'degressive' | 'progressive' | 'balloon'>(amortizationMethod);
-  // État pour la pagination
+  // état pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10); // Nombre d'éléments par page
   const { showNotification } = useNotification();
@@ -98,7 +98,7 @@ export function EditableAmortizationSchedule({
       try {
         // Utiliser les données provenant du hook useAmortizationSchedules
         if (!amortizationSchedules.isLoading) {
-          console.log('Données chargées depuis le hook:', amortizationSchedules.items.length, 'éléments');
+          console.log('données chargées depuis le hook:', amortizationSchedules.items.length, 'éléments');
           setScheduleItems(amortizationSchedules.items as AmortizationScheduleItem[]);
         }
       } catch (error) {
@@ -123,7 +123,7 @@ export function EditableAmortizationSchedule({
     console.log(`Changement de page: ${currentPage} -> ${newPage}`);
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
-      // Le hook se rechargera automatiquement grâce à la dépendance "page" dans son useEffect
+      // Le hook se rechargera automatiquement grâce à la dûpendance "page" dans son useEffect
     }
   };
 
@@ -133,33 +133,33 @@ export function EditableAmortizationSchedule({
     setCurrentPage(1); // Réinitialiser à la première page lors du changement de filtre
   };
 
-  // Gestionnaire pour changer de méthode d'amortissement
+  // Gestionnaire pour changer de Méthode d'amortissement
   const handleAmortizationMethodChange = (method: 'linear' | 'degressive' | 'progressive' | 'balloon') => {
     setSelectedAmortizationMethod(method);
-    // Rafraîchir les données avec la nouvelle méthode
+    // Rafraîchir les données avec la nouvelle Méthode
     amortizationSchedules.refresh();
     
     // Mettre à jour le contrat si onEditSchedule est fourni
     if (onEditSchedule) {
       // Nous passons un tableau vide car nous ne modifions pas les échéances elles-mêmes
-      // La méthode d'amortissement sera mise à jour dans le composant parent
+      // La Méthode d'amortissement sera mise à jour dans le composant parent
       onEditSchedule([]).then(() => {
         // Après la mise à jour, nous envoyons une notification
         showNotification(`Méthode d'amortissement modifiée en "${
           method === 'linear' ? 'Linéaire' : 
-          method === 'degressive' ? 'Dégressive' : 
+          method === 'degressive' ? 'dûgressive' : 
           method === 'progressive' ? 'Progressive' : 
           'Paiement ballon'
         }"`, 'info');
       }).catch(error => {
-        console.error('Erreur lors de la mise à jour de la méthode d\'amortissement:', error);
-        showNotification('Erreur lors de la mise à jour de la méthode d\'amortissement', 'error');
+        console.error('Erreur lors de la mise à jour de la Méthode d\'amortissement:', error);
+        showNotification('Erreur lors de la mise à jour de la Méthode d\'amortissement', 'error');
       });
     } else {
       // Si pas de callback, juste notification
       showNotification(`Méthode d'amortissement modifiée en "${
         method === 'linear' ? 'Linéaire' : 
-        method === 'degressive' ? 'Dégressive' : 
+        method === 'degressive' ? 'dûgressive' : 
         method === 'progressive' ? 'Progressive' : 
         'Paiement ballon'
       }"`, 'info');
@@ -199,7 +199,7 @@ export function EditableAmortizationSchedule({
           await onEditSchedule(updatedItems);
         }
         
-        showNotification('Échéance mise à jour avec succès', 'success');
+        showNotification('échéance mise à jour avec succès', 'success');
         setIsEditModalOpen(false);
       } else {
         showNotification('Erreur lors de la mise à jour de l\'échéance', 'error');
@@ -237,7 +237,7 @@ export function EditableAmortizationSchedule({
           await onEditSchedule(updatedItems);
         }
         
-        showNotification('Échéance marquée comme payée', 'success');
+        showNotification('échéance marquée comme payée', 'success');
       } else {
         showNotification('Erreur lors de la mise à jour de l\'échéance', 'error');
       }
@@ -249,7 +249,7 @@ export function EditableAmortizationSchedule({
 
   // Gestionnaire pour ouvrir le modal d'ajout d'échéance
   const handleOpenAddModal = () => {
-    // Initialiser le nouvel item avec des valeurs par défaut
+    // Initialiser le nouvel item avec des valeurs par dûfaut
     setNewItem({
       status: 'pending',
       dueDate: new Date().toISOString().split('T')[0],
@@ -269,7 +269,7 @@ export function EditableAmortizationSchedule({
       // Générer un ID unique
       const id = `schedule-${contractId}-${Date.now()}`;
       
-      // Créer le nouvel item complet
+      // CRéer le nouvel item complet
       const completeNewItem: AmortizationScheduleItem = {
         id,
         contractId,
@@ -305,7 +305,7 @@ export function EditableAmortizationSchedule({
     }
   };
 
-  // États pour le modal de suppression
+  // états pour le modal de suppression
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -325,14 +325,14 @@ export function EditableAmortizationSchedule({
       setScheduleItems(updatedItems);
       
       // Mettre à jour le localStorage via le hook
-      // Note: Il faudrait idéalement ajouter une méthode deleteScheduleItem au hook
+      // Note: Il faudrait idûalement ajouter une Méthode deleteScheduleItem au hook
       
       // Appeler le callback si fourni
       if (onEditSchedule) {
         await onEditSchedule(updatedItems);
       }
       
-      showNotification('Échéance supprimée avec succès', 'success');
+      showNotification('échéance supprimée avec succès', 'success');
       
       setShowDeleteConfirm(false);
       setDeleteItemId(null);
@@ -399,7 +399,7 @@ export function EditableAmortizationSchedule({
             </Card>
           </div>
           
-          {/* Sélecteur de méthode d'amortissement */}
+          {/* Sélecteur de Méthode d'amortissement */}
           <div className="mb-4">
             <div className="flex items-center">
               <label className="mr-2 text-sm text-gray-500">Méthode d'amortissement:</label>
@@ -408,7 +408,7 @@ export function EditableAmortizationSchedule({
                 onChange={handleAmortizationMethodChange}
                 options={[
                   { value: 'linear', label: 'Linéaire (constant)' },
-                  { value: 'degressive', label: 'Dégressive' },
+                  { value: 'degressive', label: 'dûgressive' },
                   { value: 'progressive', label: 'Progressive' },
                   { value: 'balloon', label: 'Paiement ballon' }
                 ]}
@@ -553,10 +553,10 @@ export function EditableAmortizationSchedule({
                 <p className="text-sm text-gray-700">
                   Affichage de <span className="font-medium">{((currentPage - 1) * pageSize) + 1}</span> à{' '}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalItems)}</span> sur{' '}
-                  <span className="font-medium">{totalItems}</span> résultats
+                  <span className="font-medium">{totalItems}</span> Résultats
                 </p>
                 <p className="ml-4 text-xs text-gray-500">
-                  (Page {currentPage}/{totalPages}, Éléments affichés: {paginatedItems.length})
+                  (Page {currentPage}/{totalPages}, éléments affichés: {paginatedItems.length})
                 </p>
               </div>
               <div className="flex justify-between sm:justify-end">
@@ -568,7 +568,7 @@ export function EditableAmortizationSchedule({
                   className="mr-2"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span className="ml-1">Précédent</span>
+                  <span className="ml-1">PRécédent</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -588,7 +588,7 @@ export function EditableAmortizationSchedule({
             <Modal
               isOpen={isEditModalOpen}
               onClose={() => setIsEditModalOpen(false)}
-              title={`Édition de l'échéance n°${editingItem.number}`}
+              title={`édition de l'échéance n°${editingItem.number}`}
             >
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -907,7 +907,7 @@ export function EditableAmortizationSchedule({
           >
             <div className="p-4">
               <p className="text-sm text-gray-500 mb-4">
-                Êtes-vous sûr de vouloir supprimer cette échéance ? Cette action est irréversible.
+                Êtes-vous sûr de vouloir supprimer cette échéance ? Cette action est irRéversible.
               </p>
               <div className="flex justify-end space-x-3 mt-5">
                 <Button
@@ -932,3 +932,6 @@ export function EditableAmortizationSchedule({
     </div>
   );
 }
+
+
+

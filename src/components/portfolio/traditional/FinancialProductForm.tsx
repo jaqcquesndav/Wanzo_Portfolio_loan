@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -113,8 +113,8 @@ export function FinancialProductForm({ onSubmit, onCancel, initialData }: Financ
 
       <FormField label="Type de produit" error={errors.type?.message}>
         <Select {...register('type')}>
-          <option value="credit">Crédit</option>
-          <option value="savings">Épargne</option>
+          <option value="credit">cRédit</option>
+          <option value="savings">épargne</option>
           <option value="investment">Investissement</option>
         </Select>
       </FormField>
@@ -232,7 +232,7 @@ export function FinancialProductForm({ onSubmit, onCancel, initialData }: Financ
           Annuler
         </Button>
         <Button type="submit" loading={isSubmitting}>
-          {initialData ? 'Mettre à jour' : 'Créer le produit'}
+          {initialData ? 'Mettre à jour' : 'CRéer le produit'}
         </Button>
       </div>
     </form>

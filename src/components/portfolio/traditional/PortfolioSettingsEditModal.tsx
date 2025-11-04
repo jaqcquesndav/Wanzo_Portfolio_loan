@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
 import { BankAccountsPanel } from '../shared/BankAccountsPanel';
@@ -84,7 +84,7 @@ export function PortfolioSettingsEditModal({ open, portfolio, onSave, onClose }:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl p-6 border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-primary">Éditer les paramètres du portefeuille</h2>
+        <h2 className="text-xl font-bold mb-4 text-primary">éditer les paramètres du portefeuille</h2>
         
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
           <TabsList className="mb-6">
@@ -174,12 +174,12 @@ export function PortfolioSettingsEditModal({ open, portfolio, onSave, onClose }:
                       onChange={e => handleChange('risk_profile', e.target.value)}
                     >
                       <option value="conservative">Conservateur</option>
-                      <option value="moderate">Modéré</option>
+                      <option value="moderate">ModûRé</option>
                       <option value="aggressive">Agressif</option>
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">Étape d'investissement</label>
+                    <label className="block text-sm font-medium mb-1">étape d'investissement</label>
                     <input 
                       className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary" 
                       value={form.investment_stage} 
@@ -253,3 +253,4 @@ export function PortfolioSettingsEditModal({ open, portfolio, onSave, onClose }:
     </div>
   );
 }
+

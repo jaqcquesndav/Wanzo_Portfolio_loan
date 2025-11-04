@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/CreditContractDetailPage.tsx
+﻿// components/portfolio/traditional/contract/CreditContractDetailPage.tsx
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
@@ -147,8 +147,8 @@ export default function CreditContractDetailPage() {
       <div className="mt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="details" currentValue={activeTab} onValueChange={setActiveTab}>Détails</TabsTrigger>
-            <TabsTrigger value="schedule" currentValue={activeTab} onValueChange={setActiveTab}>Échéancier</TabsTrigger>
+            <TabsTrigger value="details" currentValue={activeTab} onValueChange={setActiveTab}>dûtails</TabsTrigger>
+            <TabsTrigger value="schedule" currentValue={activeTab} onValueChange={setActiveTab}>échéancier</TabsTrigger>
             <TabsTrigger value="repayments" currentValue={activeTab} onValueChange={setActiveTab}>Remboursements</TabsTrigger>
             <TabsTrigger value="guarantees" currentValue={activeTab} onValueChange={setActiveTab}>Garanties</TabsTrigger>
             <TabsTrigger value="documents" currentValue={activeTab} onValueChange={setActiveTab}>Documents</TabsTrigger>
@@ -173,17 +173,17 @@ export default function CreditContractDetailPage() {
               endDate={contract.end_date || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString()}
               amortizationMethod={contract.amortization_method || 'linear'}
               onEditSchedule={async (updatedSchedule) => {
-                // Si updatedSchedule est vide, cela signifie que seule la méthode d'amortissement a changé
+                // Si updatedSchedule est vide, cela signifie que seule la Méthode d'amortissement a changé
                 if (updatedSchedule.length === 0) {
-                  // Mettre à jour la méthode d'amortissement du contrat
+                  // Mettre à jour la Méthode d'amortissement du contrat
                   handleUpdateContract({
                     amortization_method: contract.amortization_method === 'linear' ? 'degressive' :
                                         contract.amortization_method === 'degressive' ? 'progressive' :
                                         contract.amortization_method === 'progressive' ? 'balloon' : 'linear'
                   });
                 } else {
-                  console.log('Échéancier mis à jour:', updatedSchedule);
-                  showNotification('Échéancier mis à jour avec succès', 'success');
+                  console.log('échéancier mis à jour:', updatedSchedule);
+                  showNotification('échéancier mis à jour avec succès', 'success');
                 }
               }}
             />
@@ -229,3 +229,6 @@ export default function CreditContractDetailPage() {
     </div>
   );
 }
+
+
+

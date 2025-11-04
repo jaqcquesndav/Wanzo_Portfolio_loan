@@ -35,8 +35,8 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
     return (
       <EmptyState
         icon={Calendar}
-        title="Aucun Ã©chÃ©ancier disponible"
-        description="Il n'y a pas de contrats dans ce portefeuille pour lesquels vous pouvez gÃ©rer des Ã©chÃ©anciers."
+        title="Aucun é©ché©ancier disponible"
+        description="Il n'y a pas de contrats dans ce portefeuille pour lesquels vous pouvez gé©rer des é©ché©anciers."
         size="md"
       />
     );
@@ -45,7 +45,7 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
   return (
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Ã‰chÃ©anciers de remboursement</h2>
+        <h2 className="text-lg font-medium">é‰ché©anciers de remboursement</h2>
       </div>
       
       {contracts.map((contract: CreditContract) => (
@@ -69,7 +69,7 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
             </div>
             <Link to={`/app/traditional/${portfolioId}/contracts/${contract.id}`}>
               <Button size="sm" className="flex items-center">
-                <span>Voir l'Ã©chÃ©ancier</span>
+                <span>Voir l'é©ché©ancier</span>
                 <ArrowUpRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
@@ -79,4 +79,7 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
     </div>
   );
 }
+
+
+
 

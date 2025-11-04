@@ -24,14 +24,14 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
   const { showNotification } = useNotification();
   const { showPaymentOrderModal } = usePaymentOrder();
 
-  // Ouvrir le modal de paiement pour créditer le client
+  // Ouvrir le modal de paiement pour cRéditer le client
   const handleCreditClient = () => {
-    // Préparer les données pour le modal de paiement
+    // PRéparer les données pour le modal de paiement
     openPaymentOrder(
       {
         action: 'validate_funding',
         portfolioId: contract.portfolioId || 'default',
-        portfolioName: 'Portefeuille de crédit',
+        portfolioName: 'Portefeuille de cRédit',
         itemId: contract.id,
         reference: contract.contract_number,
         amount: contract.amount,
@@ -50,7 +50,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
         status: selectedStatus,
         updated_at: new Date().toISOString()
         // La propriété statusChangeReason n'existe pas dans le type CreditContract
-        // Nous pouvons stocker cette information dans une table séparée ou dans localStorage
+        // Nous pouvons stocker cette information dans une table sépaRée ou dans localStorage
       });
       
       // Si besoin de conserver la raison du changement, nous pouvons utiliser localStorage
@@ -112,7 +112,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
             className="text-green-600 border-green-600 hover:bg-green-50"
           >
             <BanknotesIcon className="w-4 h-4 mr-1" />
-            Débloquer
+            dûbloquer
           </Button>
         </div>
 
@@ -143,7 +143,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
                 className="text-orange-600 border-orange-600 hover:bg-orange-50"
                 onClick={() => openStatusDialog('defaulted')}
               >
-                Marquer défaillant
+                Marquer dûfaillant
               </Button>
               <Button 
                 variant="outline" 
@@ -279,3 +279,5 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
     </div>
   );
 }
+
+

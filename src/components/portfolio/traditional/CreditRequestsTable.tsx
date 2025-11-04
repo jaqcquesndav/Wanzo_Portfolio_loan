@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Filter, ArrowUpDown, Download, FileText, User, CreditCard, Search, Check, X } from 'lucide-react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Input } from '../../ui/Input';
@@ -13,7 +13,7 @@ import { exportToExcel, exportToPDF } from '../../../utils/export';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 import { CreditRequest, CreditRequestStatus } from '../../../types/credit';
 
-// Type amélioré et standardisé pour une demande de crédit
+// Type amélioRé et standardisé pour une demande de cRédit
 interface CreditRequestsTableProps {
   requests: CreditRequest[];
   onValidate: (id: string) => void;
@@ -37,12 +37,12 @@ const statusConfig: Record<CreditRequestStatus, { label: string; variant: "succe
   'approved': { label: 'Approuvée', variant: 'success', color: 'bg-green-100 text-green-700' },
   'rejected': { label: 'Rejetée', variant: 'error', color: 'bg-red-100 text-red-700' },
   'canceled': { label: 'Annulée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
-  'disbursed': { label: 'Décaissée', variant: 'primary', color: 'bg-blue-100 text-blue-700' },
+  'disbursed': { label: 'dûcaissée', variant: 'primary', color: 'bg-blue-100 text-blue-700' },
   'active': { label: 'Active', variant: 'success', color: 'bg-green-100 text-green-700' },
   'closed': { label: 'Fermée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
-  'defaulted': { label: 'En défaut', variant: 'error', color: 'bg-red-100 text-red-700' },
-  'restructured': { label: 'Restructurée', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
-  'consolidated': { label: 'Consolidée', variant: 'primary', color: 'bg-blue-100 text-blue-700' },
+  'defaulted': { label: 'En dûfaut', variant: 'error', color: 'bg-red-100 text-red-700' },
+  'restructured': { label: 'RestructuRée', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
+  'consolidated': { label: 'Consolidûe', variant: 'primary', color: 'bg-blue-100 text-blue-700' },
   'in_litigation': { label: 'En litige', variant: 'error', color: 'bg-red-100 text-red-700' }
 };
 
@@ -58,7 +58,7 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
   companyNames = {},
   productNames = {}
 }) => {
-  // États pour les filtres et la pagination
+  // états pour les filtres et la pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<CreditRequestStatus | ''>('');
   const [showFilters, setShowFilters] = useState(false);
@@ -162,7 +162,7 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
   // Export Excel
   const handleExportExcel = () => {
     const dataToExport = filteredAndSortedData.map(req => ({
-      'Référence': req.id,
+      'référence': req.id,
       'Client': req.memberId,
       'Produit': req.productId,
       'Montant': formatAmount(req.requestAmount),
@@ -178,8 +178,8 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
   // Export PDF
   const handleExportPDF = () => {
     exportToPDF({
-      title: 'Demandes de Crédit',
-      headers: ['Référence', 'Client', 'Produit', 'Montant', 'Statut', 'Date'],
+      title: 'Demandes de cRédit',
+      headers: ['référence', 'Client', 'Produit', 'Montant', 'Statut', 'Date'],
       data: filteredAndSortedData.map(req => [
         req.id,
         req.memberId,
@@ -203,10 +203,10 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
   
   return (
     <>
-      {/* En-tête avec résumé et statistiques */}
+      {/* En-tête avec Résumé et statistiques */}
       <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 rounded-t-lg mb-0">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold">Demandes de Crédit</h3>
+          <h3 className="text-lg font-bold">Demandes de cRédit</h3>
           <div className="flex items-center space-x-6">
             <div className="text-center">
               <div className="text-2xl font-bold">{statusCounts.total}</div>
@@ -226,7 +226,7 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold">{statusCounts.disbursed}</div>
-              <div className="text-xs uppercase">Décaissées</div>
+              <div className="text-xs uppercase">dûcaissées</div>
             </div>
           </div>
         </div>
@@ -266,9 +266,9 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
               <option value="analysis">En analyse</option>
               <option value="approved">Approuvées</option>
               <option value="rejected">Refusées</option>
-              <option value="disbursed">Décaissées</option>
+              <option value="disbursed">dûcaissées</option>
               <option value="active">Actives</option>
-              <option value="defaulted">En défaut</option>
+              <option value="defaulted">En dûfaut</option>
             </Select>
           </div>
           
@@ -305,7 +305,7 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
             <TableHead>
               <TableRow>
                 <TableHeader className="cursor-pointer" onClick={() => handleSort('id')}>
-                  Référence
+                  référence
                   <ArrowUpDown className="h-4 w-4 inline-block ml-1" />
                 </TableHeader>
                 <TableHeader className="cursor-pointer" onClick={() => handleSort('memberId')}>
@@ -337,11 +337,11 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
                   <TableCell colSpan={7} className="p-0">
                     <EmptyState
                       icon={CreditCard}
-                      title={searchTerm || statusFilter ? "Aucun résultat" : "Aucune demande de crédit"}
+                      title={searchTerm || statusFilter ? "Aucun Résultat" : "Aucune demande de cRédit"}
                       description={
                         searchTerm || statusFilter 
                           ? "Essayez de modifier vos critères de recherche ou filtres."
-                          : "Les demandes de crédit apparaîtront ici une fois soumises par les clients."
+                          : "Les demandes de cRédit apparaîtront ici une fois soumises par les clients."
                       }
                       size="sm"
                     />
@@ -395,7 +395,7 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
                       <ActionsDropdown
                         actions={[
                           { 
-                            label: 'Voir détails', 
+                            label: 'Voir dûtails', 
                             onClick: () => onView(request.id),
                             icon: <FileText className="h-4 w-4 mr-2" />
                           },
@@ -412,13 +412,13 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
                             icon: <X className="h-4 w-4 mr-2" />
                           } : null,
                           request.status === 'approved' ? { 
-                            label: 'Décaisser', 
+                            label: 'dûcaisser', 
                             onClick: () => onDisburse(request.id),
                             className: 'text-blue-600 hover:text-blue-800',
                             icon: <CreditCard className="h-4 w-4 mr-2" />
                           } : null,
                           request.status === 'approved' ? { 
-                            label: 'Créer contrat', 
+                            label: 'CRéer contrat', 
                             onClick: () => onCreateContract ? onCreateContract(request.id) : null,
                             className: 'text-purple-600 hover:text-purple-800',
                             icon: <FileText className="h-4 w-4 mr-2" />
@@ -454,3 +454,4 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
     </>
   );
 };
+

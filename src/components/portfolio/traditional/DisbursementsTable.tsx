@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
@@ -16,7 +16,7 @@ import { useDisbursements } from '../../../hooks/useDisbursements';
 interface DisbursementsTableProps {
   portfolioId: string;
   onView: (id: string) => void;
-  onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les détails de l'entreprise
+  onViewCompany?: (company: string) => void; // Nouvelle prop pour afficher les dûtails de l'entreprise
   portfolioType?: PortfolioType;
   // Informations sur le portfolio pour l'ordre de paiement
   portfolioInfo?: {
@@ -58,12 +58,12 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   const { showPaymentOrderModal } = usePaymentOrder();
   const { formatAmount } = useCurrencyContext();
   
-  // État pour la recherche et le filtrage
+  // état pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'tous' | 'en attente' | 'effectué'>('tous');
   const [sortBy, setSortBy] = useState<{ key: keyof Disbursement; direction: 'asc' | 'desc' } | null>(null);
   
-  // État pour la pagination
+  // état pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   
@@ -92,7 +92,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     },
     leasing: {
       title: 'Achats d\'équipement',
-      product: 'Équipement',
+      product: 'équipement',
       emptyMessage: 'Aucun achat d\'équipement',
       confirmAction: 'Confirmer achat'
     }
@@ -101,7 +101,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   // Sélectionner les libellés appropriés
   const currentLabels = portfolioType ? labels[portfolioType] : labels.traditional;
   
-  // Filtrer et trier les déboursements
+  // Filtrer et trier les dûboursements
   const filteredDisbursements = useMemo(() => {
     let filtered = disbursements;
     
@@ -156,7 +156,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     const dataToExport = filteredDisbursements.map(d => ({
       'Entreprise': d.company,
       'Produit': d.product,
-      'Référence Contrat': d.contractReference,
+      'référence Contrat': d.contractReference,
       'Montant': d.amount.toLocaleString() + ' FCFA',
       'Statut': statusConfig[d.status].label,
       'Date': new Date(d.date).toLocaleDateString(),
@@ -170,7 +170,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   const handleExportPDF = () => {
     exportToPDF({
       title: 'Liste des Virements',
-      headers: ['Entreprise', 'Produit', 'Référence', 'Montant', 'Statut', 'Date'],
+      headers: ['Entreprise', 'Produit', 'référence', 'Montant', 'Statut', 'Date'],
       data: filteredDisbursements.map(d => [
         d.company,
         d.product,
@@ -185,14 +185,14 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   
   // Gestionnaire d'événements pour la confirmation de paiement
   const handleConfirmPayment = (disbursement: Disbursement) => {
-    // Information de base sur l'opération (sans préjuger du détail)
+    // Information de base sur l'opération (sans pRéjuger du dûtail)
     const operationType = 
       portfolioType === 'investment' ? 'Ordre d\'achat' : 
       portfolioType === 'leasing' ? 'Acquisition' : 
       'Ordre de paiement';
     
-    // Créer les données initiales de l'ordre de paiement
-    // L'utilisateur pourra compléter les détails dans le modal
+    // CRéer les données initiales de l'ordre de paiement
+    // L'utilisateur pourra compléter les dûtails dans le modal
     const paymentOrderData: PaymentOrderData = {
       id: `payment-${Date.now()}`,
       orderNumber: `OP${Date.now().toString().slice(-8)}`,
@@ -215,7 +215,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
       updatedAt: new Date().toISOString()
     };
     
-    // Afficher le modal d'ordre de paiement pour que l'utilisateur puisse compléter les détails
+    // Afficher le modal d'ordre de paiement pour que l'utilisateur puisse compléter les dûtails
     showPaymentOrderModal(paymentOrderData, portfolioType);
     
     // Confirmer le virement avec le service API
@@ -325,7 +325,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
               <TableHeader onClick={() => handleSort('contractReference')} className="cursor-pointer">
-                Référence Contrat
+                référence Contrat
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
               <TableHeader>Compte Bénéficiaire</TableHeader>
@@ -344,7 +344,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
             {paginatedDisbursements.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-400">
-                  {filteredDisbursements.length === 0 ? currentLabels.emptyMessage : 'Aucun résultat pour cette recherche'}
+                  {filteredDisbursements.length === 0 ? currentLabels.emptyMessage : 'Aucun Résultat pour cette recherche'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -429,7 +429,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
       {totalPages > 1 && (
         <div className="p-4 border-t flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Affichage de {Math.min(filteredDisbursements.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredDisbursements.length)} sur {filteredDisbursements.length} entrées
+            Affichage de {Math.min(filteredDisbursements.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredDisbursements.length)} sur {filteredDisbursements.length} entRées
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -439,7 +439,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
+              PRécédent
             </Button>
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
@@ -467,3 +467,4 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     </div>
   );
 };
+

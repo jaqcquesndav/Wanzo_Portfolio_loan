@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
 import { ConfirmModal } from '../../ui/ConfirmModal';
@@ -38,7 +38,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
   };
   
   const handleProductEdit = (product: FinancialProduct) => {
-    console.log("Éditer le produit:", product);
+    console.log("éditer le produit:", product);
     // Implémenter la fonction d'édition de produit
   };
   
@@ -48,8 +48,8 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
   };
   
   const handleProductView = (product: FinancialProduct) => {
-    console.log("Voir les détails du produit:", product);
-    // Implémenter la fonction de visualisation détaillée du produit
+    console.log("Voir les dûtails du produit:", product);
+    // Implémenter la fonction de visualisation dûtaillée du produit
   };
   
   return (
@@ -59,7 +59,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
         <div className="flex gap-3">
           <ExportPortfolioData portfolio={portfolio} onExport={handleExport} />
           <Button variant="primary" onClick={onEdit}>
-            Éditer les paramètres
+            éditer les paramètres
           </Button>
         </div>
       </div>
@@ -86,7 +86,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
                   <span className="ml-1">{getPortfolioStatusLabel(portfolio.status)}</span>
                 </div>
                 <div><span className="font-semibold">Profil de risque :</span> {portfolio.risk_profile}</div>
-                <div><span className="font-semibold">Étape d'investissement :</span> {portfolio.investment_stage ? portfolio.investment_stage : <span className="italic text-gray-400">Non renseignée</span>}</div>
+                <div><span className="font-semibold">étape d'investissement :</span> {portfolio.investment_stage ? portfolio.investment_stage : <span className="italic text-gray-400">Non renseignée</span>}</div>
               </div>
             </div>
             <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 flex flex-col gap-4">
@@ -107,10 +107,10 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
           {/* Card suppression */}
           <div className="rounded-lg bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 p-6 mt-6 flex flex-col gap-2">
             <h3 className="text-lg font-bold text-red-700 dark:text-red-300 mb-2">Supprimer ce portefeuille</h3>
-            <p className="text-red-700 dark:text-red-300">Cette action supprimera définitivement ce portefeuille et toutes ses données. Cette opération est irréversible.</p>
+            <p className="text-red-700 dark:text-red-300">Cette action supprimera dûfinitivement ce portefeuille et toutes ses données. Cette opération est irRéversible.</p>
             <div className="flex justify-end">
               <Button variant="danger" onClick={() => setShowConfirm(true)}>
-                Supprimer définitivement
+                Supprimer dûfinitivement
               </Button>
             </div>
           </div>
@@ -137,13 +137,13 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
               />
             ) : (
               <div className="text-center py-12 text-gray-500">
-                <p>Aucun produit financier n'a encore été créé dans ce portefeuille.</p>
+                <p>Aucun produit financier n'a encore été cRéé dans ce portefeuille.</p>
                 <Button
                   variant="outline"
                   onClick={handleAddProduct}
                   className="mt-4"
                 >
-                  Créer un produit
+                  CRéer un produit
                 </Button>
               </div>
             )}
@@ -170,8 +170,8 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
       </Tabs>
       <ConfirmModal
         open={showConfirm}
-        title="Supprimer définitivement le portefeuille ?"
-        message={`Êtes-vous sûr de vouloir supprimer définitivement le portefeuille "${portfolio.name}" ? Cette action est irréversible.`}
+        title="Supprimer dûfinitivement le portefeuille ?"
+        message={`Êtes-vous sûr de vouloir supprimer dûfinitivement le portefeuille "${portfolio.name}" ? Cette action est irRéversible.`}
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
         onConfirm={() => { setShowConfirm(false); onDelete(); }}
@@ -180,3 +180,4 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
     </div>
   );
 }
+

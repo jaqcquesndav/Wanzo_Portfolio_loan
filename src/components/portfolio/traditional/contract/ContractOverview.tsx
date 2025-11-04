@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/ContractOverview.tsx
+﻿// components/portfolio/traditional/contract/ContractOverview.tsx
 import { Button } from '../../../ui/Button';
 import { StatusBadge } from '../../../ui/StatusBadge';
 import { CreditContract } from '../../../../types/credit-contract';
@@ -17,7 +17,7 @@ export function ContractOverview({ contract }: ContractOverviewProps) {
     ? Math.round((contract.remainingAmount / contract.amount) * 100) 
     : 0;
   
-  // Calculer le nombre de jours depuis le début du contrat
+  // Calculer le nombre de jours depuis le dûbut du contrat
   const daysSinceStart = contract.startDate 
     ? Math.round((new Date().getTime() - new Date(contract.startDate).getTime()) / (1000 * 60 * 60 * 24))
     : 0;
@@ -79,7 +79,7 @@ export function ContractOverview({ contract }: ContractOverviewProps) {
           <div className="mt-1">
             <div className="text-lg font-semibold">{daysSinceStart} jours</div>
             <div className="text-xs text-gray-500">
-              Début: {new Date(contract.startDate || '').toLocaleDateString('fr-FR')}
+              dûbut: {new Date(contract.startDate || '').toLocaleDateString('fr-FR')}
             </div>
           </div>
         </div>
@@ -105,3 +105,6 @@ export function ContractOverview({ contract }: ContractOverviewProps) {
     </div>
   );
 }
+
+
+

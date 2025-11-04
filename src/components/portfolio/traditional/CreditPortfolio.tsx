@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { Tab } from '../../../components/ui/Tab';
 import { CreditRequestsTable } from './CreditRequestsTable';
 import { CreditContractsList } from './credit-contract/CreditContractsList';
@@ -18,7 +18,7 @@ interface CreditPortfolioProps {
 
 type TabId = 'requests' | 'contracts' | 'amortization';
 
-// Définition de notre propre interface TabProps pour ce composant
+// dûfinition de notre propre interface TabProps pour ce composant
 interface CustomTabProps {
   id: string;
   label: string;
@@ -45,13 +45,13 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
   } = useCreditRequests();
   const { resetToMockData: resetContracts } = useCreditContracts(portfolioId);
   
-  // Préparer les mappings pour les noms
+  // PRéparer les mappings pour les noms
   const companyNames = Object.fromEntries(requests.map(req => [req.memberId, getMemberName(req.memberId)]));
   const productNames = Object.fromEntries(requests.map(req => [req.productId, getCreditProductName(req.productId)]));
   
   console.log('CreditPortfolio - Using portfolioId:', portfolioId);
   
-  // Fonction pour gérer l'affichage des détails d'une entreprise
+  // Fonction pour gérer l'affichage des dûtails d'une entreprise
   const handleViewCompany = useCallback((companyNameOrId: string) => {
     // Chercher l'entreprise dans mockCompanies par nom d'abord
     let companyFound = mockCompanies.find(c => c.name === companyNameOrId);
@@ -66,7 +66,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
       setSelectedCompany(companyFound);
       setCompanyDetailModalOpen(true);
     } else {
-      // Créer une entreprise de base avec le nom/id fourni
+      // CRéer une entreprise de base avec le nom/id fourni
       const basicCompany: Company = {
         id: companyNameOrId,
         name: companyNames[companyNameOrId] || companyNameOrId,
@@ -97,13 +97,13 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
       setCompanyDetailModalOpen(true);
     }
     
-    showNotification(`Détails de l'entreprise ${companyNames[companyNameOrId] || companyNameOrId} affichés`, 'info');
+    showNotification(`dûtails de l'entreprise ${companyNames[companyNameOrId] || companyNameOrId} affichés`, 'info');
   }, [showNotification, companyNames]);
   
   const tabs: CustomTabProps[] = [
     { id: 'requests', label: 'Demandes', icon: 'FileText' },
     { id: 'contracts', label: 'Contrats', icon: 'File' },
-    { id: 'amortization', label: 'Échéanciers', icon: 'Calendar' },
+    { id: 'amortization', label: 'échéanciers', icon: 'Calendar' },
   ];
   
   const handleRefresh = useCallback(async () => {
@@ -141,9 +141,9 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
           onValidate={(id) => changeRequestStatus(id, 'approved')}
           onRefuse={(id) => changeRequestStatus(id, 'rejected')}
           onDisburse={(id) => changeRequestStatus(id, 'disbursed')}
-          onView={(id) => console.log('Voir détails de la demande', id)}
+          onView={(id) => console.log('Voir dûtails de la demande', id)}
           onViewCompany={handleViewCompany}
-          onCreateContract={(id) => console.log('Créer contrat', id)}
+          onCreateContract={(id) => console.log('CRéer contrat', id)}
         />;
       case 'contracts':
         return <CreditContractsList key={`contracts-${refreshKey}`} portfolioId={portfolioId} onViewCompany={handleViewCompany} />;
@@ -186,7 +186,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
         {renderTabContent()}
       </div>
       
-      {/* Modal pour les détails de l'entreprise */}
+      {/* Modal pour les dûtails de l'entreprise */}
       {selectedCompany && companyDetailModalOpen && (
         <CompanyDetails
           company={selectedCompany}
@@ -196,3 +196,4 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/ContractDocuments.tsx
+﻿// components/portfolio/traditional/contract/ContractDocuments.tsx
 import { PlusIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../../ui/Button';
 import { Badge } from '../../../ui/Badge';
@@ -103,3 +103,6 @@ export function ContractDocuments({ contractId }: ContractDocumentsProps) {
     </div>
   );
 }
+
+
+

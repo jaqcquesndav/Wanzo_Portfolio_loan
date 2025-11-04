@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, Download, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../../ui/Input';
@@ -23,20 +23,20 @@ const guaranteeTypeConfig: Record<string, { label: string; color: string }> = {
   'immobilier': { label: 'Garantie Immobilier', color: 'bg-indigo-100 text-indigo-700' },
   'caution_bancaire': { label: 'Caution Bancaire', color: 'bg-purple-100 text-purple-700' },
   'fonds_garantie': { label: 'Fonds de Garantie', color: 'bg-green-100 text-green-700' },
-  'assurance_credit': { label: 'Assurance Crédit', color: 'bg-teal-100 text-teal-700' },
+  'assurance_credit': { label: 'Assurance cRédit', color: 'bg-teal-100 text-teal-700' },
   'nantissement': { label: 'Nantissement', color: 'bg-orange-100 text-orange-700' },
   'gage': { label: 'Gage', color: 'bg-amber-100 text-amber-700' },
   'hypotheque': { label: 'Hypothèque', color: 'bg-rose-100 text-rose-700' },
-  'depot_especes': { label: 'Dépôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
+  'depot_especes': { label: 'dûpôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
   'autre': { label: 'Autre', color: 'bg-gray-100 text-gray-700' },
 };
 
 // Configuration pour l'affichage des statuts
 const statusConfig: Record<string, { label: string; color: string }> = {
   'active': { label: 'Active', color: 'bg-green-100 text-green-700' },
-  'libérée': { label: 'Libérée', color: 'bg-blue-100 text-blue-700' },
+  'libéRée': { label: 'LibéRée', color: 'bg-blue-100 text-blue-700' },
   'saisie': { label: 'Saisie', color: 'bg-red-100 text-red-700' },
-  'expirée': { label: 'Expirée', color: 'bg-gray-100 text-gray-700' },
+  'expiRée': { label: 'ExpiRée', color: 'bg-gray-100 text-gray-700' },
 };
 
 // Type explicitement utilisé pour les filtres et les transformations
@@ -64,7 +64,7 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
     setShowConfirmStatusChange
   } = useGuaranteeActions(portfolioId);
 
-  // État pour la pagination et le filtrage
+  // état pour la pagination et le filtrage
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10; // Nombre fixe d'éléments par page
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,9 +124,9 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
     }
   };
   
-  // Fonction pour naviguer vers les détails du contrat
+  // Fonction pour naviguer vers les dûtails du contrat
   const handleViewContractDetails = (e: React.MouseEvent, contractReference: string) => {
-    e.stopPropagation(); // Empêcher la navigation vers les détails de la garantie
+    e.stopPropagation(); // Empêcher la navigation vers les dûtails de la garantie
     if (contractReference) {
       navigate(`/app/traditional/portfolio/${portfolioId}/contracts/${contractReference}`);
     }
@@ -140,7 +140,7 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
       'Type': guaranteeTypeConfig[g.type]?.label || g.type,
       'Valeur': g.value.toLocaleString('fr-FR') + ' XAF',
       'Statut': statusConfig[g.status]?.label || g.status,
-      'Date création': new Date(g.created_at).toLocaleDateString(),
+      'Date cRéation': new Date(g.created_at).toLocaleDateString(),
       'Date expiration': g.expiry_date ? new Date(g.expiry_date).toLocaleDateString() : 'N/A',
       'Contrat associé': g.contractReference || 'N/A'
     }));
@@ -259,7 +259,7 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
                   )}
                 </TableHeader>
                 <TableHeader onClick={() => handleSort('created_at')} className="cursor-pointer">
-                  Date création {sortField === 'created_at' && (
+                  Date cRéation {sortField === 'created_at' && (
                     <ArrowUpDown className={`w-4 h-4 inline ml-1 ${sortDirection === 'asc' ? 'transform rotate-180' : ''}`} />
                   )}
                 </TableHeader>
@@ -355,7 +355,7 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
         onClose={() => setShowConfirmDelete(false)}
         onConfirm={confirmDeleteGuarantee}
         title="Supprimer la garantie"
-        description={`Êtes-vous sûr de vouloir supprimer la garantie ${guaranteeToAction?.id} ? Cette action est irréversible.`}
+        description={`Êtes-vous sûr de vouloir supprimer la garantie ${guaranteeToAction?.id} ? Cette action est irRéversible.`}
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
       />
@@ -377,3 +377,4 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
     </div>
   );
 }
+

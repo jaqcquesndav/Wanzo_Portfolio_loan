@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/guarantees/GuaranteeCard.tsx
+﻿// src/components/portfolio/traditional/guarantees/GuaranteeCard.tsx
 import React from 'react';
 import { Card } from '../../../ui/Card';
 import { Guarantee, GuaranteeType } from '../../../../types/guarantee';
@@ -23,7 +23,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
     });
   };
 
-  // Fonction pour déterminer l'icône selon le type de garantie
+  // Fonction pour dûterminer l'icône selon le type de garantie
   const getGuaranteeIcon = (type: GuaranteeType | string) => {
     switch (type) {
       case 'materiel':
@@ -61,7 +61,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
       case 'fonds_garantie':
         return 'Fonds de garantie';
       case 'assurance_credit':
-        return 'Assurance crédit';
+        return 'Assurance cRédit';
       case 'nantissement':
         return 'Nantissement';
       case 'gage':
@@ -69,7 +69,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
       case 'hypotheque':
         return 'Hypothèque';
       case 'depot_especes':
-        return 'Dépôt en espèces';
+        return 'dûpôt en espèces';
       default:
         return type;
     }
@@ -80,11 +80,11 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800';
-      case 'libérée':
+      case 'libéRée':
         return 'bg-blue-100 text-blue-800';
       case 'saisie':
         return 'bg-red-100 text-red-800';
-      case 'expirée':
+      case 'expiRée':
         return 'bg-gray-100 text-gray-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
@@ -93,7 +93,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
     }
   };
 
-  // Fonction pour afficher les détails spécifiques selon le type de garantie
+  // Fonction pour afficher les dûtails spécifiques selon le type de garantie
   const renderTypeSpecificDetails = () => {
     switch (guarantee.type) {
       case 'materiel':
@@ -104,7 +104,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
               <p className="text-sm text-gray-900">{guarantee.details?.description || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
-              <span className="text-sm font-medium text-gray-500">Référence:</span>
+              <span className="text-sm font-medium text-gray-500">référence:</span>
               <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
           </>
@@ -121,7 +121,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
               <p className="text-sm text-gray-900">{guarantee.details?.description || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
-              <span className="text-sm font-medium text-gray-500">Référence cadastrale:</span>
+              <span className="text-sm font-medium text-gray-500">référence cadastrale:</span>
               <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
           </>
@@ -172,7 +172,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
               <p className="text-sm text-gray-900">{guarantee.details?.provider || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
-              <span className="text-sm font-medium text-gray-500">Référence du fonds:</span>
+              <span className="text-sm font-medium text-gray-500">référence du fonds:</span>
               <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
             <div className="mt-2">
@@ -190,7 +190,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
             </div>
             {guarantee.details?.reference && (
               <div className="mt-2">
-                <span className="text-sm font-medium text-gray-500">Référence:</span>
+                <span className="text-sm font-medium text-gray-500">référence:</span>
                 <p className="text-sm text-gray-900">{guarantee.details.reference}</p>
               </div>
             )}
@@ -230,7 +230,7 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
         </div>
       </div>
 
-      {/* Affichage des détails spécifiques selon le type de garantie */}
+      {/* Affichage des dûtails spécifiques selon le type de garantie */}
       {renderTypeSpecificDetails()}
 
       {/* Affichage du document de garantie si disponible */}
@@ -248,10 +248,11 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
         </div>
       )}
 
-      {/* Date de création */}
+      {/* Date de cRéation */}
       <div className="mt-3 text-xs text-gray-500">
-        Enregistrée le {formatDate(guarantee.created_at)}
+        EnregistRée le {formatDate(guarantee.created_at)}
       </div>
     </Card>
   );
 };
+

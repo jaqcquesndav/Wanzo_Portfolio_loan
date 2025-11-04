@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/contract/ContractActions.tsx
+﻿// src/components/portfolio/traditional/contract/ContractActions.tsx
 import { useState } from 'react';
 import { Card } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
@@ -40,13 +40,13 @@ export function ContractActions({
   
   const { showNotification } = useNotification();
   
-  // Données simulées pour l'historique des actions
+  // données simulées pour l'historique des actions
   const actionHistory = [
     { 
       date: '21/07/2025', 
-      action: 'Création du contrat', 
+      action: 'CRéation du contrat', 
       user: 'John Doe', 
-      details: 'Contrat créé avec un montant de 5.000.000 XAF' 
+      details: 'Contrat cRéé avec un montant de 5.000.000 XAF' 
     },
     { 
       date: '21/07/2025', 
@@ -56,9 +56,9 @@ export function ContractActions({
     },
     { 
       date: '25/07/2025', 
-      action: 'Décaissement', 
+      action: 'dûcaissement', 
       user: 'Jane Smith', 
-      details: 'Décaissement effectué pour un montant de 5.000.000 XAF' 
+      details: 'dûcaissement effectué pour un montant de 5.000.000 XAF' 
     },
     { 
       date: '15/08/2025', 
@@ -87,7 +87,7 @@ export function ContractActions({
   const handleRepayment = async () => {
     try {
       await onRepayment(repaymentAmount, repaymentDate, repaymentDescription);
-      showNotification('Remboursement enregistré avec succès', 'success');
+      showNotification('Remboursement enregistRé avec succès', 'success');
       setIsRepaymentModalOpen(false);
       
       // Réinitialiser les champs
@@ -100,7 +100,7 @@ export function ContractActions({
     }
   };
 
-  // Préparation des actions en fonction du statut
+  // PRéparation des actions en fonction du statut
   const getAvailableActions = () => {
     const actions = [];
     
@@ -161,7 +161,7 @@ export function ContractActions({
             }}
           >
             <AlertTriangle className="h-4 w-4 mr-2" />
-            Marquer en défaut
+            Marquer en dûfaut
           </Button>
         );
         break;
@@ -187,7 +187,7 @@ export function ContractActions({
         break;
         
       case 'closed':
-        // Pas d'actions supplémentaires pour un contrat clôturé
+        // Pas d'actions supplémentaires pour un contrat clôtuRé
         break;
     }
     
@@ -323,7 +323,7 @@ export function ContractActions({
             <TextArea
               value={repaymentDescription}
               onChange={(e) => setRepaymentDescription(e.target.value)}
-              placeholder="Description du remboursement (ex: numéro de référence, méthode de paiement...)"
+              placeholder="Description du remboursement (ex: numéro de référence, Méthode de paiement...)"
               rows={3}
             />
           </div>
@@ -368,7 +368,7 @@ export function ContractActions({
                     Utilisateur
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Détails
+                    dûtails
                   </th>
                 </tr>
               </thead>
@@ -406,3 +406,6 @@ export function ContractActions({
     </>
   );
 }
+
+
+

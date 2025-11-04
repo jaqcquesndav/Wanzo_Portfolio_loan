@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { GuaranteeType } from '../../../../types/credit';
 import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
@@ -26,20 +26,20 @@ const mockGuaranteeTypes: GuaranteeType[] = [
   {
     id: 'gt-003',
     name: 'Caution personnelle',
-    description: 'Engagement d\'une personne physique à rembourser le crédit en cas de défaillance',
+    description: 'Engagement d\'une personne physique à rembourser le cRédit en cas de dûfaillance',
     createdAt: '2024-12-15T09:30:00Z',
     updatedAt: '2025-02-01T16:45:00Z'
   },
   {
     id: 'gt-004',
     name: 'Caution solidaire',
-    description: 'Engagement d\'une personne morale à rembourser le crédit en cas de défaillance',
+    description: 'Engagement d\'une personne morale à rembourser le cRédit en cas de dûfaillance',
     createdAt: '2025-01-05T14:20:00Z'
   },
   {
     id: 'gt-005',
-    name: 'Dépôt à terme',
-    description: 'Blocage d\'un montant sur un compte en garantie du crédit',
+    name: 'dûpôt à terme',
+    description: 'Blocage d\'un montant sur un compte en garantie du cRédit',
     createdAt: '2025-01-10T10:45:00Z',
     updatedAt: '2025-03-15T11:30:00Z'
   }
@@ -102,7 +102,7 @@ export function GuaranteeTypesList({ portfolioId }: GuaranteeTypesListProps) {
         )
       );
     } else {
-      // Création
+      // CRéation
       const newType: GuaranteeType = {
         ...guaranteeType,
         id: `gt-${Date.now()}`,
@@ -130,7 +130,7 @@ export function GuaranteeTypesList({ portfolioId }: GuaranteeTypesListProps) {
               <TableRow>
                 <TableHeader>Nom</TableHeader>
                 <TableHeader>Description</TableHeader>
-                <TableHeader>Date de création</TableHeader>
+                <TableHeader>Date de cRéation</TableHeader>
                 <TableHeader className="text-right">Actions</TableHeader>
               </TableRow>
             </TableHead>
@@ -173,7 +173,7 @@ export function GuaranteeTypesList({ portfolioId }: GuaranteeTypesListProps) {
         )}
       </CardContent>
 
-      {/* Modal de création/modification */}
+      {/* Modal de cRéation/modification */}
       <GuaranteeTypeForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
@@ -194,3 +194,4 @@ export function GuaranteeTypesList({ portfolioId }: GuaranteeTypesListProps) {
     </Card>
   );
 }
+

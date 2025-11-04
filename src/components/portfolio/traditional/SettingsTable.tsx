@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/SettingsTable.tsx
+﻿// src/components/portfolio/traditional/SettingsTable.tsx
 import React from 'react';
 
 export const SettingsTable: React.FC = () => {
@@ -11,3 +11,4 @@ export const SettingsTable: React.FC = () => {
     </div>
   );
 };
+

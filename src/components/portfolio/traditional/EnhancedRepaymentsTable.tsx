@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -37,7 +37,7 @@ type EnhancedRepaymentsTableProps = {
 };
 
 /**
- * Tableau des remboursements amélioré avec le nouveau hook
+ * Tableau des remboursements amélioRé avec le nouveau hook
  * Affiche les remboursements avec les nouvelles colonnes (pièce justificative, pourcentage restant, glissement, référence)
  */
 export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = ({
@@ -57,20 +57,20 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
     compareWithSchedule
   } = useRepaymentsManager(contractId);
 
-  // État pour le téléchargement du document
+  // état pour le téléchargement du document
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   
-  // État pour la recherche et le filtrage
+  // état pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<{ key: keyof CreditPayment; direction: 'asc' | 'desc' } | null>(null);
   const { formatAmount } = useCurrencyContext();
   
-  // État pour la pagination
+  // état pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   
-  // Données pour la comparaison avec les échéances
+  // données pour la comparaison avec les échéances
   const scheduleComparison = useMemo(() => {
     if (!contractId) return [];
     return compareWithSchedule(contractId);
@@ -190,7 +190,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
     }
   };
 
-  // Afficher un indicateur de statut coloré
+  // Afficher un indicateur de statut coloRé
   const getStatusBadge = (status: CreditPayment['status']) => {
     switch(status) {
       case 'completed':
@@ -198,7 +198,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
       case 'pending':
         return <Badge variant="warning">En attente</Badge>;
       case 'failed':
-        return <Badge variant="error">Échoué</Badge>;
+        return <Badge variant="error">échoué</Badge>;
       case 'cancelled':
         return <Badge variant="secondary">Annulé</Badge>;
       default:
@@ -222,12 +222,12 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
   // Export des données
   const handleExportExcel = () => {
     const dataToExport = filteredPayments.map(payment => ({
-      'Référence': payment.transaction_reference || payment.payment_reference || payment.id,
+      'référence': payment.transaction_reference || payment.payment_reference || payment.id,
       'Contrat': payment.contract_id,
       'Date de paiement': payment.payment_date ? formatDate(payment.payment_date) : 'N/A',
       'Montant': formatAmount(payment.amount),
       'Statut': payment.status,
-      'Échéance liée': payment.related_schedule?.installment_number || 'N/A',
+      'échéance liée': payment.related_schedule?.installment_number || 'N/A',
       'Glissement': payment.slippage || 0,
       '% Restant': payment.remaining_percentage || 0,
       'Méthode': payment.payment_method
@@ -238,7 +238,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
   const handleExportPDF = () => {
     exportToPDF({
       title: 'Liste des Remboursements',
-      headers: ['Référence', 'Contrat', 'Date', 'Montant', 'Statut', 'Glissement', '% Restant'],
+      headers: ['référence', 'Contrat', 'Date', 'Montant', 'Statut', 'Glissement', '% Restant'],
       data: filteredPayments.map(payment => [
         payment.transaction_reference || payment.payment_reference || payment.id,
         payment.contract_id,
@@ -288,7 +288,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
               <option value="all">Tous</option>
               <option value="completed">Complété</option>
               <option value="pending">En attente</option>
-              <option value="failed">Échoué</option>
+              <option value="failed">échoué</option>
               <option value="cancelled">Annulé</option>
             </select>
             <Filter className="absolute right-2 top-2 h-4 w-4 text-gray-500 pointer-events-none" />
@@ -324,7 +324,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
           <TableHead>
             <tr>
               <TableHeader onClick={() => handleSort('transaction_reference')} className="cursor-pointer">
-                Référence Trans.
+                référence Trans.
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
               <TableHeader onClick={() => handleSort('contract_id')} className="cursor-pointer">
@@ -341,7 +341,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
                 Montant
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
-              <TableHeader>Échéance liée</TableHeader>
+              <TableHeader>échéance liée</TableHeader>
               <TableHeader onClick={() => handleSort('slippage')} className="cursor-pointer">
                 Glissement
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
@@ -362,7 +362,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
             {paginatedPayments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-8 text-gray-400">
-                  {filteredPayments.length === 0 ? 'Aucun remboursement' : 'Aucun résultat pour cette recherche'}
+                  {filteredPayments.length === 0 ? 'Aucun remboursement' : 'Aucun Résultat pour cette recherche'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -528,7 +528,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
       {totalPages > 1 && (
         <div className="p-4 border-t flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Affichage de {Math.min(filteredPayments.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredPayments.length)} sur {filteredPayments.length} entrées
+            Affichage de {Math.min(filteredPayments.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredPayments.length)} sur {filteredPayments.length} entRées
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -538,7 +538,7 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
+              PRécédent
             </Button>
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
@@ -566,3 +566,4 @@ export const EnhancedRepaymentsTable: React.FC<EnhancedRepaymentsTableProps> = (
     </div>
   );
 };
+

@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/ContractGuarantees.tsx
+﻿// components/portfolio/traditional/contract/ContractGuarantees.tsx
 import { useState, useEffect } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../../ui/Table';
 import { Button } from '../../../ui/Button';
@@ -23,12 +23,12 @@ export function ContractGuarantees({ contractId }: ContractGuaranteesProps) {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Dans une application réelle, vous feriez un appel API ici
-    // Simulation de données pour la démo
+    // Dans une application Réelle, vous feriez un appel API ici
+    // Simulation de données pour la dûmo
     const fetchGuarantees = () => {
       setLoading(true);
       
-      // Essayer de récupérer les garanties depuis le localStorage
+      // Essayer de Récupérer les garanties depuis le localStorage
       try {
         const storedGuarantees = localStorage.getItem('wanzo_guarantees');
         if (storedGuarantees) {
@@ -79,7 +79,7 @@ export function ContractGuarantees({ contractId }: ContractGuaranteesProps) {
           setGuarantees(mockGuarantees);
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération des garanties:', error);
+        console.error('Erreur lors de la Récupération des garanties:', error);
         setGuarantees([]);
       }
       
@@ -97,8 +97,8 @@ export function ContractGuarantees({ contractId }: ContractGuaranteesProps) {
   };
   
   const handleViewDetails = (guaranteeId: string) => {
-    // Rediriger vers la page de détails de la garantie
-    alert(`Voir les détails de la garantie ${guaranteeId}`);
+    // Rediriger vers la page de dûtails de la garantie
+    alert(`Voir les dûtails de la garantie ${guaranteeId}`);
   };
   
   const handleExport = () => {
@@ -151,7 +151,7 @@ export function ContractGuarantees({ contractId }: ContractGuaranteesProps) {
                 <TableHeader>Description</TableHeader>
                 <TableHeader>Valeur</TableHeader>
                 <TableHeader>Statut</TableHeader>
-                <TableHeader>Référence</TableHeader>
+                <TableHeader>référence</TableHeader>
                 <TableHeader>Date d'ajout</TableHeader>
                 <TableHeader>Actions</TableHeader>
               </TableRow>
@@ -199,7 +199,7 @@ export function ContractGuarantees({ contractId }: ContractGuaranteesProps) {
                         onClick={() => handleViewDetails(guarantee.id)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Détails
+                        dûtails
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -212,3 +212,6 @@ export function ContractGuarantees({ contractId }: ContractGuaranteesProps) {
     </div>
   );
 }
+
+
+

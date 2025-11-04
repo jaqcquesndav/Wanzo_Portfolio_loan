@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/FinancialProductsList.tsx
+﻿// src/components/portfolio/traditional/FinancialProductsList.tsx
 import { Eye, TrendingUp, Users, Tag } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
@@ -70,7 +70,7 @@ export function FinancialProductsList({ products, onViewDetails }: FinancialProd
               onClick={() => onViewDetails(product)}
               icon={<Eye className="h-4 w-4" />}
             >
-              Voir détails
+              Voir dûtails
             </Button>
           </div>
         </div>
@@ -78,3 +78,4 @@ export function FinancialProductsList({ products, onViewDetails }: FinancialProd
     </div>
   );
 }
+

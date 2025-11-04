@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/contract/ContractDocumentsManager.tsx
+﻿// src/components/portfolio/traditional/contract/ContractDocumentsManager.tsx
 import { useState, useEffect } from 'react';
 import { DocumentManager } from '../../../common/DocumentManager';
 import { PortfolioDocument } from '../../../../types/document';
@@ -15,19 +15,19 @@ export function ContractDocumentsManager({ contractId }: ContractDocumentsManage
 
   // Simuler le chargement des documents du contrat
   useEffect(() => {
-    // Dans une application réelle, nous chargerions les documents depuis une API
+    // Dans une application Réelle, nous chargerions les documents depuis une API
     const loadDocuments = async () => {
       setIsLoading(true);
       try {
         // Simule un appel API avec une attente de 500ms
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Données simulées
+        // données simulées
         const mockDocuments: PortfolioDocument[] = [
           {
             id: `${contractId}-doc-1`,
             name: 'Contrat signé',
-            description: 'Version signée du contrat de crédit',
+            description: 'Version signée du contrat de cRédit',
             type: 'contract_template',
             fileUrl: 'https://example.com/contracts/signed.pdf',
             fileSize: 2400000, // 2.4 MB
@@ -40,7 +40,7 @@ export function ContractDocumentsManager({ contractId }: ContractDocumentsManage
           {
             id: `${contractId}-doc-2`,
             name: 'Plan de remboursement',
-            description: 'Échéancier détaillé du remboursement',
+            description: 'échéancier dûtaillé du remboursement',
             type: 'technical',
             fileUrl: 'https://example.com/contracts/schedule.xlsx',
             fileSize: 1100000, // 1.1 MB
@@ -83,13 +83,13 @@ export function ContractDocumentsManager({ contractId }: ContractDocumentsManage
       // Simuler l'upload
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Créer un nouveau document simulé
+      // CRéer un nouveau document simulé
       const newDocument: PortfolioDocument = {
         id: `${contractId}-doc-${Date.now()}`,
         name: metadata.name,
         description: metadata.description,
         type: metadata.type,
-        fileUrl: URL.createObjectURL(file), // Crée une URL temporaire pour le fichier
+        fileUrl: URL.createObjectURL(file), // CRée une URL temporaire pour le fichier
         fileSize: file.size,
         fileType: file.type,
         uploadedAt: new Date().toISOString(),
@@ -131,14 +131,14 @@ export function ContractDocumentsManager({ contractId }: ContractDocumentsManage
 
   // Gestionnaire pour la visualisation de documents
   const handleViewDocument = (document: PortfolioDocument) => {
-    // Dans une application réelle, on ouvrirait le document dans un nouvel onglet
+    // Dans une application Réelle, on ouvrirait le document dans un nouvel onglet
     window.open(document.fileUrl, '_blank');
     console.log('Visualisation du document:', document.name);
   };
 
   // Gestionnaire pour le téléchargement de documents
   const handleDownloadDocument = (document: PortfolioDocument) => {
-    // Dans une application réelle, on déclencherait le téléchargement du fichier
+    // Dans une application Réelle, on dûclencherait le téléchargement du fichier
     const link = document.fileUrl;
     const a = window.document.createElement('a');
     a.href = link;
@@ -170,3 +170,6 @@ export function ContractDocumentsManager({ contractId }: ContractDocumentsManage
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { X, Edit2, Tag, Calendar, TrendingUp, Users } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
@@ -86,7 +86,7 @@ export function FinancialProductDetails({
 
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-lg font-medium mb-4">Détails du produit</h3>
+            <h3 className="text-lg font-medium mb-4">dûtails du produit</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div className="flex items-center text-sm text-gray-500">

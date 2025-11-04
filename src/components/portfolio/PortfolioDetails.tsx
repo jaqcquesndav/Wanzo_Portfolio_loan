@@ -3,14 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { PortfolioMetrics } from './PortfolioMetrics';
-// TODO: Create these components when leasing functionality is implemented
-// import { LeasingEquipmentsList } from '../funding/LeasingEquipmentsList';
-// import { LeasingEquipmentModal } from '../funding/LeasingEquipmentModal';
-// import { LeasingFilters } from '../funding/LeasingFilters';
-// import { useLeasingPortfolios } from '../../hooks/useLeasingPortfolios';
 import { useNotification } from '../../contexts/useNotification';
-// TODO: Create leasing types when functionality is implemented
-// import type { Equipment } from '../../types/leasing';
 
 export default function LeasingPortfolioDetails() {
   const { id } = useParams();
@@ -94,7 +87,6 @@ export default function LeasingPortfolioDetails() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-medium mb-4">Catalogue des équipements</h2>
             
-            {/* TODO: Implement LeasingFilters component */}
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 Filtres de recherche - En cours de développement
@@ -102,7 +94,6 @@ export default function LeasingPortfolioDetails() {
             </div>
 
             <div className="mt-6">
-              {/* TODO: Implement LeasingEquipmentsList component */}
               <div className="p-8 text-center bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <p className="text-gray-600 dark:text-gray-300">
                   Liste des équipements - En cours de développement
@@ -142,8 +133,6 @@ export default function LeasingPortfolioDetails() {
           </div>
         </div>
       )}
-
-      {/* TODO: Implement selectedEquipment modal when LeasingEquipmentModal is available */}
     </div>
   );
 }

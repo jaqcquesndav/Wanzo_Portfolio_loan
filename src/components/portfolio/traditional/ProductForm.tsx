@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -55,8 +55,8 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
 
         <FormField label="Type de produit" error={errors.type?.message}>
           <Select {...register('type')}>
-            <option value="credit">Crédit</option>
-            <option value="savings">Épargne</option>
+            <option value="credit">cRédit</option>
+            <option value="savings">épargne</option>
             <option value="investment">Investissement</option>
           </Select>
         </FormField>
@@ -144,7 +144,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           Annuler
         </Button>
         <Button type="submit" loading={isSubmitting}>
-          {product ? 'Mettre à jour' : 'Créer'}
+          {product ? 'Mettre à jour' : 'CRéer'}
         </Button>
       </div>
     </form>

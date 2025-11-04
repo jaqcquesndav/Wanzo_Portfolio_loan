@@ -1,4 +1,4 @@
-// src/components/portfolio/traditional/UploadReceiptModal.tsx
+﻿// src/components/portfolio/traditional/UploadReceiptModal.tsx
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
@@ -34,7 +34,7 @@ export const UploadReceiptModal: React.FC<UploadReceiptModalProps> = ({
       
       // Vérifier la taille du fichier (max 5 Mo)
       if (selectedFile.size > 5 * 1024 * 1024) {
-        setError('La taille du fichier ne doit pas dépasser 5 Mo');
+        setError('La taille du fichier ne doit pas dûpasser 5 Mo');
         return;
       }
       
@@ -100,7 +100,7 @@ export const UploadReceiptModal: React.FC<UploadReceiptModalProps> = ({
               <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-sm text-gray-500">
-                  Cliquez pour sélectionner ou glissez-déposez un fichier PDF
+                  Cliquez pour sélectionner ou glissez-dûposez un fichier PDF
                 </p>
                 <p className="text-xs text-gray-400 mt-1">Max. 5 Mo</p>
                 
@@ -144,3 +144,4 @@ export const UploadReceiptModal: React.FC<UploadReceiptModalProps> = ({
     </Dialog>
   );
 };
+

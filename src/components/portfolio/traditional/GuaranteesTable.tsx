@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { Filter, ArrowUpDown, Download, Info, Shield } from 'lucide-react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Input } from '../../ui/Input';
@@ -26,25 +26,25 @@ const guaranteeTypeConfig: Record<string, { label: string; color: string; icon?:
   'immobilier': { label: 'Garantie Immobilier', color: 'bg-indigo-100 text-indigo-700' },
   'caution_bancaire': { label: 'Caution Bancaire', color: 'bg-purple-100 text-purple-700' },
   'fonds_garantie': { label: 'Fonds de Garantie', color: 'bg-green-100 text-green-700' },
-  'assurance_credit': { label: 'Assurance Crédit', color: 'bg-teal-100 text-teal-700' },
+  'assurance_credit': { label: 'Assurance cRédit', color: 'bg-teal-100 text-teal-700' },
   'nantissement': { label: 'Nantissement', color: 'bg-orange-100 text-orange-700' },
   'gage': { label: 'Gage', color: 'bg-amber-100 text-amber-700' },
   'hypotheque': { label: 'Hypothèque', color: 'bg-rose-100 text-rose-700' },
-  'depot_especes': { label: 'Dépôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
+  'depot_especes': { label: 'dûpôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
   'autre': { label: 'Autre', color: 'bg-gray-100 text-gray-700' },
-  // Pour la rétrocompatibilité avec les anciennes données
+  // Pour la Rétrocompatibilité avec les anciennes données
   'Hypothèque': { label: 'Hypothèque', color: 'bg-rose-100 text-rose-700' },
   'Caution bancaire': { label: 'Caution Bancaire', color: 'bg-purple-100 text-purple-700' },
-  'Dépôt espèces': { label: 'Dépôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
+  'dûpôt espèces': { label: 'dûpôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
 };
 
 // Configuration pour l'affichage des statuts
 const statusConfig = {
   'active': { label: 'Active', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
   'pending': { label: 'En attente', variant: 'warning', color: 'bg-amber-100 text-amber-700' },
-  'libérée': { label: 'Libérée', variant: 'success', color: 'bg-green-100 text-green-700' },
+  'libéRée': { label: 'LibéRée', variant: 'success', color: 'bg-green-100 text-green-700' },
   'saisie': { label: 'Saisie', variant: 'error', color: 'bg-red-100 text-red-700' },
-  'expirée': { label: 'Expirée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
+  'expiRée': { label: 'ExpiRée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
 };
 
 export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({ 
@@ -54,7 +54,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
   onView,
   loading = false
 }) => {
-  // États pour les filtres et la pagination
+  // états pour les filtres et la pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -67,7 +67,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
 
   /* 
    * Compter les garanties par type - Code conservé pour une future implémentation 
-   * d'un graphique de répartition des garanties
+   * d'un graphique de Répartition des garanties
    * 
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -83,9 +83,9 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {
       active: 0,
-      libérée: 0,
+      libéRée: 0,
       saisie: 0,
-      expirée: 0,
+      expiRée: 0,
       total: 0
     };
     
@@ -166,13 +166,13 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
   // Export Excel
   const handleExportExcel = () => {
     const dataToExport = filteredAndSortedData.map(g => ({
-      'Référence': g.id,
+      'référence': g.id,
       'Entreprise': g.company,
       'Type de garantie': guaranteeTypeConfig[g.type]?.label || g.type,
       'Sous-type': g.subType || 'N/A',
       'Valeur': formatAmount(g.value),
       'Statut': statusConfig[g.status]?.label || g.status,
-      'Date de création': new Date(g.created_at).toLocaleDateString(),
+      'Date de cRéation': new Date(g.created_at).toLocaleDateString(),
       'Date d\'expiration': g.expiry_date ? new Date(g.expiry_date).toLocaleDateString() : 'N/A',
       'Description': g.details?.description || '',
       'Fournisseur': g.details?.provider || '',
@@ -186,7 +186,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
   const handleExportPDF = () => {
     exportToPDF({
       title: 'Liste des Garanties',
-      headers: ['Référence', 'Entreprise', 'Type', 'Valeur', 'Statut', 'Date'],
+      headers: ['référence', 'Entreprise', 'Type', 'Valeur', 'Statut', 'Date'],
       data: filteredAndSortedData.map(g => [
         g.id,
         g.company,
@@ -210,7 +210,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
   
   return (
     <>
-      {/* En-tête avec résumé et statistiques */}
+      {/* En-tête avec Résumé et statistiques */}
       <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 rounded-t-lg mb-0">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-bold">Garanties</h3>
@@ -224,8 +224,8 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
               <span className="font-semibold text-yellow-300">{statusCounts.active}</span>
             </div>
             <div>
-              <span className="text-xs block text-gray-200">Libérées</span>
-              <span className="font-semibold text-green-300">{statusCounts.libérée}</span>
+              <span className="text-xs block text-gray-200">LibéRées</span>
+              <span className="font-semibold text-green-300">{statusCounts.libéRée}</span>
             </div>
           </div>
         </div>
@@ -297,11 +297,11 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
                   <option value="immobilier">Garantie Immobilier</option>
                   <option value="caution_bancaire">Caution Bancaire</option>
                   <option value="fonds_garantie">Fonds de Garantie</option>
-                  <option value="assurance_credit">Assurance Crédit</option>
+                  <option value="assurance_credit">Assurance cRédit</option>
                   <option value="nantissement">Nantissement</option>
                   <option value="gage">Gage</option>
                   <option value="hypotheque">Hypothèque</option>
-                  <option value="depot_especes">Dépôt Espèces</option>
+                  <option value="depot_especes">dûpôt Espèces</option>
                   <option value="autre">Autre</option>
                 </Select>
               </div>
@@ -316,9 +316,9 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
                 >
                   <option value="">Tous les statuts</option>
                   <option value="active">Active</option>
-                  <option value="libérée">Libérée</option>
+                  <option value="libéRée">LibéRée</option>
                   <option value="saisie">Saisie</option>
-                  <option value="expirée">Expirée</option>
+                  <option value="expiRée">ExpiRée</option>
                 </Select>
               </div>
               
@@ -444,7 +444,7 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
                               {g.details.description && <p><strong>Description:</strong> {g.details.description}</p>}
                               {g.details.provider && <p><strong>Fournisseur:</strong> {g.details.provider}</p>}
                               {g.details.coverage && <p><strong>Couverture:</strong> {g.details.coverage}%</p>}
-                              {g.details.reference && <p><strong>Référence:</strong> {g.details.reference}</p>}
+                              {g.details.reference && <p><strong>référence:</strong> {g.details.reference}</p>}
                             </div>
                           </div>
                         </div>
@@ -492,3 +492,4 @@ export const GuaranteesTable: React.FC<GuaranteesTableProps> = ({
     </>
   );
 }
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ActionsDropdown } from '../../../ui/ActionsDropdown';
 import { Guarantee } from '../../traditional/GuaranteesTable';
 
@@ -19,7 +19,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
 }) => {
   const actions = [
     { 
-      label: 'Voir détails', 
+      label: 'Voir dûtails', 
       onClick: () => onView(guarantee.id)
     },
     guarantee.status === 'active' ? { 
@@ -44,3 +44,4 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
     <ActionsDropdown actions={actions} />
   );
 };
+

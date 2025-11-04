@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FormField, Select } from '../../ui/Form';
 
 interface PortfolioFiltersProps {
@@ -32,7 +32,7 @@ export function PortfolioFilters({ filters, onFilterChange }: PortfolioFiltersPr
         >
           <option value="">Tous les profils</option>
           <option value="conservative">Conservateur</option>
-          <option value="moderate">Modéré</option>
+          <option value="moderate">ModûRé</option>
           <option value="aggressive">Agressif</option>
         </Select>
       </FormField>

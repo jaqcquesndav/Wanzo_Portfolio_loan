@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
@@ -10,7 +10,7 @@ import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 import { useRepayments } from '../../../hooks/useRepayments';
 
 /**
- * Interface représentant un remboursement (paiement d'une entreprise vers l'institution)
+ * Interface repRésentant un remboursement (paiement d'une entreprise vers l'institution)
  */
 export interface Repayment {
   id: string;
@@ -21,14 +21,14 @@ export interface Repayment {
   status: 'à venir' | 'payé' | 'retard';
   requestId?: string;
   portfolioId: string;
-  contractReference: string;  // Référence du contrat associé (obligatoire)
-  transactionReference?: string; // Référence de la transaction bancaire
+  contractReference: string;  // référence du contrat associé (obligatoire)
+  transactionReference?: string; // référence de la transaction bancaire
   
   // Informations bancaires
-  paymentDate?: string;  // Date de paiement (si déjà payé)
+  paymentDate?: string;  // Date de paiement (si dûjà payé)
   valueDate?: string;  // Date de valeur
   
-  // Informations du compte crédité (compte de l'institution - destination)
+  // Informations du compte cRédité (compte de l'institution - destination)
   creditAccount?: {
     accountNumber: string;
     accountName: string;
@@ -38,7 +38,7 @@ export interface Repayment {
     portfolioName?: string; // Nom du portefeuille associé
   };
   
-  // Informations du compte débité (compte de l'entreprise - source)
+  // Informations du compte dûbité (compte de l'entreprise - source)
   debitAccount?: {
     accountNumber: string;
     accountName: string;
@@ -54,19 +54,19 @@ export interface Repayment {
   installmentNumber?: number;  // Numéro de l'échéance
   totalInstallments?: number;  // Nombre total d'échéances
   
-  // Détails du remboursement
+  // dûtails du remboursement
   principal?: number;  // Montant principal
   interest?: number;  // Montant des intérêts
   penalties?: number;  // Pénalités de retard (le cas échéant)
   
-  // Nouveaux champs demandés
+  // Nouveaux champs demandûs
   receiptUrl?: string; // URL de la pièce justificative
   remainingAmount?: number; // Montant restant à payer
   remainingPercentage?: number; // Pourcentage du montant restant
   slippage?: number; // Glissement (jours de retard ou d'avance)
   
   // Informations d'intégration avec les API externes
-  externalApiReference?: string; // Référence de l'API externe qui a traité ce remboursement
+  externalApiReference?: string; // référence de l'API externe qui a traité ce remboursement
   externalSystemId?: string; // Identifiant dans le système externe
   externalStatus?: string; // Statut dans le système externe
 }
@@ -74,7 +74,7 @@ export interface Repayment {
 interface RepaymentsTableProps {
   portfolioId: string;
   onView: (id: string) => void;
-  onViewCompany?: (company: string) => void; // Prop pour afficher les détails de l'entreprise
+  onViewCompany?: (company: string) => void; // Prop pour afficher les dûtails de l'entreprise
   onViewSchedule?: (contractReference: string) => void; // Prop pour naviguer vers l'échéancier
 }
 
@@ -99,13 +99,13 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
     markAsPaid,
     refresh: refreshRepayments
   } = useRepayments(undefined, portfolioId);
-  // État pour la recherche et le filtrage
+  // état pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'tous' | 'à venir' | 'payé' | 'retard'>('tous');
   const [sortBy, setSortBy] = useState<{ key: keyof Repayment; direction: 'asc' | 'desc' } | null>(null);
   const { formatAmount } = useCurrencyContext();
   
-  // État pour la pagination
+  // état pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   
@@ -173,9 +173,9 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
     const dataToExport = filteredRepayments.map(r => ({
       'Entreprise': r.company,
       'Produit': r.product,
-      'Référence Contrat': r.contractReference,
-      'Échéance': new Date(r.dueDate).toLocaleDateString(),
-      'Échéance N°': r.installmentNumber ? `${r.installmentNumber}/${r.totalInstallments}` : 'N/A',
+      'référence Contrat': r.contractReference,
+      'échéance': new Date(r.dueDate).toLocaleDateString(),
+      'échéance N°': r.installmentNumber ? `${r.installmentNumber}/${r.totalInstallments}` : 'N/A',
       'Montant': formatAmount(r.amount),
       'Principal': r.principal ? formatAmount(r.principal) : 'N/A',
       'Intérêts': r.interest ? formatAmount(r.interest) : 'N/A',
@@ -188,7 +188,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
   const handleExportPDF = () => {
     exportToPDF({
       title: 'Liste des Remboursements',
-      headers: ['Entreprise', 'Produit', 'Référence', 'Échéance', 'Montant', 'Statut'],
+      headers: ['Entreprise', 'Produit', 'référence', 'échéance', 'Montant', 'Statut'],
       data: filteredRepayments.map(r => [
         r.company,
         r.product,
@@ -294,7 +294,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
         <Table>
           <TableHead>
             <tr>
-              <TableHeader>Référence Trans.</TableHeader>
+              <TableHeader>référence Trans.</TableHeader>
               <TableHeader onClick={() => handleSort('company')} className="cursor-pointer">
                 Entreprise 
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
@@ -306,11 +306,11 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
               <TableHeader>Compte Source (Entreprise)</TableHeader>
               <TableHeader>Compte Destination (Institution)</TableHeader>
               <TableHeader onClick={() => handleSort('contractReference')} className="cursor-pointer">
-                Référence Contrat
+                référence Contrat
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
               <TableHeader onClick={() => handleSort('dueDate')} className="cursor-pointer">
-                Échéance
+                échéance
                 <ArrowUpDown className="inline ml-1 h-4 w-4" />
               </TableHeader>
               <TableHeader onClick={() => handleSort('amount')} className="cursor-pointer">
@@ -337,7 +337,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
             {paginatedRepayments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} className="text-center py-8 text-gray-400">
-                  {filteredRepayments.length === 0 ? 'Aucun remboursement' : 'Aucun résultat pour cette recherche'}
+                  {filteredRepayments.length === 0 ? 'Aucun remboursement' : 'Aucun Résultat pour cette recherche'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -403,7 +403,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
                     <div className="flex flex-col">
                       <span>{new Date(r.dueDate).toLocaleDateString()}</span>
                       {r.installmentNumber && r.totalInstallments && (
-                        <span className="text-xs text-gray-500">Échéance {r.installmentNumber}/{r.totalInstallments}</span>
+                        <span className="text-xs text-gray-500">échéance {r.installmentNumber}/{r.totalInstallments}</span>
                       )}
                     </div>
                   </TableCell>
@@ -505,7 +505,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
       {totalPages > 1 && (
         <div className="p-4 border-t flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Affichage de {Math.min(filteredRepayments.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredRepayments.length)} sur {filteredRepayments.length} entrées
+            Affichage de {Math.min(filteredRepayments.length, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(currentPage * itemsPerPage, filteredRepayments.length)} sur {filteredRepayments.length} entRées
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -515,7 +515,7 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
+              PRécédent
             </Button>
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
@@ -545,3 +545,4 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
     </div>
   );
 };
+

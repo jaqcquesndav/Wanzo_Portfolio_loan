@@ -1,4 +1,4 @@
-// components/portfolio/traditional/contract/ContractRepayments.tsx
+﻿// components/portfolio/traditional/contract/ContractRepayments.tsx
 import { useState, useEffect } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../../ui/Table';
 import { Button } from '../../../ui/Button';
@@ -45,8 +45,8 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
   const { formatAmount } = useCurrencyContext();
   
   useEffect(() => {
-    // Dans une application réelle, vous feriez un appel API ici
-    // Simulation de données pour la démo
+    // Dans une application Réelle, vous feriez un appel API ici
+    // Simulation de données pour la dûmo
     const fetchRepayments = () => {
       setLoading(true);
       
@@ -185,8 +185,8 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
                 <TableHeader>Montant</TableHeader>
                 <TableHeader>Type</TableHeader>
                 <TableHeader>Méthode</TableHeader>
-                <TableHeader>Référence</TableHeader>
-                <TableHeader>Échéance</TableHeader>
+                <TableHeader>référence</TableHeader>
+                <TableHeader>échéance</TableHeader>
                 <TableHeader>Notes</TableHeader>
               </TableRow>
             </TableHead>
@@ -226,7 +226,7 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
                     <TableCell>{repayment.reference}</TableCell>
                     <TableCell>
                       {repayment.installmentNumber 
-                        ? `Échéance ${repayment.installmentNumber}`
+                        ? `échéance ${repayment.installmentNumber}`
                         : '-'}
                     </TableCell>
                     <TableCell>{repayment.notes || '-'}</TableCell>
@@ -240,3 +240,6 @@ export function ContractRepayments({ contractId }: ContractRepaymentsProps) {
     </div>
   );
 }
+
+
+
