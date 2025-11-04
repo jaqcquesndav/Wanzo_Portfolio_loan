@@ -14,16 +14,6 @@ interface DashboardData {
       totalValue: number;
       avgRiskScore: number;
     };
-    investment?: {
-      count: number;
-      totalValue: number;
-      avgRiskScore: number;
-    };
-    leasing?: {
-      count: number;
-      totalValue: number;
-      avgRiskScore: number;
-    };
   };
   recentActivity: Array<{
     id: string;
@@ -78,7 +68,7 @@ interface DashboardData {
 interface RiskMetric {
   id: string;
   portfolioId: string;
-  portfolioType: 'traditional' | 'investment' | 'leasing';
+  portfolioType: 'traditional';
   portfolioName: string;
   type: 'credit' | 'market' | 'operational' | 'compliance' | 'liquidity';
   level: 'info' | 'warning' | 'critical' | 'high' | 'medium' | 'low';

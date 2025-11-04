@@ -1,4 +1,4 @@
-export type ProductType = 'credit' | 'leasing' | 'investment';
+export type ProductType = 'credit';
 
 export interface FinancialProduct {
   id: string;

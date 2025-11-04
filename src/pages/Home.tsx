@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { PortfolioKPIs } from '../components/home/PortfolioKPIs';
 import { PerformanceChart } from '../components/home/PerformanceChart';
 import { AssetDistribution } from '../components/home/AssetDistribution';
-import { RecentActivities } from '../components/home/RecentActivities';
 import { PortfolioDetailsModal } from '../components/home/PortfolioDetailsModal';
 import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioModal';
 import { usePortfolioMetrics } from '../hooks/usePortfolioMetrics';
@@ -108,8 +107,6 @@ export default function Home() {
         <PerformanceChart data={metrics.performance} />
         <AssetDistribution distribution={metrics.assets.distribution} />
       </div>
-
-      <RecentActivities />
 
       {selectedPortfolio && (
         <PortfolioDetailsModal

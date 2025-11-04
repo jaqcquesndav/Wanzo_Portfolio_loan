@@ -1,10 +1,9 @@
-import React from 'react';
 import { List, Map } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface ViewToggleProps {
-  view: 'grid' | 'list' | 'map';
-  onViewChange: (view: 'grid' | 'list' | 'map') => void;
+  view: 'list' | 'map';
+  onViewChange: (view: 'list' | 'map') => void;
 }
 
 export function ViewToggle({ view, onViewChange }: ViewToggleProps) {

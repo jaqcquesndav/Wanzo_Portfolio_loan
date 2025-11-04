@@ -77,36 +77,5 @@ export const mockPortfolios: Portfolio[] = [
   }
 ];
 
-// Les portefeuilles investment sont désormais créés dynamiquement et accèdent à leurs données via IndexedDB, comme pour le type traditionnel.
-import { InvestmentPortfolio } from '../types/investment-portfolio';
-export const mockInvestmentPortfolios: InvestmentPortfolio[] = [];
-
-export const mockLeasingPortfolios: Portfolio[] = [
-  {
-    id: 'lease-1',
-    name: 'Portefeuille Équipements Industriels',
-    type: 'leasing',
-    status: 'active',
-    target_amount: 750000000,
-    target_return: 14,
-    target_sectors: ['Industrie', 'BTP', 'Transport'],
-    risk_profile: 'moderate',
-    products: [],
-    metrics: {
-      net_value: 680000000,
-      average_return: 12.8,
-      risk_portfolio: 9,
-      sharpe_ratio: 1.7,
-      volatility: 11,
-      alpha: 2.8,
-      beta: 0.75,
-      asset_allocation: [
-        { type: 'Équipements industriels', percentage: 45 },
-        { type: 'Véhicules', percentage: 35 },
-        { type: 'Matériel BTP', percentage: 20 }
-      ]
-    },
-    created_at: '2024-02-01',
-    updated_at: '2024-03-15'
-  }
-];
+// Note: Les portefeuilles investment et leasing ont été supprimés de l'application
+// L'application se concentre maintenant uniquement sur les portefeuilles traditionnels

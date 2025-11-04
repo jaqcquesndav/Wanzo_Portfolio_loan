@@ -1,37 +1,39 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import { useDashboardApi, useDashboardRiskMetrics } from '../../hooks/useDashboardApi';
 import { useDashboardCustomization } from '../../hooks/dashboard/useDashboardCustomization';
+import { useRecentOperations } from '../../hooks/useRecentOperations';
 import { WidgetSelector } from './WidgetSelector';
 import { DashboardSkeleton } from '../ui/DashboardSkeleton';
+import { RecentOperationsTable } from './RecentOperationsTable';
 import type { PortfolioSelection, PeriodFilter } from '../../types/dashboard/ohada';
 import type { WidgetType } from '../../types/dashboard/customization';
+import type { PortfolioOperation } from './RecentOperationsTable';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { CalendarIcon, ChevronDownIcon, TrendingUpIcon, AlertCircleIcon, CheckCircleIcon, BarChart3Icon, DollarSignIcon, UsersIcon, PieChartIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-
-// Interface pour les activités récentes
-interface ActivityItem {
-  id: string;
-  type: 'demande' | 'contrat' | 'virement' | 'remboursement' | 'garantie' | 'validation';
-  description: string;
-  user: string;
-  portfolio: string;
-  contractId?: string;
-  amount?: number;
-  status: 'en_cours' | 'termine' | 'rejete' | 'en_attente';
-  timestamp: string;
-}
+import { CalendarIcon, ChevronDownIcon, TrendingUpIcon, AlertCircleIcon, CheckCircleIcon, BarChart3Icon, DollarSignIcon, UsersIcon, PieChartIcon, RefreshCwIcon } from 'lucide-react';
 
 /**
  * Dashboard Crédit OHADA
  * Conforme aux standards du financement PME en zone CEMAC/UEMOA
  */
 export const ProfessionalCreditDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { portfolios, loading: portfoliosLoading } = useTraditionalPortfolios();
   const { formatCurrency } = useFormatCurrency();
+  
+  // Forcer l'initialisation des données mock au chargement
+  React.useEffect(() => {
+    // Vérifier si les données mock sont bien dans le localStorage
+    const disbursements = localStorage.getItem('wanzo_portfolio_disbursements');
+    if (!disbursements) {
+      console.warn('Mock data not found in localStorage, initializing...');
+      // Vous pouvez importer et appeler initializeLocalStorageMocks ici si nécessaire
+    }
+  }, []);
   
   // Utiliser les hooks API pour récupérer les données réelles
   const {
@@ -45,6 +47,14 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     loading: riskLoading,
     error: riskError
   } = useDashboardRiskMetrics();
+
+  // Hook pour récupérer les opérations réelles
+  const {
+    operations: recentOperations,
+    loading: operationsLoading,
+    error: operationsError,
+    refreshOperations
+  } = useRecentOperations('traditional');
 
   // Hook de customisation (utilisateur simulé)
   const { 
@@ -69,73 +79,6 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     type: 'year',
     label: 'Année en cours'
   });
-
-  // État pour la pagination des activités
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  // Données mockées des activités récentes (basées sur entreprises RDC réelles)
-  const mockActivities: ActivityItem[] = useMemo(() => [
-    {
-      id: '1',
-      type: 'demande',
-      description: 'Nouvelle demande de crédit PME - Secteur Agro-alimentaire',
-      user: 'Marie Kabila',
-      portfolio: 'PME Kinshasa',
-      contractId: 'CON-2025-001',
-      amount: 150000000, // 150M CDF
-      status: 'en_cours',
-      timestamp: '2025-08-26T14:30:00Z'
-    },
-    {
-      id: '2',
-      type: 'virement',
-      description: 'Déblocage fonds - Projet expansion commerciale',
-      user: 'Jean-Pierre Mukendi',
-      portfolio: 'Commerce RDC',
-      contractId: 'CON-2025-002',
-      amount: 85000000, // 85M CDF
-      status: 'termine',
-      timestamp: '2025-08-26T13:15:00Z'
-    },
-    {
-      id: '3',
-      type: 'contrat',
-      description: 'Signature contrat financement - Entreprise textile',
-      user: 'Grace Tshimanga',
-      portfolio: 'Industries Lubumbashi',
-      contractId: 'CON-2025-003',
-      amount: 220000000, // 220M CDF
-      status: 'termine',
-      timestamp: '2025-08-26T11:45:00Z'
-    },
-    {
-      id: '4',
-      type: 'garantie',
-      description: 'Validation garantie immobilière - Local commercial',
-      user: 'Antoine Nsembo',
-      portfolio: 'PME Kinshasa',
-      contractId: 'CON-2025-001',
-      status: 'en_cours',
-      timestamp: '2025-08-26T10:20:00Z'
-    },
-    {
-      id: '5',
-      type: 'remboursement',
-      description: 'Échéance mensuelle - Crédit équipement agricole',
-      user: 'System Auto',
-      portfolio: 'Agriculture Kasaï',
-      contractId: 'CON-2025-015',
-      amount: 12500000, // 12.5M CDF
-      status: 'termine',
-      timestamp: '2025-08-26T09:00:00Z'
-    }
-  ], []);
-
-  // Calculs pour la pagination
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const totalPages = Math.ceil(mockActivities.length / itemsPerPage);
-  const currentActivities = mockActivities.slice(startIndex, startIndex + itemsPerPage);
 
   // Helper pour vérifier si un widget est visible
   const isWidgetVisible = (widgetId: WidgetType): boolean => {
@@ -222,12 +165,54 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     { type: 'custom', label: 'Période personnalisée' }
   ];
 
-  const loading = portfoliosLoading || dashboardLoading || riskLoading;
+  // Gestionnaire personnalisé pour la navigation des opérations
+  const handleOperationClick = (operation: PortfolioOperation) => {
+    console.log('Operation clicked:', operation);
+    
+    // Vérifier si le portefeuille existe dans nos données
+    const portfolioExists = portfolios.some(p => p.id === operation.portfolioId);
+    console.log(`Portfolio ${operation.portfolioId} exists:`, portfolioExists);
+    
+    if (portfolioExists) {
+      // Essayer d'abord de naviguer vers les détails de l'opération
+      let route = '';
+      
+      if (operation.type === 'disbursement' && operation.id) {
+        route = `/app/portfolio/${operation.portfolioId}/disbursements/${operation.id}`;
+      } else if (operation.type === 'repayment' && operation.id) {
+        route = `/app/portfolio/${operation.portfolioId}/repayments/${operation.id}`;
+      } else if (operation.type === 'request' && operation.id) {
+        route = `/app/portfolio/${operation.portfolioId}/requests/${operation.id}`;
+      } else if (operation.type === 'contract' && (operation.contractId || operation.id)) {
+        const contractId = operation.contractId || operation.id;
+        route = `/app/portfolio/${operation.portfolioId}/contracts/${contractId}`;
+      } else if (operation.type === 'guarantee' && operation.id) {
+        route = `/app/traditional/${operation.portfolioId}/guarantees/${operation.id}`;
+      } else {
+        // Fallback vers les détails du portefeuille
+        route = `/app/traditional/${operation.portfolioId}`;
+      }
+      
+      console.log('Navigating to:', route);
+      navigate(route);
+    } else {
+      // Fallback vers la liste des portefeuilles si l'ID n'existe pas
+      console.warn(`Portfolio "${operation.portfolioId}" not found. Redirecting to portfolio list.`);
+      navigate('/app/traditional');
+    }
+  };
+
+  const loading = portfoliosLoading || dashboardLoading || riskLoading || operationsLoading;
+
+  // Log pour debug
+  console.log('Recent operations:', recentOperations);
+  console.log('Operations loading:', operationsLoading);
+  console.log('Operations error:', operationsError);
 
   // Fonction pour rendre le contenu selon l'état
   function renderDashboardContent() {
     // Gestion des erreurs API
-    const hasError = dashboardError || riskError;
+    const hasError = dashboardError || riskError || operationsError;
   
     if (hasError) {
       return (
@@ -235,8 +220,11 @@ export const ProfessionalCreditDashboard: React.FC = () => {
           <div className="text-center">
             <AlertCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
-            <p className="text-sm text-gray-600 mb-4">{dashboardError || riskError}</p>
-            <Button onClick={refreshDashboard} variant="outline">
+            <p className="text-sm text-gray-600 mb-4">{dashboardError || riskError || operationsError}</p>
+            <Button onClick={() => {
+              refreshDashboard();
+              refreshOperations();
+            }} variant="outline">
               <RefreshCwIcon className="h-4 w-4 mr-2" />
               Réessayer
             </Button>
@@ -526,75 +514,20 @@ export const ProfessionalCreditDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Activités récentes */}
+        {/* Opérations récentes */}
         {isWidgetVisible('recent-activities') && (
         <Card>
           <CardHeader>
-            <CardTitle>Activités Récentes</CardTitle>
+            <CardTitle>Opérations Récentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {currentActivities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                    <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
-                      <span>{activity.user}</span>
-                      <span>•</span>
-                      <span>{activity.portfolio}</span>
-                      <span>•</span>
-                      <span>{new Date(activity.timestamp).toLocaleDateString('fr-FR')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {activity.amount && (
-                      <span className="text-sm font-semibold text-blue-600">
-                        {formatCurrency(activity.amount)}
-                      </span>
-                    )}
-                    <Badge 
-                      variant={
-                        activity.status === 'termine' ? 'success' : 
-                        activity.status === 'en_cours' ? 'warning' : 
-                        activity.status === 'rejete' ? 'error' : 'secondary'
-                      }
-                      className="text-xs"
-                    >
-                      {activity.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Pagination simple */}
-            <div className="flex items-center justify-center mt-6">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1"
-                >
-                  <ChevronLeftIcon className="h-4 w-4" />
-                  Précédent
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} sur {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1"
-                >
-                  Suivant
-                  <ChevronRightIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <RecentOperationsTable
+              operations={recentOperations || []}
+              portfolioType="traditional"
+              isLoading={loading}
+              limit={5}
+              onOperationClick={handleOperationClick}
+            />
           </CardContent>
         </Card>
         )}
@@ -629,7 +562,10 @@ export const ProfessionalCreditDashboard: React.FC = () => {
           {/* Bouton actualiser (mobile uniquement) */}
           <div className="sm:hidden">
             <Button 
-              onClick={refreshDashboard} 
+              onClick={() => {
+                refreshDashboard();
+                refreshOperations();
+              }} 
               variant="outline" 
               size="sm"
               disabled={loading}
@@ -698,7 +634,10 @@ export const ProfessionalCreditDashboard: React.FC = () => {
           {/* Bouton actualiser (desktop) */}
           <div className="hidden sm:block lg:ml-4">
             <Button 
-              onClick={refreshDashboard} 
+              onClick={() => {
+                refreshDashboard();
+                refreshOperations();
+              }} 
               variant="outline" 
               size="sm"
               disabled={loading}

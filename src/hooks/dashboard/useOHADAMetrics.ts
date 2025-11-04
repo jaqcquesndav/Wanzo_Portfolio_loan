@@ -1,5 +1,5 @@
 // src/hooks/dashboard/useOHADAMetrics.ts
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ohadaMetricsService, type OHADAMetricsResponse } from '../../services/api/dashboard/ohadaMetrics.api';
 import type { OHADAMetrics } from '../../types/dashboard/ohada';
 
@@ -146,19 +146,6 @@ export const useOHADAMetrics = () => {
   };
 
   /**
-   * Actualise les métriques manuellement
-   */
-  const refreshMetrics = () => {
-    loadMetrics();
-  };
-
-  // Chargement initial
-  useEffect(() => {
-    loadMetrics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /**
    * Obtient un résumé de conformité
    */
   const getComplianceSummary = () => {
@@ -193,7 +180,6 @@ export const useOHADAMetrics = () => {
     
     // Actions
     loadMetrics,
-    refreshMetrics,
     getPortfolioMetrics,
     getComplianceSummary
   };

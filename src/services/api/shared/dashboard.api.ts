@@ -10,8 +10,6 @@ import { dashboardOHADAApi, type OHADAMetricsResponse, type OHADAMetrics } from 
 interface LegacyDashboardData {
   portfolioSummary: {
     traditional: { count: number; totalValue: number; avgRiskScore: number };
-    investment: { count: number; totalValue: number; avgRiskScore: number };
-    leasing: { count: number; totalValue: number; avgRiskScore: number };
   };
   recentActivity: Array<{
     id: string;
@@ -92,9 +90,7 @@ function convertOHADAToLegacy(ohadaResponse: OHADAMetricsResponse): LegacyDashbo
         count: traditionalPortfolios.length,
         totalValue: totalTraditionalValue,
         avgRiskScore: avgTraditionalRisk
-      },
-      investment: { count: 0, totalValue: 0, avgRiskScore: 0 }, // Pas dans OHADA
-      leasing: { count: 0, totalValue: 0, avgRiskScore: 0 } // Pas dans OHADA
+      }
     },
     recentActivity,
     alerts,
@@ -156,9 +152,7 @@ export const dashboardApi = {
       // Données mockées de base en cas d'erreur
       return {
         portfolioSummary: {
-          traditional: { count: 0, totalValue: 0, avgRiskScore: 0 },
-          investment: { count: 0, totalValue: 0, avgRiskScore: 0 },
-          leasing: { count: 0, totalValue: 0, avgRiskScore: 0 }
+          traditional: { count: 0, totalValue: 0, avgRiskScore: 0 }
         },
         recentActivity: [],
         alerts: [],
@@ -232,12 +226,5 @@ export const dashboardApi = {
    */
   async getComplianceSummary() {
     return await dashboardOHADAApi.getComplianceSummary();
-  },
-
-  /**
-   * Force l'actualisation des métriques
-   */
-  async refreshMetrics() {
-    return await dashboardOHADAApi.refreshMetrics();
   }
 };

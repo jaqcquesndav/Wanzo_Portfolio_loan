@@ -26,7 +26,7 @@ export interface UserDetails extends User {
   portfolioAssignments: Array<{
     id: string;
     name: string;
-    type: 'traditional' | 'investment' | 'leasing';
+    type: 'traditional';
   }>;
   activityLog: Array<{
     action: string;

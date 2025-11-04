@@ -46,10 +46,15 @@ const mapStatus = (status: string): 'completed' | 'pending' | 'failed' | 'planne
 export const getRecentOperations = async (portfolioType?: PortfolioType): Promise<PortfolioOperation[]> => {
   let operations: PortfolioOperation[] = [];
   
+  console.log('getRecentOperations called with portfolioType:', portfolioType);
+  
   // Opérations pour les portefeuilles traditionnels
   if (!portfolioType || portfolioType === 'traditional') {
     // Virements
-    const disbursementOps = getDisbursements().map((item) => ({
+    const disbursements = getDisbursements();
+    console.log('Raw disbursements:', disbursements);
+    
+    const disbursementOps = disbursements.map((item) => ({
       id: item.id,
       type: 'disbursement' as const,
       amount: item.amount,
@@ -63,6 +68,8 @@ export const getRecentOperations = async (portfolioType?: PortfolioType): Promis
       description: `Virement à ${item.company}`,
       portfolioType: 'traditional' as const
     }));
+    
+    console.log('Processed disbursement operations:', disbursementOps);
     
     // Remboursements
     const repaymentOps = getRepayments().map((item) => ({
@@ -94,17 +101,18 @@ export const getRecentOperations = async (portfolioType?: PortfolioType): Promis
     }));
     
     // Contrats de crédit
-    const contractOps = getCreditContracts().map((item) => ({
+    const contracts = getCreditContracts();
+    const contractOps = contracts.map((item) => ({
       id: item.id,
       type: 'contract' as const,
       amount: item.amount,
-      date: item.startDate,
+      date: item.startDate || new Date().toISOString(),
       status: mapStatus(item.status),
       portfolioId: item.portfolioId,
       portfolioName: item.portfolioId, // à remplacer par le nom réel
-      clientName: item.memberName,
+      clientName: item.memberName || 'Client inconnu',
       contractId: item.id,
-      description: `Contrat - ${item.duration || 12} mois à ${item.interestRate || 5}%`,
+      description: `Contrat - ${item.duration || 12} mois à ${item.interest_rate || 5}%`,
       portfolioType: 'traditional' as const
     }));
     
@@ -124,10 +132,14 @@ export const getRecentOperations = async (portfolioType?: PortfolioType): Promis
     }));
     
     operations = [...operations, ...disbursementOps, ...repaymentOps, ...requestOps, ...contractOps, ...guaranteeOps];
+    console.log('All traditional operations combined:', operations);
   }
   
   // Trier par date décroissante (plus récent d'abord)
-  return operations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedOperations = operations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  console.log('Final sorted operations:', sortedOperations);
+  
+  return sortedOperations;
 };
 
 /**

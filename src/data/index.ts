@@ -5,7 +5,6 @@ export * from './mockChatResponses';
 export * from './mockCompanies';
 export * from './mockCompanyDetails';
 export * from './mockDisbursements';
-export * from './mockFundingOffers';
 export * from './mockCreditContracts';
 export * from './mockGuarantees';
 export * from './mockCreditRequests';

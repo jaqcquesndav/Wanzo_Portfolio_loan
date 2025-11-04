@@ -5,7 +5,6 @@ import { usePortfolioType } from '../../hooks/usePortfolioType';
 import { useDashboardMetrics } from '../../hooks/useDashboardMetrics';
 import { PerformanceIndicatorCard } from './PerformanceIndicatorCard';
 import { Button } from '../ui/Button';
-import { RecentOperationsTable } from './RecentOperationsTable';
 import EnhancedPerformanceChart from './EnhancedPerformanceChart';
 import { DashboardMetrics } from '../../types/dashboard';
 import { PortfolioType } from '../../types/portfolio';
@@ -14,9 +13,10 @@ import { useConnectivity } from '../../hooks/useConnectivity';
 import { usePortfolioSectors } from '../../hooks/usePortfolioSectors';
 import { formatCurrency } from '../../utils/formatters';
 import { Spinner } from '../ui/Spinner';
+import { RecentOperationsTable } from './RecentOperationsTable';
 
 interface EnhancedPortfolioDashboardProps {
-  portfolioTypeFromProps?: 'traditional' | 'investment' | 'leasing' | null | undefined;
+  portfolioTypeFromProps?: 'traditional' | null | undefined;
   metrics?: DashboardMetrics;
 }
 
@@ -74,8 +74,8 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
   
   // Utiliser le hook useOperations pour charger les opérations
   const { 
-    operations, 
-    loading: operationsLoading, 
+    operations,
+    loading: operationsLoading,
     error: operationsError,
     refreshOperations
   } = useOperations(portfolioType as PortfolioType);
@@ -392,12 +392,19 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
           </div>
         )}
         
-        <RecentOperationsTable
-          operations={operations}
-          portfolioType={portfolioType as PortfolioType}
-          isLoading={operationsLoading}
-          limit={8}
-        />
+        {/* Section opérations récentes - Table détaillée */}
+        <div className="p-6">
+          <RecentOperationsTable
+            operations={operations || []}
+            portfolioType={portfolioType as 'traditional'}
+            isLoading={operationsLoading}
+            onOperationClick={(operation) => {
+              // Navigation vers les détails de l'opération
+              navigate(`/portfolio/${portfolioType}/operations/${operation.id}`);
+            }}
+            limit={10}
+          />
+        </div>
       </div>
 
       {/* Modal d'analyse sectorielle */}

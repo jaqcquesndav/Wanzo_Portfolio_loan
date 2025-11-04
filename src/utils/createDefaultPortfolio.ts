@@ -8,7 +8,7 @@ export function createDefaultPortfolio(
     target_return: number;
     risk_profile: 'conservative' | 'moderate' | 'aggressive';
     target_sectors: string[];
-    type: 'traditional' | 'investment' | 'leasing';
+    type: 'traditional';
   }
 ): Portfolio {
   return {

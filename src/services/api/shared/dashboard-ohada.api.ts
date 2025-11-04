@@ -326,34 +326,7 @@ export const dashboardOHADAApi = {
     }
   },
 
-  /**
-   * POST /metrics/refresh
-   * Force l'actualisation des métriques OHADA
-   */
-  async refreshMetrics(): Promise<{ success: boolean; message: string; data: { refreshedAt: string; portfoliosProcessed: number; calculationTime: string } }> {
-    try {
-      console.log('🔄 Actualisation des métriques...');
-      const response = await apiClient.post<{ success: boolean; message: string; data: { refreshedAt: string; portfoliosProcessed: number; calculationTime: string } }>(
-        API_ENDPOINTS.dashboard.metrics.refresh
-      );
-      console.log('✅ Métriques actualisées avec succès');
-      return response;
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 404) {
-        console.warn('⚠️ Endpoint refresh non disponible, simulation de l\'actualisation');
-        return {
-          success: true,
-          message: "Métriques actualisées (mode simulation)",
-          data: {
-            refreshedAt: new Date().toISOString(),
-            portfoliosProcessed: 8,
-            calculationTime: "1.23s"
-          }
-        };
-      }
-      throw error;
-    }
-  },
+
 
   /**
    * GET /preferences/{userId}

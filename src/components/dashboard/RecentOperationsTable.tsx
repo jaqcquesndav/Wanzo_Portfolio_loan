@@ -5,11 +5,10 @@ import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { formatDate } from '../../utils/formatters';
 import { Badge } from '../ui/Badge';
-import type { PortfolioType } from '../../types/portfolio';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import { TableSkeleton } from '../ui/TableSkeleton';
 
-// Types d'opérations spécifiques pour chaque type de portefeuille
+// Types d'opérations pour les portefeuilles traditionnels uniquement
 export type TraditionalOperation = {
   id: string;
   type: 'disbursement' | 'repayment' | 'request' | 'contract' | 'guarantee';
@@ -24,43 +23,12 @@ export type TraditionalOperation = {
   description?: string;
 };
 
-export type LeasingOperation = {
-  id: string;
-  type: 'rental' | 'return' | 'maintenance' | 'payment' | 'incident';
-  amount: number;
-  date: string;
-  status: 'completed' | 'pending' | 'failed' | 'planned';
-  portfolioId: string;
-  portfolioName: string;
-  clientName: string;
-  equipmentId: string;
-  equipmentName?: string;
-  description?: string;
-};
-
-export type InvestmentOperation = {
-  id: string;
-  type: 'subscription' | 'redemption' | 'valuation' | 'dividend' | 'transaction';
-  amount: number;
-  date: string;
-  status: 'completed' | 'pending' | 'failed' | 'planned';
-  portfolioId: string;
-  portfolioName: string;
-  clientName: string; // Ajout de clientName manquant
-  assetName: string;
-  assetId?: string;
-  description?: string;
-};
-
-// Type union pour représenter n'importe quelle opération
-export type PortfolioOperation = 
-  | (TraditionalOperation & { portfolioType: 'traditional' })
-  | (LeasingOperation & { portfolioType: 'leasing' })
-  | (InvestmentOperation & { portfolioType: 'investment' });
+// Type union simplifié pour représenter uniquement les opérations traditionnelles
+export type PortfolioOperation = TraditionalOperation & { portfolioType: 'traditional' };
 
 interface RecentOperationsTableProps {
   operations: PortfolioOperation[];
-  portfolioType: PortfolioType;
+  portfolioType: 'traditional';
   isLoading?: boolean;
   onOperationClick?: (operation: PortfolioOperation) => void;
   onFilterChange?: (filters: { type: string; status: string; portfolioId: string }) => void;
@@ -80,21 +48,7 @@ const typeLabels: Record<string, string> = {
   repayment: 'Remboursement',
   request: 'Demande',
   contract: 'Contrat',
-  guarantee: 'Garantie',
-  
-  // Leasing
-  rental: 'Location',
-  return: 'Retour',
-  maintenance: 'Maintenance',
-  payment: 'Paiement',
-  incident: 'Incident',
-  
-  // Investment
-  subscription: 'Souscription',
-  redemption: 'Rachat',
-  valuation: 'Valorisation',
-  dividend: 'Dividende',
-  transaction: 'Transaction'
+  guarantee: 'Garantie'
 };
 
 export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
@@ -203,33 +157,48 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
   };
   
   const handleOperationClick = (operation: PortfolioOperation) => {
+    console.log('handleOperationClick called with:', operation);
+    console.log('onOperationClick prop:', onOperationClick);
+    
     if (onOperationClick) {
+      console.log('Using custom onOperationClick handler');
       onOperationClick(operation);
     } else {
-      // Navigation par défaut vers le portefeuille et l'onglet approprié
-      const route = `/portfolio/${portfolioType}/${operation.portfolioId}`;
+      console.log('Using default navigation logic');
+      // Pour l'instant, navigation vers la page des portefeuilles traditionnels
+      // car les IDs des mock data ne correspondent pas toujours aux portefeuilles réels
       
-      // Déterminer l'onglet en fonction du type d'opération
-      let tab = '';
-      if (portfolioType === 'traditional') {
-        if (operation.type === 'disbursement') tab = '/disbursements';
-        else if (operation.type === 'repayment') tab = '/repayments';
-        else if (operation.type === 'request') tab = '/requests';
-        else if (operation.type === 'contract') tab = '/contracts';
-        else if (operation.type === 'guarantee') tab = '/guarantees';
-      } else if (portfolioType === 'leasing') {
-        if (operation.type === 'rental' || operation.type === 'return') tab = '/contracts';
-        else if (operation.type === 'maintenance') tab = '/maintenance';
-        else if (operation.type === 'payment') tab = '/payments';
-        else if (operation.type === 'incident') tab = '/incidents';
-      } else if (portfolioType === 'investment') {
-        if (operation.type === 'subscription') tab = '/subscriptions';
-        else if (operation.type === 'redemption') tab = '/subscriptions';
-        else if (operation.type === 'valuation') tab = '/valuations';
-        else if (operation.type === 'transaction' || operation.type === 'dividend') tab = '/assets';
+      // Si on a un portfolioId qui commence par 'trad-', c'est probablement valide
+      if (operation.portfolioId && operation.portfolioId.startsWith('trad-')) {
+        // Navigation vers les détails de l'opération selon le type
+        let route = '';
+        
+        if (portfolioType === 'traditional') {
+          if (operation.type === 'disbursement' && operation.id) {
+            route = `/app/portfolio/${operation.portfolioId}/disbursements/${operation.id}`;
+          } else if (operation.type === 'repayment' && operation.id) {
+            route = `/app/portfolio/${operation.portfolioId}/repayments/${operation.id}`;
+          } else if (operation.type === 'request' && operation.id) {
+            route = `/app/portfolio/${operation.portfolioId}/requests/${operation.id}`;
+          } else if (operation.type === 'contract' && (operation.contractId || operation.id)) {
+            const contractId = operation.contractId || operation.id;
+            route = `/app/portfolio/${operation.portfolioId}/contracts/${contractId}`;
+          } else if (operation.type === 'guarantee' && operation.id) {
+            route = `/app/traditional/${operation.portfolioId}/guarantees/${operation.id}`;
+          } else {
+            // Fallback vers les détails du portefeuille
+            route = `/app/traditional/${operation.portfolioId}`;
+          }
+        }
+        
+        if (route) {
+          navigate(route);
+        }
+      } else {
+        // Pour les autres cas, navigation vers la liste des portefeuilles avec un message
+        console.warn(`Portfolio ID "${operation.portfolioId}" does not match any existing portfolio. Redirecting to portfolio list.`);
+        navigate(`/app/traditional`);
       }
-      
-      navigate(route + tab);
     }
   };
   
@@ -306,7 +275,7 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/portfolio/${portfolioType}`)}
+            onClick={() => navigate(`/app/${portfolioType}`)}
             className="flex items-center gap-1"
           >
             <span>Voir tout</span>
@@ -385,9 +354,7 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
                 </div>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {portfolioType === 'traditional' ? 'Client' : 
-                 portfolioType === 'leasing' ? 'Client/Équipement' : 
-                 'Actif'}
+                Client
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
@@ -415,8 +382,16 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
             {paginatedOperations.map((operation) => (
               <tr 
                 key={operation.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer transition-colors"
-                onClick={() => handleOperationClick(operation)}
+                className="hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer transition-colors border-2 border-transparent hover:border-blue-200"
+                onClick={() => {
+                  console.log('Row clicked:', operation);
+                  handleOperationClick(operation);
+                }}
+                style={{ 
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none'
+                }}
               >
                 <td className="px-4 py-3 whitespace-nowrap">
                   <Badge variant="secondary">
@@ -427,18 +402,7 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
                   {formatDate(operation.date)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  {portfolioType === 'traditional' ? operation.clientName : 
-                   portfolioType === 'leasing' ? (
-                     <div>
-                       <div>{operation.clientName}</div>
-                       {(operation as LeasingOperation & { portfolioType: 'leasing' }).equipmentName && (
-                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                           {(operation as LeasingOperation & { portfolioType: 'leasing' }).equipmentName}
-                         </div>
-                       )}
-                     </div>
-                   ) : 
-                   (operation as InvestmentOperation & { portfolioType: 'investment' }).assetName}
+                  {operation.clientName}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                   {formatCurrency(operation.amount, undefined)}

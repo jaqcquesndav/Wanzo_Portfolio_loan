@@ -14,6 +14,7 @@ import CreditContractSchedulePage from '../pages/CreditContractSchedulePage';
 import DisbursementDetails from '../pages/DisbursementDetails';
 import RepaymentDetails from '../pages/RepaymentDetails';
 import GuaranteeDetails from '../pages/GuaranteeDetails';
+import OperationNotFound from '../pages/OperationNotFound';
 
 import Documentation from '../pages/Documentation';
 import Help from '../pages/Help';
@@ -95,16 +96,16 @@ export const router = createBrowserRouter([
       { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
       { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
       // Métier detail routes (must be before :id and *)
-      { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails /> },
-      { path: 'portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
-      { path: 'traditional/portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail /> },
-      { path: 'portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage /> },
-      { path: 'traditional/portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage /> },
-      { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails /> },
-      { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <RepaymentDetails /> },
-      { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails />, errorElement: <OperationNotFound /> },
+      { path: 'portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail />, errorElement: <OperationNotFound /> },
+      { path: 'traditional/portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail />, errorElement: <OperationNotFound /> },
+      { path: 'portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage />, errorElement: <OperationNotFound /> },
+      { path: 'traditional/portfolio/:portfolioId/contracts/:contractId/schedule', element: <CreditContractSchedulePage />, errorElement: <OperationNotFound /> },
+      { path: 'portfolio/:portfolioId/disbursements/:disbursementId', element: <DisbursementDetails />, errorElement: <OperationNotFound /> },
+      { path: 'portfolio/:portfolioId/repayments/:repaymentId', element: <RepaymentDetails />, errorElement: <OperationNotFound /> },
+      { path: 'portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <OperationNotFound /> },
       // Route de fallback garantie pour compatibilité
-      { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
+      { path: 'traditional/portfolio/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <OperationNotFound /> },
       // Settings
       { path: 'settings', element: <Settings /> },
       // Administration

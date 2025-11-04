@@ -147,7 +147,7 @@ export default function Prospection() {
           </p>
         </div>
         <div className="flex items-center space-x-4 mt-2 md:mt-0">
-          <ViewToggle view={view} onViewChange={v => setView(v as 'list' | 'map')} />
+          <ViewToggle view={view} onViewChange={setView} />
         </div>
       </div>
 
@@ -158,7 +158,12 @@ export default function Prospection() {
         />
       </div>
 
-      {filteredCompanies.length === 0 ? (
+      {view === 'map' ? (
+        <CompanyMap
+          companies={filteredCompanies}
+          onSelectCompany={handleViewDetails}
+        />
+      ) : filteredCompanies.length === 0 ? (
         <EmptyState
           icon={Building2}
           title="Aucune entreprise trouvée"
@@ -167,11 +172,6 @@ export default function Prospection() {
             : 'Aucune entreprise n\'est disponible pour la prospection'
           }
           size="lg"
-        />
-      ) : view === 'map' ? (
-        <CompanyMap
-          companies={filteredCompanies}
-          onSelectCompany={handleViewDetails}
         />
       ) : (
         <CompanyListPaginated

@@ -1,4 +1,4 @@
-export type InstitutionType = 'bank' | 'microfinance' | 'investment_fund' | 'cooperative';
+export type InstitutionType = 'bank' | 'microfinance' | 'cooperative';
 export type InstitutionStatus = 'pending' | 'active' | 'suspended' | 'revoked';
 
 export interface Institution {

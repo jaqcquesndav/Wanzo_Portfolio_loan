@@ -43,58 +43,13 @@ export const API_ENDPOINTS = {
     activity: '/users/activity'
   },
 
-  // Companies
+  // Companies (read-only for prospection)
   companies: {
     base: '/companies',
     getAll: '/companies',
     getById: (id: string) => `/companies/${id}`,
-    create: '/companies',
-    update: (id: string) => `/companies/${id}`,
-    delete: (id: string) => `/companies/${id}`,
-    documents: {
-      upload: (id: string) => `/companies/${id}/documents`,
-      delete: (id: string, documentId: string) => `/companies/${id}/documents/${documentId}`
-    },
     financials: (id: string) => `/companies/${id}/financials`,
     valuation: (id: string) => `/companies/${id}/valuation`
-  },
-
-  // Institutions
-  institutions: {
-    base: '/institutions',
-    getAll: '/institutions',
-    getById: (id: string) => `/institutions/${id}`,
-    create: '/institutions',
-    update: (id: string) => `/institutions/${id}`,
-    delete: (id: string) => `/institutions/${id}`,
-    metrics: (id: string) => `/institutions/${id}/metrics`
-  },
-
-  // Payments
-  payments: {
-    base: '/payments',
-    getAll: '/payments',
-    getById: (id: string) => `/payments/${id}`,
-    create: '/payments',
-    update: (id: string) => `/payments/${id}`,
-    cancel: (id: string) => `/payments/${id}/cancel`,
-    approve: (id: string) => `/payments/${id}/approve`,
-    reject: (id: string) => `/payments/${id}/reject`,
-    methods: '/payments/methods',
-    schedule: '/payments/schedule'
-  },
-
-  // Risk
-  risk: {
-    base: '/risk',
-    centralBank: '/risk/central-bank',
-    companyRisk: (id: string) => `/risk/companies/${id}`,
-    portfolioRisk: (id: string) => `/risk/portfolios/${id}`,
-    scoring: '/risk/scoring',
-    alerts: '/risk/alerts',
-    create: '/risk/entries',
-    update: (id: string) => `/risk/entries/${id}`,
-    delete: (id: string) => `/risk/entries/${id}`
   },
 
   // Portfolios
@@ -111,12 +66,6 @@ export const API_ENDPOINTS = {
       create: (portfolioId: string) => `/portfolios/${portfolioId}/products`,
       update: (portfolioId: string, productId: string) => `/portfolios/${portfolioId}/products/${productId}`,
       delete: (portfolioId: string, productId: string) => `/portfolios/${portfolioId}/products/${productId}`
-    },
-    equipment: {
-      base: (portfolioId: string) => `/portfolios/${portfolioId}/equipment`,
-      create: (portfolioId: string) => `/portfolios/${portfolioId}/equipment`,
-      update: (portfolioId: string, equipmentId: string) => `/portfolios/${portfolioId}/equipment/${equipmentId}`,
-      delete: (portfolioId: string, equipmentId: string) => `/portfolios/${portfolioId}/equipment/${equipmentId}`
     }
   },
 
@@ -171,140 +120,22 @@ export const API_ENDPOINTS = {
     }
   },
 
-  // Investment Portfolios
-  investment: {
-    base: '/investment',
-    getAll: '/investment',
-    getById: (id: string) => `/investment/${id}`,
-    create: '/investment',
-    update: (id: string) => `/investment/${id}`,
-    delete: (id: string) => `/investment/${id}`,
-    positions: {
-      base: (portfolioId: string) => `/investment/${portfolioId}/positions`,
-      getById: (portfolioId: string, positionId: string) => `/investment/${portfolioId}/positions/${positionId}`,
-      create: (portfolioId: string) => `/investment/${portfolioId}/positions`,
-      update: (portfolioId: string, positionId: string) => `/investment/${portfolioId}/positions/${positionId}`,
-      delete: (portfolioId: string, positionId: string) => `/investment/${portfolioId}/positions/${positionId}`
-    },
-    transactions: {
-      base: (portfolioId: string) => `/investment/${portfolioId}/transactions`,
-      getById: (portfolioId: string, transactionId: string) => `/investment/${portfolioId}/transactions/${transactionId}`,
-      create: (portfolioId: string) => `/investment/${portfolioId}/transactions`,
-      update: (portfolioId: string, transactionId: string) => `/investment/${portfolioId}/transactions/${transactionId}`,
-      delete: (portfolioId: string, transactionId: string) => `/investment/${portfolioId}/transactions/${transactionId}`
-    }
-  },
-
-  // Leasing Portfolios
-  leasing: {
-    base: '/leasing',
-    getAll: '/leasing',
-    getById: (id: string) => `/leasing/${id}`,
-    create: '/leasing',
-    update: (id: string) => `/leasing/${id}`,
-    delete: (id: string) => `/leasing/${id}`,
-    contracts: {
-      base: (portfolioId: string) => `/leasing/${portfolioId}/contracts`,
-      getById: (portfolioId: string, contractId: string) => `/leasing/${portfolioId}/contracts/${contractId}`,
-      create: (portfolioId: string) => `/leasing/${portfolioId}/contracts`,
-      update: (portfolioId: string, contractId: string) => `/leasing/${portfolioId}/contracts/${contractId}`,
-      delete: (portfolioId: string, contractId: string) => `/leasing/${portfolioId}/contracts/${contractId}`
-    },
-    assets: {
-      base: (portfolioId: string) => `/leasing/${portfolioId}/assets`,
-      getById: (portfolioId: string, assetId: string) => `/leasing/${portfolioId}/assets/${assetId}`,
-      create: (portfolioId: string) => `/leasing/${portfolioId}/assets`,
-      update: (portfolioId: string, assetId: string) => `/leasing/${portfolioId}/assets/${assetId}`,
-      delete: (portfolioId: string, assetId: string) => `/leasing/${portfolioId}/assets/${assetId}`
-    },
-    maintenance: {
-      base: (portfolioId: string) => `/leasing/${portfolioId}/maintenance`,
-      getById: (portfolioId: string, maintenanceId: string) => `/leasing/${portfolioId}/maintenance/${maintenanceId}`,
-      create: (portfolioId: string) => `/leasing/${portfolioId}/maintenance`,
-      update: (portfolioId: string, maintenanceId: string) => `/leasing/${portfolioId}/maintenance/${maintenanceId}`,
-      delete: (portfolioId: string, maintenanceId: string) => `/leasing/${portfolioId}/maintenance/${maintenanceId}`
-    },
-    incidents: {
-      base: (portfolioId: string) => `/leasing/${portfolioId}/incidents`,
-      getById: (portfolioId: string, incidentId: string) => `/leasing/${portfolioId}/incidents/${incidentId}`,
-      create: (portfolioId: string) => `/leasing/${portfolioId}/incidents`,
-      update: (portfolioId: string, incidentId: string) => `/leasing/${portfolioId}/incidents/${incidentId}`,
-      delete: (portfolioId: string, incidentId: string) => `/leasing/${portfolioId}/incidents/${incidentId}`
-    }
-  },
-
-  // Prospection
+  // Prospection (includes companies access)
   prospection: {
-    base: '/prospection',
-    getAll: '/prospection',
-    getById: (id: string) => `/prospection/${id}`,
-    create: '/prospection',
-    update: (id: string) => `/prospection/${id}`,
-    delete: (id: string) => `/prospection/${id}`,
-    opportunities: {
-      base: '/prospection/opportunities',
-      getById: (id: string) => `/prospection/opportunities/${id}`,
-      create: '/prospection/opportunities',
-      update: (id: string) => `/prospection/opportunities/${id}`,
-      delete: (id: string) => `/prospection/opportunities/${id}`
-    },
-    leads: {
-      base: '/prospection/leads',
-      getById: (id: string) => `/prospection/leads/${id}`,
-      create: '/prospection/leads',
-      update: (id: string) => `/prospection/leads/${id}`,
-      delete: (id: string) => `/prospection/leads/${id}`
-    }
+    base: '/prospection'
   },
 
-  // Communication
+  // Communication (simplified)
   messages: {
     base: '/messages',
     getAll: '/messages',
     getById: (id: string) => `/messages/${id}`,
     send: '/messages',
-    reply: (id: string) => `/messages/${id}/reply`,
-    markAsRead: (id: string) => `/messages/${id}/read`,
-    archive: (id: string) => `/messages/${id}/archive`,
     
-    // Endpoints spécifiques au chat
+    // Chat endpoints
     getConversations: '/chat/conversations',
     getMessages: '/chat/messages',
-    sendMessage: '/chat/messages',
-    createConversation: '/chat/conversations',
-    deleteConversation: '/chat/conversations',
-    updateMessage: '/chat/messages'
-  },
-
-  meetings: {
-    base: '/meetings',
-    getAll: '/meetings',
-    getById: (id: string) => `/meetings/${id}`,
-    create: '/meetings',
-    update: (id: string) => `/meetings/${id}`,
-    delete: (id: string) => `/meetings/${id}`,
-    join: (id: string) => `/meetings/${id}/join`
-  },
-
-  // Documents
-  documents: {
-    base: '/documents',
-    getAll: '/documents',
-    getById: (id: string) => `/documents/${id}`,
-    upload: '/documents/upload',
-    download: (id: string) => `/documents/${id}/download`,
-    delete: (id: string) => `/documents/${id}`
-  },
-
-  // Reports
-  reports: {
-    base: '/reports',
-    getAll: '/reports',
-    getById: (id: string) => `/reports/${id}`,
-    generate: '/reports/generate',
-    download: (id: string) => `/reports/${id}/download`,
-    preview: (id: string) => `/reports/${id}/preview`,
-    schedule: '/reports/schedule'
+    sendMessage: '/chat/messages'
   },
 
   // Settings
@@ -317,27 +148,28 @@ export const API_ENDPOINTS = {
     integrations: '/settings/integrations'
   },
 
-  // Dashboard
+  // Dashboard (with integrated risk management)
   dashboard: {
     base: '/dashboard',
-    // Endpoints pour métriques OHADA (selon documentation)
+    // Métriques centralisées
     metrics: {
       ohada: '/metrics/ohada',
       portfolio: (portfolioId: string) => `/metrics/portfolio/${portfolioId}`,
-      global: '/metrics/global',
-      refresh: '/metrics/refresh'
+      global: '/metrics/global'
     },
-    // Endpoints pour conformité réglementaire
+    // Conformité et risques intégrés
     compliance: {
       summary: '/compliance/summary'
     },
-    // Endpoints pour préférences utilisateur
+    risk: {
+      centralBank: '/risk/central-bank',
+      portfolioRisk: (id: string) => `/risk/portfolios/${id}`
+    },
+    // Préférences utilisateur
     preferences: {
       get: (userId: string) => `/preferences/${userId}`,
       updateWidget: (userId: string, widgetId: string) => `/preferences/${userId}/widget/${widgetId}`,
-      reset: (userId: string) => `/preferences/${userId}/reset`,
-      backup: (userId: string) => `/preferences/${userId}/backup`,
-      restore: (userId: string, backupId: string) => `/preferences/${userId}/restore/${backupId}`
+      reset: (userId: string) => `/preferences/${userId}/reset`
     }
   }
 } as const;
