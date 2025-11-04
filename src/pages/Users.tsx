@@ -7,10 +7,12 @@ import { UserForm } from '../components/users/UserForm';
 import { Button } from '../components/ui/Button';
 import { Pagination } from '../components/ui/Pagination';
 import { UsersSkeleton } from '../components/ui/UsersSkeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import { User, UserRole } from '../types/users';
 import { useNotification } from '../contexts/useNotification';
 import { useAuth } from '../contexts/useAuth';
 import { useUsersApi } from '../hooks/useUsersApi';
+import { useUserContext } from '../hooks/useUserContext';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -24,6 +26,7 @@ export default function Users() {
   
   const { showNotification } = useNotification();
   const { user: currentUser } = useAuth();
+  const { isNewUser } = useUserContext();
   
   // Utiliser le hook API pour gérer les utilisateurs
   const {
@@ -114,17 +117,31 @@ export default function Users() {
     }
   };
 
-  // Affichage du chargement pendant le chargement initial
-  if (loading && users.length === 0) {
-    return <UsersSkeleton />;
-  }
-
   // Affichage des erreurs
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-500 mb-4">Erreur lors du chargement des utilisateurs</div>
-        <Button onClick={() => loadUsers()}>Réessayer</Button>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <UsersIcon className="h-6 w-6 text-primary mr-2" />
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              Gestion des utilisateurs
+            </h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              icon={<UserPlus className="h-5 w-5" />}
+            >
+              Nouvel utilisateur
+            </Button>
+          </div>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">Erreur lors du chargement des utilisateurs</div>
+          <Button onClick={() => loadUsers()}>Réessayer</Button>
+        </div>
       </div>
     );
   }
@@ -184,20 +201,43 @@ export default function Users() {
         onRoleChange={setSelectedRole}
       />
 
-      <UsersList
-        users={paginatedUsers}
-        onEdit={handleEditUser}
-        onDelete={handleDelete}
-        view={view}
-        currentUserIsAdmin={currentUserIsAdmin}
-      />
-
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
+      {loading && users.length === 0 ? (
+        <UsersSkeleton />
+      ) : paginatedUsers.length === 0 ? (
+        <EmptyState
+          icon={UsersIcon}
+          title={searchTerm || selectedRole !== 'all' ? "Aucun utilisateur trouvé" : (isNewUser ? "Bienvenue ! Créez votre premier utilisateur" : "Aucun utilisateur")}
+          description={
+            searchTerm || selectedRole !== 'all' 
+              ? "Essayez de modifier vos critères de recherche ou filtres."
+              : isNewUser 
+                ? "Commencez par créer le premier utilisateur de votre institution."
+                : "Aucun utilisateur n'a encore été créé pour votre institution."
+          }
+          action={{
+            label: "Créer un utilisateur",
+            onClick: () => setShowCreateModal(true)
+          }}
+          size="lg"
         />
+      ) : (
+        <>
+          <UsersList
+            users={paginatedUsers}
+            onEdit={handleEditUser}
+            onDelete={handleDelete}
+            view={view}
+            currentUserIsAdmin={currentUserIsAdmin}
+          />
+
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </>
       )}
 
       {showCreateModal && (

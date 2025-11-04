@@ -1,12 +1,15 @@
 import { Building2 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
+import { EmptyState } from '../components/ui/EmptyState';
 import { formatDate } from '../utils/formatters';
 import { useInstitutionApi } from '../hooks/useInstitutionApi';
 import { OrganizationSkeleton } from '../components/ui/OrganizationSkeleton';
+import { useUserContext } from '../hooks/useUserContext';
 import { useEffect } from 'react';
 
 export default function Organization() {
   const { institution, loading: isLoading, refetch } = useInstitutionApi();
+  const { isNewUser } = useUserContext();
 
   // Charger l'institution au montage du composant
   useEffect(() => {
@@ -21,14 +24,31 @@ export default function Organization() {
   // Affichage si aucune institution n'est configurée
   if (!institution) {
     return (
-      <div className="text-center py-12">
-        <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Aucune institution configurée
-        </h2>
-        <p className="text-gray-500 mb-4">
-          Les informations de votre institution ne sont pas disponibles
-        </p>
+      <div className="space-y-6">
+        <div className="flex items-center">
+          <Building2 className="h-6 w-6 text-primary mr-2" />
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Informations de l'Institution
+          </h1>
+        </div>
+        
+        <EmptyState
+          icon={Building2}
+          title={isNewUser ? "Configurez votre institution" : "Institution non configurée"}
+          description={
+            isNewUser 
+              ? "Bienvenue ! Configurez d'abord les informations de votre institution financière pour commencer à utiliser la plateforme."
+              : "Les informations de votre institution ne sont pas encore configurées ou ne sont pas disponibles."
+          }
+          action={{
+            label: "Configurer l'institution",
+            onClick: () => {
+              // TODO: Ajouter l'action pour configurer l'institution
+              console.log("Configuration de l'institution");
+            }
+          }}
+          size="lg"
+        />
       </div>
     );
   }

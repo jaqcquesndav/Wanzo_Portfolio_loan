@@ -1,6 +1,7 @@
 import { Button } from '../../../ui/Button';
 import { Card } from '../../../ui/Card';
 import { Badge } from '../../../ui/Badge';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowUpRight } from 'lucide-react';
@@ -32,13 +33,12 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
   
   if (!contracts || contracts.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-        <h3 className="text-lg font-medium mb-2">Aucun échéancier disponible</h3>
-        <p className="mb-4">
-          Il n'y a pas de contrats dans ce portefeuille pour lesquels vous pouvez gérer des échéanciers.
-        </p>
-      </div>
+      <EmptyState
+        icon={Calendar}
+        title="Aucun échéancier disponible"
+        description="Il n'y a pas de contrats dans ce portefeuille pour lesquels vous pouvez gérer des échéanciers."
+        size="md"
+      />
     );
   }
   

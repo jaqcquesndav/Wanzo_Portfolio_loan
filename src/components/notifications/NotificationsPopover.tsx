@@ -1,6 +1,6 @@
-import React from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
 import { useNotifications } from './hooks/useNotifications';
 import { formatNotificationDate } from './utils/formatters';
 
@@ -27,8 +27,13 @@ export function NotificationsPopover({ onClose }: NotificationsPopoverProps) {
 
       <div className="max-h-96 overflow-y-auto">
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-            Aucune notification
+          <div className="p-2">
+            <EmptyState
+              icon={Bell}
+              title="Aucune notification"
+              description="Vous êtes à jour ! Les nouvelles notifications apparaîtront ici."
+              size="sm"
+            />
           </div>
         ) : (
           <div className="divide-y divide-gray-200 dark:divide-gray-700">

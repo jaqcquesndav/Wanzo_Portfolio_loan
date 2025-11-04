@@ -315,5 +315,29 @@ export const API_ENDPOINTS = {
     security: '/settings/security',
     appearance: '/settings/appearance',
     integrations: '/settings/integrations'
+  },
+
+  // Dashboard
+  dashboard: {
+    base: '/dashboard',
+    // Endpoints pour métriques OHADA (selon documentation)
+    metrics: {
+      ohada: '/metrics/ohada',
+      portfolio: (portfolioId: string) => `/metrics/portfolio/${portfolioId}`,
+      global: '/metrics/global',
+      refresh: '/metrics/refresh'
+    },
+    // Endpoints pour conformité réglementaire
+    compliance: {
+      summary: '/compliance/summary'
+    },
+    // Endpoints pour préférences utilisateur
+    preferences: {
+      get: (userId: string) => `/preferences/${userId}`,
+      updateWidget: (userId: string, widgetId: string) => `/preferences/${userId}/widget/${widgetId}`,
+      reset: (userId: string) => `/preferences/${userId}/reset`,
+      backup: (userId: string) => `/preferences/${userId}/backup`,
+      restore: (userId: string, backupId: string) => `/preferences/${userId}/restore/${backupId}`
+    }
   }
 } as const;

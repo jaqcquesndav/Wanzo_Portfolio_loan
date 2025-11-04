@@ -1,170 +1,243 @@
 // src/services/api/shared/dashboard.api.ts
-import { apiClient } from '../base.api';
+// Service API Dashboard - Version actualisée conforme à la documentation
+
+import { dashboardOHADAApi, type OHADAMetricsResponse, type OHADAMetrics } from './dashboard-ohada.api';
 
 /**
- * API pour le dashboard
+ * Interface de compatibilité pour l'ancien format dashboard
+ * Mapping vers les nouvelles structures OHADA
+ */
+interface LegacyDashboardData {
+  portfolioSummary: {
+    traditional: { count: number; totalValue: number; avgRiskScore: number };
+    investment: { count: number; totalValue: number; avgRiskScore: number };
+    leasing: { count: number; totalValue: number; avgRiskScore: number };
+  };
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    description: string;
+    timestamp: string;
+    portfolioId?: string;
+  }>;
+  alerts: Array<{
+    id: string;
+    type: 'risk' | 'payment' | 'compliance' | 'opportunity';
+    level: 'info' | 'warning' | 'critical';
+    title: string;
+    description: string;
+    timestamp: string;
+  }>;
+  kpis: {
+    totalPortfolios: number;
+    activePortfolios: number;
+    totalValue: number;
+    portfolioGrowth: number;
+    pendingRequests: number;
+    completedRequests: number;
+    totalUsers: number;
+    activeUsers: number;
+  };
+  metrics: {
+    creditVolume: number;
+    paymentRate: number;
+    riskExposure: number;
+    riskGrowth: number;
+    portfolioPerformance: number;
+    complianceScore: number;
+  };
+  charts: {
+    portfolioGrowth: unknown[];
+    riskDistribution: unknown[];
+    paymentTrends: unknown[];
+  };
+}
+
+/**
+ * Convertit les données OHADA vers le format legacy pour compatibilité
+ */
+function convertOHADAToLegacy(ohadaResponse: OHADAMetricsResponse): LegacyDashboardData {
+  const portfolios = ohadaResponse.data;
+  const metadata = ohadaResponse.metadata;
+  
+  // Calculer les agrégations par type
+  const traditionalPortfolios = portfolios.filter(p => p.sector === 'PME' || p.sector === 'Corporate');
+  const totalTraditionalValue = traditionalPortfolios.reduce((sum, p) => sum + p.totalAmount, 0);
+  const avgTraditionalRisk = traditionalPortfolios.reduce((sum, p) => sum + p.nplRatio, 0) / (traditionalPortfolios.length || 1);
+
+  // Générer des activités récentes basées sur les données OHADA
+  const recentActivity = portfolios.slice(0, 5).map((portfolio, index) => ({
+    id: `activity-${index}`,
+    type: 'portfolio_update',
+    description: `Mise à jour des métriques pour ${portfolio.name}`,
+    timestamp: portfolio.lastActivity,
+    portfolioId: portfolio.id
+  }));
+
+  // Générer des alertes basées sur la conformité
+  const alerts = portfolios
+    .filter(p => p.nplRatio > 4.0 || !p.regulatoryCompliance?.bceaoCompliant)
+    .map((portfolio, index) => ({
+      id: `alert-${index}`,
+      type: 'compliance' as const,
+      level: portfolio.nplRatio > 5.0 ? 'critical' as const : 'warning' as const,
+      title: `Alerte conformité - ${portfolio.name}`,
+      description: `NPL Ratio: ${portfolio.nplRatio}% (Seuil BCEAO: 5%)`,
+      timestamp: new Date().toISOString()
+    }));
+
+  return {
+    portfolioSummary: {
+      traditional: {
+        count: traditionalPortfolios.length,
+        totalValue: totalTraditionalValue,
+        avgRiskScore: avgTraditionalRisk
+      },
+      investment: { count: 0, totalValue: 0, avgRiskScore: 0 }, // Pas dans OHADA
+      leasing: { count: 0, totalValue: 0, avgRiskScore: 0 } // Pas dans OHADA
+    },
+    recentActivity,
+    alerts,
+    kpis: {
+      totalPortfolios: metadata.totalPortfolios,
+      activePortfolios: portfolios.filter(p => p.activeContracts > 0).length,
+      totalValue: portfolios.reduce((sum, p) => sum + p.totalAmount, 0),
+      portfolioGrowth: portfolios.reduce((sum, p) => sum + p.growthRate, 0) / portfolios.length,
+      pendingRequests: 0, // Non disponible dans OHADA
+      completedRequests: portfolios.reduce((sum, p) => sum + p.activeContracts, 0),
+      totalUsers: 0, // Non disponible dans OHADA
+      activeUsers: 0 // Non disponible dans OHADA
+    },
+    metrics: {
+      creditVolume: portfolios.reduce((sum, p) => sum + p.totalAmount, 0),
+      paymentRate: portfolios.reduce((sum, p) => sum + p.collectionEfficiency, 0) / portfolios.length,
+      riskExposure: portfolios.reduce((sum, p) => sum + p.nplRatio, 0) / portfolios.length,
+      riskGrowth: 0, // Calculé différemment
+      portfolioPerformance: portfolios.reduce((sum, p) => sum + p.roa, 0) / portfolios.length,
+      complianceScore: metadata.complianceStatus === 'COMPLIANT' ? 100 : 
+                      metadata.complianceStatus === 'WARNING' ? 75 : 50
+    },
+    charts: {
+      portfolioGrowth: portfolios.map(p => ({ name: p.name, value: p.growthRate })),
+      riskDistribution: portfolios.map(p => ({ name: p.name, npl: p.nplRatio })),
+      paymentTrends: portfolios.map(p => ({ 
+        name: p.name, 
+        efficiency: p.collectionEfficiency,
+        monthlyData: p.monthlyPerformance
+      }))
+    }
+  };
+}
+
+/**
+ * API Dashboard avec compatibilité legacy et nouvelles fonctionnalités OHADA
  */
 export const dashboardApi = {
   /**
-   * Récupère les données agrégées pour le dashboard
+   * Récupère les données dashboard (format legacy pour compatibilité)
+   * Utilise en arrière-plan les endpoints OHADA conformes à la documentation
    */
-  getDashboardData: () => {
-    return apiClient.get<{
-      portfolioSummary: {
-        traditional: {
-          count: number;
-          totalValue: number;
-          avgRiskScore: number;
-        };
-        investment: {
-          count: number;
-          totalValue: number;
-          avgRiskScore: number;
-        };
-        leasing: {
-          count: number;
-          totalValue: number;
-          avgRiskScore: number;
-        };
+  async getDashboardData(): Promise<LegacyDashboardData> {
+    try {
+      console.log('🔄 Récupération données dashboard via API OHADA conforme...');
+      
+      // Utiliser la nouvelle API OHADA conforme à la documentation
+      const ohadaResponse = await dashboardOHADAApi.getOHADAMetrics();
+      
+      // Convertir vers le format legacy pour compatibilité
+      const legacyData = convertOHADAToLegacy(ohadaResponse);
+      
+      console.log('✅ Données dashboard converties avec succès');
+      return legacyData;
+      
+    } catch {
+      console.warn('⚠️ Erreur lors de la récupération des données OHADA, utilisation du fallback');
+      
+      // Données mockées de base en cas d'erreur
+      return {
+        portfolioSummary: {
+          traditional: { count: 0, totalValue: 0, avgRiskScore: 0 },
+          investment: { count: 0, totalValue: 0, avgRiskScore: 0 },
+          leasing: { count: 0, totalValue: 0, avgRiskScore: 0 }
+        },
+        recentActivity: [],
+        alerts: [],
+        kpis: {
+          totalPortfolios: 0,
+          activePortfolios: 0,
+          totalValue: 0,
+          portfolioGrowth: 0,
+          pendingRequests: 0,
+          completedRequests: 0,
+          totalUsers: 0,
+          activeUsers: 0
+        },
+        metrics: {
+          creditVolume: 0,
+          paymentRate: 0,
+          riskExposure: 0,
+          riskGrowth: 0,
+          portfolioPerformance: 0,
+          complianceScore: 0
+        },
+        charts: {
+          portfolioGrowth: [],
+          riskDistribution: [],
+          paymentTrends: []
+        }
       };
-      recentActivity: Array<{
-        id: string;
-        type: 'portfolio_created' | 'funding_request' | 'payment' | 'risk_alert' | 'contract_signed';
-        entityId: string;
-        title: string;
-        description: string;
-        timestamp: string;
-      }>;
-      alerts: Array<{
-        id: string;
-        type: 'risk' | 'payment' | 'compliance' | 'opportunity';
-        level: 'info' | 'warning' | 'critical';
-        title: string;
-        description: string;
-        timestamp: string;
-      }>;
-      kpis: {
-        totalPortfolios: number;
-        activePortfolios: number;
-        totalValue: number;
-        portfolioGrowth: number;
-        pendingRequests: number;
-        riskScore: number;
-        complianceScore: number;
-      };
-      charts: {
-        portfolioDistribution: Array<{ category: string; value: number }>;
-        monthlyPerformance: Array<{ month: string; traditional: number; investment: number; leasing: number }>;
-        riskDistribution: Array<{ riskLevel: string; percentage: number }>;
-        sectorExposure: Array<{ sector: string; value: number; percentage: number }>;
-      };
-    }>('/dashboard');
+    }
   },
 
   /**
-   * Récupère les données de performance pour un portefeuille spécifique
+   * Récupère les alertes de risque (format legacy)
+   * Utilise les données de conformité OHADA
    */
-  getPortfolioPerformance: (portfolioId: string, type: 'traditional' | 'investment' | 'leasing', period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => {
-    return apiClient.get<{
-      id: string;
-      name: string;
-      type: 'traditional' | 'investment' | 'leasing';
-      period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-      data: Array<{ date: string; value: number }>;
-      metrics: {
-        totalReturn: number;
-        annualizedReturn: number;
-        volatility: number;
-        sharpeRatio: number;
-        maxDrawdown: number;
-      };
-    }>(`/dashboard/portfolio/${portfolioId}/performance?type=${type}&period=${period}`);
+  async getRiskAlerts() {
+    try {
+      const dashboardData = await this.getDashboardData();
+      return dashboardData.alerts;
+    } catch {
+      return [];
+    }
   },
 
   /**
-   * Récupère les données de tendance pour tous les portefeuilles
+   * Nouvelles méthodes conformes à la documentation OHADA
    */
-  getPortfolioTrends: (period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => {
-    return apiClient.get<{
-      period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-      trends: {
-        traditional: {
-          growth: number;
-          data: Array<{ date: string; value: number }>;
-        };
-        investment: {
-          growth: number;
-          data: Array<{ date: string; value: number }>;
-        };
-        leasing: {
-          growth: number;
-          data: Array<{ date: string; value: number }>;
-        };
-      };
-    }>(`/dashboard/trends?period=${period}`);
+  
+  /**
+   * Récupère les métriques OHADA (nouveau format conforme)
+   */
+  async getOHADAMetrics(): Promise<OHADAMetricsResponse> {
+    return await dashboardOHADAApi.getOHADAMetrics();
   },
 
   /**
-   * Récupère les alertes de risque pour le dashboard
+   * Récupère les métriques pour un portefeuille spécifique
    */
-  getRiskAlerts: (priority?: 'high' | 'medium' | 'low') => {
-    const params = new URLSearchParams();
-    if (priority) params.append('priority', priority);
-
-    return apiClient.get<Array<{
-      id: string;
-      portfolioId: string;
-      portfolioType: 'traditional' | 'investment' | 'leasing';
-      portfolioName: string;
-      type: 'credit' | 'market' | 'operational' | 'compliance' | 'liquidity';
-      level: 'low' | 'medium' | 'high' | 'critical';
-      title: string;
-      description: string;
-      timestamp: string;
-      status: 'new' | 'acknowledged' | 'resolved';
-    }>>(`/dashboard/risk-alerts?${params.toString()}`);
+  async getPortfolioMetrics(portfolioId: string): Promise<{ success: boolean; data: OHADAMetrics }> {
+    return await dashboardOHADAApi.getPortfolioMetrics(portfolioId);
   },
 
   /**
-   * Récupère les opportunités commerciales pour le dashboard
+   * Récupère les métriques globales
    */
-  getBusinessOpportunities: () => {
-    return apiClient.get<Array<{
-      id: string;
-      companyId: string;
-      companyName: string;
-      type: 'traditional' | 'investment' | 'leasing';
-      amount: number;
-      probability: number;
-      expectedCloseDate: string;
-      status: 'new' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
-      assignedTo: string;
-      notes: string;
-    }>>('/dashboard/opportunities');
+  async getGlobalMetrics(): Promise<{ success: boolean; data: OHADAMetrics }> {
+    return await dashboardOHADAApi.getGlobalMetrics();
   },
 
   /**
-   * Récupère les KPIs pour un type de portefeuille spécifique
+   * Récupère le résumé de conformité réglementaire
    */
-  getPortfolioTypeKPIs: (type: 'traditional' | 'investment' | 'leasing') => {
-    return apiClient.get<{
-      type: 'traditional' | 'investment' | 'leasing';
-      count: number;
-      totalValue: number;
-      growth: number;
-      avgRiskScore: number;
-      performance: {
-        monthly: number;
-        quarterly: number;
-        yearly: number;
-      };
-      topPortfolios: Array<{
-        id: string;
-        name: string;
-        value: number;
-        growth: number;
-      }>;
-      metrics: Record<string, number>;
-    }>(`/dashboard/portfolio-type/${type}/kpis`);
+  async getComplianceSummary() {
+    return await dashboardOHADAApi.getComplianceSummary();
+  },
+
+  /**
+   * Force l'actualisation des métriques
+   */
+  async refreshMetrics() {
+    return await dashboardOHADAApi.refreshMetrics();
   }
 };

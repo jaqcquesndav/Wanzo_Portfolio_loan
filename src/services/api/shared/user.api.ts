@@ -1,6 +1,6 @@
 // src/services/api/shared/user.api.ts
 import { apiClient } from '../base.api';
-import { PaginatedResponse, SuccessResponse } from '../types';
+import { FlexiblePaginatedResponse, SuccessResponse } from '../types';
 import { 
   User, 
   UserSettings, 
@@ -87,7 +87,7 @@ export const userApi = {
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
-    return apiClient.get<PaginatedResponse<User>>(`/users?${params.toString()}`);
+    return apiClient.get<FlexiblePaginatedResponse<User>>(`/users?${params.toString()}`);
   },
 
   /**
@@ -206,6 +206,6 @@ export const userApi = {
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
-    return apiClient.get<PaginatedResponse<UserActivity>>(`/users/activity?${params.toString()}`);
+    return apiClient.get<FlexiblePaginatedResponse<UserActivity>>(`/users/activity?${params.toString()}`);
   }
 };

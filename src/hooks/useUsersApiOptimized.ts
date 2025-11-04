@@ -32,9 +32,14 @@ export function useUsersApiOptimized() {
       });
       
       // Transformer la réponse pour correspondre au format attendu par useApiList
+      // Gérer la structure de réponse flexible (avec ou sans meta)
+      const total = ('meta' in response && response.meta) 
+        ? response.meta.total 
+        : (response as { data: User[]; total?: number }).total ?? 0;
+      
       return {
         data: response.data,
-        total: response.meta.total
+        total: total
       };
     },
     {

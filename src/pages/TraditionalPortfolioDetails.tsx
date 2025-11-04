@@ -3,10 +3,11 @@ import { portfolioTypeConfig } from '../config/portfolioTypes';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
+import { EmptyState } from '../components/ui/EmptyState';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
 import { PortfolioSettingsEditModal } from '../components/portfolio/traditional/PortfolioSettingsEditModal';
 import { PortfolioSettingsPanel } from '../components/portfolio/traditional/PortfolioSettingsPanel';
-import { Plus } from 'lucide-react';
+import { Plus, CreditCard } from 'lucide-react';
 import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
 import { FinancialProductForm } from '../components/portfolio/traditional/FinancialProductForm';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -346,17 +347,16 @@ export default function TraditionalPortfolioDetails() {
                     }}
                   />
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <p>Aucun produit financier n'a encore été créé</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowProductForm(true)}
-                      className="mt-4"
-                      icon={<Plus className="h-5 w-5" aria-hidden="true" />}
-                    >
-                      Créer un produit
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={CreditCard}
+                    title="Aucun produit financier"
+                    description="Créez votre premier produit financier pour commencer à gérer vos offres de crédit."
+                    action={{
+                      label: "Créer un produit",
+                      onClick: () => setShowProductForm(true),
+                      variant: "primary"
+                    }}
+                  />
                 )}
               </TabsContent>
             );

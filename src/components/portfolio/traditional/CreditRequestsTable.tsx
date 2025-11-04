@@ -8,6 +8,7 @@ import { Badge } from '../../ui/Badge';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { Pagination } from '../../ui/Pagination';
 import { TableSkeleton } from '../../ui/TableSkeleton';
+import { EmptyState } from '../../ui/EmptyState';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 import { CreditRequest, CreditRequestStatus } from '../../../types/credit';
@@ -333,8 +334,17 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
             <TableBody>
               {currentPageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    Aucune demande trouvée
+                  <TableCell colSpan={7} className="p-0">
+                    <EmptyState
+                      icon={CreditCard}
+                      title={searchTerm || statusFilter ? "Aucun résultat" : "Aucune demande de crédit"}
+                      description={
+                        searchTerm || statusFilter 
+                          ? "Essayez de modifier vos critères de recherche ou filtres."
+                          : "Les demandes de crédit apparaîtront ici une fois soumises par les clients."
+                      }
+                      size="sm"
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

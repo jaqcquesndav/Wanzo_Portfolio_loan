@@ -8,6 +8,8 @@ import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioMod
 import { usePortfolioMetrics } from '../hooks/usePortfolioMetrics';
 import type { Portfolio } from '../types/portfolio';
 import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Briefcase } from 'lucide-react';
 
 export default function Home() {
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
@@ -55,6 +57,41 @@ export default function Home() {
         <p className="text-red-800 dark:text-red-200">
           Une erreur est survenue lors du chargement des données
         </p>
+      </div>
+    );
+  }
+
+  // Vérifier si l'utilisateur a des données de portefeuille
+  const hasPortfolioData = metrics && (
+    metrics.totalValue > 0 || 
+    metrics.assets?.distribution?.length > 0 ||
+    metrics.performance?.length > 0
+  );
+
+  // Nouvel utilisateur ou absence de données
+  if (!hasPortfolioData) {
+    return (
+      <div className="space-y-6">
+        <EmptyState
+          icon={Briefcase}
+          title="Bienvenue dans votre dashboard"
+          description="Commencez par créer votre premier portefeuille pour suivre vos investissements et analyser leurs performances."
+          action={{
+            label: "Créer un portefeuille",
+            onClick: () => setShowCreateModal(true)
+          }}
+          size="lg"
+        />
+
+        {showCreateModal && (
+          <CreatePortfolioModal
+            onClose={() => setShowCreateModal(false)}
+            onSubmit={async () => {
+              // Implémentation de la création
+              setShowCreateModal(false);
+            }}
+          />
+        )}
       </div>
     );
   }

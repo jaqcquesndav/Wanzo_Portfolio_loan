@@ -4,7 +4,39 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userApi, type UserDetails, type UserActivity, type UserRoleDetails } from '../services/api/shared/user.api';
 import type { User, UserSettings, UserRole, UserType, Permission } from '../types/user';
+import type { FlexiblePaginatedResponse } from '../services/api/types';
 import { useNotification } from '../contexts/useNotification';
+
+/**
+ * Helper pour extraire les informations de pagination de manière sûre
+ */
+function extractPaginationInfo<T>(response: FlexiblePaginatedResponse<T>) {
+  // Vérifier si c'est le format avec meta
+  if ('meta' in response && response.meta) {
+    return {
+      total: response.meta.total,
+      page: response.meta.page,
+      limit: response.meta.limit,
+      totalPages: response.meta.totalPages
+    };
+  }
+  
+  // Format direct - utilisation d'un cast sécurisé
+  const directResponse = response as {
+    data: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  };
+  
+  const total = directResponse.total ?? 0;
+  const page = directResponse.page ?? 1;
+  const limit = directResponse.limit ?? 10;
+  const totalPages = directResponse.totalPages ?? Math.ceil(total / (limit || 1));
+  
+  return { total, page, limit, totalPages };
+}
 
 /**
  * Hook principal pour la gestion des utilisateurs via l'API
@@ -34,13 +66,22 @@ export function useUsersApi() {
       setLoading(true);
       setError(null);
       const response = await userApi.getAllUsers(filters);
-      setUsers(response.data);
-      setPagination({
-        total: response.meta.total,
-        page: response.meta.page,
-        limit: response.meta.limit,
-        totalPages: response.meta.totalPages
+      
+      // Debug: log de la structure de réponse
+      console.log('🔍 Structure de réponse API utilisateurs:', {
+        hasData: !!response.data,
+        dataLength: response.data?.length,
+        hasMeta: 'meta' in response,
+        responseKeys: Object.keys(response),
+        fullResponse: response
       });
+      
+      setUsers(response.data);
+      
+      // Utiliser la fonction helper pour extraire les infos de pagination
+      const paginationInfo = extractPaginationInfo(response);
+      console.log('📊 Pagination extraite:', paginationInfo);
+      setPagination(paginationInfo);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des utilisateurs';
       setError(errorMessage);
@@ -330,12 +371,10 @@ export function useUserActivity() {
       setError(null);
       const response = await userApi.getUserActivity(filters);
       setActivities(response.data);
-      setPagination({
-        total: response.meta.total,
-        page: response.meta.page,
-        limit: response.meta.limit,
-        totalPages: response.meta.totalPages
-      });
+      
+      // Utiliser la fonction helper pour extraire les infos de pagination
+      const paginationInfo = extractPaginationInfo(response);
+      setPagination(paginationInfo);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement de l\'activité';
       setError(errorMessage);

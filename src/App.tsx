@@ -139,7 +139,7 @@ export default function App() {
             </CurrencyProvider>
           </NotificationProvider>
         </PortfolioProvider>
-        </ErrorBoundaryProvider>
+      </ErrorBoundaryProvider>
       </ConnectivityProvider>
     </QueryClientProvider>
   );

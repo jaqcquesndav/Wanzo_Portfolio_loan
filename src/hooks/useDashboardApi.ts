@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { dashboardApi } from '../services/api/shared/dashboard.api';
 import { useNotification } from '../contexts/useNotification';
 import { useErrorBoundary } from './useErrorBoundary';
+import type { OHADAMetricsResponse, ComplianceSummary } from '../services/api/shared/dashboard-ohada.api';
 
 /**
  * Types pour les données du dashboard basés sur l'API (traditional seulement)
@@ -13,12 +14,23 @@ interface DashboardData {
       totalValue: number;
       avgRiskScore: number;
     };
+    investment?: {
+      count: number;
+      totalValue: number;
+      avgRiskScore: number;
+    };
+    leasing?: {
+      count: number;
+      totalValue: number;
+      avgRiskScore: number;
+    };
   };
   recentActivity: Array<{
     id: string;
-    type: 'portfolio_created' | 'funding_request' | 'payment' | 'risk_alert' | 'contract_signed';
-    entityId: string;
-    title: string;
+    type: 'portfolio_created' | 'funding_request' | 'payment' | 'risk_alert' | 'contract_signed' | 'portfolio_update';
+    entityId?: string;
+    portfolioId?: string;
+    title?: string;
     description: string;
     timestamp: string;
   }>;
@@ -36,17 +48,30 @@ interface DashboardData {
     totalValue: number;
     portfolioGrowth: number;
     pendingRequests: number;
-    riskScore: number;
+    completedRequests?: number;
+    totalUsers?: number;
+    activeUsers?: number;
+    riskScore?: number;
+    complianceScore: number;
+  };
+  metrics?: {
+    creditVolume: number;
+    paymentRate: number;
+    riskExposure: number;
+    riskGrowth: number;
+    portfolioPerformance: number;
     complianceScore: number;
   };
   charts: {
-    portfolioDistribution: Array<{ category: string; value: number }>;
-    monthlyPerformance: Array<{ 
+    portfolioDistribution?: Array<{ category: string; value: number }>;
+    portfolioGrowth?: unknown[];
+    riskDistribution?: unknown[];
+    paymentTrends?: unknown[];
+    monthlyPerformance?: Array<{ 
       month: string; 
       traditional: number; 
     }>;
-    riskDistribution: Array<{ riskLevel: string; percentage: number }>;
-    sectorExposure: Array<{ sector: string; value: number; percentage: number }>;
+    sectorExposure?: Array<{ sector: string; value: number; percentage: number }>;
   };
 }
 
@@ -118,7 +143,7 @@ export function useDashboardApi() {
       lastApiCall.current = Date.now();
       
       const dashboardData = await dashboardApi.getDashboardData();
-      setData(dashboardData);
+      setData(dashboardData as DashboardData);
       
       // Reset sur succès
       rateLimitBackoff.current = 0;
@@ -159,12 +184,27 @@ export function useDashboardRiskMetrics() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRiskMetrics = useCallback(async (priority?: 'high' | 'medium' | 'low') => {
+  const fetchRiskMetrics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dashboardApi.getRiskAlerts(priority);
-      setMetrics(data);
+      const data = await dashboardApi.getRiskAlerts();
+      // Convertir en format RiskMetric
+      const riskMetrics: RiskMetric[] = data.map((alert, index) => ({
+        id: alert.id,
+        portfolioId: `portfolio-${index}`,
+        portfolioType: 'traditional' as const,
+        portfolioName: `Portfolio ${index + 1}`,
+        type: alert.type === 'risk' ? 'credit' : 
+              alert.type === 'payment' ? 'liquidity' : 
+              alert.type === 'compliance' ? 'compliance' : 'operational',
+        level: alert.level,
+        title: alert.title,
+        description: alert.description,
+        timestamp: alert.timestamp,
+        status: 'new' as const
+      }));
+      setMetrics(riskMetrics);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des métriques de risque';
       setError(errorMessage);
@@ -183,5 +223,75 @@ export function useDashboardRiskMetrics() {
     loading,
     error,
     refetch: fetchRiskMetrics
+  };
+}
+
+/**
+ * Hook pour les métriques OHADA conformes à la documentation
+ */
+export function useOHADAMetrics() {
+  const [metrics, setMetrics] = useState<OHADAMetricsResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOHADAMetrics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardApi.getOHADAMetrics();
+      setMetrics(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des métriques OHADA';
+      setError(errorMessage);
+      console.error('Erreur métriques OHADA:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOHADAMetrics();
+  }, [fetchOHADAMetrics]);
+
+  return {
+    metrics,
+    loading,
+    error,
+    refetch: fetchOHADAMetrics
+  };
+}
+
+/**
+ * Hook pour les métriques de conformité réglementaire
+ */
+export function useComplianceMetrics() {
+  const [compliance, setCompliance] = useState<ComplianceSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCompliance = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardApi.getComplianceSummary();
+      setCompliance(data.data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement de la conformité';
+      setError(errorMessage);
+      console.error('Erreur conformité:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCompliance();
+  }, [fetchCompliance]);
+
+  return {
+    compliance,
+    loading,
+    error,
+    refetch: fetchCompliance
   };
 }

@@ -58,7 +58,7 @@ export default function Prospection() {
       lastApiCall.current = Date.now();
       
       const companiesData = await companyApi.getAllCompanies();
-      setCompanies(companiesData);
+      setCompanies(Array.isArray(companiesData) ? companiesData : []);
       
       // Reset du backoff en cas de succès
       rateLimitBackoff.current = 0;
@@ -79,6 +79,8 @@ export default function Prospection() {
       } else {
         setError('Impossible de charger les entreprises');
       }
+      // S'assurer que companies reste un tableau même en cas d'erreur
+      setCompanies([]); 
     } finally {
       setLoading(false);
       apiCallInProgress.current = false;
@@ -104,7 +106,7 @@ export default function Prospection() {
   };
 
   // Filtrer les entreprises
-  const filteredCompanies = companies.filter(company => {
+  const filteredCompanies = (companies || []).filter(company => {
     if (searchTerm) {
       return company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
              company.sector.toLowerCase().includes(searchTerm.toLowerCase());

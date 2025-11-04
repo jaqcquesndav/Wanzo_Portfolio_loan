@@ -5,12 +5,13 @@ import { useDashboardApi, useDashboardRiskMetrics } from '../../hooks/useDashboa
 import { useDashboardCustomization } from '../../hooks/dashboard/useDashboardCustomization';
 import { OHADACharts } from './OHADACharts';
 import { WidgetSelector } from './WidgetSelector';
+import { DashboardSkeleton } from '../ui/DashboardSkeleton';
 import type { PortfolioSelection, PeriodFilter } from '../../types/dashboard/ohada';
 import type { WidgetType } from '../../types/dashboard/customization';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { CalendarIcon, ChevronDownIcon, TrendingUpIcon, AlertCircleIcon, CheckCircleIcon, BarChart3Icon, DollarSignIcon, UsersIcon, PieChartIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { TrendingUpIcon, AlertCircleIcon, CheckCircleIcon, BarChart3Icon, DollarSignIcon, UsersIcon, PieChartIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 // Interface pour les activités récentes
 interface ActivityItem {
@@ -54,6 +55,12 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     updateWidgetVisibility,
     resetToDefault
   } = useDashboardCustomization('user_001');
+
+  // Calculer les widgets sélectionnés depuis les préférences
+  const selectedWidgets = useMemo(() => {
+    if (!preferences?.widgets) return availableWidgets;
+    return preferences.widgets.filter(widget => widget.isVisible);
+  }, [preferences?.widgets, availableWidgets]);
 
   // États locaux
   const [portfolioSelection, setPortfolioSelection] = useState<PortfolioSelection>({
@@ -287,140 +294,130 @@ export const ProfessionalCreditDashboard: React.FC = () => {
 
   const loading = portfoliosLoading || dashboardLoading || riskLoading;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center space-y-4">
-          <RefreshCwIcon className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-sm text-gray-600">Chargement des métriques OHADA...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Gestion des erreurs API
-  const hasError = dashboardError || riskError;
-  
-  if (hasError) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
-          <p className="text-sm text-gray-600 mb-4">{dashboardError || riskError}</p>
-          <Button onClick={refreshDashboard} variant="outline">
-            <RefreshCwIcon className="h-4 w-4 mr-2" />
-            Réessayer
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!adaptedMetrics) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <BarChart3Icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune donnée disponible</h3>
-          <p className="text-sm text-gray-600">Sélectionnez un portefeuille pour voir les métriques.</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Rendu principal - toujours afficher l'en-tête
   return (
     <div className="space-y-6">
-      {/* En-tête avec sélecteurs */}
+      {/* En-tête toujours visible */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tableau de Bord</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Conforme aux normes OHADA/BCEAO • 
-            {dashboardData && ` Dernière MAJ: ${new Date().toLocaleString('fr-FR')}`}
-          </p>
+        <div className="flex items-center space-x-4">
+          <BarChart3Icon className="h-8 w-8 text-blue-600" />
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Dashboard Professionnel Crédit
+          </h1>
+          {loading && (
+            <RefreshCwIcon className="h-5 w-5 animate-spin text-blue-600" />
+          )}
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Sélecteur de customisation des widgets */}
-          <WidgetSelector
-            widgets={preferences?.widgets || availableWidgets}
-            onToggleWidget={updateWidgetVisibility}
-            onResetToDefault={resetToDefault}
-          />
-
+        
+        <div className="flex items-center space-x-4">
           {/* Sélecteur de portefeuille */}
-          <div className="relative">
-            <div className="relative">
-              <select
-                value={portfolioSelection.selectedPortfolioId || 'global'}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === 'global') {
-                    setPortfolioSelection({ mode: 'global', label: 'Vue Globale - Tous Portefeuilles' });
-                  } else {
-                    const option = portfolioOptions.find(opt => 
-                      opt.mode === 'individual' && opt.selectedPortfolioId === value
-                    );
-                    if (option) {
-                      setPortfolioSelection(option);
-                    }
-                  }
-                }}
-                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[200px] relative z-10"
-                style={{ backgroundImage: 'none' }}
-              >
-                {portfolioOptions.map((option, index) => (
-                  <option 
-                    key={index} 
-                    value={option.selectedPortfolioId || 'global'}
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <ChevronDownIcon className="h-4 w-4 text-gray-400" />
-              </div>
-            </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Portefeuille:</span>
+            <select 
+              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm disabled:opacity-50"
+              value={portfolioOptions.findIndex(opt => 
+                opt.mode === portfolioSelection.mode && 
+                opt.selectedPortfolioId === portfolioSelection.selectedPortfolioId
+              )}
+              onChange={(e) => setPortfolioSelection(portfolioOptions[parseInt(e.target.value)])}
+              disabled={loading}
+            >
+              {portfolioOptions.map((option, index) => (
+                <option key={index} value={index}>{option.label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Sélecteur de période */}
-          <div className="relative">
-            <div className="relative">
-              <select
-                value={periodFilter.type}
-                onChange={(e) => {
-                  const selectedType = e.target.value as PeriodFilter['type'];
-                  const selectedOption = periodOptions.find(opt => opt.type === selectedType);
-                  if (selectedOption) {
-                    setPeriodFilter(selectedOption);
-                  }
-                }}
-                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[160px]"
-                style={{ backgroundImage: 'none' }}
-              >
-                {periodOptions.map((option) => (
-                  <option key={option.type} value={option.type}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <CalendarIcon className="h-4 w-4 text-gray-400" />
-              </div>
-            </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Période:</span>
+            <select 
+              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm disabled:opacity-50"
+              value={periodOptions.findIndex(opt => opt.type === periodFilter.type)}
+              onChange={(e) => setPeriodFilter(periodOptions[parseInt(e.target.value)])}
+              disabled={loading}
+            >
+              {periodOptions.map((option, index) => (
+                <option key={index} value={index}>{option.label}</option>
+              ))}
+            </select>
           </div>
 
-          <Button onClick={refreshDashboard} variant="outline" size="sm">
-            <RefreshCwIcon className="h-4 w-4 mr-2" />
+          <Button 
+            onClick={refreshDashboard} 
+            variant="outline" 
+            size="sm"
+            disabled={loading}
+            icon={<RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
+          >
             Actualiser
           </Button>
         </div>
       </div>
 
-      {/* Indicateur de conformité OHADA */}
-      {isWidgetVisible('regulatory-compliance') && (
+      {/* Contenu conditionnel */}
+      {loading ? (
+        <DashboardSkeleton />
+      ) : renderDashboardContent()}
+    </div>
+  );
+
+  // Fonction pour rendre le contenu selon l'état
+  function renderDashboardContent() {
+    // Gestion des erreurs API
+    const hasError = dashboardError || riskError;
+  
+    if (hasError) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
+            <p className="text-sm text-gray-600 mb-4">{dashboardError || riskError}</p>
+            <Button onClick={refreshDashboard} variant="outline">
+              <RefreshCwIcon className="h-4 w-4 mr-2" />
+              Réessayer
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (!adaptedMetrics) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <BarChart3Icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune donnée disponible</h3>
+            <p className="text-sm text-gray-600">Sélectionnez un portefeuille pour voir les métriques.</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Actions des widgets */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <WidgetSelector
+              widgets={preferences?.widgets || availableWidgets}
+              onToggleWidget={updateWidgetVisibility}
+              onResetToDefault={resetToDefault}
+            />
+            <span className="text-sm text-gray-500">
+              {selectedWidgets?.length || 0} widget{(selectedWidgets?.length || 0) > 1 ? 's' : ''} actif{(selectedWidgets?.length || 0) > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <div className="text-sm text-gray-500">
+            Conforme aux normes OHADA/BCEAO • 
+            {dashboardData && ` Dernière MAJ: ${new Date().toLocaleString('fr-FR')}`}
+          </div>
+        </div>
+
+        {/* Indicateur de conformité OHADA */}
+        {isWidgetVisible('regulatory-compliance') && (
         <Card className="border-l-4 border-l-blue-600">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -453,7 +450,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
       )}
 
       {/* KPIs compacts */}
-      {isWidgetVisible('kpi-overview') && (
+      {isWidgetVisible('kpi-overview') && adaptedMetrics && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {/* Montant total */}
         <Card className="relative overflow-hidden">
@@ -462,7 +459,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
               <div className="flex-1">
                 <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Montant Total</p>
                 <p className="text-lg font-bold text-gray-900 mt-1">
-                  {formatCurrency(adaptedMetrics.totalAmount)}
+                  {formatCurrency(adaptedMetrics?.totalAmount || 0)}
                 </p>
               </div>
               <DollarSignIcon className="h-6 w-6 text-blue-600 opacity-75" />
@@ -560,7 +557,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
       )}
 
       {/* Balance AGE */}
-      {isWidgetVisible('balance-age') && (
+      {isWidgetVisible('balance-age') && adaptedMetrics && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -654,6 +651,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
       )}
 
       {/* Métriques additionnelles */}
+      {adaptedMetrics && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Informations générales */}
         <Card>
@@ -738,6 +736,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Section Graphiques OHADA */}
       {(isWidgetVisible('monthly-performance') || isWidgetVisible('balance-age-distribution') || 
@@ -866,6 +865,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
         </CardContent>
       </Card>
       )}
-    </div>
-  );
+      </div>
+    );
+  }
 };

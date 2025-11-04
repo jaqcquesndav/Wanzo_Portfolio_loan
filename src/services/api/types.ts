@@ -1,7 +1,7 @@
 // src/services/api/types.ts
 
 /**
- * Interface pour les réponses paginées
+ * Interface pour les réponses paginées (format standard avec meta)
  */
 export interface PaginatedResponse<T> {
   data: T[];
@@ -12,6 +12,22 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+/**
+ * Interface pour les réponses paginées (format alternatif direct)
+ */
+export interface PaginatedResponseDirect<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages?: number;
+}
+
+/**
+ * Union type pour supporter les deux formats de réponse paginée
+ */
+export type FlexiblePaginatedResponse<T> = PaginatedResponse<T> | PaginatedResponseDirect<T>;
 
 /**
  * Interface pour les options de pagination

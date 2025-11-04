@@ -4,7 +4,37 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { userApi } from '../services/api/shared/user.api';
 import type { User, UserRole, UserType } from '../types/user';
+import type { FlexiblePaginatedResponse } from '../services/api/types';
 import { useNotification } from '../contexts/useNotification';
+
+/**
+ * Helper pour extraire les informations de pagination de manière sûre
+ */
+function extractPaginationInfo<T>(response: FlexiblePaginatedResponse<T>) {
+  if ('meta' in response && response.meta) {
+    return {
+      total: response.meta.total,
+      page: response.meta.page,
+      limit: response.meta.limit,
+      totalPages: response.meta.totalPages
+    };
+  }
+  
+  const directResponse = response as {
+    data: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  };
+  
+  const total = directResponse.total ?? 0;
+  const page = directResponse.page ?? 1;
+  const limit = directResponse.limit ?? 10;
+  const totalPages = directResponse.totalPages ?? Math.ceil(total / (limit || 1));
+  
+  return { total, page, limit, totalPages };
+}
 
 interface LoadUsersParams {
   role?: UserRole;
@@ -133,16 +163,14 @@ export function useUsersApiEnhanced() {
 
       const response = await retryWithBackoff(() => userApi.getAllUsers(params));
 
+      // Gérer la structure de réponse flexible (avec ou sans meta)
+      const paginationInfo = extractPaginationInfo(response);
+
       const newState = {
         users: response.data,
         loading: false,
         error: null,
-        pagination: {
-          total: response.meta.total,
-          page: response.meta.page,
-          limit: response.meta.limit,
-          totalPages: response.meta.totalPages
-        }
+        pagination: paginationInfo
       };
 
       // Mettre à jour le cache

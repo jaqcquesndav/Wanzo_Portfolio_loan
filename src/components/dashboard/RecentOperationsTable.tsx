@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarClock, ArrowUpRight, Filter, ChevronDown, ArrowDownUp, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
 import { formatDate } from '../../utils/formatters';
 import { Badge } from '../ui/Badge';
 import type { PortfolioType } from '../../types/portfolio';
@@ -274,9 +275,13 @@ export const RecentOperationsTable: React.FC<RecentOperationsTableProps> = ({
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Opérations récentes</h3>
         </div>
-        <div className="p-6 text-center">
-          <p className="text-gray-500 dark:text-gray-400">Aucune opération récente</p>
-        </div>
+        <EmptyState
+          icon={CalendarClock}
+          title="Aucune opération récente"
+          description="Les dernières opérations apparaîtront ici une fois que vous aurez commencé à utiliser vos portefeuilles."
+          size="sm"
+          className="py-8"
+        />
       </div>
     );
   }
