@@ -1,9 +1,9 @@
-// components/portfolio/traditional/contract/ConfigureContractForm.tsx
+﻿// components/portfolio/traditional/contract/ConfigureContractForm.tsx
 import { useState } from 'react';
 import { Button } from '../../../ui/Button';
 import { Input, Select } from '../../../ui/Form';
 import { Modal } from '../../../ui/Modal';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 import { useNotification } from '../../../../contexts/useNotification';
 
 interface ConfigureContractFormProps {
@@ -15,22 +15,22 @@ interface ConfigureContractFormProps {
 
 export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: ConfigureContractFormProps) {
   const [formData, setFormData] = useState({
-    interestRate: contract.interestRate.toString(),
-    startDate: contract.startDate || new Date().toISOString().split('T')[0],
-    endDate: contract.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0],
+    interest_rate: contract.interest_rate.toString(),
+    start_date: contract.start_date || new Date().toISOString().split('T')[0],
+    end_date: contract.end_date || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0],
     amortization_method: contract.amortization_method || 'linear',
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showNotification } = useNotification();
 
-  // Gestionnaire séparé pour les éléments input
+  // Gestionnaire sÃ©parÃ© pour les Ã©lÃ©ments input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Gestionnaire séparé pour les éléments select
+  // Gestionnaire sÃ©parÃ© pour les Ã©lÃ©ments select
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -42,14 +42,14 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
     
     try {
       const updatedData: Partial<CreditContract> = {
-        interestRate: parseFloat(formData.interestRate),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
+        interest_rate: parseFloat(formData.interest_rate),
+        start_date: formData.start_date,
+        end_date: formData.end_date,
         amortization_method: formData.amortization_method as 'linear' | 'degressive' | 'progressive' | 'balloon',
       };
       
       await onUpdate(updatedData);
-      showNotification('Contrat configuré avec succès', 'success');
+      showNotification('Contrat configurÃ© avec succÃ¨s', 'success');
       onClose();
     } catch (error) {
       showNotification('Erreur lors de la configuration du contrat', 'error');
@@ -64,13 +64,13 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Taux d'intérêt (%)
+            Taux d'intÃ©rÃªt (%)
           </label>
           <Input
             type="number"
             step="0.01"
             name="interestRate"
-            value={formData.interestRate}
+            value={formData.interest_rate}
             onChange={handleInputChange}
             required
             min="0"
@@ -80,12 +80,12 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date de début
+            Date de dÃ©but
           </label>
           <Input
             type="date"
             name="startDate"
-            value={formData.startDate}
+            value={formData.start_date}
             onChange={handleInputChange}
             required
           />
@@ -98,7 +98,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
           <Input
             type="date"
             name="endDate"
-            value={formData.endDate}
+            value={formData.end_date}
             onChange={handleInputChange}
             required
           />
@@ -106,7 +106,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Méthode d'amortissement
+            MÃ©thode d'amortissement
           </label>
           <Select
             name="amortization_method"
@@ -114,8 +114,8 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
             onChange={handleSelectChange}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
           >
-            <option value="linear">Linéaire (constant)</option>
-            <option value="degressive">Dégressive</option>
+            <option value="linear">LinÃ©aire (constant)</option>
+            <option value="degressive">DÃ©gressive</option>
             <option value="progressive">Progressive</option>
             <option value="balloon">Paiement ballon</option>
           </Select>
@@ -133,3 +133,4 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
     </Modal>
   );
 }
+

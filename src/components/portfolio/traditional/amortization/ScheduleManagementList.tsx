@@ -1,11 +1,11 @@
-import { Button } from '../../../ui/Button';
+﻿import { Button } from '../../../ui/Button';
 import { Card } from '../../../ui/Card';
 import { Badge } from '../../../ui/Badge';
 import { EmptyState } from '../../../ui/EmptyState';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowUpRight } from 'lucide-react';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 
 interface ScheduleManagementListProps {
   portfolioId: string;
@@ -35,8 +35,8 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
     return (
       <EmptyState
         icon={Calendar}
-        title="Aucun échéancier disponible"
-        description="Il n'y a pas de contrats dans ce portefeuille pour lesquels vous pouvez gérer des échéanciers."
+        title="Aucun Ã©chÃ©ancier disponible"
+        description="Il n'y a pas de contrats dans ce portefeuille pour lesquels vous pouvez gÃ©rer des Ã©chÃ©anciers."
         size="md"
       />
     );
@@ -45,7 +45,7 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
   return (
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Échéanciers de remboursement</h2>
+        <h2 className="text-lg font-medium">Ã‰chÃ©anciers de remboursement</h2>
       </div>
       
       {contracts.map((contract: CreditContract) => (
@@ -53,23 +53,23 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-medium">
-                Contrat {contract.reference}
+                Contrat {contract.contract_number}
               </h3>
               <p className="text-sm text-gray-600 mt-1">
-                {contract.memberName} - {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(contract.amount)}
+                {contract.company_name} - {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(contract.amount)}
               </p>
               <div className="mt-2">
                 <Badge variant={contract.status === 'active' ? 'success' : 'warning'}>
                   {contract.status === 'active' ? 'Actif' : contract.status}
                 </Badge>
                 <Badge variant="secondary" className="ml-2">
-                  {contract.productName || 'Standard'}
+                  {contract.product_type || 'Standard'}
                 </Badge>
               </div>
             </div>
             <Link to={`/app/traditional/${portfolioId}/contracts/${contract.id}`}>
               <Button size="sm" className="flex items-center">
-                <span>Voir l'échéancier</span>
+                <span>Voir l'Ã©chÃ©ancier</span>
                 <ArrowUpRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
@@ -79,3 +79,4 @@ export function ScheduleManagementList({ portfolioId }: ScheduleManagementListPr
     </div>
   );
 }
+

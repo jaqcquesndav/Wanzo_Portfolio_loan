@@ -1,6 +1,6 @@
 // src/services/storage/creditContractsStorage.ts
-import { CreditContract } from '../../types/credit';
-import { mockCreditContracts as initialMockData } from '../../data';
+import { CreditContract } from '../../types/credit-contract';
+import { mockCreditContracts as initialMockData } from '../../data/mockCreditContractsNew';
 
 const STORAGE_KEYS = {
   CREDIT_CONTRACTS: 'credit_contracts'
@@ -126,7 +126,7 @@ export const creditContractsStorageService = {
         contracts[index] = { 
           ...contracts[index], 
           ...updates,
-          updatedAt: new Date().toISOString() 
+          updated_at: new Date().toISOString() 
         };
         localStorage.setItem(STORAGE_KEYS.CREDIT_CONTRACTS, JSON.stringify(contracts));
         return contracts[index];

@@ -68,7 +68,7 @@ export const paymentApi = {
    */
   getPaymentReceipt: async (paymentId: string) => {
     try {
-      const response = await apiClient.get<{ receipt_url: string }>(`/portfolios/traditional/payments/${paymentId}/receipt`);
+      const response = await apiClient.get<{ receipt_url: string }>(`/portfolios/traditional/repayments/${paymentId}/receipt`);
       return response.receipt_url;
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
@@ -83,7 +83,7 @@ export const paymentApi = {
    */
   downloadPaymentReceipt: async (paymentId: string) => {
     try {
-      return await apiClient.get<Blob>(`/portfolios/traditional/payments/${paymentId}/receipt/download`, {
+      return await apiClient.get<Blob>(`/portfolios/traditional/repayments/${paymentId}/receipt/download`, {
         responseType: 'blob'
       });
     } catch (error) {
@@ -173,7 +173,7 @@ export const paymentApi = {
    */
   updatePayment: async (id: string, updates: Partial<CreditPayment>) => {
     try {
-      return await apiClient.put<CreditPayment>(`/portfolios/traditional/payments/${id}`, updates);
+      return await apiClient.put<CreditPayment>(`/portfolios/traditional/repayments/${id}`, updates);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for updating payment ${id}`, error);
@@ -198,7 +198,7 @@ export const paymentApi = {
    */
   cancelPayment: async (id: string, reason: string) => {
     try {
-      return await apiClient.post<CreditPayment>(`/portfolios/traditional/payments/${id}/cancel`, { reason });
+      return await apiClient.post<CreditPayment>(`/portfolios/traditional/repayments/${id}/cancel`, { reason });
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for cancelling payment ${id}`, error);
@@ -225,7 +225,7 @@ export const paymentApi = {
    */
   generateReceipt: async (id: string) => {
     try {
-      return await apiClient.post<{ receiptUrl: string }>(`/portfolios/traditional/payments/${id}/generate-receipt`, {});
+      return await apiClient.post<{ receiptUrl: string }>(`/portfolios/traditional/repayments/${id}/generate-receipt`, {});
     } catch (error) {
       // Fallback pour le développement
       console.warn(`Fallback for generating receipt for payment ${id}`, error);
@@ -238,7 +238,7 @@ export const paymentApi = {
    */
   hasPaymentReceipt: async (id: string) => {
     try {
-      const response = await apiClient.get<{ has_receipt: boolean }>(`/portfolios/traditional/payments/${id}/has-receipt`);
+      const response = await apiClient.get<{ has_receipt: boolean }>(`/portfolios/traditional/repayments/${id}/has-receipt`);
       return response.has_receipt;
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
@@ -257,7 +257,7 @@ export const paymentApi = {
       formData.append('receipt', file);
       
       // Vérifions comment apiClient est implémenté
-      const response = await fetch(`/api/portfolios/traditional/payments/${id}/upload-receipt`, {
+      const response = await fetch(`/api/portfolios/traditional/repayments/${id}/upload-receipt`, {
         method: 'POST',
         body: formData,
       });
@@ -294,7 +294,7 @@ export const paymentApi = {
    */
   downloadSupportingDocument: async (paymentId: string) => {
     try {
-      return await apiClient.get<Blob>(`/portfolios/traditional/payments/${paymentId}/supporting-document`, {
+      return await apiClient.get<Blob>(`/portfolios/traditional/repayments/${paymentId}/supporting-document`, {
         responseType: 'blob'
       });
     } catch (error) {

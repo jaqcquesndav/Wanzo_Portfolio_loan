@@ -1,5 +1,5 @@
 // src/utils/exportModern.ts
-import { CreditContract } from '../types/credit';
+import { CreditContract } from '../types/credit-contract';
 import type { CreditContractPDFRef } from '../components/credit/CreditContractPDF';
 
 // Type pour les données additionnelles qui ne sont pas dans CreditContract

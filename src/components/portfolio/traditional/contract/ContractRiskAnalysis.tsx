@@ -1,7 +1,7 @@
 // components/portfolio/traditional/contract/ContractRiskAnalysis.tsx
 import { useState, useEffect } from 'react';
 import { Card } from '../../../ui/Card';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 
 // Fonction utilitaire pour le formatage des montants
 const formatAmount = (amount: number) => {
@@ -46,7 +46,7 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
       // Simuler un délai de calcul
       setTimeout(() => {
         // Calcul du ratio de couverture des garanties
-        const collateralCoverage = (contract.guaranteesTotalValue / contract.amount) * 100;
+        const collateralCoverage = ((contract.guaranteesTotalValue || 0) / contract.amount) * 100;
         
         // Calculer le ratio de remboursement (payé / total)
         const repaymentRatio = ((contract.amount - (contract.remainingAmount || 0)) / contract.amount) * 100;
@@ -64,7 +64,7 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
             value: collateralCoverage,
             description: 'Ratio entre la valeur des garanties et le montant du prêt',
             status: collateralCoverage >= 100 ? 'good' : collateralCoverage >= 80 ? 'warning' : 'danger',
-            details: `${formatAmount(contract.guaranteesTotalValue)} / ${formatAmount(contract.amount)}`
+            details: `${formatAmount(contract.guaranteesTotalValue || 0)} / ${formatAmount(contract.amount)}`
           },
           {
             name: 'Progression du remboursement',
@@ -89,10 +89,10 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
           },
           {
             name: 'Jours de retard',
-            value: contract.delinquencyDays,
+            value: contract.delinquencyDays || 0,
             description: 'Nombre de jours de retard sur les échéances',
-            status: contract.delinquencyDays === 0 ? 'good' : contract.delinquencyDays <= 30 ? 'warning' : 'danger',
-            details: `${contract.delinquencyDays} jours`
+            status: (contract.delinquencyDays || 0) === 0 ? 'good' : (contract.delinquencyDays || 0) <= 30 ? 'warning' : 'danger',
+            details: `${contract.delinquencyDays || 0} jours`
           }
         ];
         

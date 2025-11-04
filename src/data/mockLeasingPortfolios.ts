@@ -1,4 +1,4 @@
-import type { LeasingPortfolio } from '../types/leasing';
+﻿import type { LeasingPortfolio } from '../types/leasing';
 
 export const mockLeasingPortfolios: LeasingPortfolio[] = [
   {
@@ -218,7 +218,7 @@ export const mockLeasingPortfolios: LeasingPortfolio[] = [
     payments: [
       {
         id: 'PAY-20250201001',
-        portfolio_id: 'lease-1',
+        portfolioId: 'lease-1',
         contract_id: 'EQ-000001',
         date: '2024-02-01',
         amount: 3200000,

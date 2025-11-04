@@ -33,6 +33,7 @@ export function useProspection(initialCompanies: Company[] = []) {
   const rateLimitBackoff = useRef<number>(0);
   const consecutiveFailures = useRef<number>(0);
   const circuitBreakerOpen = useRef<boolean>(false);
+  const hasLoadedOnce = useRef<boolean>(false); // Nouveau: empêcher les rechargements
 
   // Fonction pour vérifier si on peut faire un appel API (rate limiting + circuit breaker)
   const canCallApi = useCallback(() => {
@@ -97,12 +98,20 @@ export function useProspection(initialCompanies: Company[] = []) {
       return;
     }
     
+    // Si nous avons déjà des données suffisantes, ne pas appeler l'API
+    if (baseCompanies.length > 0 && !canCallApi()) {
+      console.log('Données existantes utilisées, API rate limitée');
+      setCompanies(baseCompanies as Company[]);
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       let allCompanies = [...baseCompanies] as Company[];
       
       // Vérifier le rate limiting avant d'appeler l'API
-      if (canCallApi()) {
+      if (canCallApi() && allCompanies.length === 0) { // Appeler l'API seulement si pas de données locales
         apiCallAttempted.current = true;
         lastApiCall.current = Date.now();
         
@@ -130,7 +139,11 @@ export function useProspection(initialCompanies: Company[] = []) {
           apiCallAttempted.current = false;
         }
       } else {
-        console.log('Rate limit actif, utilisation des données de base uniquement');
+        if (allCompanies.length > 0) {
+          console.log('Utilisation des données locales existantes');
+        } else {
+          console.log('Rate limit actif, utilisation des données de base uniquement');
+        }
       }
       
       setCompanies(allCompanies);
@@ -191,7 +204,9 @@ export function useProspection(initialCompanies: Company[] = []) {
 
   useEffect(() => {
     // Éviter les effets multiples - utiliser une seule source de données
-    if (!loadingLocalStorage) {
+    if (!loadingLocalStorage && !hasLoadedOnce.current) {
+      hasLoadedOnce.current = true; // Marquer comme chargé
+      
       const dataToUse = localStorageCompanies.length > 0 ? localStorageCompanies : initialCompanies;
       
       if (dataToUse.length > 0) {
@@ -202,7 +217,7 @@ export function useProspection(initialCompanies: Company[] = []) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadingLocalStorage, localStorageCompanies, initialCompanies, formatCompanies]); // loadCompanies volontairement exclu pour éviter la boucle
+  }, [loadingLocalStorage, localStorageCompanies.length, initialCompanies.length]); // Utiliser .length pour éviter les référence cycliques
 
   const handleContact = async (company: Company) => {
     try {

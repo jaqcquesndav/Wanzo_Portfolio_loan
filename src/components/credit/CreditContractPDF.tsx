@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { CreditContract } from '../../types/credit';
+import { CreditContract } from '../../types/credit-contract';
 import { formatAmount, formatDate, formatStatus } from '../../utils/credit';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -269,7 +269,7 @@ const CreditContractPDF = forwardRef<CreditContractPDFRef, CreditContractPDFProp
                   Montant décaissé:
                 </td>
                 <td style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>
-                  {formatAmount(contract.disbursedAmount, { spaceBetweenAmountAndCurrency: true, currency: 'XOF' })}
+                  {formatAmount(contract.disbursedAmount || 0, { spaceBetweenAmountAndCurrency: true, currency: 'XOF' })}
                 </td>
               </tr>
               <tr>
@@ -277,14 +277,14 @@ const CreditContractPDF = forwardRef<CreditContractPDFRef, CreditContractPDFProp
                   Montant restant:
                 </td>
                 <td style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>
-                  {formatAmount(contract.remainingAmount, { spaceBetweenAmountAndCurrency: true, currency: 'XOF' })}
+                  {formatAmount(contract.remainingAmount || 0, { spaceBetweenAmountAndCurrency: true, currency: 'XOF' })}
                 </td>
               </tr>
               <tr>
                 <td style={{ padding: '5px 10px 5px 0', fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
                   Taux d'intérêt:
                 </td>
-                <td style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>{contract.interestRate}%</td>
+                <td style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>{contract.interest_rate}%</td>
               </tr>
               <tr>
                 <td style={{ padding: '5px 10px 5px 0', fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
@@ -333,7 +333,7 @@ const CreditContractPDF = forwardRef<CreditContractPDFRef, CreditContractPDFProp
                   Période de grâce:
                 </td>
                 <td style={{ padding: '5px 0', borderBottom: '1px solid #eee' }}>
-                  {contract.gracePeriod ? `${contract.gracePeriod} mois` : 'Aucune'}
+                  {contract.grace_period ? `${contract.grace_period} mois` : 'Aucune'}
                 </td>
               </tr>
               <tr>

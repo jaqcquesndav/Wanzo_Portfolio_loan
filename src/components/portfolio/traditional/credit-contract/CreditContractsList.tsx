@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Filter, Search, Star, X } from 'lucide-react';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
@@ -15,7 +15,7 @@ import { ConfirmDialog } from '../../../ui/ConfirmDialog';
 import { formatAmount, formatDate, statusConfig } from '../../../../utils/credit';
 import { ActionMenu } from './ActionMenu';
 import { useContractActions } from '../../../../hooks/useContractActions';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 
 interface CreditContractsListProps {
   portfolioId?: string;
@@ -30,11 +30,11 @@ export function CreditContractsList({
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   
-  // États locaux pour gérer les modals et actions
+  // Ã‰tats locaux pour gÃ©rer les modals et actions
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showConfirmStatusChange, setShowConfirmStatusChange] = useState(false);
   const [contractToAction, setContractToAction] = useState<CreditContract | null>(null);
-  const [newStatusToApply, setNewStatusToApply] = useState<'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation' | null>(null);
+  const [newStatusToApply, setNewStatusToApply] = useState<'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation' | null>(null);
   
   const {
     handleGeneratePDF,
@@ -46,14 +46,14 @@ export function CreditContractsList({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number} | null>(null);
   
-  // États pour le filtrage et la recherche
+  // Ã‰tats pour le filtrage et la recherche
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [amountRangeFilter, setAmountRangeFilter] = useState({min: '', max: ''});
   const [dateRangeFilter, setDateRangeFilter] = useState({start: '', end: ''});
   const [showFilters, setShowFilters] = useState(false);
   
-  // États pour les filtres favoris
+  // Ã‰tats pour les filtres favoris
   const [savedFilters, setSavedFilters] = useState<Array<{
     id: string;
     name: string;
@@ -67,8 +67,8 @@ export function CreditContractsList({
   
   const portalRoot = typeof document !== 'undefined' ? document.body : null;
   
-  // Fonction pour gérer le changement de statut
-  const handleStatusChange = useCallback((contract: CreditContract, newStatus: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation') => {
+  // Fonction pour gÃ©rer le changement de statut
+  const handleStatusChange = useCallback((contract: CreditContract, newStatus: 'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation') => {
     setContractToAction(contract);
     setNewStatusToApply(newStatus);
     setShowConfirmStatusChange(true);
@@ -81,10 +81,10 @@ export function CreditContractsList({
     
     handleUpdateContract(contractToAction.id, { status: newStatusToApply })
       .then(() => {
-        showNotification(`Statut du contrat ${contractToAction.reference} changé en "${newStatusToApply}"`, 'success');
+        showNotification(`Statut du contrat ${contractToAction.contract_number} changÃ© en "${newStatusToApply}"`, 'success');
       })
       .catch(() => {
-        showNotification(`Erreur lors du changement de statut du contrat ${contractToAction.reference}`, 'error');
+        showNotification(`Erreur lors du changement de statut du contrat ${contractToAction.contract_number}`, 'error');
       })
       .finally(() => {
         setContractToAction(null);
@@ -99,20 +99,20 @@ export function CreditContractsList({
     setShowConfirmDelete(true);
   }, []);
   
-  // Fonction pour exécuter la suppression
+  // Fonction pour exÃ©cuter la suppression
   const executeDeleteContract = useCallback(() => {
     if (!contractToAction) return;
     
     handleDeleteContract(contractToAction.id)
       .then((success) => {
         if (success) {
-          showNotification(`Contrat ${contractToAction.reference} supprimé avec succès`, 'success');
+          showNotification(`Contrat ${contractToAction.contract_number} supprimÃ© avec succÃ¨s`, 'success');
         } else {
-          showNotification(`Erreur lors de la suppression du contrat ${contractToAction.reference}`, 'error');
+          showNotification(`Erreur lors de la suppression du contrat ${contractToAction.contract_number}`, 'error');
         }
       })
       .catch(() => {
-        showNotification(`Erreur lors de la suppression du contrat ${contractToAction.reference}`, 'error');
+        showNotification(`Erreur lors de la suppression du contrat ${contractToAction.contract_number}`, 'error');
       })
       .finally(() => {
         setContractToAction(null);
@@ -120,7 +120,7 @@ export function CreditContractsList({
       });
   }, [contractToAction, handleDeleteContract, showNotification]);
   
-  // Fonctions pour gérer les filtres favoris
+  // Fonctions pour gÃ©rer les filtres favoris
   const saveCurrentFilter = () => {
     if (!filterName.trim()) {
       showNotification('Veuillez entrer un nom pour le filtre', 'warning');
@@ -139,7 +139,7 @@ export function CreditContractsList({
     setSavedFilters(prev => [...prev, newFilter]);
     setFilterName('');
     setShowSaveFilterModal(false);
-    showNotification(`Filtre "${newFilter.name}" sauvegardé`, 'success');
+    showNotification(`Filtre "${newFilter.name}" sauvegardÃ©`, 'success');
   };
 
   const applySavedFilter = (filter: typeof savedFilters[0]) => {
@@ -147,12 +147,12 @@ export function CreditContractsList({
     setStatusFilter(filter.statusFilter);
     setAmountRangeFilter(filter.amountRangeFilter);
     setDateRangeFilter(filter.dateRangeFilter);
-    showNotification(`Filtre "${filter.name}" appliqué`, 'success');
+    showNotification(`Filtre "${filter.name}" appliquÃ©`, 'success');
   };
 
   const deleteSavedFilter = (filterId: string) => {
     setSavedFilters(prev => prev.filter(f => f.id !== filterId));
-    showNotification('Filtre supprimé', 'success');
+    showNotification('Filtre supprimÃ©', 'success');
   };
 
   const resetAllFilters = () => {
@@ -160,7 +160,7 @@ export function CreditContractsList({
     setStatusFilter('');
     setAmountRangeFilter({min: '', max: ''});
     setDateRangeFilter({start: '', end: ''});
-    showNotification('Tous les filtres ont été réinitialisés', 'success');
+    showNotification('Tous les filtres ont Ã©tÃ© rÃ©initialisÃ©s', 'success');
   };
 
   const hasActiveFilters = searchTerm || statusFilter || dateRangeFilter.start || dateRangeFilter.end || 
@@ -174,9 +174,9 @@ export function CreditContractsList({
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(contract => 
-        contract.reference?.toLowerCase().includes(term) ||
-        contract.memberName?.toLowerCase().includes(term) ||
-        contract.productName?.toLowerCase().includes(term) ||
+        contract.contract_number?.toLowerCase().includes(term) ||
+        contract.company_name?.toLowerCase().includes(term) ||
+        contract.product_type?.toLowerCase().includes(term) ||
         contract.id?.toLowerCase().includes(term)
       );
     }
@@ -199,8 +199,8 @@ export function CreditContractsList({
     // Appliquer le filtre de date
     if (dateRangeFilter.start || dateRangeFilter.end) {
       filtered = filtered.filter(contract => {
-        if (!contract.startDate) return false;
-        const contractDate = new Date(contract.startDate);
+        if (!contract.start_date) return false;
+        const contractDate = new Date(contract.start_date);
         const startDate = dateRangeFilter.start ? new Date(dateRangeFilter.start) : null;
         const endDate = dateRangeFilter.end ? new Date(dateRangeFilter.end) : null;
         
@@ -237,7 +237,7 @@ export function CreditContractsList({
         errorDetails={error}
         onReset={async () => {
           await resetToMockData();
-          showNotification('Données réinitialisées avec succès!', 'success');
+          showNotification('DonnÃ©es rÃ©initialisÃ©es avec succÃ¨s!', 'success');
         }}
       />
     );
@@ -246,7 +246,7 @@ export function CreditContractsList({
   const handleRowClick = (e: React.MouseEvent, contract: CreditContract) => {
     if ((e.target as HTMLElement).closest('.dropdown-menu-container')) return;
     navigate(`/app/traditional/portfolio/${portfolioId}/contracts/${contract.id}`);
-    showNotification(`Navigation vers le contrat ${contract.reference}`, 'info');
+    showNotification(`Navigation vers le contrat ${contract.contract_number}`, 'info');
   };
 
   const toggleDropdown = (e: React.MouseEvent, contractId: string) => {
@@ -266,7 +266,7 @@ export function CreditContractsList({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold mb-4">Contrats de crédit</h2>
+      <h2 className="text-2xl font-bold mb-4">Contrats de crÃ©dit</h2>
       
       <div className="grid grid-cols-1 gap-6">
         <div className="col-span-12 transition-all duration-300">
@@ -279,10 +279,10 @@ export function CreditContractsList({
                   size="sm" 
                   onClick={() => {
                     resetToMockData();
-                    showNotification(`Les données ont été réinitialisées pour le portefeuille ID: ${portfolioId}`, 'success');
+                    showNotification(`Les donnÃ©es ont Ã©tÃ© rÃ©initialisÃ©es pour le portefeuille ID: ${portfolioId}`, 'success');
                   }}
                 >
-                  Réinitialiser les données
+                  RÃ©initialiser les donnÃ©es
                 </Button>
               </div>
             </div>
@@ -295,7 +295,7 @@ export function CreditContractsList({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     type="text"
-                    placeholder="Rechercher par référence, client, produit..."
+                    placeholder="Rechercher par rÃ©fÃ©rence, client, produit..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 w-full"
@@ -336,7 +336,7 @@ export function CreditContractsList({
                         <div className="absolute top-full right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-10 min-w-64">
                           <div className="p-2">
                             <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Filtres sauvegardés
+                              Filtres sauvegardÃ©s
                             </div>
                             {savedFilters.map((filter) => (
                               <div key={filter.id} className="flex items-center justify-between py-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded px-2">
@@ -374,7 +374,7 @@ export function CreditContractsList({
                 </div>
               </div>
               
-              {/* Filtres avancés */}
+              {/* Filtres avancÃ©s */}
               {showFilters && (
                 <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -388,8 +388,8 @@ export function CreditContractsList({
                       >
                         <option value="">Tous les statuts</option>
                         <option value="active">Actif</option>
-                        <option value="closed">Fermé</option>
-                        <option value="defaulted">En défaut</option>
+                        <option value="completed">FermÃ©</option>
+                        <option value="defaulted">En dÃ©faut</option>
                         <option value="suspended">Suspendu</option>
                         <option value="in_litigation">En litige</option>
                       </Select>
@@ -413,7 +413,7 @@ export function CreditContractsList({
                       </label>
                       <Input
                         type="number"
-                        placeholder="∞"
+                        placeholder="âˆž"
                         value={amountRangeFilter.max}
                         onChange={(e) => setAmountRangeFilter(prev => ({...prev, max: e.target.value}))}
                       />
@@ -421,7 +421,7 @@ export function CreditContractsList({
                     
                     <div>
                       <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                        Date début
+                        Date dÃ©but
                       </label>
                       <Input
                         type="date"
@@ -497,7 +497,7 @@ export function CreditContractsList({
             
             {portfolioId && portfolioId !== 'qf3081zdd' && (
               <div className="bg-blue-50 p-3 rounded-md mb-4 text-sm">
-                <p>Note: Ces données sont générées pour le portefeuille avec l'ID: <strong>{portfolioId}</strong></p>
+                <p>Note: Ces donnÃ©es sont gÃ©nÃ©rÃ©es pour le portefeuille avec l'ID: <strong>{portfolioId}</strong></p>
               </div>
             )}
             
@@ -506,11 +506,11 @@ export function CreditContractsList({
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableHeader>Référence</TableHeader>
+                      <TableHeader>RÃ©fÃ©rence</TableHeader>
                       <TableHeader>Client</TableHeader>
                       <TableHeader>Montant</TableHeader>
                       <TableHeader>Statut</TableHeader>
-                      <TableHeader>Date début</TableHeader>
+                      <TableHeader>Date dÃ©but</TableHeader>
                       <TableHeader>Actions</TableHeader>
                     </TableRow>
                   </TableHead>
@@ -521,20 +521,20 @@ export function CreditContractsList({
                         className="interactive-table-row"
                         onClick={(e) => handleRowClick(e, contract)}
                       >
-                        <TableCell className="font-mono">{contract.reference}</TableCell>
+                        <TableCell className="font-mono">{contract.contract_number}</TableCell>
                         <TableCell>
                           {onViewCompany ? (
                             <div 
                               className="cursor-pointer hover:text-blue-600 hover:underline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onViewCompany(contract.memberName);
+                                onViewCompany(contract.company_name);
                               }}
                             >
-                              {contract.memberName}
+                              {contract.company_name}
                             </div>
                           ) : (
-                            contract.memberName
+                            contract.company_name
                           )}
                         </TableCell>
                         <TableCell>{formatAmount(contract.amount)}</TableCell>
@@ -545,7 +545,7 @@ export function CreditContractsList({
                             {statusConfig[contract.status]?.label || contract.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{formatDate(contract.startDate)}</TableCell>
+                        <TableCell>{formatDate(contract.start_date)}</TableCell>
                         <TableCell>
                           <div className="relative dropdown-menu-container" onClick={(e) => e.stopPropagation()}>
                             <Button 
@@ -568,7 +568,7 @@ export function CreditContractsList({
                                 onClose={() => setOpenDropdown(null)}
                                 onNavigate={(path) => {
                                   navigate(path);
-                                  showNotification(`Navigation vers le contrat ${contract.reference}`, 'info');
+                                  showNotification(`Navigation vers le contrat ${contract.contract_number}`, 'info');
                                 }}
                                 onViewSchedule={() => handleViewSchedule(contract)}
                                 onGeneratePDF={() => handleGeneratePDF(contract)}
@@ -592,19 +592,19 @@ export function CreditContractsList({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  {hasActiveFilters ? 'Aucun contrat ne correspond aux critères de recherche' : 'Aucun contrat trouvé'}
+                  {hasActiveFilters ? 'Aucun contrat ne correspond aux critÃ¨res de recherche' : 'Aucun contrat trouvÃ©'}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
                   {hasActiveFilters 
-                    ? 'Essayez de modifier vos critères de recherche ou de supprimer certains filtres.' 
-                    : 'Commencez par créer un nouveau contrat de crédit.'
+                    ? 'Essayez de modifier vos critÃ¨res de recherche ou de supprimer certains filtres.' 
+                    : 'Commencez par crÃ©er un nouveau contrat de crÃ©dit.'
                   }
                 </p>
                 <div className="mt-6">
                   <Button
                     variant="primary"
                     onClick={() => {
-                      showNotification("Cette fonctionnalité n'est pas encore implémentée", "info");
+                      showNotification("Cette fonctionnalitÃ© n'est pas encore implÃ©mentÃ©e", "info");
                     }}
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -622,7 +622,7 @@ export function CreditContractsList({
       <ConfirmDialog 
         isOpen={showConfirmDelete}
         title="Confirmer la suppression"
-        description={`Êtes-vous sûr de vouloir supprimer le contrat ${contractToAction?.reference} ? Cette action est irréversible.`}
+        description={`ÃŠtes-vous sÃ»r de vouloir supprimer le contrat ${contractToAction?.contract_number} ? Cette action est irrÃ©versible.`}
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
         onConfirm={executeDeleteContract}
@@ -635,7 +635,7 @@ export function CreditContractsList({
       <ConfirmDialog 
         isOpen={showConfirmStatusChange}
         title="Confirmer le changement de statut"
-        description={`Êtes-vous sûr de vouloir changer le statut du contrat ${contractToAction?.reference} en "${newStatusToApply && statusConfig[newStatusToApply] ? statusConfig[newStatusToApply].label : newStatusToApply}" ? Cette action pourrait avoir des conséquences importantes.`}
+        description={`ÃŠtes-vous sÃ»r de vouloir changer le statut du contrat ${contractToAction?.contract_number} en "${newStatusToApply && statusConfig[newStatusToApply] ? statusConfig[newStatusToApply].label : newStatusToApply}" ? Cette action pourrait avoir des consÃ©quences importantes.`}
         confirmLabel="Confirmer"
         cancelLabel="Annuler"
         onConfirm={confirmStatusChange}

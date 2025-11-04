@@ -1,9 +1,9 @@
-// components/portfolio/traditional/contract/ContractActionsPanel.tsx
+﻿// components/portfolio/traditional/contract/ContractActionsPanel.tsx
 import { useState } from 'react';
 import { Button } from '../../../ui/Button';
 // Utiliser Dialog directement en attendant que TypeScript reconnaisse AlertDialog
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../ui/Dialog';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 import { creditContractsStorageService } from '../../../../services/storage/creditContractsStorage';
 import { useNotification } from '../../../../contexts/useNotification';
 import { BanknotesIcon } from '@heroicons/react/24/outline';
@@ -33,10 +33,10 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
         portfolioId: contract.portfolioId || 'default',
         portfolioName: 'Portefeuille de crédit',
         itemId: contract.id,
-        reference: contract.reference,
+        reference: contract.contract_number,
         amount: contract.amount,
-        company: contract.memberName,
-        product: contract.productName
+        company: contract.company_name,
+        product: contract.product_type
       },
       showPaymentOrderModal
     );
@@ -48,7 +48,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
     try {
       await creditContractsStorageService.updateContract(contract.id, {
         status: selectedStatus,
-        lastUpdated: new Date().toISOString()
+        updated_at: new Date().toISOString()
         // La propriété statusChangeReason n'existe pas dans le type CreditContract
         // Nous pouvons stocker cette information dans une table séparée ou dans localStorage
       });
@@ -65,13 +65,14 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
         localStorage.setItem(`statusHistory_${contract.id}`, JSON.stringify(statusHistory));
       }
       
-      showNotification(`Statut du contrat modifié en "${selectedStatus}"`, 'success');
+      showNotification(`Statut du contrat mis à jour avec succès`, 'success');
       onRefresh();
       setIsStatusDialogOpen(false);
+      setSelectedStatus(null);
       setStatusReason('');
     } catch (error) {
-      console.error('Erreur lors de la modification du statut:', error);
-      showNotification('Erreur lors de la modification du statut', 'error');
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      showNotification('Erreur lors de la mise à jour du statut', 'error');
     }
   };
 
@@ -81,18 +82,15 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="text-lg font-medium mb-4">Actions sur le contrat</h3>
+    <div className="bg-white p-4 rounded-lg shadow-sm border">
+      <h3 className="text-lg font-medium mb-4">Actions du contrat</h3>
       
-      {/* Section des actions principales */}
-      <div className="mb-4 border-b pb-4">
-        <h4 className="text-md font-medium mb-2 text-gray-700">Actions principales</h4>
+      <div className="space-y-4">
+        {/* Actions principales */}
         <div className="flex flex-wrap gap-2">
           <Button 
-            variant="outline" 
+            onClick={onConfigure} 
             size="sm"
-            onClick={onConfigure}
-            className="bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
           >
             Configurer
           </Button>
@@ -100,32 +98,31 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
           {onEdit && (
             <Button 
               variant="outline" 
+              onClick={onEdit} 
               size="sm"
-              onClick={onEdit}
-              className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
             >
-              Éditer les paramètres
+              Modifier
             </Button>
           )}
           
           <Button 
             variant="outline" 
+            onClick={handleCreditClient} 
             size="sm"
-            onClick={handleCreditClient}
-            className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100 flex items-center"
+            className="text-green-600 border-green-600 hover:bg-green-50"
           >
-            <BanknotesIcon className="h-4 w-4 mr-1" />
-            Créditer
+            <BanknotesIcon className="w-4 h-4 mr-1" />
+            Débloquer
           </Button>
         </div>
-      </div>
-      
-      {/* Section des actions de gestion du statut */}
-      <div>
-        <h4 className="text-md font-medium mb-2 text-gray-700">Gestion du contrat</h4>
-        <div className="flex flex-wrap gap-2">
+
+        {/* Actions de changement de statut */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">Changer le statut</h4>
+          
+          {/* Actions disponibles selon le statut actuel */}
           {contract.status === 'active' && (
-            <>
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -136,31 +133,31 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => openStatusDialog('closed')}
+                onClick={() => openStatusDialog('completed')}
               >
                 Clôturer
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-amber-600"
+                className="text-orange-600 border-orange-600 hover:bg-orange-50"
                 onClick={() => openStatusDialog('defaulted')}
               >
-                Marquer en défaut
+                Marquer défaillant
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-red-600"
+                className="text-red-600 border-red-600 hover:bg-red-50"
                 onClick={() => openStatusDialog('in_litigation')}
               >
                 Mettre en contentieux
               </Button>
-            </>
+            </div>
           )}
-          
+
           {contract.status === 'suspended' && (
-            <>
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -171,15 +168,15 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => openStatusDialog('closed')}
+                onClick={() => openStatusDialog('completed')}
               >
                 Clôturer
               </Button>
-            </>
+            </div>
           )}
-          
+
           {contract.status === 'defaulted' && (
-            <>
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -190,60 +187,92 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-red-600"
+                className="text-red-600 border-red-600 hover:bg-red-50"
                 onClick={() => openStatusDialog('in_litigation')}
               >
                 Mettre en contentieux
               </Button>
-            </>
+            </div>
           )}
-          
+
           {contract.status === 'in_litigation' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => openStatusDialog('active')}
-            >
-              Réactiver
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('active')}
+              >
+                Réactiver
+              </Button>
+            </div>
           )}
-          
-          {contract.status === 'closed' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => openStatusDialog('active')}
-            >
-              Réactiver
-            </Button>
+
+          {contract.status === 'completed' && (
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('active')}
+              >
+                Réactiver
+              </Button>
+            </div>
+          )}
+
+          {contract.status === 'restructured' && (
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => openStatusDialog('active')}
+              >
+                Réactiver
+              </Button>
+            </div>
           )}
         </div>
       </div>
-      
-      {/* Dialogue de confirmation pour changement de statut */}
+
+      {/* Dialog de confirmation pour le changement de statut */}
       <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier le statut du contrat</DialogTitle>
+            <DialogTitle>Confirmer le changement de statut</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir changer le statut du contrat {contract.reference} à "{selectedStatus}"?
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Motif du changement
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  value={statusReason}
-                  onChange={(e) => setStatusReason(e.target.value)}
-                  placeholder="Veuillez indiquer le motif du changement de statut..."
-                />
-              </div>
+              Vous êtes sur le point de changer le statut du contrat {contract.contract_number} de "{contract.status}" vers "{selectedStatus}".
             </DialogDescription>
           </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+                Raison du changement (optionnel)
+              </label>
+              <textarea
+                id="reason"
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                placeholder="Expliquez la raison de ce changement de statut..."
+              />
+            </div>
+          </div>
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsStatusDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleStatusChange}>Confirmer</Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsStatusDialogOpen(false);
+                setSelectedStatus(null);
+                setStatusReason('');
+              }}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleStatusChange}>
+              Confirmer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

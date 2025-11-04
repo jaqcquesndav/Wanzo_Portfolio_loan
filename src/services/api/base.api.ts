@@ -2,6 +2,63 @@ import { API_CONFIG } from '../../config/api';
 import { auth0Service } from './auth/auth0Service';
 import { apiCache, CacheOptions } from './cache';
 import { interceptorManager, RequestConfig } from './interceptors';
+import { apiCoordinator } from './apiCoordinator';
+
+// Gestionnaire global de rate limiting
+class RateLimitManager {
+  private static instance: RateLimitManager;
+  private lastRequestTime: number = 0;
+  private requestCount: number = 0;
+  private resetTime: number = 0;
+  private isBlocked: boolean = false;
+  
+  public static getInstance(): RateLimitManager {
+    if (!RateLimitManager.instance) {
+      RateLimitManager.instance = new RateLimitManager();
+    }
+    return RateLimitManager.instance;
+  }
+  
+  public async checkRateLimit(): Promise<void> {
+    const now = Date.now();
+    
+    // Réinitialiser le compteur toutes les minutes
+    if (now > this.resetTime) {
+      this.requestCount = 0;
+      this.resetTime = now + 60000; // 1 minute
+      this.isBlocked = false;
+    }
+    
+    // Si bloqué, attendre
+    if (this.isBlocked) {
+      const waitTime = this.resetTime - now;
+      throw new ApiError(429, `Rate limit dépassé. Réessayez dans ${Math.ceil(waitTime / 1000)} secondes.`);
+    }
+    
+    // Limiter à 30 requêtes par minute
+    if (this.requestCount >= 30) {
+      this.isBlocked = true;
+      throw new ApiError(429, 'Rate limit dépassé. Trop de requêtes par minute.');
+    }
+    
+    // Espacer les requêtes d'au moins 2 secondes
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    if (timeSinceLastRequest < 2000) {
+      const waitTime = 2000 - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    this.requestCount++;
+    this.lastRequestTime = Date.now();
+  }
+  
+  public handleRateLimitResponse(retryAfter?: number): void {
+    this.isBlocked = true;
+    this.resetTime = Date.now() + (retryAfter || 60000);
+  }
+}
+
+const rateLimitManager = RateLimitManager.getInstance();
 
 export class ApiError extends Error {
   constructor(
@@ -20,6 +77,18 @@ async function handleResponse<T>(response: Response): Promise<T> {
   // Si la réponse est vide, retourne null
   if (response.status === 204) {
     return null as unknown as T;
+  }
+
+  // Gestion spéciale du rate limiting (429)
+  if (response.status === 429) {
+    const retryAfter = response.headers.get('Retry-After');
+    const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 10000; // 10 secondes par défaut
+    
+    throw new ApiError(
+      429, 
+      `Trop de requêtes. Veuillez patienter ${Math.ceil(waitTime / 1000)} secondes avant de réessayer.`,
+      { retryAfter: waitTime }
+    );
   }
 
   // Gestion des réponses JSON
@@ -44,6 +113,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 export const apiClient = {
   async request<T>(endpoint: string, options: RequestConfig = { url: endpoint }): Promise<T> {
+    // Vérifier le rate limiting avant de faire la requête
+    await rateLimitManager.checkRateLimit();
+    
     // Récupération du token d'authentification via auth0Service
     const token = auth0Service.getAccessToken() || localStorage.getItem('token');
     
@@ -76,6 +148,12 @@ export const apiClient = {
       return await interceptorManager.applyResponseInterceptors<T>(data);
     } catch (error) {
       if (error instanceof ApiError) {
+        // Gestion spécifique du rate limiting
+        if (error.status === 429) {
+          const retryAfter = (error.data as { retryAfter?: number })?.retryAfter || 60000;
+          rateLimitManager.handleRateLimitResponse(retryAfter);
+        }
+        
         // Gestion des erreurs 401 (non autorisé)
         if (error.status === 401) {
           console.warn('Session expirée, redirection vers la page de connexion');
@@ -109,7 +187,14 @@ export const apiClient = {
         )}`
       : endpoint;
     
-    return this.request<T>(url, { url, method: 'GET' });
+    // Utiliser le coordinateur pour les appels GET (lecture)
+    const callId = `GET:${url}`;
+    return apiCoordinator.scheduleApiCall(
+      callId,
+      () => this.request<T>(url, { url, method: 'GET' }),
+      'medium', // Priorité normale pour les GET
+      2 // Max 2 tentatives pour les GET
+    );
   },
 
   async post<T, D = unknown>(endpoint: string, data?: D): Promise<T> {

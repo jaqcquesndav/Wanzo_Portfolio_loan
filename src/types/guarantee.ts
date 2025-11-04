@@ -28,5 +28,6 @@ export interface Guarantee {
     coverage?: number; // Pourcentage de couverture
     document_url?: string; // Lien vers le document justificatif
     guarantor?: string; // Personne physique garantissant la dette
+    contract_number?: string; // Numéro du contrat de garantie
   };
 }

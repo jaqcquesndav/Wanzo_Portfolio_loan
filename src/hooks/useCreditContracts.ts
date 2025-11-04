@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { CreditContract } from '../types/credit';
+﻿import { useState, useEffect, useCallback } from 'react';
+import { CreditContract } from '../types/credit-contract';
 import { creditContractsStorageService } from '../services/storage/creditContractsStorage';
 
 export function useCreditContracts(portfolioId: string) {
@@ -63,7 +63,7 @@ export function useCreditContracts(portfolioId: string) {
       const newContract: CreditContract = {
         ...contract,
         id: `contract-${Date.now()}`,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       };
       
       // Sauvegarder dans le localStorage

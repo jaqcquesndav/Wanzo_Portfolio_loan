@@ -1,66 +1,39 @@
-// src/hooks/useContractActions.ts
+﻿// src/hooks/useContractActions.ts
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditContract } from '../types/credit';
+import { CreditContract } from '../types/credit-contract';
 import { useNotification } from '../contexts/useNotification';
-import { useCreditContracts } from './useCreditContracts';
-
-// Interface pour les éléments d'échéancier
-interface ScheduleItem {
-  due_date: string;
-  principal_amount: number;
-  interest_amount: number;
-  total_amount: number;
-  status: string;
-}
+import { creditContractApi } from '../services/api/traditional/credit-contract.api';
 
 // Hook pour gérer les actions sur les contrats
 export const useContractActions = (portfolioId: string) => {
-  const { updateContract, deleteContract } = useCreditContracts(portfolioId);
   const { showNotification } = useNotification();
   const navigate = useNavigate();
 
-  // Fonction pour récupérer un portefeuille par ID
-  const getPortfolioById = async (id: string) => {
+  // Fonction pour mettre à jour un contrat
+  const handleUpdateContract = useCallback(async (id: string, updates: Partial<CreditContract>) => {
     try {
-      // Simule un appel API
-      return {
-        id,
-        name: `Portefeuille ${id}`,
-        manager: { name: 'Gestionnaire par défaut' }
-      };
+      const updatedContract = await creditContractApi.updateContract(id, updates);
+      showNotification(`Contrat mis à jour avec succès`, 'success');
+      return updatedContract;
     } catch (error) {
-      console.error(`Erreur lors de la récupération du portefeuille ${id}:`, error);
-      return null;
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      showNotification(`Erreur lors de la mise à jour: ${errorMessage}`, 'error');
+      throw error;
     }
-  };
+  }, [showNotification]);
 
-  // Fonction pour récupérer l'échéancier d'un contrat
-  const getContractSchedule = async (contractId: string): Promise<ScheduleItem[]> => {
+  // Fonction pour supprimer un contrat (simulation - pas d'endpoint de suppression défini)
+  const handleDeleteContract = useCallback(async (id: string) => {
     try {
-      // Simule un appel API - génère un échéancier factice
-      const now = new Date();
-      const scheduleItems: ScheduleItem[] = [];
-      
-      for (let i = 0; i < 6; i++) {
-        const dueDate = new Date(now);
-        dueDate.setMonth(dueDate.getMonth() + i + 1);
-        
-        scheduleItems.push({
-          due_date: dueDate.toISOString(),
-          principal_amount: 50000,
-          interest_amount: 5000,
-          total_amount: 55000,
-          status: i === 0 ? 'paid' : (i === 1 ? 'partial' : 'pending')
-        });
-      }
-      
-      return scheduleItems;
+      showNotification(`Contrat ${id} marqué pour suppression`, 'success');
+      return true;
     } catch (error) {
-      console.error(`Erreur lors de la récupération de l'échéancier du contrat ${contractId}:`, error);
-      return [];
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      showNotification(`Erreur lors de la suppression: ${errorMessage}`, 'error');
+      return false;
     }
-  };
+  }, [showNotification]);
 
   // Fonction pour générer un PDF du contrat
   const handleGeneratePDF = useCallback(async (contract: CreditContract) => {
@@ -71,77 +44,26 @@ export const useContractActions = (portfolioId: string) => {
     
     try {
       if (!navigator.onLine) {
-        showNotification(`Mode hors ligne: La génération du PDF pour le contrat ${contract.reference} est indisponible`, 'warning');
+        showNotification(`Mode hors ligne: La génération du PDF pour le contrat ${contract.contract_number} est indisponible`, 'warning');
         return;
       }
       
-      showNotification(`Génération du PDF pour le contrat ${contract.reference} en cours...`, 'info');
+      showNotification(`Génération du PDF pour le contrat ${contract.contract_number} en cours...`, 'info');
       
-      // Obtenir les données du portefeuille
-      const portfolioDetails = await getPortfolioById(portfolioId);
+      const result = await creditContractApi.generateContractDocument(contract.id);
       
-      // Obtenir les données d'échéancier si disponibles
-      // Interface pour les données d'échéancier formatées
-      interface FormattedScheduleItem {
-        number: number;
-        dueDate: string;
-        principal: number;
-        interest: number;
-        total: number;
-        status: string;
-      }
-      
-      let scheduleData: FormattedScheduleItem[] = [];
-      try {
-        const schedule = await getContractSchedule(contract.id);
-        scheduleData = schedule.map((item, index: number) => ({
-          number: index + 1,
-          dueDate: item.due_date,
-          principal: item.principal_amount,
-          interest: item.interest_amount,
-          total: item.total_amount,
-          status: item.status
-        }));
-      } catch (error) {
-        console.warn('Échéancier non disponible:', error);
-        scheduleData = [];
-      }
-      
-      // Extraire le nom du gestionnaire du portfolio ou utiliser une valeur par défaut
-      let managerName = "Gestionnaire non spécifié";
-      if (portfolioDetails && typeof portfolioDetails.manager === 'object' && portfolioDetails.manager) {
-        managerName = portfolioDetails.manager.name || "Gestionnaire non spécifié";
-      } else if (portfolioDetails && typeof portfolioDetails.manager === 'string') {
-        managerName = portfolioDetails.manager;
-      }
-      
-      // Informations de l'institution (à adapter selon votre structure)
-      const institutionInfo = {
-        institutionName: "Wanzo Institution Financière",
-        institutionAddress: "01 BP 1234, Abidjan 01, Côte d'Ivoire",
-        institutionContact: "Tel: +225 27 20 xx xx xx | Email: contact@wanzo.com",
-        portfolioName: portfolioDetails?.name || "Portefeuille de prêts",
-        portfolioManager: managerName,
-        scheduleData
-      };
-      
-      // Importer dynamiquement la fonction d'export pour éviter les problèmes de dépendances circulaires
-      // Utiliser la nouvelle implémentation moderne pour un rendu de meilleure qualité
-      const { exportCreditContractToPDF } = await import('../utils/exportModern');
-      
-      // Générer le PDF
-      const result = await exportCreditContractToPDF(contract, institutionInfo);
-      
-      if (result.success) {
-        showNotification(`PDF du contrat ${contract.reference} généré avec succès`, 'success');
+      if (result.documentUrl) {
+        showNotification(`PDF du contrat ${contract.contract_number} généré avec succès`, 'success');
+        // Ouvrir le document ou déclencher le téléchargement
+        window.open(result.documentUrl, '_blank');
       } else {
-        showNotification(`Erreur lors de la génération du PDF: ${result.message || 'Erreur inconnue'}`, 'error');
+        showNotification(`Erreur lors de la génération du PDF`, 'error');
       }
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
       showNotification(`Erreur lors de la génération du PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`, 'error');
     }
-  }, [portfolioId, showNotification]);
+  }, [showNotification]);
 
   // Fonction pour afficher l'échéancier d'un contrat
   const handleViewSchedule = useCallback((contract: CreditContract) => {
@@ -151,14 +73,102 @@ export const useContractActions = (portfolioId: string) => {
     }
     
     navigate(`/app/traditional/portfolio/${portfolioId}/contracts/${contract.id}/schedule`);
-    showNotification(`Navigation vers l'échéancier du contrat ${contract.reference}`, 'info');
+    showNotification(`Navigation vers l'échéancier du contrat ${contract.contract_number}`, 'info');
   }, [navigate, portfolioId, showNotification]);
+
+  // Fonction pour marquer un contrat comme défaillant
+  const handleMarkAsDefaulted = useCallback(async (contract: CreditContract, reason: string) => {
+    if (!contract) {
+      showNotification('Impossible de marquer un contrat inexistant comme défaillant', 'error');
+      return false;
+    }
+    
+    try {
+      await creditContractApi.markAsDefaulted(contract.id, reason);
+      showNotification(`Contrat ${contract.contract_number} marqué comme défaillant`, 'success');
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      showNotification(`Erreur lors du marquage comme défaillant: ${errorMessage}`, 'error');
+      return false;
+    }
+  }, [showNotification]);
+
+  // Fonction pour restructurer un contrat
+  const handleRestructureContract = useCallback(async (
+    contract: CreditContract, 
+    restructuringDetails: {
+      new_terms: string;
+      new_rate?: number;
+      new_end_date: string;
+      reason: string;
+    }
+  ) => {
+    if (!contract) {
+      showNotification('Impossible de restructurer un contrat inexistant', 'error');
+      return false;
+    }
+    
+    try {
+      await creditContractApi.restructureContract(contract.id, restructuringDetails);
+      showNotification(`Contrat ${contract.contract_number} restructuré avec succès`, 'success');
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      showNotification(`Erreur lors de la restructuration: ${errorMessage}`, 'error');
+      return false;
+    }
+  }, [showNotification]);
+
+  // Fonction pour clôturer un contrat
+  const handleCompleteContract = useCallback(async (
+    contract: CreditContract, 
+    completionDetails: {
+      completion_date: string;
+      notes?: string;
+    }
+  ) => {
+    if (!contract) {
+      showNotification('Impossible de clôturer un contrat inexistant', 'error');
+      return false;
+    }
+    
+    try {
+      await creditContractApi.completeContract(contract.portfolioId, contract.id, completionDetails);
+      showNotification(`Contrat ${contract.contract_number} clôturé avec succès`, 'success');
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      showNotification(`Erreur lors de la clôture: ${errorMessage}`, 'error');
+      return false;
+    }
+  }, [showNotification]);
+
+  // Fonction pour récupérer l'échéancier de paiement
+  const handleGetPaymentSchedule = useCallback(async (contractId: string) => {
+    try {
+      const schedule = await creditContractApi.getPaymentSchedule(contractId);
+      showNotification('Échéancier récupéré avec succès', 'success');
+      return schedule;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      showNotification(`Erreur lors de la récupération de l'échéancier: ${errorMessage}`, 'error');
+      return null;
+    }
+  }, [showNotification]);
   
   // Retourne les fonctions du hook
   return {
+    // Actions de base
+    handleUpdateContract,
+    handleDeleteContract,
     handleGeneratePDF,
     handleViewSchedule,
-    handleUpdateContract: updateContract,
-    handleDeleteContract: deleteContract
+    
+    // Actions avancées
+    handleMarkAsDefaulted,
+    handleRestructureContract,
+    handleCompleteContract,
+    handleGetPaymentSchedule
   };
 };

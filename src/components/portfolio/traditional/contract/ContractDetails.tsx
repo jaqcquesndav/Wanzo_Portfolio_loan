@@ -1,6 +1,6 @@
-// components/portfolio/traditional/contract/ContractDetails.tsx
+﻿// components/portfolio/traditional/contract/ContractDetails.tsx
 import { useState, useEffect } from 'react';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 import { Card } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Form';
@@ -21,7 +21,7 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-// Interface pour les options de sélection
+// Interface pour les options de sé©lection
 interface SelectOption {
   value: string;
   label: string;
@@ -52,7 +52,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
   const { showNotification } = useNotification();
   const { formatAmount } = useCurrencyContext();
   
-  // Récupérer les garanties associées au contrat
+  // Ré©cupé©rer les garanties associé©es au contrat
   useEffect(() => {
     if (contract?.id) {
       const contractGuarantees = traditionalDataService.getContractRelatedData<Guarantee>(
@@ -63,15 +63,15 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     }
   }, [contract?.id]);
   
-  // Calculer la durée en mois entre la date de début et la date de fin
+  // Calculer la duré©e en mois entre la date de dé©but et la date de fin
   const calculateTermInMonths = (): number => {
-    const startDate = new Date(contract.startDate);
-    const endDate = new Date(contract.endDate);
+    const startDate = new Date(contract.start_date);
+    const endDate = new Date(contract.end_date);
     return (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
            (endDate.getMonth() - startDate.getMonth());
   };
 
-  // Activer le mode d'édition pour un champ spécifique
+  // Activer le mode d'é©dition pour un champ spé©cifique
   const handleEnableEdit = (field: string, initialValue: string | number) => {
     setEditMode(field);
     setEditValues({
@@ -80,7 +80,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     });
   };
 
-  // Annuler l'édition
+  // Annuler l'é©dition
   const handleCancelEdit = () => {
     setEditMode(null);
     setEditValues({});
@@ -102,18 +102,18 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       // Appeler la fonction de mise à jour fournie
       await onUpdate(updateData);
       
-      // Afficher une notification de succès
-      showNotification('Information mise à jour avec succès', 'success');
+      // Afficher une notification de succé¨s
+      showNotification('Information mise é  jour avec succé¨s', 'success');
       
-      // Quitter le mode édition
+      // Quitter le mode é©dition
       setEditMode(null);
     } catch (error) {
-      showNotification('Erreur lors de la mise à jour', 'error');
-      console.error('Erreur lors de la mise à jour:', error);
+      showNotification('Erreur lors de la mise é  jour', 'error');
+      console.error('Erreur lors de la mise é  jour:', error);
     }
   };
   
-  // Gérer le changement de valeur dans l'édition
+  // Gé©rer le changement de valeur dans l'é©dition
   const handleChange = (field: string, value: string | number) => {
     setEditValues({
       ...editValues,
@@ -130,20 +130,20 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       // Appeler la fonction de mise à jour fournie avec toutes les modifications
       await onUpdate(editValues);
       
-      // Afficher une notification de succès
-      showNotification('Toutes les informations ont été mises à jour avec succès', 'success');
+      // Afficher une notification de succé¨s
+      showNotification('Toutes les informations ont é©té© mises é  jour avec succé¨s', 'success');
       
-      // Réinitialiser
+      // Ré©initialiser
       setEditValues({});
       setHasChanges(false);
       setEditMode(null);
     } catch (error) {
-      showNotification('Erreur lors de la mise à jour', 'error');
-      console.error('Erreur lors de la mise à jour:', error);
+      showNotification('Erreur lors de la mise é  jour', 'error');
+      console.error('Erreur lors de la mise é  jour:', error);
     }
   };
   
-  // Fonction pour rendre un champ éditable
+  // Fonction pour rendre un champ é©ditable
   const renderEditableField = (
     field: string, 
     label: string, 
@@ -225,36 +225,36 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     );
   };
 
-  // Définir les options pour les champs de type select
+  // Dé©finir les options pour les champs de type select
   const statusOptions: SelectOption[] = [
     { value: 'active', label: 'Actif' },
     { value: 'suspended', label: 'Suspendu' },
-    { value: 'closed', label: 'Clôturé' },
-    { value: 'defaulted', label: 'En défaut' }
+    { value: 'completed', label: 'Clé´turé©' },
+    { value: 'defaulted', label: 'En dé©faut' }
   ];
 
   const riskClassOptions: SelectOption[] = [
-    { value: 'A', label: 'A - Très faible risque' },
+    { value: 'A', label: 'A - Tré¨s faible risque' },
     { value: 'B', label: 'B - Faible risque' },
-    { value: 'C', label: 'C - Risque modéré' },
-    { value: 'D', label: 'D - Risque élevé' },
-    { value: 'E', label: 'E - Très haut risque' }
+    { value: 'C', label: 'C - Risque modé©ré©' },
+    { value: 'D', label: 'D - Risque é©levé©' },
+    { value: 'E', label: 'E - Tré¨s haut risque' }
   ];
 
   // Organiser les informations à afficher
-  // Informations générales
+  // Informations gé©né©rales
   const generalInfoFields: InfoField[] = [
     { 
       field: 'reference', 
-      label: 'Référence du contrat', 
-      value: contract.reference, 
+      label: 'Ré©fé©rence du contrat', 
+      value: contract.contract_number, 
       icon: <DocumentIcon className="h-5 w-5 text-gray-500" />,
-      editable: false // ID ne doit pas être modifiable
+      editable: false // ID ne doit pas éªtre modifiable
     },
     { 
       field: 'productName', 
       label: 'Type de produit', 
-      value: contract.productName, 
+      value: contract.product_type, 
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'text'
@@ -262,28 +262,28 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     { 
       field: 'startDate', 
       label: 'Date de signature', 
-      value: contract.startDate ? contract.startDate.split('T')[0] : '', 
-      displayValue: formatDate(contract.startDate),
+      value: contract.start_date ? contract.start_date.split('T')[0] : '', 
+      displayValue: formatDate(contract.start_date),
       icon: <CalendarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'date'
     },
     { 
       field: 'endDate', 
-      label: 'Date d\'échéance', 
-      value: contract.endDate ? contract.endDate.split('T')[0] : '',
-      displayValue: formatDate(contract.endDate),
+      label: 'Date d\'é©ché©ance', 
+      value: contract.end_date ? contract.end_date.split('T')[0] : '',
+      displayValue: formatDate(contract.end_date),
       icon: <CalendarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'date'
     }
   ];
   
-  // Informations financières
+  // Informations financié¨res
   const financialInfoFields: InfoField[] = [
     { 
       field: 'amount', 
-      label: 'Montant accordé', 
+      label: 'Montant accordé©', 
       value: contract.amount,
       displayValue: formatAmount(contract.amount),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
@@ -292,47 +292,47 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     },
     { 
       field: 'remainingAmount', 
-      label: 'Montant restant dû', 
-      value: contract.remainingAmount || 0,
-      displayValue: formatAmount(contract.remainingAmount || 0),
+      label: 'Montant restant dé»', 
+      value: contract.amount || 0,
+      displayValue: formatAmount(contract.amount || 0),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
     },
     { 
       field: 'amortization_method', 
-      label: 'Méthode d\'amortissement', 
+      label: 'Mé©thode d\'amortissement', 
       value: contract.amortization_method || 'linear',
-      displayValue: contract.amortization_method === 'linear' ? 'Linéaire (constant)' :
-                   contract.amortization_method === 'degressive' ? 'Dégressive' :
+      displayValue: contract.amortization_method === 'linear' ? 'Liné©aire (constant)' :
+                   contract.amortization_method === 'degressive' ? 'Dé©gressive' :
                    contract.amortization_method === 'progressive' ? 'Progressive' :
-                   contract.amortization_method === 'balloon' ? 'Paiement ballon' : 'Linéaire (constant)',
+                   contract.amortization_method === 'balloon' ? 'Paiement ballon' : 'Liné©aire (constant)',
       icon: <ScaleIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'select',
       options: [
-        { value: 'linear', label: 'Linéaire (constant)' },
-        { value: 'degressive', label: 'Dégressive' },
+        { value: 'linear', label: 'Liné©aire (constant)' },
+        { value: 'degressive', label: 'Dé©gressive' },
         { value: 'progressive', label: 'Progressive' },
         { value: 'balloon', label: 'Paiement ballon' }
       ]
     },
     { 
       field: 'interestRate', 
-      label: 'Taux d\'intérêt', 
-      value: contract.interestRate,
-      displayValue: `${contract.interestRate}%`,
+      label: 'Taux d\'inté©réªt', 
+      value: contract.interest_rate,
+      displayValue: `${contract.interest_rate}%`,
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
     },
     { 
       field: 'term', 
-      label: 'Durée (mois)', 
+      label: 'Duré©e (mois)', 
       value: calculateTermInMonths(),
       displayValue: calculateTermInMonths().toString(),
       icon: <CalendarIcon className="h-5 w-5 text-gray-500" />,
-      editable: false // Calculé automatiquement
+      editable: false // Calculé© automatiquement
     }
   ];
   
@@ -341,7 +341,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     { 
       field: 'memberName', 
       label: 'Client', 
-      value: contract.memberName,
+      value: contract.company_name,
       icon: <UserIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'text'
@@ -349,13 +349,13 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     { 
       field: 'memberId', 
       label: 'ID du client', 
-      value: contract.memberId,
+      value: contract.client_id,
       icon: <BuildingOfficeIcon className="h-5 w-5 text-gray-500" />,
-      editable: false // ID ne doit pas être modifiable
+      editable: false // ID ne doit pas éªtre modifiable
     }
   ];
   
-  // Informations légales
+  // Informations lé©gales
   const legalInfoFields: InfoField[] = [
     { 
       field: 'status', 
@@ -369,7 +369,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     { 
       field: 'riskClass', 
       label: 'Classe de risque', 
-      value: contract.riskClass,
+      value: contract.risk_rating || 0,
       icon: <DocumentIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'select',
@@ -377,13 +377,13 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     }
   ];
   
-  // Intégrer les champs importants des informations supplémentaires
+  // Inté©grer les champs importants des informations supplé©mentaires
   const importantAdditionalFields: InfoField[] = [
     { 
       field: 'disbursedAmount', 
       label: 'Montant décaissé', 
-      value: contract.disbursedAmount || 0,
-      displayValue: formatAmount(contract.disbursedAmount || 0),
+      value: contract.disbursements?.reduce((sum, d) => sum + d.amount, 0) || 0,
+      displayValue: formatAmount(contract.disbursements?.reduce((sum, d) => sum + d.amount, 0) || 0),
       icon: <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
@@ -391,8 +391,8 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
     { 
       field: 'delinquencyDays', 
       label: 'Jours de retard', 
-      value: contract.delinquencyDays,
-      displayValue: contract.delinquencyDays.toString(),
+      value: contract.days_past_due || 0,
+      displayValue: (contract.days_past_due || 0).toString(),
       icon: <UserIcon className="h-5 w-5 text-gray-500" />,
       editable: true,
       type: 'number'
@@ -402,16 +402,16 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Détails du contrat</h2>
+        <h2 className="text-xl font-semibold">Dé©tails du contrat</h2>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Informations générales */}
+        {/* Informations gé©né©rales */}
         <Card className="p-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Informations générales</h3>
+            <h3 className="text-lg font-medium">Informations gé©né©rales</h3>
             
-            {/* Bouton d'enregistrement dans la carte des informations générales */}
+            {/* Bouton d'enregistrement dans la carte des informations gé©né©rales */}
             {onUpdate && hasChanges && editMode === null && (
               <Button 
                 onClick={handleSaveAllChanges}
@@ -448,9 +448,9 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
           </dl>
         </Card>
         
-        {/* Informations financières */}
+        {/* Informations financié¨res */}
         <Card className="p-4">
-          <h3 className="text-lg font-medium mb-4">Informations financières</h3>
+          <h3 className="text-lg font-medium mb-4">Informations financié¨res</h3>
           <dl className="grid grid-cols-1 gap-3">
             {financialInfoFields.map((item) => (
               item.editable 
@@ -502,9 +502,9 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
           </dl>
         </Card>
         
-        {/* Fusion des informations légales et autres informations importantes */}
+        {/* Fusion des informations lé©gales et autres informations importantes */}
         <Card className="p-4">
-          <h3 className="text-lg font-medium mb-4">Informations légales et complémentaires</h3>
+          <h3 className="text-lg font-medium mb-4">Informations lé©gales et complé©mentaires</h3>
           <dl className="grid grid-cols-1 gap-3">
             {[...legalInfoFields, ...importantAdditionalFields].map((item) => (
               item.editable 
@@ -531,21 +531,29 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
       </div>
       
       {/* Affichage du lien vers le document du contrat s'il existe */}
-      {contract.documentUrl && (
+      {contract.documents && (
         <Card className="p-4 mt-4">
           <h3 className="text-lg font-medium mb-4">Documents associés</h3>
-          <p className="text-sm text-gray-700">
-            <a href={contract.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
-              <DocumentIcon className="h-5 w-5 mr-2" />
-              Ouvrir le document du contrat
-            </a>
-          </p>
+          {contract.documents && contract.documents.length > 0 ? (
+            <div className="space-y-2">
+              {contract.documents.map(doc => (
+                <p key={doc.id} className="text-sm text-gray-700">
+                  <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                    <DocumentIcon className="h-5 w-5 mr-2" />
+                    {doc.name}
+                  </a>
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic">Aucun document associé</p>
+          )}
         </Card>
       )}
       
       {/* Carte des garanties */}
       <Card className="p-4 mt-4">
-        <h3 className="text-lg font-medium mb-4">Garanties associées</h3>
+        <h3 className="text-lg font-medium mb-4">Garanties associé©es</h3>
         {guarantees.length > 0 ? (
           <div className="space-y-4">
             {guarantees.map(guarantee => (
@@ -573,5 +581,8 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
   );
 }
 
-// Exportation nommée pour la compatibilité
+// Exportation nommé©e pour la compatibilité©
 export { ContractDetails };
+
+
+

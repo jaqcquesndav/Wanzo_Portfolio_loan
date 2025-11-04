@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { ContractDetailsResponsive } from '../components/portfolio/traditional/contract/ContractDetailsResponsive';
 import { creditContractsStorageService } from '../services/storage/creditContractsStorage';
 import { useNotification } from '../contexts/useNotification';
-import { CreditContract } from '../types/credit';
+import { CreditContract } from '../types/credit-contract';
 
 export default function CreditContractDetail() {
   const { portfolioId, contractId } = useParams();
@@ -103,7 +103,7 @@ export default function CreditContractDetail() {
           { label: 'Tableau de bord', href: '/app/traditional' },
           { label: 'Portefeuille', href: `/app/traditional/${portfolioId || 'default'}` },
           { label: 'Contrats', href: `/app/traditional/${portfolioId || 'default'}?tab=contracts` },
-          { label: `${contract.reference}`, href: '#' }
+          { label: `${contract.contract_number}`, href: '#' }
         ]} 
       />
       

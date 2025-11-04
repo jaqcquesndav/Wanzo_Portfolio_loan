@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 
 interface ActionMenuProps {
   contract: CreditContract;
@@ -10,7 +10,7 @@ interface ActionMenuProps {
   onNavigate: (path: string) => void;
   onViewSchedule: () => void;
   onGeneratePDF: () => void;
-  onChangeStatus: (newStatus: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation') => void;
+  onChangeStatus: (newStatus: 'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation') => void;
   onDelete: () => void;
 }
 
@@ -90,7 +90,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
             <button
               className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
-              onClick={() => onChangeStatus('closed')}
+              onClick={() => onChangeStatus('completed')}
             >
               <svg className="mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

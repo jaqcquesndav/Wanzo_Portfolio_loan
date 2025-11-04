@@ -371,38 +371,5 @@ export type CreditReport = {
   createdAt: string;
 };
 
-// Type complet pour les contrats de crédit
-export type CreditContract = {
-  id: string;
-  reference: string;
-  creditRequestId: string;
-  memberId: string;
-  memberName: string;
-  productId: string;
-  productName: string;
-  portfolioId: string;
-  amount: number;
-  disbursedAmount: number;
-  remainingAmount: number;
-  interestRate: number;
-  startDate: string;
-  endDate: string;
-  lastPaymentDate?: string;
-  nextPaymentDate?: string;
-  status: 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation';
-  delinquencyDays: number;
-  riskClass: 'standard' | 'watch' | 'substandard' | 'doubtful' | 'loss';
-  guaranteesTotalValue: number;
-  guaranteeId?: string; // ID de la garantie principale associée au contrat
-  scheduleId: string;
-  documentUrl?: string;
-  consolidatedFrom?: string[];
-  isConsolidated: boolean;
-  consolidatedTo?: string;
-  duration?: number; // Durée du crédit en mois
-  gracePeriod?: number; // Période de grâce en mois
-  amortization_method?: 'linear' | 'degressive' | 'progressive' | 'balloon'; // Méthode d'amortissement du crédit
-  createdAt: string;
-  updatedAt?: string;
-  lastUpdated?: string; // Dernière mise à jour du contrat
-};
+// Note: CreditContract interface has been moved to src/types/credit-contract.ts
+// to avoid conflicts and provide a unified interface

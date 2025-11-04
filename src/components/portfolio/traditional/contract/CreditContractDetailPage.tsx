@@ -24,7 +24,7 @@ import { EditContractForm } from './EditContractForm';
 
 // Styles et utilitaires
 import { creditContractsStorageService } from '../../../../services/storage/creditContractsStorage';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 
 export default function CreditContractDetailPage() {
   const { portfolioId, contractId } = useParams();
@@ -125,7 +125,7 @@ export default function CreditContractDetailPage() {
           { label: 'Tableau de bord', href: '/app/traditional' },
           { label: 'Portefeuille', href: `/app/traditional/${portfolioId || 'default'}` },
           { label: 'Contrats', href: `/app/traditional/${portfolioId || 'default'}?tab=contracts` },
-          { label: `${contract.reference}`, href: '#' }
+          { label: `${contract.contract_number}`, href: '#' }
         ]} 
       />
       
@@ -168,9 +168,9 @@ export default function CreditContractDetailPage() {
             <EditableAmortizationSchedule 
               contractId={contract.id}
               amount={contract.amount}
-              interestRate={contract.interestRate}
-              startDate={contract.startDate || new Date().toISOString()}
-              endDate={contract.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString()}
+              interestRate={contract.interest_rate}
+              startDate={contract.start_date || new Date().toISOString()}
+              endDate={contract.end_date || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString()}
               amortizationMethod={contract.amortization_method || 'linear'}
               onEditSchedule={async (updatedSchedule) => {
                 // Si updatedSchedule est vide, cela signifie que seule la méthode d'amortissement a changé

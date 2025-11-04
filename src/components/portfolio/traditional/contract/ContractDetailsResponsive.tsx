@@ -1,6 +1,6 @@
-// src/components/portfolio/traditional/contract/ContractDetailsResponsive.tsx
+﻿// src/components/portfolio/traditional/contract/ContractDetailsResponsive.tsx
 import { useState } from 'react';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 import { Card } from '../../../ui/Card';
 import { Badge } from '../../../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/Tabs';
@@ -24,8 +24,8 @@ import { EditContractForm } from './EditContractForm';
 // Configuration des status pour l'affichage
 const statusConfig: Record<string, { label: string; variant: "success" | "secondary" | "danger" | "warning" }> = {
   'active': { label: 'Actif', variant: 'success' },
-  'closed': { label: 'Clôturé', variant: 'secondary' },
-  'defaulted': { label: 'En défaut', variant: 'danger' },
+  'completed': { label: 'ClÃ´turÃ©', variant: 'secondary' },
+  'defaulted': { label: 'En dÃ©faut', variant: 'danger' },
   'suspended': { label: 'Suspendu', variant: 'warning' },
   'in_litigation': { label: 'En contentieux', variant: 'danger' }
 };
@@ -46,7 +46,7 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
       <div className="flex justify-between items-start flex-wrap gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-xl font-semibold">Détails du contrat</h2>
+            <h2 className="text-xl font-semibold">DÃ©tails du contrat</h2>
             <Badge 
               variant={
                 (statusConfig[contract.status] && statusConfig[contract.status].variant) 
@@ -61,7 +61,7 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
             </Badge>
           </div>
           <p className="text-gray-500 mt-1">
-            Référence: {contract.reference} • Client: {contract.memberName}
+            RÃ©fÃ©rence: {contract.contract_number} â€¢ Client: {contract.company_name}
           </p>
         </div>
         
@@ -76,13 +76,13 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-1 md:grid-cols-3 mb-4">
-          <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Informations générales</TabsTrigger>
-          <TabsTrigger value="schedule" currentValue={activeTab} onValueChange={setActiveTab}>Échéancier</TabsTrigger>
+          <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Informations gÃ©nÃ©rales</TabsTrigger>
+          <TabsTrigger value="schedule" currentValue={activeTab} onValueChange={setActiveTab}>Ã‰chÃ©ancier</TabsTrigger>
           <TabsTrigger value="documents" currentValue={activeTab} onValueChange={setActiveTab}>Documents</TabsTrigger>
         </TabsList>
         
         <TabsContent value="general" currentValue={activeTab} className="space-y-6">
-          {/* Utiliser le composant ContractDetails avec la possibilité d'édition */}
+          {/* Utiliser le composant ContractDetails avec la possibilitÃ© d'Ã©dition */}
           <ContractDetails 
             contract={contract}
             onUpdate={onUpdateContract}
@@ -94,13 +94,13 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
             <EditableAmortizationSchedule 
               contractId={contract.id}
               amount={contract.amount}
-              interestRate={contract.interestRate}
-              startDate={contract.startDate}
-              endDate={contract.endDate}
+              interestRate={contract.interest_rate}
+              startDate={contract.start_date}
+              endDate={contract.end_date}
               onEditSchedule={async () => {
                 // Dans une application réelle, nous sauvegarderions l'échéancier mis à jour
                 showNotification(
-                  'Échéancier mis à jour avec succès',
+                  'Ã‰chÃ©ancier mis Ã  jour avec succÃ¨s',
                   'success'
                 );
               }}
@@ -125,7 +125,7 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
         />
       )}
       
-      {/* Formulaire d'édition des paramètres du contrat */}
+      {/* Formulaire d'Ã©dition des paramÃ¨tres du contrat */}
       {contract && (
         <EditContractForm 
           isOpen={isEditModalOpen}
@@ -137,3 +137,4 @@ export function ContractDetailsResponsive({ contract, onUpdateContract }: Contra
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 // components/ui/StatusBadge.tsx
 import { Badge } from './Badge';
 
-type StatusType = 'active' | 'closed' | 'defaulted' | 'suspended' | 'in_litigation';
+type StatusType = 'active' | 'completed' | 'defaulted' | 'restructured' | 'suspended' | 'in_litigation';
 
 interface StatusConfig {
   label: string;
@@ -11,8 +11,9 @@ interface StatusConfig {
 // Configuration des status pour l'affichage
 const statusConfig: Record<StatusType, StatusConfig> = {
   'active': { label: 'Actif', variant: 'success' },
-  'closed': { label: 'Clôturé', variant: 'secondary' },
+  'completed': { label: 'Clôturé', variant: 'secondary' },
   'defaulted': { label: 'En défaut', variant: 'danger' },
+  'restructured': { label: 'Restructuré', variant: 'warning' },
   'suspended': { label: 'Suspendu', variant: 'warning' },
   'in_litigation': { label: 'En contentieux', variant: 'danger' }
 };

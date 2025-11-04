@@ -1,4 +1,4 @@
-// src/hooks/useContractSchedule.ts
+﻿// src/hooks/useContractSchedule.ts
 import { useState, useEffect, useCallback } from 'react';
 import { traditionalDataService } from '../services/api/traditional/dataService';
 import { paymentApi } from '../services/api/traditional/payment.api';
@@ -28,7 +28,7 @@ interface ScheduleItemData {
 interface PaymentData {
   id: string;
   contract_id: string;
-  portfolio_id: string;
+  portfolioId: string;
   client_id?: string;
   due_date?: string;
   payment_date?: string;
@@ -143,7 +143,7 @@ export function useContractSchedule(contractId: string): ContractScheduleData {
                  payment.status === 'completed' ? 'payé' : 
                  'retard' as 'à venir' | 'payé' | 'retard',
           requestId: payment.scheduled_payment_id,
-          portfolioId: payment.portfolio_id,
+          portfolioId: payment.portfolioId,
           contractReference: payment.contract_id,
           transactionReference: payment.transaction_reference,
           paymentDate: payment.payment_date,
@@ -221,7 +221,7 @@ export function useContractSchedule(contractId: string): ContractScheduleData {
       // Créer le paiement
       const paymentToCreate = {
         contract_id: contractId,
-        portfolio_id: contract?.portfolio_id || '',
+        portfolioId: contract?.portfolio_id || '',
         client_id: contract?.client_id || '',
         payment_date: paymentData.payment_date,
         amount: paymentData.amount,

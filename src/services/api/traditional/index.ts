@@ -9,6 +9,9 @@
  * - payments: Gestion des paiements (création, annulation, recherche)
  * - guarantees: Gestion des garanties (création, validation, réévaluation)
  * - portfolioSettings: Gestion des paramètres du portefeuille (configuration, mise à jour)
+ * - disbursements: Gestion des décaissements/virements (création, confirmation, annulation)
+ * - paymentSchedules: Gestion des échéanciers de paiement (génération, suivi)
+ * - documents: Gestion des documents (téléversement, validation, téléchargement)
  * - dataService: Service de données local (fallback pour développement)
  * 
  * Les services font d'abord appel à l'API distante, et en cas d'échec,
@@ -23,6 +26,8 @@ import { guaranteeApi } from './guarantee.api';
 import { portfolioSettingsApi } from './portfolio-settings.api';
 import { traditionalDataService } from './dataService';
 import { disbursementApi } from './disbursement.api';
+import { paymentScheduleApi } from './payment-schedule.api';
+import { traditionalDocumentApi } from './document.api';
 
 // Initialise les données mock locales si nécessaire (pour le développement)
 traditionalDataService.initData();
@@ -42,6 +47,8 @@ export const traditionalApi = {
   guarantees: guaranteeApi,
   portfolioSettings: portfolioSettingsApi,
   disbursements: disbursementApi,
+  paymentSchedules: paymentScheduleApi,
+  documents: traditionalDocumentApi,
   dataService: traditionalDataService
 };
 
@@ -53,6 +60,8 @@ export {
   guaranteeApi,
   portfolioSettingsApi,
   disbursementApi,
+  paymentScheduleApi,
+  traditionalDocumentApi,
   traditionalDataService
 };
 
@@ -81,3 +90,12 @@ export type {
 export type {
   Disbursement
 } from '../../../types/disbursement';
+
+export type {
+  PaymentSchedule,
+  PaymentScheduleDetails
+} from '../../../types/payment-schedule';
+
+export type {
+  TraditionalDocument
+} from './document.api';

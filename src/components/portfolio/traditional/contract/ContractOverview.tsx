@@ -1,7 +1,7 @@
 // components/portfolio/traditional/contract/ContractOverview.tsx
 import { Button } from '../../../ui/Button';
 import { StatusBadge } from '../../../ui/StatusBadge';
-import { CreditContract } from '../../../../types/credit';
+import { CreditContract } from '../../../../types/credit-contract';
 import { useCurrencyContext } from '../../../../hooks/useCurrencyContext';
 
 interface ContractOverviewProps {
@@ -67,9 +67,9 @@ export function ContractOverview({ contract }: ContractOverviewProps) {
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Valeur des garanties</h3>
           <div className="flex items-end justify-between mt-1">
-            <div className="text-lg font-semibold">{formatAmount(contract.guaranteesTotalValue)}</div>
+            <div className="text-lg font-semibold">{formatAmount(contract.guaranteesTotalValue || 0)}</div>
             <div className="text-xs text-gray-500">
-              {Math.round((contract.guaranteesTotalValue / contract.amount) * 100)}% du montant
+              {Math.round(((contract.guaranteesTotalValue || 0) / contract.amount) * 100)}% du montant
             </div>
           </div>
         </div>

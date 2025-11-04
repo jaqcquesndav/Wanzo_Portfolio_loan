@@ -1,4 +1,4 @@
-// src/services/api/traditional/credit-contract.api.ts
+﻿// src/services/api/traditional/credit-contract.api.ts
 import { apiClient } from '../base.api';
 import type { CreditContract } from '../../../types/credit-contract';
 import { traditionalDataService } from './dataService';
@@ -35,7 +35,7 @@ export const creditContractApi = {
       
       // Appliquer les filtres
       if (portfolioId) {
-        contracts = contracts.filter(c => c.portfolio_id === portfolioId);
+        contracts = contracts.filter(c => c.portfolioId === portfolioId);
       }
       if (filters?.status) {
         contracts = contracts.filter(c => c.status === filters.status);
@@ -197,6 +197,132 @@ export const creditContractApi = {
             previous_end_date: contract.end_date
           }
         ],
+        updated_at: new Date().toISOString()
+      };
+      
+      traditionalDataService.updateCreditContract(updatedContract);
+      return updatedContract;
+    }
+  },
+
+  /**
+   * Récupère l'échéancier de paiement d'un contrat
+   */
+  getPaymentSchedule: async (contractId: string) => {
+    try {
+      return await apiClient.get<{
+        contract_id: string;
+        schedule: Array<{
+          installment_number: number;
+          due_date: string;
+          principal_amount: number;
+          interest_amount: number;
+          total_amount: number;
+          status: 'pending' | 'paid' | 'overdue';
+          payment_date?: string;
+          remaining_balance: number;
+        }>;
+        total_installments: number;
+        total_amount: number;
+        total_paid: number;
+        remaining_amount: number;
+      }>(`/portfolios/traditional/credit-contracts/${contractId}/payment-schedule`);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for payment schedule of contract ${contractId}`, error);
+      
+      // Simulation d'un échéancier basique
+      const contract = traditionalDataService.getCreditContractById(contractId);
+      if (!contract) {
+        throw new Error(`Contract with ID ${contractId} not found`);
+      }
+
+      // Génération d'un échéancier simulé
+      const monthlyAmount = contract.amount / 12; // Simulation 12 mois
+      const schedule = Array.from({ length: 12 }, (_, index) => ({
+        installment_number: index + 1,
+        due_date: new Date(Date.now() + (index + 1) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        principal_amount: monthlyAmount * 0.8,
+        interest_amount: monthlyAmount * 0.2,
+        total_amount: monthlyAmount,
+        status: index < 3 ? 'paid' as const : 'pending' as const,
+        payment_date: index < 3 ? new Date(Date.now() - (12 - index) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined,
+        remaining_balance: contract.amount - (monthlyAmount * (index + 1))
+      }));
+
+      return {
+        contract_id: contractId,
+        schedule,
+        total_installments: 12,
+        total_amount: contract.amount,
+        total_paid: monthlyAmount * 3,
+        remaining_amount: contract.amount - (monthlyAmount * 3)
+      };
+    }
+  },
+
+  /**
+   * Marque un contrat comme terminé/clôturé
+   */
+  completeContract: async (portfolioId: string, contractId: string, completionDetails: {
+    completion_date: string;
+    notes?: string;
+  }) => {
+    try {
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/${portfolioId}/credit-contracts/${contractId}/complete`, completionDetails);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for completing contract ${contractId}`, error);
+      const contract = traditionalDataService.getCreditContractById(contractId);
+      if (!contract) {
+        throw new Error(`Contract with ID ${contractId} not found`);
+      }
+      
+      const updatedContract = {
+        ...contract,
+        status: 'completed' as const,
+        completion_date: completionDetails.completion_date,
+        updated_at: new Date().toISOString()
+      };
+      
+      traditionalDataService.updateCreditContract(updatedContract);
+      return {
+        success: true,
+        data: {
+          id: contractId,
+          portfolio_id: portfolioId,
+          contract_number: contract.contract_number,
+          status: 'completed' as const,
+          completion_date: completionDetails.completion_date,
+          updated_at: new Date().toISOString()
+        }
+      };
+    }
+  },
+
+  /**
+   * Met un contrat en contentieux
+   */
+  putInLitigation: async (contractId: string, litigationDetails: {
+    reason: string;
+    litigation_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/litigation`, litigationDetails);
+    } catch (error) {
+      // Fallback sur les données en localStorage si l'API échoue
+      console.warn(`Fallback to localStorage for putting contract ${contractId} in litigation`, error);
+      const contract = traditionalDataService.getCreditContractById(contractId);
+      if (!contract) {
+        throw new Error(`Contract with ID ${contractId} not found`);
+      }
+      
+      const updatedContract = {
+        ...contract,
+        status: 'in_litigation' as const,
+        litigation_date: litigationDetails.litigation_date || new Date().toISOString(),
+        litigation_reason: litigationDetails.reason,
         updated_at: new Date().toISOString()
       };
       
