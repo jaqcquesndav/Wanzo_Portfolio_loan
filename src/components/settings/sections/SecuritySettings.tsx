@@ -2,33 +2,37 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { FormField, Input } from '../../ui/Form';
 import { Button } from '../../ui/Button';
 import { Switch } from '../../ui/Switch';
 import { useNotification } from '../../../contexts/useNotification';
 import { usersApi } from '../../../services/api/shared/users.api';
 
-const passwordSchema = z.object({
-  currentPassword: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
-  newPassword: z.string()
-    .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-    .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
-    .regex(/[a-z]/, 'Le mot de passe doit contenir au moins une minuscule')
-    .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre')
-    .regex(/[^A-Za-z0-9]/, 'Le mot de passe doit contenir au moins un caractère spécial'),
-  confirmPassword: z.string()
-}).refine(data => data.newPassword === data.confirmPassword, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword']
-});
-
-type PasswordFormData = z.infer<typeof passwordSchema>;
-
 export function SecuritySettings() {
   const { showNotification } = useNotification();
+  const { t } = useTranslation();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Schéma de validation dynamique avec traductions
+  const passwordSchema = z.object({
+    currentPassword: z.string().min(8, t('errors.password.minLength', { min: 8 })),
+    newPassword: z.string()
+      .min(8, t('errors.password.minLength', { min: 8 }))
+      .regex(/[A-Z]/, t('errors.password.uppercase'))
+      .regex(/[a-z]/, t('errors.password.lowercase'))
+      .regex(/[0-9]/, t('errors.password.number'))
+      .regex(/[^A-Za-z0-9]/, t('errors.password.special')),
+    confirmPassword: z.string()
+  }).refine(data => data.newPassword === data.confirmPassword, {
+    message: t('errors.password.match'),
+    path: ['confirmPassword']
+  });
+
+  type PasswordFormData = z.infer<typeof passwordSchema>;
+
   const {
     register,
     handleSubmit,
@@ -41,11 +45,11 @@ export function SecuritySettings() {
   const handlePasswordChange = async (data: PasswordFormData) => {
     try {
       await usersApi.changePassword(data.currentPassword, data.newPassword);
-      showNotification('Mot de passe mis à jour avec succès', 'success');
+      showNotification(t('messages.passwordUpdated'), 'success');
       reset();
     } catch (err) {
       console.error('Password change error:', err);
-      showNotification('Erreur lors de la mise à jour du mot de passe', 'error');
+      showNotification(t('messages.passwordError'), 'error');
     }
   };
 
@@ -55,14 +59,14 @@ export function SecuritySettings() {
         // Envoyer un code par email
         await usersApi.sendTwoFactorCode();
         setIsVerifying(true);
-        showNotification('Un code de vérification a été envoyé à votre adresse email', 'success');
+        showNotification(t('messages.verificationSent'), 'success');
       } else {
         setTwoFactorEnabled(false);
-        showNotification('Authentification à deux facteurs désactivée', 'success');
+        showNotification(t('messages.twoFactorDisabled'), 'success');
       }
     } catch (err) {
       console.error('Two factor toggle error:', err);
-      showNotification('Erreur lors de la modification des paramètres', 'error');
+      showNotification(t('messages.settingsError'), 'error');
     }
   };
 
@@ -72,10 +76,10 @@ export function SecuritySettings() {
       await usersApi.verifyTwoFactorCode(verificationCode);
       setTwoFactorEnabled(true);
       setIsVerifying(false);
-      showNotification('Authentification à deux facteurs activée', 'success');
+      showNotification(t('messages.twoFactorEnabled'), 'success');
     } catch (err) {
       console.error('Verification code error:', err);
-      showNotification('Code invalide', 'error');
+      showNotification(t('messages.invalidCode'), 'error');
     }
   };
 
@@ -83,16 +87,16 @@ export function SecuritySettings() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Authentification à deux facteurs
+          {t('settings.security.twoFactor')}
         </h2>
         
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500">
-              Ajoutez une couche de sécurité supplémentaire à votre compte
+              {t('settings.security.twoFactorDescription')}
             </p>
             <p className="text-sm text-gray-500 mt-1">
-              {twoFactorEnabled ? 'Activé' : 'Désactivé'}
+              {twoFactorEnabled ? t('settings.security.enabled') : t('settings.security.disabled')}
             </p>
           </div>
           <Switch
@@ -103,23 +107,23 @@ export function SecuritySettings() {
 
         {isVerifying && (
           <div className="mt-4 space-y-4">
-            <FormField label="Code de vérification">
+            <FormField label={t('settings.security.verificationCode')}>
               <div className="flex space-x-4">
                 <Input
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="Entrez le code reçu par email"
+                  placeholder={t('settings.security.verificationCode')}
                   maxLength={6}
                   className="flex-1"
                 />
                 <Button onClick={handleVerifyCode}>
-                  Vérifier
+                  {t('common.confirm')}
                 </Button>
               </div>
             </FormField>
             <p className="text-sm text-gray-500">
-              Un code de vérification a été envoyé à votre adresse email. Veuillez le saisir ci-dessus.
+              {t('messages.verificationSent')}
             </p>
           </div>
         )}
@@ -127,11 +131,11 @@ export function SecuritySettings() {
 
       <div className="border-t dark:border-gray-700 pt-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Changer le mot de passe
+          {t('settings.security.changePassword')}
         </h2>
 
         <form onSubmit={handleSubmit(handlePasswordChange)} className="space-y-4">
-          <FormField label="Mot de passe actuel" error={errors.currentPassword?.message}>
+          <FormField label={t('settings.security.currentPassword')} error={errors.currentPassword?.message}>
             <Input
               type="password"
               {...register('currentPassword')}
@@ -139,7 +143,7 @@ export function SecuritySettings() {
             />
           </FormField>
 
-          <FormField label="Nouveau mot de passe" error={errors.newPassword?.message}>
+          <FormField label={t('settings.security.newPassword')} error={errors.newPassword?.message}>
             <Input
               type="password"
               {...register('newPassword')}
@@ -147,7 +151,7 @@ export function SecuritySettings() {
             />
           </FormField>
 
-          <FormField label="Confirmer le mot de passe" error={errors.confirmPassword?.message}>
+          <FormField label={t('settings.security.confirmPassword')} error={errors.confirmPassword?.message}>
             <Input
               type="password"
               {...register('confirmPassword')}
@@ -156,7 +160,7 @@ export function SecuritySettings() {
           </FormField>
 
           <Button type="submit" loading={isSubmitting}>
-            Mettre à jour le mot de passe
+            {t('settings.security.updatePassword')}
           </Button>
         </form>
       </div>

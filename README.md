@@ -5,14 +5,26 @@ Application de gestion de portefeuilles financiers pour les institutions.
 ## Compatibilité avec l'API Backend
 
 Cette application frontend communique avec le backend via l'API Gateway sur le port 8000.
-La documentation complète de l'API est disponible dans [PORTFOLIO_API_DOCUMENTATION.md](./PORTFOLIO_API_DOCUMENTATION.md).
+
+### Configuration API
+
+- **Base URL** : `http://localhost:8000`
+- **Préfixe API Portfolio** : `/portfolio/api/v1`
+- **URL complète** : `http://localhost:8000/portfolio/api/v1`
+- **Port API Gateway** : 8000
+
+La documentation complète de l'API est disponible dans [API DOCUMENTATION/PORTFOLIO_API_DOCUMENTATION.md](./API%20DOCUMENTATION/PORTFOLIO_API_DOCUMENTATION.md).
+
+### Validation et tests
 
 Pour vérifier la compatibilité entre le frontend et le backend, exécutez :
 ```bash
 node scripts/validate-api-compatibility.js
 ```
 
-Pour plus d'informations sur les modifications récentes pour assurer la compatibilité, consultez [API_COMPATIBILITY.md](./docs/API_COMPATIBILITY.md).
+Pour plus d'informations sur les modifications récentes pour assurer la compatibilité, consultez :
+- [API_COMPATIBILITY.md](./docs/API_COMPATIBILITY.md) - Historique des modifications
+- [CHANGELOG.md](./API%20DOCUMENTATION/CHANGELOG.md) - Dernières mises à jour de la documentation API
 
 ## Fonctionnalités principales
 

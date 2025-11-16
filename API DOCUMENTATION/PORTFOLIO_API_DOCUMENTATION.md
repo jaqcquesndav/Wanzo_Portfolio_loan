@@ -125,14 +125,14 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolios/traditional` | Récupère tous les portefeuilles traditionnels |
-| GET | `/portfolios/traditional/${id}` | Récupère un portefeuille traditionnel par son ID |
-| POST | `/portfolios/traditional` | Crée un nouveau portefeuille traditionnel |
-| PUT | `/portfolios/traditional/${id}` | Met à jour un portefeuille traditionnel |
-| DELETE | `/portfolios/traditional/${id}` | Supprime un portefeuille traditionnel |
-| POST | `/portfolios/traditional/${id}/status` | Change le statut d'un portefeuille traditionnel |
-| GET | `/portfolios/traditional/${id}/performance` | Récupère les performances d'un portefeuille traditionnel |
-| GET | `/portfolios/traditional/${id}/activities` | Récupère l'historique des activités d'un portefeuille traditionnel |
+| GET | `/portfolios` | Récupère tous les portefeuilles (avec pagination et filtres) |
+| GET | `/portfolios/${id}` | Récupère un portefeuille par son ID |
+| POST | `/portfolios` | Crée un nouveau portefeuille |
+| PUT | `/portfolios/${id}` | Met à jour un portefeuille |
+| DELETE | `/portfolios/${id}` | Supprime un portefeuille |
+| PUT | `/portfolios/${id}/status` | Change le statut d'un portefeuille |
+| POST | `/portfolios/${id}/close` | Ferme définitivement un portefeuille |
+| GET | `/portfolios/${id}/products` | Récupère tous les produits financiers d'un portefeuille |
 
 #### Produits financiers (associés à un portefeuille)
 
@@ -154,16 +154,28 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 ### 2. Contrats de crédit
 
+#### Gestion des contrats
+
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolios/traditional/credit-contracts` | Récupère tous les contrats de crédit |
-| GET | `/portfolios/traditional/credit-contracts/${id}` | Récupère un contrat de crédit par son ID |
-| POST | `/portfolios/traditional/credit-contracts/from-request` | Crée un nouveau contrat de crédit à partir d'une demande |
-| POST | `/portfolios/traditional/credit-contracts/${id}/generate-document` | Génère le document du contrat de crédit |
-| POST | `/portfolios/traditional/credit-contracts/${id}/default` | Marque un contrat comme défaillant |
-| POST | `/portfolios/traditional/credit-contracts/${id}/restructure` | Restructure un contrat de crédit |
-| PUT | `/portfolios/traditional/credit-contracts/${id}` | Met à jour un contrat de crédit |
-| GET | `/portfolios/traditional/credit-contracts/${contractId}/payment-schedule` | Récupère l'échéancier de paiement d'un contrat |
+| GET | `/contracts` | Récupère tous les contrats de crédit (avec filtres) |
+| GET | `/contracts/${id}` | Récupère un contrat de crédit par son ID |
+| POST | `/contracts/from-request` | Crée un nouveau contrat de crédit à partir d'une demande |
+| PUT | `/contracts/${id}` | Met à jour un contrat de crédit |
+| DELETE | `/contracts/${id}` | Supprime un contrat de crédit |
+| GET | `/contracts/${contractId}/schedule` | Récupère l'échéancier de paiement d'un contrat |
+
+#### Actions sur le cycle de vie des contrats
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/contracts/${id}/activate` | Active un contrat (DRAFT → ACTIVE) |
+| POST | `/contracts/${id}/suspend` | Suspend un contrat (ACTIVE → SUSPENDED) |
+| POST | `/contracts/${id}/mark-default` | Marque un contrat en défaut (ACTIVE → DEFAULTED) |
+| POST | `/contracts/${id}/litigation` | Met un contrat en litige (DEFAULTED → LITIGATION) |
+| POST | `/contracts/${id}/restructure` | Restructure un contrat |
+| POST | `/contracts/${id}/complete` | Termine un contrat (ACTIVE → COMPLETED) |
+| POST | `/contracts/${id}/cancel` | Annule un contrat (DRAFT/ACTIVE → CANCELLED) |
 
 ### 3. Demandes de crédit
 
@@ -222,73 +234,214 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 ### 7. Utilisateurs
 
+#### Gestion des utilisateurs
+
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/users/${id}` | GET /users/${id} |
-| POST | `/users/${id}/reset-password` | POST /users/${id}/reset-password |
-| POST | `/users/${userId}/portfolios` | POST /users/${userId}/portfolios |
-| PUT | `/users/${id}` | PUT /users/${id} |
-| DELETE | `/users/${id}` | DELETE /users/${id} |
-| DELETE | `/users/${userId}/portfolios/${portfolioId}` | DELETE /users/${userId}/portfolios/${portfolioId} |
+| GET | `/users` | Récupère tous les utilisateurs (avec pagination et filtres) |
+| GET | `/users/${id}` | Récupère un utilisateur par son ID |
+| POST | `/users` | Crée un nouvel utilisateur |
+| PUT | `/users/${id}` | Met à jour un utilisateur |
+| DELETE | `/users/${id}` | Supprime un utilisateur |
+
+#### Activités et historique
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/users/${id}/activities` | Récupère l'historique des activités d'un utilisateur |
+
+#### Préférences utilisateur
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/users/${id}/preferences` | Récupère toutes les préférences d'un utilisateur |
+| GET | `/users/${id}/preferences/${category}` | Récupère les préférences par catégorie |
+| PUT | `/users/${id}/preferences` | Met à jour une préférence spécifique |
+
+#### Sessions utilisateur
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/users/${id}/sessions` | Récupère toutes les sessions actives d'un utilisateur |
+| DELETE | `/users/${id}/sessions/${sessionId}` | Termine une session spécifique |
 
 ### 8. Entreprises
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/companies/${id}` | GET /companies/${id} |
-| GET | `/companies/search?q=${encodeURIComponent(searchTerm)}` | GET /companies/search?q=${encodeURIComponent(searchTerm)} |
-| PUT | `/companies/${id}` | PUT /companies/${id} |
-| DELETE | `/companies/${id}` | DELETE /companies/${id} |
+| GET | `/companies` | Récupère toutes les entreprises |
+| GET | `/companies/${id}` | Récupère une entreprise par son ID |
+| POST | `/companies` | Crée une nouvelle entreprise |
+| PUT | `/companies/${id}` | Met à jour une entreprise |
+| DELETE | `/companies/${id}` | Supprime une entreprise |
+| GET | `/companies/search?q=${encodeURIComponent(searchTerm)}` | Recherche d'entreprises par terme |
+| GET | `/companies/${id}/financials` | Récupère les données financières d'une entreprise |
+| GET | `/companies/${id}/valuation` | Récupère l'évaluation d'une entreprise |
 
 ### 9. Gestion des risques
 
+#### Évaluations de risque
+
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/risk/central/company/${companyId}` | GET /risk/central/company/${companyId} |
-| PUT | `/risk/central/entries/${id}` | PUT /risk/central/entries/${id} |
-| GET | `/risk/credit/${companyId}` | GET /risk/credit/${companyId} |
-| GET | `/risk/leasing/${companyId}` | GET /risk/leasing/${companyId} |
-| GET | `/risk/investment/${companyId}` | GET /risk/investment/${companyId} |
-| POST | `/risk/${type}` | POST /risk/${type} |
-| PUT | `/risk/${type}/${id}` | PUT /risk/${type}/${id} |
+| GET | `/risk` | Récupère toutes les évaluations de risque |
+| POST | `/risk` | Crée une nouvelle évaluation de risque |
+| PUT | `/risk/${id}` | Met à jour une évaluation de risque |
+
+#### Évaluations spécialisées par secteur
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/risk/credit/${companyId}` | Récupère l'évaluation de risque crédit d'une entreprise |
+| GET | `/risk/leasing/${companyId}` | Récupère l'évaluation de risque leasing d'une entreprise |
+
+#### Centrale des risques
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/risk/central/company/${companyId}` | Récupère les informations de risque de la centrale des risques |
+| POST | `/risk/central` | Crée une nouvelle entrée de risque central |
+| PUT | `/risk/central/entries/${id}` | Met à jour une entrée de risque central |
 
 ### 10. Paiements
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/payments?${params.toString()}` | GET /payments?${params.toString()} |
+| GET | `/payments` | Récupère tous les ordres de paiement |
+| GET | `/payments/${id}` | Récupère un ordre de paiement par son ID |
+| POST | `/payments` | Crée un nouvel ordre de paiement |
+| PUT | `/payments/${id}` | Met à jour un ordre de paiement |
+| PUT | `/payments/${id}/status` | Met à jour le statut d'un ordre de paiement |
+| PUT | `/payments/${id}/cancel` | Annule un ordre de paiement |
+| GET | `/payments/beneficiary/${encodeURIComponent(beneficiaryName)}` | Récupère les ordres par bénéficiaire |
+| GET | `/payments?${params.toString()}` | Récupère les paiements avec filtres (page, limit, status, etc.) |
 
 ### 11. Paramètres
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| POST | `/settings/webhooks/${id}/test` | POST /settings/webhooks/${id}/test |
-| PUT | `/settings/webhooks/${id}` | PUT /settings/webhooks/${id} |
-| DELETE | `/settings/api-keys/${id}` | DELETE /settings/api-keys/${id} |
-| DELETE | `/settings/webhooks/${id}` | DELETE /settings/webhooks/${id} |
+| GET | `/settings` | Récupère tous les paramètres système |
+| PUT | `/settings` | Met à jour les paramètres système |
+| GET | `/settings/system` | Récupère les paramètres système globaux |
+| PUT | `/settings/system` | Met à jour les paramètres système globaux |
+| GET | `/settings/notifications` | Récupère les paramètres de notifications |
+| PUT | `/settings/notifications` | Met à jour les paramètres de notifications |
+| GET | `/settings/security` | Récupère les paramètres de sécurité |
+| PUT | `/settings/security` | Met à jour les paramètres de sécurité |
+| GET | `/settings/appearance` | Récupère les paramètres d'apparence |
+| PUT | `/settings/appearance` | Met à jour les paramètres d'apparence |
+| GET | `/settings/integrations` | Récupère les paramètres d'intégrations |
+| PUT | `/settings/integrations` | Met à jour les paramètres d'intégrations |
+| GET | `/settings/webhooks` | Récupère la liste des webhooks |
+| POST | `/settings/webhooks` | Crée un nouveau webhook |
+| PUT | `/settings/webhooks/${id}` | Met à jour un webhook |
+| DELETE | `/settings/webhooks/${id}` | Supprime un webhook |
+| POST | `/settings/webhooks/${id}/test` | Teste un webhook |
+| GET | `/settings/api-keys` | Récupère la liste des clés API |
+| POST | `/settings/api-keys` | Crée une nouvelle clé API |
+| DELETE | `/settings/api-keys/${id}` | Supprime une clé API |
 
 ### 12. Prospection
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| POST | `/prospection/opportunities/${opportunityId}/activities` | POST /prospection/opportunities/${opportunityId}/activities |
-| PUT | `/prospection/opportunities/${id}` | PUT /prospection/opportunities/${id} |
-| DELETE | `/prospection/opportunities/${id}` | DELETE /prospection/opportunities/${id} |
+| GET | `/prospection/opportunities` | Récupère toutes les opportunités de prospection |
+| GET | `/prospection/opportunities/${id}` | Récupère une opportunité par son ID |
+| POST | `/prospection/opportunities` | Crée une nouvelle opportunité |
+| PUT | `/prospection/opportunities/${id}` | Met à jour une opportunité |
+| DELETE | `/prospection/opportunities/${id}` | Supprime une opportunité |
+| POST | `/prospection/opportunities/${opportunityId}/activities` | Ajoute une activité à une opportunité |
+| GET | `/prospection/opportunities/${opportunityId}/activities` | Récupère les activités d'une opportunité |
+| POST | `/prospection/opportunities/${opportunityId}/documents` | Ajoute un document à une opportunité |
+| GET | `/prospection/opportunities/${opportunityId}/documents` | Récupère les documents d'une opportunité |
+| GET | `/prospection/leads` | Récupère tous les leads |
+| POST | `/prospection/leads` | Crée un nouveau lead |
+| PUT | `/prospection/leads/${id}` | Met à jour un lead |
 
 ### 13. Chat et notifications
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| POST | `/chat/messages/${messageId}/rating` | POST /chat/messages/${messageId}/rating |
-| DELETE | `/chat/contexts/${id}` | DELETE /chat/contexts/${id} |
+| GET | `/chat/conversations` | Récupère toutes les conversations |
+| GET | `/chat/conversations/${id}` | Récupère une conversation par son ID |
+| POST | `/chat/conversations` | Crée une nouvelle conversation |
+| DELETE | `/chat/conversations/${id}` | Supprime une conversation |
+| GET | `/chat/messages` | Récupère tous les messages |
+| GET | `/chat/messages/${conversationId}` | Récupère les messages d'une conversation |
+| POST | `/chat/messages` | Envoie un nouveau message |
+| PUT | `/chat/messages/${messageId}` | Met à jour un message |
+| POST | `/chat/messages/${messageId}/rating` | Évalue un message |
+| DELETE | `/chat/contexts/${id}` | Supprime un contexte de chat |
+| GET | `/notifications` | Récupère toutes les notifications |
+| POST | `/notifications` | Crée une nouvelle notification |
+| PUT | `/notifications/${id}/read` | Marque une notification comme lue |
 
-### 14. Autres endpoints
+### 14. Dashboard et métriques
+
+#### Dashboard principal
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolios` | Récupère tous les portefeuilles (tous types) |
-| GET | `/portfolios/${id}` | Récupère un portefeuille par son ID |
-| DELETE | `/portfolios/${id}` | Supprime un portefeuille |
+| GET | `/dashboard` | Récupère les données du tableau de bord principal |
+| GET | `/dashboard/traditional` | Récupère le tableau de bord traditionnel |
+
+#### Métriques OHADA
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/dashboard/ohada` | Récupère les métriques de conformité OHADA globales |
+| GET | `/dashboard/ohada/portfolio/${portfolioId}` | Récupère les métriques OHADA d'un portefeuille spécifique |
+
+#### Préférences et widgets
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/dashboard/preferences` | Récupère les préférences du tableau de bord |
+| PUT | `/dashboard/preferences/widget` | Met à jour les préférences d'un widget |
+
+### 15. Notifications
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/notifications` | Récupère toutes les notifications |
+| POST | `/notifications` | Crée une nouvelle notification |
+| GET | `/notifications/unread-count` | Récupère le nombre de notifications non lues |
+| POST | `/notifications/${id}/read` | Marque une notification comme lue |
+| DELETE | `/notifications/${id}` | Supprime une notification |
+
+### 16. Chat Portfolio
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/portfolio-chat` | Récupère toutes les conversations de chat |
+| POST | `/portfolio-chat` | Crée une nouvelle conversation |
+| GET | `/portfolio-chat/${id}` | Récupère une conversation par son ID |
+| PUT | `/portfolio-chat/${id}` | Met à jour une conversation |
+| DELETE | `/portfolio-chat/${id}` | Supprime une conversation |
+
+### 17. Synchronisation
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/sync/status` | Récupère le statut de synchronisation |
+| POST | `/sync/pull` | Récupère les changements du serveur |
+| POST | `/sync/push` | Envoie les changements locaux |
+| POST | `/sync/reset` | Réinitialise l'état de synchronisation |
+
+### 18. Autres endpoints généraux
+
+#### Santé du service
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/health` | Vérification de la santé du service (sans authentification) |
+
+#### Gestion d'institution
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/institution/managers` | Récupère tous les gestionnaires d'institution |
+| POST | `/institution/managers` | Crée un nouveau gestionnaire |
 | PUT | `/institution/managers/${id}` | Met à jour un gestionnaire d'institution |
 | DELETE | `/institution/managers/${id}` | Supprime un gestionnaire d'institution |
 
@@ -466,3 +619,55 @@ const completeWorkflow = async () => {
   }
 };
 ```
+
+## ✨ Nouvelles fonctionnalités découvertes (Mise à jour du 10 novembre 2025)
+
+Cette section documente les nouvelles fonctionnalités ajoutées au service portfolio-institution qui n'étaient pas documentées précédemment :
+
+### 🔄 Workflow avancé des contrats
+- **États étendus** : Support complet des états DRAFT, ACTIVE, SUSPENDED, DEFAULTED, LITIGATION, COMPLETED, CANCELLED
+- **Transitions contrôlées** : Actions spécialisées pour chaque changement d'état avec validation
+- **Traçabilité complète** : Historique détaillé de tous les changements d'état
+
+### 👥 Gestion avancée des utilisateurs
+- **Préférences granulaires** : Système de préférences par catégorie (UI, notifications, sécurité, etc.)
+- **Suivi d'activité** : Historique complet des actions utilisateur avec horodatage
+- **Gestion de sessions** : Contrôle des sessions actives et déconnexion sélective
+
+### 📊 Dashboard OHADA et métriques
+- **Conformité OHADA** : Métriques spécialisées pour la conformité aux normes OHADA
+- **Widgets personnalisables** : Interface de tableau de bord configurable par utilisateur
+- **Métriques par portefeuille** : Analyses détaillées par type de financement
+
+### 🔍 Système d'évaluation des risques
+- **Évaluations multicritères** : Support pour crédit, leasing et investissement
+- **Centrale des risques** : Interface avec les organismes de régulation financière
+- **Scoring automatisé** : Calculs de risque en temps réel avec historique
+
+### 💳 Ordres de paiement génériques
+- **Multi-financement** : Support pour tous types de financement (crédit, leasing, investissement)
+- **Workflow d'approbation** : Processus de validation avec états (PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED)
+- **Traçabilité bancaire** : Suivi complet jusqu'à confirmation bancaire
+
+### 🔔 Notifications et chat intégrés
+- **Système de notifications** : Gestion complète des notifications avec compteur de non-lus
+- **Chat portfolio** : Conversations contextuelles liées aux portfolios et opérations
+
+### 🚀 Améliorations techniques
+
+#### Structure d'URL simplifiée
+- **URLs consolidées** : Simplification de `/portfolios/traditional/` vers `/portfolios/` et `/contracts/`
+- **Cohérence API** : Standardisation des patterns d'URL sur l'ensemble du service
+
+#### Filtrage et pagination avancés
+- **Filtres uniformes** : Support cohérent des filtres par statut, type, dates sur tous les endpoints
+- **Pagination optimisée** : Métadonnées complètes (total, pages, limites) sur toutes les listes
+
+#### Sécurité renforcée
+- **Authentification JWT** : Intégration complète avec Auth0
+- **Contrôle d'accès** : Vérification des permissions par rôle sur tous les endpoints
+- **Audit trail** : Traçabilité complète des actions utilisateur
+
+---
+
+*Documentation mise à jour le 10 novembre 2025 suite à l'analyse complète du code source du portfolio-institution-service.*

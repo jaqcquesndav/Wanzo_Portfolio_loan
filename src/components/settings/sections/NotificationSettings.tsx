@@ -1,11 +1,13 @@
 import { Switch } from '../../ui/Switch';
 import { useApplicationSettings } from '../../../hooks/useSettingsApi';
+import { useTranslation } from 'react-i18next';
 
 export function NotificationSettings() {
   const { settings, updateNotificationSettings, loading } = useApplicationSettings();
+  const { t } = useTranslation();
 
   const handleToggle = async (setting: string, value: boolean) => {
-    if (!settings) return;
+    if (!settings?.notifications) return;
     
     try {
       await updateNotificationSettings({ [setting]: value });
@@ -14,28 +16,35 @@ export function NotificationSettings() {
     }
   };
 
-  if (!settings) return <div>Chargement...</div>;
+  // Afficher un état de chargement si les données ne sont pas encore disponibles
+  if (!settings || !settings.notifications) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-500 dark:text-gray-400">{t('settings.notifications.loading')}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <NotificationOption
-          title="Notifications par email"
-          description="Recevoir des notifications par email"
+          title={t('settings.notifications.email')}
+          description={t('settings.notifications.emailDescription')}
           checked={settings.notifications.emailEnabled}
           onChange={value => handleToggle('emailEnabled', value)}
           disabled={loading}
         />
         <NotificationOption
-          title="Notifications push"
-          description="Recevoir des notifications push"
+          title={t('settings.notifications.push')}
+          description={t('settings.notifications.pushDescription')}
           checked={settings.notifications.pushEnabled}
           onChange={value => handleToggle('pushEnabled', value)}
           disabled={loading}
         />
         <NotificationOption
-          title="Notifications de bureau"
-          description="Recevoir des notifications sur le bureau"
+          title={t('settings.notifications.desktop')}
+          description={t('settings.notifications.desktopDescription')}
           checked={settings.notifications.desktopEnabled}
           onChange={value => handleToggle('desktopEnabled', value)}
           disabled={loading}

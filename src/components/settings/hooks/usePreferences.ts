@@ -3,13 +3,11 @@ import { useState, useEffect } from 'react';
 export interface UserPreferences {
   language: string;
   timezone: string;
-  currency: 'USD' | 'CDF' | 'EUR';
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   language: 'fr',
-  timezone: 'UTC',
-  currency: 'CDF'
+  timezone: 'UTC'
 };
 
 export function usePreferences() {
