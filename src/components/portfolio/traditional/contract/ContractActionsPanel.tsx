@@ -31,11 +31,12 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
       {
         action: 'validate_funding',
         portfolioId: contract.portfolioId || 'default',
-        portfolioName: 'Portefeuille de cRédit',
+        portfolioName: 'Portefeuille de crédit',
         itemId: contract.id,
         reference: contract.contract_number,
         amount: contract.amount,
         company: contract.company_name,
+        companyId: contract.client_id, // ID de l'entreprise pour récupérer toutes ses données
         product: contract.product_type
       },
       showPaymentOrderModal

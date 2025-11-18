@@ -207,6 +207,7 @@ export const creditContractApi = {
 
   /**
    * Récupère l'échéancier de paiement d'un contrat
+   * Conforme à la documentation: GET /contracts/${contractId}/schedule
    */
   getPaymentSchedule: async (contractId: string) => {
     try {
@@ -226,7 +227,7 @@ export const creditContractApi = {
         total_amount: number;
         total_paid: number;
         remaining_amount: number;
-      }>(`/portfolios/traditional/credit-contracts/${contractId}/payment-schedule`);
+      }>(`/contracts/${contractId}/schedule`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for payment schedule of contract ${contractId}`, error);
@@ -309,7 +310,7 @@ export const creditContractApi = {
     notes?: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/litigation`, litigationDetails);
+      return await apiClient.post<CreditContract>(`/contracts/${contractId}/litigation`, litigationDetails);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for putting contract ${contractId} in litigation`, error);
@@ -323,6 +324,97 @@ export const creditContractApi = {
         status: 'in_litigation' as const,
         litigation_date: litigationDetails.litigation_date || new Date().toISOString(),
         litigation_reason: litigationDetails.reason,
+        updated_at: new Date().toISOString()
+      };
+      
+      traditionalDataService.updateCreditContract(updatedContract);
+      return updatedContract;
+    }
+  },
+
+  /**
+   * Active un contrat (DRAFT → ACTIVE)
+   * Conforme à la documentation: POST /contracts/${id}/activate
+   */
+  activateContract: async (contractId: string, activationDetails?: {
+    activation_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      return await apiClient.post<CreditContract>(`/contracts/${contractId}/activate`, activationDetails || {});
+    } catch (error) {
+      console.warn(`Fallback to localStorage for activating contract ${contractId}`, error);
+      const contract = traditionalDataService.getCreditContractById(contractId);
+      if (!contract) {
+        throw new Error(`Contract with ID ${contractId} not found`);
+      }
+      
+      const updatedContract = {
+        ...contract,
+        status: 'active' as const,
+        activation_date: activationDetails?.activation_date || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      traditionalDataService.updateCreditContract(updatedContract);
+      return updatedContract;
+    }
+  },
+
+  /**
+   * Suspend un contrat (ACTIVE → SUSPENDED)
+   * Conforme à la documentation: POST /contracts/${id}/suspend
+   */
+  suspendContract: async (contractId: string, suspensionDetails: {
+    reason: string;
+    suspension_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      return await apiClient.post<CreditContract>(`/contracts/${contractId}/suspend`, suspensionDetails);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for suspending contract ${contractId}`, error);
+      const contract = traditionalDataService.getCreditContractById(contractId);
+      if (!contract) {
+        throw new Error(`Contract with ID ${contractId} not found`);
+      }
+      
+      const updatedContract = {
+        ...contract,
+        status: 'suspended' as const,
+        suspension_date: suspensionDetails.suspension_date || new Date().toISOString(),
+        suspension_reason: suspensionDetails.reason,
+        updated_at: new Date().toISOString()
+      };
+      
+      traditionalDataService.updateCreditContract(updatedContract);
+      return updatedContract;
+    }
+  },
+
+  /**
+   * Annule un contrat (DRAFT/ACTIVE → CANCELLED)
+   * Conforme à la documentation: POST /contracts/${id}/cancel
+   */
+  cancelContract: async (contractId: string, cancellationDetails: {
+    reason: string;
+    cancellation_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      return await apiClient.post<CreditContract>(`/contracts/${contractId}/cancel`, cancellationDetails);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for cancelling contract ${contractId}`, error);
+      const contract = traditionalDataService.getCreditContractById(contractId);
+      if (!contract) {
+        throw new Error(`Contract with ID ${contractId} not found`);
+      }
+      
+      const updatedContract = {
+        ...contract,
+        status: 'cancelled' as const,
+        cancellation_date: cancellationDetails.cancellation_date || new Date().toISOString(),
+        cancellation_reason: cancellationDetails.reason,
         updated_at: new Date().toISOString()
       };
       

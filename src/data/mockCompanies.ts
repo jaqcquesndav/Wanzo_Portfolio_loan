@@ -35,6 +35,19 @@ export const mockCompanies: Company[] = companiesData.map(company => {
   const financialHighlights = typeof company.financialHighlights === 'object' ? company.financialHighlights as GenericRecord : {};
   const socialMedia = typeof company.socialMedia === 'object' ? company.socialMedia as GenericRecord : {};
   
+  // Récupérer les données de trésorerie pour extraire les comptes bancaires
+  const treasuryData = getMockTreasuryData(company.id);
+  const bankAccounts = treasuryData?.accounts
+    .filter(acc => acc.type === 'bank')
+    .map((acc, index) => ({
+      accountNumber: acc.accountNumber || `CD39-${company.id}-${index}`,
+      accountName: company.name,
+      bankName: acc.bankName || 'Banque Inconnue',
+      swiftCode: acc.bankName ? `${acc.bankName.substring(0, 4).toUpperCase()}CDKI` : undefined,
+      currency: acc.currency,
+      isPrimary: index === 0
+    }));
+  
   return {
     id: company.id,
     name: company.name,
@@ -55,8 +68,33 @@ export const mockCompanies: Company[] = companiesData.map(company => {
       credit_score: company.creditRating === 'A' ? 85 : company.creditRating === 'B' ? 75 : 65,
       financial_rating: (safeString(company.creditRating) || 'C') as 'A' | 'B' | 'C' | 'D',
       ebitda: safeNumber(safeGet(financialHighlights, 'ebitda')),
-      treasury_data: getMockTreasuryData(company.id) // Ajouter données de trésorerie
+      treasury_data: treasuryData // Ajouter données de trésorerie
     },
+    contact_info: {
+      email: `contact@${company.name.toLowerCase().replace(/\s+/g, '')}.cd`,
+      phone: `+243 ${80 + Math.floor(Math.random() * 10)} ${Math.floor(Math.random() * 900) + 100} ${Math.floor(Math.random() * 9000) + 1000}`,
+      address: `${Math.floor(Math.random() * 500) + 1} Avenue de la République, Kinshasa, RDC`,
+      website: safeString(safeGet(socialMedia, 'website'))
+    },
+    legal_info: {
+      legalForm: company.size === 'large' ? 'SA' : company.size === 'medium' ? 'SARL' : 'SPRL',
+      rccm: `CD/KIN/${new Date().getFullYear()}/${company.id}`,
+      taxId: `A${Math.floor(Math.random() * 900000) + 100000}${company.id.replace('COMP-', '')}`,
+      yearFounded: 2024 - Math.floor(Math.random() * 15)
+    },
+    payment_info: bankAccounts && bankAccounts.length > 0 ? {
+      preferredMethod: 'bank',
+      bankAccounts: bankAccounts,
+      mobileMoneyAccounts: [
+        {
+          phoneNumber: `+243 ${80 + Math.floor(Math.random() * 10)} ${Math.floor(Math.random() * 900) + 100} ${Math.floor(Math.random() * 9000) + 1000}`,
+          accountName: company.name,
+          provider: 'Orange Money',
+          currency: 'CDF',
+          isPrimary: false
+        }
+      ]
+    } : undefined,
     esg_metrics: {
       carbon_footprint: 12.5,
       environmental_rating: 'B',

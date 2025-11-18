@@ -92,6 +92,27 @@ export interface Company {
     website?: string;            // Site web (peut dupliquer website_url)
   };
   
+  // Informations de paiement (pour ordres de paiement)
+  payment_info?: {
+    preferredMethod?: 'bank' | 'mobile_money'; // Méthode de paiement préférée
+    bankAccounts?: Array<{        // Comptes bancaires
+      accountNumber: string;      // Numéro de compte
+      accountName: string;        // Titulaire du compte
+      bankName: string;           // Nom de la banque
+      swiftCode?: string;         // Code SWIFT/BIC
+      iban?: string;              // IBAN (si applicable)
+      currency: Currency;         // Devise du compte
+      isPrimary: boolean;         // Compte principal
+    }>;
+    mobileMoneyAccounts?: Array<{ // Comptes Mobile Money
+      phoneNumber: string;        // Numéro de téléphone
+      accountName: string;        // Nom du titulaire
+      provider: string;           // Opérateur (Orange Money, M-Pesa, Airtel Money, etc.)
+      currency: Currency;         // Devise
+      isPrimary: boolean;         // Compte principal
+    }>;
+  };
+  
   // Informations légales (pour vérification conformité)
   legal_info?: {
     legalForm?: string;          // Forme juridique (SARL, SA, SAS, etc.)

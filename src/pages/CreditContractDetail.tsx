@@ -16,6 +16,17 @@ export default function CreditContractDetail() {
   
   // Trouver le contrat correspondant
   const contract = contracts.find(c => c.id === contractId);
+  
+  // Construire l'URL de retour correcte en fonction de l'URL actuelle
+  const getPortfolioUrl = () => {
+    // Vérifier si l'URL actuelle contient "traditional/traditional" (format ancien)
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/app/traditional/traditional/')) {
+      return `/app/traditional/traditional/${portfolioId || 'default'}?tab=contracts`;
+    }
+    // Sinon utiliser le format standard
+    return `/app/traditional/${portfolioId || 'default'}?tab=contracts`;
+  };
 
   // Gestionnaire pour mettre à jour le contrat
   const handleUpdateContract = async (updatedData: Partial<CreditContract>) => {
@@ -59,7 +70,7 @@ export default function CreditContractDetail() {
           <Button 
             className="mt-4" 
             variant="outline" 
-            onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}`)}
+            onClick={() => navigate(getPortfolioUrl())}
           >
             Retour au portefeuille
           </Button>
@@ -73,9 +84,9 @@ export default function CreditContractDetail() {
       <div className="container mx-auto p-6">
       <Breadcrumb 
         items={[
+          { label: 'Tableau de bord', href: '/app' },
           { label: 'Portefeuilles', href: '/app/traditional' },
-          { label: 'Traditionnel', href: '/app/traditional' },
-          { label: `Portefeuille ${portfolioId ? portfolioId.slice(0, 8) : 'default'}`, href: `/app/traditional/${portfolioId || 'default'}` },
+          { label: `Portefeuille ${portfolioId || 'default'}`, href: getPortfolioUrl() },
           { label: 'Contrat introuvable', href: '#' }
         ]} 
       />        <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mt-4">
@@ -86,7 +97,7 @@ export default function CreditContractDetail() {
           <Button 
             className="mt-4" 
             variant="outline" 
-            onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}?tab=contracts`)}
+            onClick={() => navigate(getPortfolioUrl())}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour aux contrats
@@ -100,17 +111,20 @@ export default function CreditContractDetail() {
     <div className="container mx-auto p-6">
       <Breadcrumb 
         items={[
-          { label: 'Tableau de bord', href: '/app/traditional' },
-          { label: 'Portefeuille', href: `/app/traditional/${portfolioId || 'default'}` },
-          { label: 'Contrats', href: `/app/traditional/${portfolioId || 'default'}?tab=contracts` },
-          { label: `${contract.contract_number}`, href: '#' }
+          { label: 'Tableau de bord', href: '/app' },
+          { label: 'Portefeuilles', href: '/app/traditional' },
+          { label: `Portefeuille ${portfolioId || 'default'}`, href: getPortfolioUrl() },
+          { label: contract.contract_number, href: '#' }
         ]} 
       />
       
       <div className="flex justify-between items-center my-6">
         <Button 
           variant="outline" 
-          onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}?tab=contracts`)}
+          onClick={() => {
+            // Retour à l'onglet contrats du portefeuille
+            navigate(getPortfolioUrl());
+          }}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
