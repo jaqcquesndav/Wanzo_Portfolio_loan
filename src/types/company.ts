@@ -1,5 +1,8 @@
 export type CompanySize = 'micro' | 'small' | 'medium' | 'large';
-export type CompanyStatus = 'active' | 'pending' | 'rejected' | 'funded' | 'contacted';
+export type CompanyStatus = 'active' | 'pending' | 'rejected' | 'funded' | 'contacted' | 'qualified';
+
+// Rating financier conforme à la documentation (AAA à E)
+export type FinancialRating = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'C' | 'D' | 'E';
 
 export interface Company {
   id: string;
@@ -12,19 +15,78 @@ export interface Company {
   pitch_deck_url?: string;
   status: CompanyStatus;
   lastContact?: string;
+  
+  // Métriques financières (conformes à ProspectDto)
   financial_metrics: {
-    revenue_growth: number;
-    profit_margin: number;
-    cash_flow: number;
-    debt_ratio: number;
-    working_capital: number;
-    credit_score: number; // Score de crédit sur 100
-    financial_rating: 'A' | 'B' | 'C' | 'D'; // Note financière
-    ebitda?: number;
+    annual_revenue: number;      // CA annuel (peut différer du champ racine si consolidé)
+    revenue_growth: number;      // Croissance YoY (%)
+    profit_margin: number;       // Marge bénéficiaire (%)
+    cash_flow: number;           // Flux de trésorerie
+    debt_ratio: number;          // Ratio d'endettement (0.0-1.0)
+    working_capital: number;     // Fonds de roulement
+    credit_score: number;        // Score de crédit (0-100)
+    financial_rating: FinancialRating; // Rating financier (AAA-E)
+    ebitda?: number;             // EBITDA (optionnel)
   };
+  
+  // Informations de contact (essentielles pour prospection)
+  contact_info?: {
+    email?: string;              // Email de contact
+    phone?: string;              // Téléphone
+    address?: string;            // Adresse physique
+    website?: string;            // Site web (peut dupliquer website_url)
+  };
+  
+  // Informations légales (pour vérification conformité)
+  legal_info?: {
+    legalForm?: string;          // Forme juridique (SARL, SA, SAS, etc.)
+    rccm?: string;               // Numéro RCCM
+    taxId?: string;              // Numéro fiscal
+    yearFounded?: number;        // Année de création
+  };
+  
+  // Géolocalisation (pour recherche nearby)
+  latitude?: number;             // Latitude GPS (-90 à 90)
+  longitude?: number;            // Longitude GPS (-180 à 180)
+  
+  // Emplacements multiples (optionnel, pour entreprises multi-sites)
+  locations?: Array<{
+    id: string;
+    address: string;
+    city: string;
+    country: string;
+    isPrimary: boolean;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+  }>;
+  
+  // Propriétaire principal (optionnel, pour contexte décisionnel)
+  owner?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  
+  // Personnes de contact (optionnel, pour faciliter la prospection)
+  contactPersons?: Array<{
+    name: string;
+    role: string;
+    email: string;
+    phone: string;
+  }>;
+  
+  // Métadonnées de synchronisation (indicateurs de fraîcheur des données)
+  profileCompleteness?: number;        // Complétude du profil (0-100%)
+  lastSyncFromAccounting?: string;     // Dernière sync accounting-service (ISO 8601)
+  lastSyncFromCustomer?: string;       // Dernière sync customer-service (ISO 8601)
+  
+  // Métriques ESG (conservées pour compatibilité)
   esg_metrics: {
     esg_rating?: string;
-    carbon_footprint: number; // en tonnes de CO2
+    carbon_footprint: number;
     environmental_rating: 'A' | 'B' | 'C' | 'D';
     social_rating: 'A' | 'B' | 'C' | 'D';
     governance_rating: 'A' | 'B' | 'C' | 'D';
@@ -33,6 +95,7 @@ export interface Company {
       female: number;
     };
   };
+  
   created_at: string;
   updated_at: string;
 }

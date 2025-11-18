@@ -10,11 +10,17 @@ export interface Disbursement {
   company: string;
   product: string;
   amount: number;
-  status: 'en attente' | 'effectué';
+  currency: string; // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF) - AJOUTÉ pour conformité
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'canceled'; // Statuts conformes à validation_workflow.md DisbursementStatus enum
   date: string;
   requestId?: string;
   portfolioId: string;
   contractReference: string;  // Référence du contrat associé (obligatoire)
+  validatedBy?: string; // ID utilisateur validateur
+  validatedAt?: string; // Date de validation ISO 8601
+  rejectionReason?: string; // Raison du rejet si status=rejeté
+  errorCode?: string; // Code d'erreur si status=échoué ou en_erreur
+  errorMessage?: string; // Message d'erreur détaillé
   
   // Informations bancaires de l'ordre de virement
   transactionReference?: string;  // Référence de transaction bancaire

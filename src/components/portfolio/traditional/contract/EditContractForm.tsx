@@ -19,7 +19,7 @@ interface EditContractFormProps {
 
 export function EditContractForm({ contract, isOpen, onClose, onSave }: EditContractFormProps) {
   const [formData, setFormData] = useState<Partial<CreditContract>>({
-    // Informations gé©né©rales
+    // Informations générales
     product_type: contract.product_type,
     start_date: contract.start_date ? contract.start_date.split('T')[0] : '',
     end_date: contract.end_date ? contract.end_date.split('T')[0] : '',
@@ -57,7 +57,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showNotification } = useNotification();
 
-  // Calculer la duRé©e en mois entre la date de dû©but et la date de fin
+  // Calculer la durée en mois entre la date de début et la date de fin
   function calculateTermInMonths(startDateStr: string, endDateStr: string): number {
     if (!startDateStr || !endDateStr) return 0;
     
@@ -97,7 +97,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
-    // Convertir les valeurs numé©riques
+    // Convertir les valeurs numériques
     if (type === 'number') {
       setFormData(prev => ({ 
         ...prev, 
@@ -108,7 +108,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
     }
   };
 
-  // Gestionnaire pour les é©lé©ments select
+  // Gestionnaire pour les éléments select
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -118,7 +118,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
   const handleGuaranteeInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // Convertir les valeurs numé©riques
+    // Convertir les valeurs numériques
     if (type === 'number') {
       setNewGuarantee(prev => ({ 
         ...prev, 
@@ -131,7 +131,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
 
   // Ajouter une nouvelle garantie
   const handleAddGuarantee = () => {
-    // Gé©né©rer un ID temporaire pour la nouvelle garantie
+    // Générer un ID temporaire pour la nouvelle garantie
     const newId = `temp-${Date.now()}`;
     
     const newGuaranteeItem: Guarantee = {
@@ -152,7 +152,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
     
     setGuarantees(prev => [...prev, newGuaranteeItem]);
     
-    // Ré©initialiser le formulaire de nouvelle garantie
+    // Réinitialiser le formulaire de nouvelle garantie
     setNewGuarantee({
       type: 'materiel',
       value: 0,
@@ -189,7 +189,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
         await Promise.all(guarantees.map(async (guarantee) => {
           if (guarantee.id.startsWith('new-')) {
             // C'est une nouvelle garantie, l'ajouter
-            // Gé©né©rer un nouvel ID au format "g-" + timestamp + random
+            // Générer un nouvel ID au format "g-" + timestamp + random
             const newId = `g-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             const newGuarantee = { ...guarantee, id: newId, contractId: contract.id };
             await guaranteeService.addGuarantee(newGuarantee);
@@ -199,7 +199,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
           }
         }));
         
-        // Supprimer les garanties qui ont é©té© retiRé©es
+        // Supprimer les garanties qui ont été retirées
         const existingGuarantees = await guaranteeService.getGuaranteesByContractId(contract.id);
         const guaranteeIds = guarantees.map(g => g.id);
         
@@ -210,11 +210,11 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
         }
       }
       
-      showNotification('Paramé¨tres du contrat mis é  jour avec succé¨s', 'success');
+      showNotification('Paramètres du contrat mis à jour avec succès', 'success');
       onClose();
     } catch (error) {
-      console.error('Erreur lors de la mise é  jour des paramé¨tres du contrat:', error);
-      showNotification('Erreur lors de la mise é  jour des paramé¨tres du contrat', 'error');
+      console.error('Erreur lors de la mise à jour des paramètres du contrat:', error);
+      showNotification('Erreur lors de la mise à jour des paramètres du contrat', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -224,28 +224,28 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Modifier les paramé¨tres du contrat</DialogTitle>
+          <DialogTitle className="text-xl">Modifier les paramètres du contrat</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          {/* Informations gé©né©rales */}
+          {/* Informations générales */}
           <Card className="p-4">
             <div className="flex items-center mb-4">
               <DocumentIcon className="h-5 w-5 text-gray-500 mr-2" />
-              <h3 className="text-lg font-medium">Informations gé©né©rales</h3>
+              <h3 className="text-lg font-medium">Informations générales</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ré©fé©rence du contrat
+                  Référence du contrat
                 </label>
                 <Input
                   value={contract.contract_number}
                   disabled
                   className="bg-gray-100"
                 />
-                <p className="text-xs text-gray-500 mt-1">La Ré©fé©rence du contrat ne peut pas éªtre modifié©e</p>
+                <p className="text-xs text-gray-500 mt-1">La référence du contrat ne peut pas être modifiée</p>
               </div>
               
               <div>
@@ -275,7 +275,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date d'é©ché©ance
+                  Date d'échéance
                 </label>
                 <Input
                   type="date"
@@ -298,7 +298,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Montant accordû©
+                  Montant accordé
                 </label>
                 <Input
                   type="number"
@@ -313,7 +313,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Montant restant dû»
+                  Montant restant dû
                 </label>
                 <Input
                   type="number"
@@ -328,7 +328,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Taux d'inté©Réªt (%)
+                  Taux d'intérêt (%)
                 </label>
                 <Input
                   type="number"
@@ -344,7 +344,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mé©thode d'amortissement
+                  Méthode d'amortissement
                 </label>
                 <Select
                   name="amortization_method"
@@ -353,8 +353,8 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                   required
                   className="block w-full"
                 >
-                  <option value="linear">Liné©aire (constant)</option>
-                  <option value="degressive">dû©gressive</option>
+                  <option value="linear">Linéaire (constant)</option>
+                  <option value="degressive">dégressive</option>
                   <option value="progressive">Progressive</option>
                   <option value="balloon">Paiement ballon</option>
                 </Select>
@@ -362,7 +362,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  DuRé©e (mois)
+                  Durée (mois)
                 </label>
                 <Input
                   type="number"
@@ -378,7 +378,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pé©riode de gRé¢ce (mois)
+                  Période de grâce (mois)
                 </label>
                 <Input
                   type="number"
@@ -420,16 +420,16 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                   disabled
                   className="bg-gray-100"
                 />
-                <p className="text-xs text-gray-500 mt-1">L'ID du client ne peut pas éªtre modifié©</p>
+                <p className="text-xs text-gray-500 mt-1">L'ID du client ne peut pas être modifié</p>
               </div>
             </div>
           </Card>
           
-          {/* Informations lé©gales et complé©mentaires */}
+          {/* Informations légales et complémentaires */}
           <Card className="p-4">
             <div className="flex items-center mb-4">
               <ScaleIcon className="h-5 w-5 text-gray-500 mr-2" />
-              <h3 className="text-lg font-medium">Informations lé©gales et complé©mentaires</h3>
+              <h3 className="text-lg font-medium">Informations légales et complémentaires</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -446,8 +446,8 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 >
                   <option value="active">Actif</option>
                   <option value="suspended">Suspendu</option>
-                  <option value="completed">Clé´tuRé©</option>
-                  <option value="defaulted">En dû©faut</option>
+                  <option value="completed">Clôturé</option>
+                  <option value="defaulted">En défaut</option>
                   <option value="in_litigation">En contentieux</option>
                 </Select>
               </div>
@@ -473,7 +473,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Montant dû©caissé©
+                  Montant décaissé
                 </label>
                 <Input
                   type="number"
@@ -518,7 +518,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                         <div className="font-medium">{guarantee.type.charAt(0).toUpperCase() + guarantee.type.slice(1).replace('_', ' ')}</div>
                         <div className="text-sm text-gray-500">
                           Valeur: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(guarantee.value)}
-                          {guarantee.details?.contract_number && ` ¢ Ré©f: ${guarantee.details.contract_number}`}
+                          {guarantee.details?.contract_number && ` • Réf: ${guarantee.details.contract_number}`}
                         </div>
                       </div>
                       <Button 
@@ -556,15 +556,15 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                     onChange={handleGuaranteeInputChange}
                     className="block w-full"
                   >
-                    <option value="materiel">Maté©riel</option>
+                    <option value="materiel">Matériel</option>
                     <option value="immobilier">Immobilier</option>
                     <option value="caution_bancaire">Caution bancaire</option>
                     <option value="fonds_garantie">Fonds de garantie</option>
-                    <option value="assurance_credit">Assurance cRé©dit</option>
+                    <option value="assurance_credit">Assurance crédit</option>
                     <option value="nantissement">Nantissement</option>
                     <option value="gage">Gage</option>
-                    <option value="hypotheque">Hypothé¨que</option>
-                    <option value="depot_especes">dû©pé´t espé¨ces</option>
+                    <option value="hypotheque">Hypothèque</option>
+                    <option value="depot_especes">dépôt espèces</option>
                     <option value="autre">Autre</option>
                   </Select>
                 </div>
@@ -595,9 +595,9 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                   >
                     <option value="active">Active</option>
                     <option value="pending">En attente</option>
-                    <option value="libé©Ré©e">Libé©Ré©e</option>
+                    <option value="libérée">Libérée</option>
                     <option value="saisie">Saisie</option>
-                    <option value="expiRé©e">ExpiRé©e</option>
+                    <option value="expirée">Expirée</option>
                   </Select>
                 </div>
               </div>
@@ -605,7 +605,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ré©fé©rence
+                    Référence
                   </label>
                   <Input
                     name="reference"
@@ -614,7 +614,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                       ...prev, 
                       details: { ...prev.details, contract_number: e.target.value } 
                     }))}
-                    placeholder="Numé©ro de Ré©fé©rence (facultatif)"
+                    placeholder="Numéro de référence (facultatif)"
                   />
                 </div>
                 

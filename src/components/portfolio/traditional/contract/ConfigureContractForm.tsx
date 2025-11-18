@@ -80,7 +80,7 @@ export function ConfigureContractForm({ contract, isOpen, onClose, onUpdate }: C
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date de dû©but
+            Date de début
           </label>
           <Input
             type="date"

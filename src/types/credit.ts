@@ -90,12 +90,26 @@ export type CreditPeriodicity =
   | 'semiannual'
   | 'annual';
 
+/**
+ * Métadonnées de synchronisation avec gestion-commerciale
+ */
+export type CreditRequestMetadata = {
+  sourceRequestId?: string;            // ID de la demande source (gestion commerciale)
+  syncedFrom?: string;                 // Service source (ex: 'gestion_commerciale')
+  businessInformation?: any;           // Informations commerciales
+  financialInformation?: any;          // Informations financières
+  creditScore?: any;                   // Score de crédit
+  firstSyncAt?: string;                // Date de première synchronisation (ISO 8601)
+  lastSyncAt?: string;                 // Date de dernière synchronisation (ISO 8601)
+};
+
 export type CreditRequest = {
   id: string;
   memberId: string;
   productId: string;
   receptionDate: string;
   requestAmount: number;
+  currency: string; // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF) - AJOUTÉ pour conformité
   periodicity: CreditPeriodicity;
   interestRate: number;
   reason: string;
@@ -110,6 +124,8 @@ export type CreditRequest = {
   groupId?: string;
   distributions?: CreditDistribution[];
   rejectionReason?: string;
+  portfolioId?: string; // ID du portefeuille associé - AJOUTÉ pour conformité
+  metadata?: CreditRequestMetadata; // Métadonnées pour synchronisation avec gestion-commerciale - Structure complète conforme
   createdAt: string;
   updatedAt?: string;
 };

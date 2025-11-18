@@ -2,25 +2,27 @@
 // Hook pour accéder aux données d'entreprises via l'API backend
 
 import { useState, useEffect, useCallback } from 'react';
-import { companyApi } from '../services/api/shared/company.api';
+import { companyApi, type ProspectionFilters, type NearbySearchParams, type PaginatedResponse } from '../services/api/shared/company.api';
 import type { Company } from '../types/company';
 import { useNotification } from '../contexts/useNotification';
 
 /**
- * Hook pour récupérer toutes les entreprises via l'API
+ * Hook pour récupérer toutes les entreprises via l'API avec filtres de prospection
  */
-export function useCompaniesApi() {
+export function useCompaniesApi(filters?: ProspectionFilters) {
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [meta, setMeta] = useState<PaginatedResponse<Company>['meta'] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification } = useNotification();
 
-  const fetchCompanies = useCallback(async () => {
+  const fetchCompanies = useCallback(async (customFilters?: ProspectionFilters) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await companyApi.getAllCompanies();
-      setCompanies(data);
+      const response = await companyApi.getAllCompanies(customFilters || filters);
+      setCompanies(response.data);
+      setMeta(response.meta);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des entreprises';
       setError(errorMessage);
@@ -29,7 +31,7 @@ export function useCompaniesApi() {
     } finally {
       setLoading(false);
     }
-  }, [showNotification]);
+  }, [filters, showNotification]);
 
   useEffect(() => {
     fetchCompanies();
@@ -37,6 +39,7 @@ export function useCompaniesApi() {
 
   return {
     companies,
+    meta,
     loading,
     error,
     refetch: fetchCompanies
@@ -304,15 +307,127 @@ export function useCompanyFinancials(companyId: string | null) {
 }
 
 /**
+ * Hook pour la recherche géographique de prospects
+ */
+export function useNearbyCompanies() {
+  const [results, setResults] = useState<Array<Company & { distance: number }>>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
+
+  const searchNearby = useCallback(async (params: NearbySearchParams) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await companyApi.getNearbyCompanies(params);
+      setResults(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la recherche géographique';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      console.error('Erreur recherche nearby:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [showNotification]);
+
+  const clearResults = useCallback(() => {
+    setResults([]);
+    setError(null);
+  }, []);
+
+  return {
+    results,
+    loading,
+    error,
+    searchNearby,
+    clearResults
+  };
+}
+
+/**
+ * Hook pour les statistiques de prospection
+ */
+export function useCompanyStats() {
+  const [stats, setStats] = useState<Awaited<ReturnType<typeof companyApi.getCompanyStats>> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await companyApi.getCompanyStats();
+      setStats(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques';
+      setError(errorMessage);
+      console.error('Erreur stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  return {
+    stats,
+    loading,
+    error,
+    refetch: fetchStats
+  };
+}
+
+/**
+ * Hook pour la synchronisation manuelle d'un prospect
+ */
+export function useCompanySync() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
+
+  const syncCompany = useCallback(async (id: string, complete = false) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = complete 
+        ? await companyApi.syncCompanyComplete(id)
+        : await companyApi.syncCompany(id);
+      
+      showNotification('Synchronisation réussie', 'success');
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la synchronisation';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      console.error('Erreur sync:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [showNotification]);
+
+  return {
+    loading,
+    error,
+    syncCompany
+  };
+}
+
+/**
  * Hook combiné pour remplacer useCompaniesData (localStorage)
  * Utilise l'API et fournit une interface compatible
  */
 export function useCompaniesDataApi() {
-  const { companies, loading, error, refetch } = useCompaniesApi();
+  const { companies, meta, loading, error, refetch } = useCompaniesApi();
 
   // Interface compatible avec l'ancien hook localStorage
   return {
     companies,
+    meta,
     loading,
     error,
     refresh: refetch,

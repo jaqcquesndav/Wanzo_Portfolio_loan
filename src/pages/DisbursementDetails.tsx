@@ -51,11 +51,23 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
           <div className="text-right">
             <p className="text-xl font-bold">{disbursement.amount.toLocaleString()} FCFA</p>
             <div className={`text-sm px-2 py-1 rounded-full inline-block ${
-              disbursement.status === 'effectué' 
+              disbursement.status === 'completed' 
                 ? 'bg-green-100 text-green-700' 
+                : disbursement.status === 'failed' || disbursement.status === 'rejected'
+                ? 'bg-red-100 text-red-700'
+                : disbursement.status === 'approved' || disbursement.status === 'processing'
+                ? 'bg-blue-100 text-blue-700'
                 : 'bg-yellow-100 text-yellow-700'
             }`}>
-              {disbursement.status === 'effectué' ? 'Effectué' : 'En attente'}
+              {disbursement.status === 'completed' ? 'Effectué' 
+                : disbursement.status === 'pending' ? 'En attente'
+                : disbursement.status === 'approved' ? 'Approuvé'
+                : disbursement.status === 'rejected' ? 'Rejeté'
+                : disbursement.status === 'processing' ? 'En traitement'
+                : disbursement.status === 'failed' ? 'Échoué'
+                : disbursement.status === 'canceled' ? 'Annulé'
+                : disbursement.status === 'draft' ? 'Brouillon'
+                : disbursement.status}
             </div>
           </div>
         </div>
@@ -184,7 +196,7 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
         </div>
       </div>
       <div className="flex gap-4">
-        <Button onClick={() => setShowConfirm(true)} disabled={disbursement.status !== 'en attente'}>Confirmer</Button>
+        <Button onClick={() => setShowConfirm(true)} disabled={disbursement.status !== 'pending'}>Confirmer</Button>
         <Button onClick={() => navigate(-1)} variant="ghost">Retour</Button>
       </div>
       <h2 className="text-lg font-semibold mt-8">Historique des interactions</h2>

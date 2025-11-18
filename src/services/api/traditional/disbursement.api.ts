@@ -53,15 +53,25 @@ export const disbursementApi = {
    */
   createDisbursement: async (disbursement: Omit<Disbursement, 'id'>): Promise<Disbursement> => {
     try {
-      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements`, disbursement);
+      // Assurer que currency est défini (valeur par défaut: CDF) et status est pending
+      const disbursementWithDefaults = {
+        ...disbursement,
+        currency: disbursement.currency || 'CDF', // Code ISO 4217 par défaut
+        status: disbursement.status || 'pending',
+      };
+      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements`, disbursementWithDefaults);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn('Fallback to localStorage for creating disbursement', error);
       
-      // Générer un ID unique
-      const id = `DISB-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      // Générer un ID unique au format conforme: DISB-YYYY-NNNNNN
+      const year = new Date().getFullYear();
+      const sequence = Date.now() % 1000000;
+      const id = `DISB-${year}-${sequence.toString().padStart(6, '0')}`;
       const newDisbursement: Disbursement = {
         ...disbursement,
+        currency: disbursement.currency || 'CDF',
+        status: (disbursement.status || 'pending') as any,
         id
       };
       
@@ -146,7 +156,7 @@ export const disbursementApi = {
       console.warn(`Fallback to localStorage for confirming disbursement ${id}`, error);
       
       return disbursementApi.updateDisbursement(id, {
-        status: 'effectué',
+        status: 'completed' as any, // Statut conforme à DisbursementStatus.COMPLETED
         transactionReference: transactionDetails.transactionReference,
         executionDate: transactionDetails.executionDate,
         valueDate: transactionDetails.valueDate

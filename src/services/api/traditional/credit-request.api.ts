@@ -69,12 +69,18 @@ export const creditRequestApi = {
    */
   createRequest: async (request: Omit<CreditRequest, 'id' | 'createdAt' | 'status'>): Promise<CreditRequest> => {
     try {
-      return await apiClient.post<CreditRequest>('/portfolios/traditional/credit-requests', request);
+      // Assurer que currency est défini (valeur par défaut: CDF)
+      const requestWithCurrency = {
+        ...request,
+        currency: request.currency || 'CDF', // Code ISO 4217 par défaut
+      };
+      return await apiClient.post<CreditRequest>('/portfolios/traditional/credit-requests', requestWithCurrency);
     } catch (error) {
       console.warn('Fallback to localStorage for creating credit request', error);
       // Pour le fallback, nous devons créer un ID et définir le statut et la date nous-mêmes
       const newRequest: CreditRequest = {
         ...request,
+        currency: request.currency || 'CDF', // Code ISO 4217 par défaut
         id: `req-${Date.now()}`,
         createdAt: new Date().toISOString(),
         status: 'pending',

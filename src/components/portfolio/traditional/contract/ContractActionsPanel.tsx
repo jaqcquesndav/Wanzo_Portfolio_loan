@@ -112,7 +112,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
             className="text-green-600 border-green-600 hover:bg-green-50"
           >
             <BanknotesIcon className="w-4 h-4 mr-1" />
-            dûbloquer
+            Débloquer
           </Button>
         </div>
 
@@ -143,7 +143,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
                 className="text-orange-600 border-orange-600 hover:bg-orange-50"
                 onClick={() => openStatusDialog('defaulted')}
               >
-                Marquer dûfaillant
+                Marquer défaillant
               </Button>
               <Button 
                 variant="outline" 
