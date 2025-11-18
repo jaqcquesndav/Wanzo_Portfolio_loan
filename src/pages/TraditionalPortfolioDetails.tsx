@@ -369,8 +369,41 @@ export default function TraditionalPortfolioDetails() {
                   onDisburse={(id) => changeRequestStatus(id, 'disbursed')}
                   onView={(id) => navigate(`/portfolio/${id}/requests/${id}`)}
                   onViewCompany={(memberId) => {
-                    const company = mockCompanies.find(c => c.id === memberId);
-                    setSelectedCompany(company || null);
+                    // Chercher d'abord dans mockCompanies par ID
+                    let company = mockCompanies.find(c => c.id === memberId);
+                    
+                    // Si non trouvé, chercher par nom
+                    if (!company) {
+                      const companyName = getMemberName(memberId);
+                      company = mockCompanies.find(c => c.name === companyName);
+                    }
+                    
+                    // Si toujours pas trouvé, créer un objet Company minimal
+                    if (!company) {
+                      const companyName = getMemberName(memberId);
+                      company = {
+                        id: memberId,
+                        name: companyName,
+                        sector: 'Non spécifié',
+                        size: 'PME' as CompanySize,
+                        annual_revenue: 0,
+                        employee_count: 0,
+                        status: 'lead' as CompanyStatus,
+                        financial_metrics: {
+                          annual_revenue: 0,
+                          revenue_growth: 0,
+                          profit_margin: 0,
+                          cash_flow: 0,
+                          debt_ratio: 0,
+                          working_capital: 0,
+                          credit_score: 0,
+                          financial_rating: 'NR' as const,
+                          ebitda: 0
+                        }
+                      };
+                    }
+                    
+                    setSelectedCompany(company);
                     setCompanyDetailModalOpen(true);
                   }}
                   onCreateContract={(id) => console.log('Créer contrat', id)}

@@ -4,6 +4,60 @@ export type CompanyStatus = 'active' | 'pending' | 'rejected' | 'funded' | 'cont
 // Rating financier conforme à la documentation (AAA à E)
 export type FinancialRating = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'C' | 'D' | 'E';
 
+// Types de comptes de trésorerie selon SYSCOHADA
+export type TreasuryAccountType = 'bank' | 'cash' | 'investment' | 'transit';
+
+// Devise supportée
+export type Currency = 'CDF' | 'USD' | 'EUR';
+
+// Échelle temporelle pour les séries de trésorerie
+export type TimeseriesScale = 'weekly' | 'monthly' | 'quarterly' | 'annual';
+
+/**
+ * Compte de trésorerie SYSCOHADA
+ * Classes SYSCOHADA : 521 (banques), 53 (caisse), 54 (placements), 57 (virements internes)
+ */
+export interface TreasuryAccount {
+  code: string;                    // Code comptable SYSCOHADA (521*, 53*, 54*, 57*)
+  name: string;                    // Libellé du compte
+  type: TreasuryAccountType;       // Type de compte
+  balance: number;                 // Solde actuel
+  currency: Currency;              // Devise
+  bankName?: string;               // Nom de la banque (pour type=bank)
+  accountNumber?: string;          // Numéro de compte (pour type=bank)
+}
+
+/**
+ * Résumé d'une période temporelle
+ */
+export interface TreasuryPeriod {
+  periodId: string;                // Identifiant période (2025-W46, 2025-11, 2025-Q4, 2025)
+  startDate: string;               // Date début période (ISO 8601)
+  endDate: string;                 // Date fin période (ISO 8601)
+  totalBalance: number;            // Solde total pour la période
+  accountsCount: number;           // Nombre de comptes actifs
+  treasuryAccounts?: TreasuryAccount[]; // Détails des comptes (optionnel)
+}
+
+/**
+ * Séries temporelles multi-échelles
+ */
+export interface TreasuryTimeseries {
+  weekly: TreasuryPeriod[];        // 12 dernières semaines
+  monthly: TreasuryPeriod[];       // 12 derniers mois
+  quarterly: TreasuryPeriod[];     // 4 derniers trimestres
+  annual: TreasuryPeriod[];        // 3 dernières années
+}
+
+/**
+ * Données complètes de trésorerie
+ */
+export interface TreasuryData {
+  total_treasury_balance: number;  // Solde total trésorerie
+  accounts: TreasuryAccount[];     // Liste des comptes de trésorerie
+  timeseries?: TreasuryTimeseries; // Séries temporelles (optionnel)
+}
+
 export interface Company {
   id: string;
   name: string;
@@ -27,6 +81,7 @@ export interface Company {
     credit_score: number;        // Score de crédit (0-100)
     financial_rating: FinancialRating; // Rating financier (AAA-E)
     ebitda?: number;             // EBITDA (optionnel)
+    treasury_data?: TreasuryData; // Données de trésorerie SYSCOHADA (optionnel)
   };
   
   // Informations de contact (essentielles pour prospection)

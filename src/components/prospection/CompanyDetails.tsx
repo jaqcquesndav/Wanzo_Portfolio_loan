@@ -1,6 +1,6 @@
 // src/components/prospection/CompanyDetails.tsx
 import { useState, useEffect, useRef } from 'react';
-import { X, Copy, CheckCircle2, MapPin, Building2, Phone, Mail, Globe, Clock, AlertCircle } from 'lucide-react';
+import { X, Copy, CheckCircle2, MapPin, Building2, Phone, Mail, Globe, Clock, AlertCircle, Wallet } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Table, TableBody, TableRow, TableCell } from '../ui/Table';
@@ -8,6 +8,11 @@ import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 import type { Company } from '../../types/company';
 import { CreditScoreGauge } from './CreditScoreGauge';
 import { FinancialRatingBadge } from './FinancialRatingBadge';
+import { TreasuryMetricsCards } from './treasury/TreasuryMetricsCards';
+import { TreasuryPeriodFilter } from './treasury/TreasuryPeriodFilter';
+import { TreasuryTable } from './treasury/TreasuryTable';
+import { TreasuryExport } from './treasury/TreasuryExport';
+import { useTreasuryData } from '../../hooks/useTreasuryData';
 
 interface CompanyDetailsProps {
   company: Company;
@@ -24,6 +29,9 @@ export function CompanyDetails({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const { formatAmount } = useCurrencyContext();
+
+  // Treasury data management
+  const treasuryHook = useTreasuryData(company.financial_metrics?.treasury_data);
 
   // Helper: Copy to clipboard
   const copyToClipboard = (text: string, field: string) => {
@@ -173,7 +181,7 @@ export function CompanyDetails({
           <nav className="flex -mb-px">
             {[
               { id: 'overview', label: 'Vue d\'ensemble', icon: CheckCircle2 },
-              { id: 'financial', label: 'Finances', icon: Building2 },
+              { id: 'financial', label: 'Finances & Trésorerie', icon: Wallet },
               { id: 'contacts', label: 'Contacts & Équipe', icon: Phone },
             ].map(tab => (
               <button
@@ -296,62 +304,94 @@ export function CompanyDetails({
             </div>
           )}
 
-          {/* Tab: Financial Details */}
+          {/* Tab: Financial Details & Treasury */}
           {activeTab === 'financial' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Métriques financières détaillées</h3>
-              
-              <div className="border dark:border-gray-700 rounded-lg overflow-hidden">
-                <Table>
-                  <TableBody>
-                    {company.financial_metrics?.annual_revenue !== undefined && (
-                      <InfoRow label="Chiffre d'affaires annuel" value={formatAmount(company.financial_metrics.annual_revenue)} />
-                    )}
-                    {company.financial_metrics?.revenue_growth !== undefined && (
-                      <InfoRow 
-                        label="Croissance du CA" 
-                        value={
-                          <span className={company.financial_metrics.revenue_growth >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-                            {company.financial_metrics.revenue_growth > 0 ? '+' : ''}{company.financial_metrics.revenue_growth}%
-                          </span>
-                        } 
-                      />
-                    )}
-                    {company.financial_metrics?.profit_margin !== undefined && (
-                      <InfoRow label="Marge bénéficiaire" value={`${company.financial_metrics.profit_margin}%`} />
-                    )}
-                    {company.financial_metrics?.cash_flow !== undefined && (
-                      <InfoRow label="Flux de trésorerie" value={formatAmount(company.financial_metrics.cash_flow)} />
-                    )}
-                    {company.financial_metrics?.debt_ratio !== undefined && (
-                      <InfoRow 
-                        label="Ratio d'endettement" 
-                        value={
-                          <span className={company.financial_metrics.debt_ratio > 0.7 ? 'text-orange-600 font-semibold' : 'text-green-600 font-semibold'}>
-                            {(company.financial_metrics.debt_ratio * 100).toFixed(1)}%
-                          </span>
-                        } 
-                      />
-                    )}
-                    {company.financial_metrics?.working_capital !== undefined && (
-                      <InfoRow label="Fonds de roulement" value={formatAmount(company.financial_metrics.working_capital)} />
-                    )}
-                    {company.financial_metrics?.credit_score !== undefined && (
-                      <InfoRow label="Score de crédit" value={`${company.financial_metrics.credit_score}/100`} />
-                    )}
-                    {company.financial_metrics?.financial_rating && (
-                      <InfoRow 
-                        label="Rating financier" 
-                        value={<FinancialRatingBadge rating={company.financial_metrics.financial_rating} size="small" showLabel={false} />} 
-                      />
-                    )}
-                    {company.financial_metrics?.ebitda !== undefined && (
-                      <InfoRow label="EBITDA" value={formatAmount(company.financial_metrics.ebitda)} />
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              {/* Metrics Cards */}
+              <TreasuryMetricsCards company={company} />
 
+              {/* Treasury Section */}
+              {treasuryHook.treasuryData ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Trésorerie SYSCOHADA
+                    </h3>
+                    <Badge variant="info">
+                      Solde total: {formatAmount(treasuryHook.treasuryData.total_treasury_balance)}
+                    </Badge>
+                  </div>
+
+                  {/* Period Filter */}
+                  {treasuryHook.treasuryData.timeseries && (
+                    <TreasuryPeriodFilter
+                      selectedScale={treasuryHook.selectedScale}
+                      onScaleChange={treasuryHook.setSelectedScale}
+                      periods={treasuryHook.getPeriods()}
+                      selectedPeriod={treasuryHook.selectedPeriod}
+                      onPeriodSelect={treasuryHook.setSelectedPeriod}
+                    />
+                  )}
+
+                  {/* Period Stats */}
+                  {treasuryHook.selectedPeriod && treasuryHook.periodStats && (
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Période</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {treasuryHook.selectedPeriod.periodId}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Solde actuel</div>
+                          <div className="font-semibold text-blue-600">
+                            {formatAmount(treasuryHook.periodStats.currentBalance)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Variation</div>
+                          <div className={`font-semibold ${treasuryHook.periodStats.changeAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {treasuryHook.periodStats.changeAmount >= 0 ? '+' : ''}{formatAmount(treasuryHook.periodStats.changeAmount)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Évolution</div>
+                          <div className={`font-semibold ${treasuryHook.periodStats.changePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {treasuryHook.periodStats.changePercent >= 0 ? '+' : ''}{treasuryHook.periodStats.changePercent.toFixed(2)}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Treasury Table */}
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
+                      Comptes de trésorerie
+                    </h4>
+                    <TreasuryTable accounts={treasuryHook.filteredAccounts} />
+                  </div>
+
+                  {/* Export */}
+                  <TreasuryExport
+                    accounts={treasuryHook.treasuryData.accounts}
+                    periods={treasuryHook.getPeriods()}
+                    selectedScale={treasuryHook.selectedScale}
+                    companyName={company.name}
+                  />
+                </>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                  <Wallet className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                  <p className="text-gray-600 dark:text-gray-400 font-medium mb-2">
+                    Aucune donnée de trésorerie disponible
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    Les données de trésorerie seront affichées ici une fois partagées par l'entreprise
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

@@ -1,4 +1,5 @@
 import type { Company, CompanySize, CompanyStatus } from '../types/company';
+import { getMockTreasuryData } from './mockTreasuryData';
 
 // Importer depuis le nouveau système de données
 import { mockCompanies as companiesData } from './companies';
@@ -45,13 +46,16 @@ export const mockCompanies: Company[] = companiesData.map(company => {
     pitch_deck_url: safeString(company.pitch_deck_url),
     status: (safeString(company.status) || 'active') as CompanyStatus,
     financial_metrics: {
+      annual_revenue: safeNumber(company.annual_revenue),
       revenue_growth: safeNumber(safeGet(financialMetrics, 'revenue_growth')),
       profit_margin: safeNumber(safeGet(financialHighlights, 'operatingMargin')),
       cash_flow: safeNumber(safeGet(financialHighlights, 'ebitda')),
       debt_ratio: 0.3,
       working_capital: safeNumber(safeGet(financialHighlights, 'totalAssets')),
       credit_score: company.creditRating === 'A' ? 85 : company.creditRating === 'B' ? 75 : 65,
-      financial_rating: (safeString(company.creditRating) || 'C') as 'A' | 'B' | 'C' | 'D'
+      financial_rating: (safeString(company.creditRating) || 'C') as 'A' | 'B' | 'C' | 'D',
+      ebitda: safeNumber(safeGet(financialHighlights, 'ebitda')),
+      treasury_data: getMockTreasuryData(company.id) // Ajouter données de trésorerie
     },
     esg_metrics: {
       carbon_footprint: 12.5,
