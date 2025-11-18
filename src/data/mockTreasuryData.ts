@@ -303,12 +303,75 @@ export const mockTreasuryCommerceHub: TreasuryData = {
 };
 
 /**
+ * Données de trésorerie pour PME Agro Sarl (COMP-0001)
+ */
+export const mockTreasuryPMEAgro: TreasuryData = {
+  total_treasury_balance: 145000000.00,
+  accounts: [
+    {
+      code: '521001',
+      name: 'Equity Bank - Compte Courant CDF',
+      type: 'bank',
+      balance: 85000000.00,
+      currency: 'CDF',
+      bankName: 'Equity Bank',
+      accountNumber: 'CD39-2001-5678-9012-3456'
+    },
+    {
+      code: '521002',
+      name: 'BCDC - Compte USD',
+      type: 'bank',
+      balance: 25000000.00,
+      currency: 'USD',
+      bankName: 'BCDC',
+      accountNumber: 'CD39-2002-8765-4321-0987'
+    },
+    {
+      code: '531001',
+      name: 'Caisse Principale CDF',
+      type: 'cash',
+      balance: 18000000.00,
+      currency: 'CDF'
+    },
+    {
+      code: '531002',
+      name: 'Caisse Secondaire USD',
+      type: 'cash',
+      balance: 5000000.00,
+      currency: 'USD'
+    },
+    {
+      code: '541001',
+      name: 'Placements à terme - Equity Bank',
+      type: 'investment',
+      balance: 12000000.00,
+      currency: 'CDF',
+      bankName: 'Equity Bank'
+    }
+  ],
+  timeseries: {
+    weekly: generateWeeklyPeriods(12).map(p => ({ ...p, totalBalance: p.totalBalance * 1.16, accountsCount: 5 })),
+    monthly: generateMonthlyPeriods(12).map(p => ({ ...p, totalBalance: p.totalBalance * 1.16, accountsCount: 5 })),
+    quarterly: generateQuarterlyPeriods(4).map(p => ({ ...p, totalBalance: p.totalBalance * 1.16, accountsCount: p.periodId.includes('2023') ? 3 : 5 })),
+    annual: generateAnnualPeriods(3).map(p => ({ ...p, totalBalance: p.totalBalance * 1.16, accountsCount: parseInt(p.periodId) < 2024 ? 3 : 5 }))
+  }
+};
+
+/**
  * Map de toutes les données de trésorerie mockées par companyId
  */
 export const mockTreasuryDataMap: Record<string, TreasuryData> = {
-  '1': mockTreasuryTechInnovate,    // TechInnovate SARL
-  '2': mockTreasuryAgroPlus,        // AgroPlus Services
-  '3': mockTreasuryCommerceHub,     // CommerceHub SA
+  '1': mockTreasuryTechInnovate,    // TechInnovate SARL (legacy)
+  '2': mockTreasuryAgroPlus,        // AgroPlus Services (legacy)
+  '3': mockTreasuryCommerceHub,     // CommerceHub SA (legacy)
+  'COMP-0001': mockTreasuryPMEAgro, // PME Agro Sarl
+  'COMP-0002': mockTreasuryCommerceHub, // TransLogistics (reuse CommerceHub data)
+  'COMP-0003': mockTreasuryAgroPlus,    // BTP Services (reuse AgroPlus data)
+  'COMP-0004': mockTreasuryTechInnovate, // InnoBiotech (reuse TechInnovate data)
+  'COMP-0005': mockTreasuryTechInnovate, // Digital Solutions (reuse TechInnovate data)
+  'COMP-0006': mockTreasuryCommerceHub,  // Eco-Construct (reuse CommerceHub data)
+  'COMP-0007': mockTreasuryPMEAgro,      // AgroTech Innovations (reuse PME Agro data)
+  'COMP-0008': mockTreasuryAgroPlus,     // MediHealth Plus (reuse AgroPlus data)
 };
 
 /**
