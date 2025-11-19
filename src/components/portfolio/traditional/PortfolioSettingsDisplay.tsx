@@ -1,11 +1,13 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Label } from '../../ui/Label';
 import { Select } from '../../ui/Select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
 import { ConfirmModal } from '../../ui/ConfirmModal';
-import { BankAccountsPanel } from '../shared/BankAccountsPanel';
+import { AccountsPanel } from '../shared/AccountsPanel';
+import { usePortfolioAccounts } from '../../../hooks/usePortfolioAccounts';
+import { useToastStore } from '../../../stores/toastStore';
 import { ExportPortfolioData } from '../shared/ExportPortfolioData';
 import { ProductList } from './ProductList';
 import { PortfolioDocumentsSection } from '../shared/PortfolioDocumentsSection';
@@ -27,6 +29,28 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
   const [activeTab, setActiveTab] = useState('general');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPortfolio, setEditedPortfolio] = useState<Partial<Portfolio>>({});
+  const addToast = useToastStore((state) => state.addToast);
+  
+  // Hook pour gérer les comptes du portefeuille
+  const {
+    bankAccounts,
+    mobileMoneyAccounts,
+    loading: accountsLoading,
+    addBankAccount,
+    updateBankAccount,
+    deleteBankAccount,
+    addMobileMoneyAccount,
+    updateMobileMoneyAccount,
+    deleteMobileMoneyAccount,
+    loadBankAccounts,
+    loadMobileMoneyAccounts,
+  } = usePortfolioAccounts(portfolio.id);
+  
+  // Charger les comptes au montage du composant
+  useEffect(() => {
+    loadBankAccounts();
+    loadMobileMoneyAccounts();
+  }, [loadBankAccounts, loadMobileMoneyAccounts]);
   
   const handleStartEdit = () => {
     setIsEditing(true);
@@ -107,7 +131,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
         <TabsList className="mb-6">
           <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Général</TabsTrigger>
           <TabsTrigger value="products" currentValue={activeTab} onValueChange={setActiveTab}>Produits</TabsTrigger>
-          <TabsTrigger value="accounts" currentValue={activeTab} onValueChange={setActiveTab}>Comptes bancaires</TabsTrigger>
+          <TabsTrigger value="accounts" currentValue={activeTab} onValueChange={setActiveTab}>Comptes</TabsTrigger>
           <TabsTrigger value="bcc-parameters" currentValue={activeTab} onValueChange={setActiveTab}>Paramètres BCC</TabsTrigger>
           <TabsTrigger value="bcc-surveillance" currentValue={activeTab} onValueChange={setActiveTab}>Surveillance BCC</TabsTrigger>
         </TabsList>
@@ -319,27 +343,88 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
         </TabsContent>
 
         <TabsContent value="accounts" currentValue={activeTab}>
-          <BankAccountsPanel
-            accounts={portfolio.bank_accounts || []}
-            onAdd={() => {
-              if (isEditing) {
-                // Gérer l'ajout de compte en mode édition
-                console.log("Ajouter un compte bancaire");
-              } else {
-                handleStartEdit();
-              }
-            }}
-            onEdit={() => {
+          <AccountsPanel
+            bankAccounts={bankAccounts}
+            mobileMoneyAccounts={mobileMoneyAccounts}
+            onAddBank={async (account) => {
               if (!isEditing) {
                 handleStartEdit();
+                return;
+              }
+              try {
+                await addBankAccount(account);
+                addToast('success', 'Compte bancaire ajouté avec succès');
+              } catch (error) {
+                addToast('error', 'Erreur lors de l\'ajout du compte bancaire');
+                console.error('Error adding bank account:', error);
               }
             }}
-            onDelete={() => {
+            onEditBank={async (account) => {
               if (!isEditing) {
                 handleStartEdit();
+                return;
+              }
+              try {
+                await updateBankAccount(account.id, account);
+                addToast('success', 'Compte bancaire modifié avec succès');
+              } catch (error) {
+                addToast('error', 'Erreur lors de la modification du compte bancaire');
+                console.error('Error updating bank account:', error);
               }
             }}
-            readOnly={!isEditing}
+            onDeleteBank={async (accountId) => {
+              if (!isEditing) {
+                handleStartEdit();
+                return;
+              }
+              try {
+                await deleteBankAccount(accountId);
+                addToast('success', 'Compte bancaire supprimé avec succès');
+              } catch (error) {
+                addToast('error', 'Erreur lors de la suppression du compte bancaire');
+                console.error('Error deleting bank account:', error);
+              }
+            }}
+            onAddMobileMoney={async (account) => {
+              if (!isEditing) {
+                handleStartEdit();
+                return;
+              }
+              try {
+                await addMobileMoneyAccount(account);
+                addToast('success', 'Compte Mobile Money ajouté avec succès');
+              } catch (error) {
+                addToast('error', 'Erreur lors de l\'ajout du compte Mobile Money');
+                console.error('Error adding mobile money account:', error);
+              }
+            }}
+            onEditMobileMoney={async (account) => {
+              if (!isEditing) {
+                handleStartEdit();
+                return;
+              }
+              try {
+                await updateMobileMoneyAccount(account.id, account);
+                addToast('success', 'Compte Mobile Money modifié avec succès');
+              } catch (error) {
+                addToast('error', 'Erreur lors de la modification du compte Mobile Money');
+                console.error('Error updating mobile money account:', error);
+              }
+            }}
+            onDeleteMobileMoney={async (accountId) => {
+              if (!isEditing) {
+                handleStartEdit();
+                return;
+              }
+              try {
+                await deleteMobileMoneyAccount(accountId);
+                addToast('success', 'Compte Mobile Money supprimé avec succès');
+              } catch (error) {
+                addToast('error', 'Erreur lors de la suppression du compte Mobile Money');
+                console.error('Error deleting mobile money account:', error);
+              }
+            }}
+            readOnly={!isEditing || accountsLoading}
           />
         </TabsContent>
 

@@ -5,6 +5,7 @@ export * from './institution.api';
 export * from './notifications.api';
 export * from './payment.api';
 export * from './portfolio.api';
+export * from './portfolio-accounts.api';
 export * from './risk.api';
 export * from './user.api';
 export * from './users.api';

@@ -58,6 +58,7 @@ interface Portfolio {
   risk_profile: 'conservative' | 'moderate' | 'aggressive';
   products: FinancialProduct[];
   bank_accounts?: BankAccount[];
+  mobile_money_accounts?: MobileMoneyAccount[];
   manager?: {
     id: string;
     name: string;
@@ -77,8 +78,9 @@ interface Portfolio {
 }
 ```
 
-**Conformité Documentation** : ✅ 95%
+**Conformité Documentation** : ✅ 98%
 - ✅ Tous les champs principaux présents
+- ✅ Champ `mobile_money_accounts` ajouté pour support Mobile Money
 - ⚠️ Champ `reference` manquant (documenté mais non implémenté)
 - ⚠️ Champ `currency` manquant (documenté mais non implémenté)
 - ⚠️ Champs `clientCount` et `riskScore` manquants (documentés comme calculés)

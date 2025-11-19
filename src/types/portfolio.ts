@@ -1,6 +1,7 @@
 // Import explicites pour une meilleure maintenabilité
 import type { FinancialProduct } from './traditional-portfolio';
 import type { BankAccount } from './bankAccount';
+import type { MobileMoneyAccount } from './mobileMoneyAccount';
 // Autres types importés à la demande
 
 export type PortfolioStatus = 'active' | 'inactive' | 'pending' | 'archived';
@@ -21,6 +22,7 @@ export interface Portfolio {
   risk_profile: 'conservative' | 'moderate' | 'aggressive';
   products: FinancialProduct[]; // Maintenant obligatoire et non optionnel
   bank_accounts?: BankAccount[];
+  mobile_money_accounts?: MobileMoneyAccount[];
   manager?: {
     id: string;
     name: string;

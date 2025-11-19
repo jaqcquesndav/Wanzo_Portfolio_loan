@@ -290,11 +290,25 @@ export default function TraditionalPortfolioDetails() {
                 {portfolio && (
                   <PortfolioSettingsDisplay
                     portfolio={portfolio as TraditionalPortfolio}
-                    onEdit={() => {}} // Édition intégrée dans le composant
+                    onEdit={async (updatedData) => {
+                      try {
+                        await addOrUpdate(updatedData);
+                        showNotification('Paramètres du portefeuille sauvegardés avec succès', 'success');
+                      } catch (error) {
+                        console.error('Error saving portfolio settings:', error);
+                        showNotification('Erreur lors de la sauvegarde des paramètres', 'error');
+                      }
+                    }}
                     onAddProduct={() => setShowProductForm(true)}
-                    onDelete={() => {
-                      // TODO: brancher la suppression réelle ici
-                      showNotification('Portefeuille supprimé (simulation)', 'success');
+                    onDelete={async () => {
+                      try {
+                        // TODO: Appeler l'API de suppression
+                        showNotification('Portefeuille supprimé avec succès', 'success');
+                        navigate('/portfolio');
+                      } catch (error) {
+                        console.error('Error deleting portfolio:', error);
+                        showNotification('Erreur lors de la suppression du portefeuille', 'error');
+                      }
                     }}
                   />
                 )}

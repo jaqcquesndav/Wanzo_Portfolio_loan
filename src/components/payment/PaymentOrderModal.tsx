@@ -325,8 +325,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                           disabled={readOnly}
                           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                             formData.paymentMethod === 'bank'
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                              ? 'border-primary bg-primary-light text-primary'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-primary/30'
                           }`}
                         >
                           <BuildingLibraryIcon className="h-5 w-5" />
@@ -339,8 +339,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                           disabled={readOnly}
                           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                             formData.paymentMethod === 'mobile_money'
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                              ? 'border-primary bg-primary-light text-primary'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-primary/30'
                           }`}
                         >
                           <DevicePhoneMobileIcon className="h-5 w-5" />
@@ -419,7 +419,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                                 value={formData.beneficiary.accountNumber}
                                 onChange={(e) => handleBankAccountSelect(e.target.value)}
                                 disabled={readOnly}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                               >
                                 <option value="">Sélectionner un compte</option>
                                 {bankAccounts.map((account) => (
@@ -508,7 +508,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                                 value={formData.beneficiary.phoneNumber || ''}
                                 onChange={(e) => handleMobileMoneyAccountSelect(e.target.value)}
                                 disabled={readOnly}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                               >
                                 <option value="">Sélectionner un compte</option>
                                 {mobileMoneyAccounts.map((account) => (
@@ -576,8 +576,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                                   disabled={readOnly || mobileMoneyAccounts.length > 0}
                                   className={`relative p-2 border-2 rounded-lg transition-all ${
                                     formData.beneficiary.provider === provider.name
-                                      ? 'border-indigo-600 bg-indigo-50'
-                                      : 'border-gray-300 bg-white hover:border-gray-400'
+                                      ? 'border-primary bg-primary-light'
+                                      : 'border-gray-300 bg-white hover:border-primary/30'
                                   }`}
                                 >
                                   <img 
@@ -666,7 +666,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       {!readOnly && (
                         <button
                           type="submit"
-                          className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mr-2"
+                          className="inline-flex justify-center rounded-md border border-transparent bg-primary py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 mr-2"
                         >
                           <CheckIcon className="h-5 w-5 mr-2" />
                           Enregistrer
@@ -685,7 +685,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       >
                         Fermer
                       </button>
