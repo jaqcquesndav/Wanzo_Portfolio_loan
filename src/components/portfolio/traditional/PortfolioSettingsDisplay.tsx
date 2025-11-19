@@ -104,7 +104,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
   
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-end items-center mb-6">
         <div className="flex gap-3">
           <ExportPortfolioData portfolio={portfolio} onExport={handleExport} />
           {!isEditing ? (
