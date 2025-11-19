@@ -11,7 +11,7 @@ import { TableSkeleton } from '../../ui/TableSkeleton';
 import { EmptyState } from '../../ui/EmptyState';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
-import { CreditRequest, CreditRequestStatus } from '../../../types/credit';
+import { CreditRequest, CreditRequestStatus, CreditDocument } from '../../../types/credit';
 
 // Type amélioRé et standardisé pour une demande de cRédit
 interface CreditRequestsTableProps {
@@ -328,13 +328,14 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
                   Date de demande
                   <ArrowUpDown className="h-4 w-4 inline-block ml-1" />
                 </TableHeader>
+                <TableHeader>Dossier</TableHeader>
                 <TableHeader>Actions</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>
               {currentPageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="p-0">
+                  <TableCell colSpan={8} className="p-0">
                     <EmptyState
                       icon={CreditCard}
                       title={searchTerm || statusFilter ? "Aucun Résultat" : "Aucune demande de cRédit"}
@@ -390,6 +391,21 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
                       <span className="text-xs text-gray-500 block">
                         {new Date(request.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      {request.documents && request.documents.length > 0 ? (
+                        <div className="flex items-center space-x-1">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-600">
+                            {request.documents.length}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {request.documents.length === 1 ? 'document' : 'documents'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Aucun document</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <ActionsDropdown

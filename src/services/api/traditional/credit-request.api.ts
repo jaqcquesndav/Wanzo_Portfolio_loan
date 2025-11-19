@@ -1,6 +1,6 @@
 // src/services/api/traditional/credit-request.api.ts
 import { apiClient } from '../base.api';
-import { CreditRequest, CreditRequestStatus } from '../../../types/credit';
+import { CreditRequest, CreditRequestStatus, CreditDocument } from '../../../types/credit';
 import { creditRequestsStorageService } from '../../storage/creditRequestsStorage';
 
 /**
@@ -144,6 +144,70 @@ export const creditRequestApi = {
     } catch (error) {
       console.warn('Fallback to localStorage for resetting credit requests', error);
       return await creditRequestsStorageService.resetToMockData();
+    }
+  },
+  
+  /**
+   * Récupère les documents d'une demande de crédit
+   */
+  getDocuments: async (requestId: string): Promise<CreditDocument[]> => {
+    try {
+      return await apiClient.get<CreditDocument[]>(`/portfolios/traditional/credit-requests/${requestId}/documents`);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for documents of credit request ${requestId}`, error);
+      const request = await creditRequestsStorageService.getRequestById(requestId);
+      return request?.documents || [];
+    }
+  },
+  
+  /**
+   * Ajoute un document à une demande de crédit
+   */
+  addDocument: async (requestId: string, document: Omit<CreditDocument, 'id' | 'uploadedAt'>): Promise<CreditDocument> => {
+    try {
+      return await apiClient.post<CreditDocument>(`/portfolios/traditional/credit-requests/${requestId}/documents`, document);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for adding document to credit request ${requestId}`, error);
+      const newDocument: CreditDocument = {
+        ...document,
+        id: `doc-${Date.now()}`,
+        uploadedAt: new Date().toISOString(),
+      };
+      
+      const request = await creditRequestsStorageService.getRequestById(requestId);
+      if (request) {
+        const updatedRequest = {
+          ...request,
+          documents: [...(request.documents || []), newDocument],
+          updatedAt: new Date().toISOString(),
+        };
+        await creditRequestsStorageService.updateRequest(requestId, updatedRequest);
+      }
+      
+      return newDocument;
+    }
+  },
+  
+  /**
+   * Supprime un document d'une demande de crédit
+   */
+  deleteDocument: async (requestId: string, documentId: string): Promise<boolean> => {
+    try {
+      await apiClient.delete(`/portfolios/traditional/credit-requests/${requestId}/documents/${documentId}`);
+      return true;
+    } catch (error) {
+      console.warn(`Fallback to localStorage for deleting document ${documentId} from credit request ${requestId}`, error);
+      const request = await creditRequestsStorageService.getRequestById(requestId);
+      if (request && request.documents) {
+        const updatedRequest = {
+          ...request,
+          documents: request.documents.filter(doc => doc.id !== documentId),
+          updatedAt: new Date().toISOString(),
+        };
+        await creditRequestsStorageService.updateRequest(requestId, updatedRequest);
+        return true;
+      }
+      return false;
     }
   }
 };

@@ -64,6 +64,21 @@ export type Guarantee = {
   updatedAt?: string;
 };
 
+/**
+ * Document attaché à une demande de crédit
+ */
+export type CreditDocument = {
+  id: string;
+  name: string;
+  type: 'business_plan' | 'financial_statements' | 'identity_document' | 'proof_of_address' | 'tax_certificate' | 'bank_statements' | 'project_file' | 'guarantee_document' | 'other';
+  url: string;
+  size?: number; // Taille en bytes
+  mimeType?: string; // Type MIME (application/pdf, image/jpeg, etc.)
+  uploadedBy?: string; // ID de l'utilisateur qui a uploadé
+  uploadedAt: string; // Date d'upload (ISO 8601)
+  description?: string;
+};
+
 export type CreditRequestStatus = 
   | 'draft'
   | 'submitted'
@@ -123,6 +138,7 @@ export type CreditRequest = {
   isGroup: boolean;
   groupId?: string;
   distributions?: CreditDistribution[];
+  documents?: CreditDocument[]; // Documents et pièces jointes associés à la demande
   rejectionReason?: string;
   portfolioId?: string; // ID du portefeuille associé - AJOUTÉ pour conformité
   metadata?: CreditRequestMetadata; // Métadonnées pour synchronisation avec gestion-commerciale - Structure complète conforme
