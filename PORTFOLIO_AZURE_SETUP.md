@@ -341,6 +341,59 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 ```
+
+### Erreur 6 : "Super expression must either be null or a function" dans charts
+
+**Symptôme :**
+```
+Uncaught TypeError: Super expression must either be null or a function
+    at charts-D89tRzSw.js:1:698
+```
+
+**Cause :** Incompatibilité entre `@types/chart.js` v2.x et `chart.js` v4.x, ou utilisation de `chart.js/auto`
+
+**Solution :**
+1. Supprimer les types incompatibles :
+   ```bash
+   npm uninstall @types/chart.js
+   ```
+
+2. Dans les fichiers utilisant Chart.js, remplacer :
+   ```typescript
+   // ❌ MAUVAIS
+   import { Chart } from 'chart.js/auto';
+   
+   // ✅ BON - Import explicite
+   import {
+     Chart,
+     LineController,
+     LineElement,
+     PointElement,
+     LinearScale,
+     CategoryScale,
+     Tooltip,
+     Legend,
+     Filler
+   } from 'chart.js';
+   
+   // Enregistrer les composants
+   Chart.register(
+     LineController,
+     LineElement,
+     PointElement,
+     LinearScale,
+     CategoryScale,
+     Tooltip,
+     Legend,
+     Filler
+   );
+   ```
+
+3. Rebuild et redéployer :
+   ```bash
+   npm run build
+   git add . && git commit -m "Fix chart.js imports" && git push
+   ```
 - [ ] Publish Profile téléchargé depuis Azure
 - [ ] Secret GitHub `AZUREAPPSERVICE_PUBLISHPROFILE_PORTFOLIO` configuré
 - [ ] DNS CNAME configuré (portfolio → wanzo-portfolio.azurewebsites.net)
