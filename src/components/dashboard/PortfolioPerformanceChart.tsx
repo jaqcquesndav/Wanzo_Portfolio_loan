@@ -2,6 +2,7 @@ import { Line } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
 import {
   Chart,
+  LineController,
   LineElement,
   PointElement,
   LinearScale,
@@ -11,7 +12,16 @@ import {
   Filler
 } from 'chart.js';
 
-Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler);
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 
 interface PortfolioPerformanceChartProps {
