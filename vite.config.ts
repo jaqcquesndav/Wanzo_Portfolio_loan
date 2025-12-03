@@ -65,7 +65,7 @@ export default defineConfig({
   },
   build: {
     // Optimisation de la construction
-    minify: 'terser',
+    minify: 'esbuild', // Changé de 'terser' à 'esbuild' pour éviter les problèmes de classe
     cssCodeSplit: true,
     rollupOptions: {
       output: {
