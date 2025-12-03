@@ -75,26 +75,34 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Séparer les bibliothèques volumineuses pour optimiser le chargement
           if (id.includes('node_modules')) {
+            // Normaliser le chemin pour cross-platform
+            const normalizedId = id.replace(/\\/g, '/');
+            
+            // React core et tous ses modules doivent être ensemble
+            if (normalizedId.match(/\/react[\/\-]/) || 
+                normalizedId.includes('/react-dom/') || 
+                normalizedId.includes('/react-router') ||
+                normalizedId.includes('/@remix-run/') ||
+                normalizedId.includes('/scheduler/')) {
+              return 'vendor';
+            }
+            
             // Plotly dans son propre chunk (très volumineux)
-            if (id.includes('plotly.js') || id.includes('react-plotly.js')) {
+            if (normalizedId.includes('/plotly.js/') || 
+                normalizedId.includes('/react-plotly.js/')) {
               return 'plotly';
             }
             
             // Chart.js et Recharts ensemble
-            if (id.includes('chart.js') || id.includes('react-chartjs-2') || 
-                id.includes('recharts') || id.includes('/d3-')) {
+            if (normalizedId.includes('/chart.js/') || 
+                normalizedId.includes('/react-chartjs-2/') || 
+                normalizedId.includes('/recharts/') || 
+                normalizedId.includes('/d3-')) {
               return 'charts';
             }
             
-            // React core
-            if (id.includes('react') || id.includes('react-dom') || 
-                id.includes('react-router') || id.includes('scheduler')) {
-              return 'vendor';
-            }
-            
-            // Tout le reste des node_modules dans un chunk séparé
+            // Tout le reste des node_modules
             return 'libs';
           }
         },
