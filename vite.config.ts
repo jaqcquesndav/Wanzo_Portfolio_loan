@@ -74,38 +74,35 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            // Normaliser le chemin pour cross-platform
-            const normalizedId = id.replace(/\\/g, '/');
-            
-            // React core et tous ses modules doivent être ensemble
-            if (normalizedId.match(/\/react[\/\-]/) || 
-                normalizedId.includes('/react-dom/') || 
-                normalizedId.includes('/react-router') ||
-                normalizedId.includes('/@remix-run/') ||
-                normalizedId.includes('/scheduler/')) {
-              return 'vendor';
-            }
-            
-            // Plotly dans son propre chunk (très volumineux)
-            if (normalizedId.includes('/plotly.js/') || 
-                normalizedId.includes('/react-plotly.js/')) {
-              return 'plotly';
-            }
-            
-            // Chart.js et Recharts ensemble
-            if (normalizedId.includes('/chart.js/') || 
-                normalizedId.includes('/react-chartjs-2/') || 
-                normalizedId.includes('/recharts/') || 
-                normalizedId.includes('/d3-')) {
-              return 'charts';
-            }
-            
-            // Tout le reste des node_modules
-            return 'libs';
-          }
-        },
+        manualChunks: {
+          // React core et routing
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'react/jsx-runtime'
+          ],
+          // Bibliothèques de visualisation
+          charts: [
+            'recharts',
+            'chart.js',
+            'react-chartjs-2'
+          ],
+          // Plotly séparé car très volumineux
+          plotly: [
+            'plotly.js',
+            'react-plotly.js'
+          ],
+          // Icônes et UI
+          ui: [
+            'lucide-react',
+            '@heroicons/react',
+            '@headlessui/react',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-popover'
+          ]
+        }
       },
     },
     chunkSizeWarningLimit: 1000,
