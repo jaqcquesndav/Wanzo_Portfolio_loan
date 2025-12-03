@@ -1,37 +1,62 @@
-# Instructions de Configuration Azure - Wanzo Accounting
+# Guide Général de Déploiement Azure - Applications Wanzo
 
-## ✅ Fichiers de Production Créés
+Ce document explique la configuration générale pour déployer des applications React/Vite sur Azure App Service.
 
-Les fichiers suivants ont été créés pour permettre le déploiement sur Azure :
+**📁 Pour les instructions spécifiques à cette application (Portfolio), voir :** [`PORTFOLIO_AZURE_SETUP.md`](./PORTFOLIO_AZURE_SETUP.md)
+
+---
+
+## 🏗️ Architecture Générale
+
+Toutes les applications Wanzo suivent la même architecture de déploiement :
+
+### ✅ Fichiers de Production Requis
 
 1. **`production-server.js`** - Serveur Express pour production
 2. **`production-package.json`** - Dépendances et scripts de production
 3. **`.deployment`** - Configuration Azure (désactive le rebuild)
-4. **`vite.config.ts`** - Modifié avec plugin de copie automatique
-5. **`.github/workflows/main_wanzo-accounting.yml`** - Pipeline CI/CD
+4. **`vite.config.ts`** - Plugin de copie automatique des fichiers de production
+5. **`.github/workflows/main_<app-name>.yml`** - Pipeline CI/CD (⚠️ Le nom doit correspondre à l'App Service)
 
 ---
 
-## 📋 Étapes de Configuration Azure
+## 📋 Vue d'Ensemble des Applications Déployées
+
+| Application | App Service | Domaine | Workflow | Repository |
+|-------------|-------------|---------|----------|------------|
+| **Landing Page** | `wanzzo` | wanzzo.com | `main_wanzzo.yml` | Wanzo_Land |
+| **Accounting** | `wzaccounting` | accounting.wanzzo.com | `main_wzaccounting.yml` | wanzo_compta |
+| **Portfolio** | `wzportfolio` | portfolio.wanzzo.com | `main_wzportfolio.yml` | Wanzo_Portfolio_loan |
+
+---
+
+## 📋 Étapes Générales de Configuration Azure
 
 ### 1. Créer l'App Service Azure
 
 Dans le portail Azure :
 
 1. Créer un **Azure App Service**
-   - Nom : `wanzo-accounting`
+   - Nom : **Doit correspondre au workflow** (ex: `wzportfolio`)
    - Système : **Linux**
    - Runtime : **Node 20 LTS**
    - Région : Canada Central (ou votre région préférée)
 
+**⚠️ RÈGLE CRITIQUE :**
+```
+Nom App Service = wzportfolio
+→ Workflow DOIT s'appeler : main_wzportfolio.yml
+→ Sinon le déploiement automatique NE FONCTIONNERA PAS
+```
+
 2. Configuration du domaine personnalisé
    - Aller dans **Custom domains**
-   - Ajouter le domaine : `accounting.wanzzo.com`
+   - Ajouter votre sous-domaine (ex: `portfolio.wanzzo.com`)
    - Configurer le CNAME DNS chez votre fournisseur :
      ```
      Type: CNAME
-     Name: accounting
-     Value: wanzo-accounting.azurewebsites.net
+     Name: <sous-domaine>
+     Value: <app-service-name>.azurewebsites.net
      ```
 
 3. Configuration SSL
@@ -42,18 +67,27 @@ Dans le portail Azure :
 
 ### 2. Télécharger le Publish Profile
 
-1. Dans le portail Azure, aller sur votre App Service `wanzo-accounting`
+1. Dans le portail Azure, aller sur votre App Service
 2. Cliquer sur **Get publish profile** (dans la barre du haut)
 3. Un fichier `.PublishSettings` sera téléchargé
 
----
+**⚠️ Sécurité :** Ce fichier contient des identifiants sensibles. Ne JAMAIS le committer dans Git !
 
 ### 3. Ajouter le Secret GitHub
 
-1. Aller sur votre repository GitHub : `jaqcquesndav/wanzo_compta`
+1. Aller sur votre repository GitHub
 2. Cliquer sur **Settings** → **Secrets and variables** → **Actions**
 3. Cliquer sur **New repository secret**
-4. Nom du secret : `AZUREAPPSERVICE_PUBLISHPROFILE_ACCOUNTING`
+4. Nom du secret : Contient généralement un hash unique (ex: `AZUREAPPSERVICE_PUBLISHPROFILE_44C23074E5C846A4ABE9B23065AC9A68`)
+5. Valeur : Copier-coller **tout le contenu** du fichier `.PublishSettings`
+6. Cliquer sur **Add secret**
+
+**⚠️ RÈGLE CRITIQUE :**
+Le nom du secret dans le workflow DOIT correspondre EXACTEMENT au nom dans GitHub :
+```yaml
+publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_44C23074... }}
+```
+Sinon → Erreur "No credentials found"ERVICE_PUBLISHPROFILE_ACCOUNTING`
 5. Valeur : Copier-coller **tout le contenu** du fichier `.PublishSettings`
 6. Cliquer sur **Add secret**
 
@@ -94,29 +128,32 @@ git push origin main
    - Copie automatique de `server.js` et `package.json` dans `dist/`
    - Upload de `dist/` comme artifact
    - Déploiement sur Azure
+## 🔍 Vérification du Déploiement
 
-3. Vérifier les logs :
-   - GitHub : Actions tab
-   - Azure : App Service → Log stream
+### URLs de Test
 
----
-
-## 🔍 Vérification
-
-### Tester le Déploiement
-
-1. **URL temporaire Azure :**
-   ```
-   https://wanzo-accounting.azurewebsites.net
-   ```
-
-2. **URL de production (après config DNS) :**
-   ```
-   https://accounting.wanzzo.com
-   ```
+**Format des URLs :**
+- URL Azure : `https://<app-service-name>.azurewebsites.net`
+- URL Production : `https://<sous-domaine>.wanzzo.com`
 
 ### Logs Azure
 
+```bash
+# Via Azure Portal
+App Service → Log stream
+
+# Ou via URL directe
+https://<app-service-name>.scm.azurewebsites.net/api/logstream/
+```
+
+### Vérification du Build Local
+
+Avant de push, toujours vérifier que `dist/` contient les fichiers nécessaires :
+```bash
+npm run build
+ls dist/
+# Doit contenir : index.html, server.js, package.json, assets/
+```
 ```bash
 # Via Azure Portal
 App Service → Log stream
@@ -160,17 +197,26 @@ Site started
 ┌─────────────────────────────────────────────┐
 │    Express Server                           │
 │  • Port: 8080 (Azure PORT env var)          │
-│  • Sert fichiers statiques                  │
-│  • Catch-all → index.html (SPA routing)     │
-└─────────────────────────────────────────────┘
+## 🔄 Règles de Nommage Critiques
+
+**Correspondance obligatoire entre 3 éléments :**
+
+```
+App Service Azure      Workflow GitHub              Secret GitHub
+─────────────────      ───────────────              ─────────────
+wzportfolio       →    main_wzportfolio.yml    →    AZUREAPPSERVICE_PUBLISHPROFILE_<HASH>
+wzaccounting      →    main_wzaccounting.yml   →    AZUREAPPSERVICE_PUBLISHPROFILE_<HASH>
+wanzzo            →    main_wanzzo.yml         →    AZUREAPPSERVICE_PUBLISHPROFILE_<HASH>
 ```
 
----
+**Si ces noms ne correspondent pas :**
+- ❌ Le déploiement automatique ne se déclenchera pas
+- ❌ Vous obtiendrez "No credentials found"
+- ❌ Le site affichera "waiting for content"
 
-## 🔄 Différences avec Landing Page
-
-| Aspect | Landing Page | Accounting App |
-|--------|-------------|----------------|
+**Note importante :** 
+- Le `base: '/'` dans `vite.config.ts` car chaque sous-domaine sert l'app à la racine
+- Les sous-domaines fonctionnent comme des apps indépendantes
 | **Domaine** | wanzzo.com | accounting.wanzzo.com |
 | **App Service** | wanzzo | wanzo-accounting |
 | **Base URL** | `/` | `/` (pas `/accounting/`) |
@@ -385,17 +431,32 @@ cp production-package.json dist/package.json
 9. ✅ **Fix 1 :** Changement de `path: .` → `path: dist/`
 10. ❌ **Erreur :** "No credentials found"
 11. ✅ **Fix 2 :** Ajout section `environment` (sans effet)
-12. ✅ **Fix 3 :** Changement du nom du secret vers celui existant
-13. ✅ **Déploiement réussi !** Site fonctionne sur accounting.wanzzo.com
+## 📝 Checklist Générale de Déploiement
 
-**Leçons apprises :**
-- Toujours vérifier quel workflow est actif (basé sur le nom de l'App Service)
-- Le `path` dans `upload-artifact` est CRITIQUE - doit pointer vers `dist/`
-- Les secrets doivent avoir le nom EXACT configuré dans GitHub
-- La section `environment` n'est pas obligatoire si le secret est correct
-- Vérifier la version de déploiement dans Azure logs pour confirmer qu'un nouveau déploiement est appliqué
+### Avant le Premier Déploiement
 
----
+- [ ] Azure App Service créé avec le bon nom
+- [ ] Workflow GitHub nommé selon le pattern `main_<app-service-name>.yml`
+- [ ] Publish Profile téléchargé depuis Azure
+- [ ] Secret GitHub configuré avec le nom exact du workflow
+- [ ] DNS CNAME configuré vers `<app-service-name>.azurewebsites.net`
+- [ ] SSL/HTTPS activé dans Azure
+- [ ] Fichiers de production créés localement (`production-server.js`, `production-package.json`, `.deployment`)
+- [ ] Plugin Vite configuré pour copier les fichiers dans `dist/`
+- [ ] Build local réussi avec `npm run build`
+- [ ] Vérification manuelle que `dist/` contient `server.js` et `package.json`
+- [ ] Commit et push sur `main`
+- [ ] Workflow GitHub Actions se déclenche automatiquement
+- [ ] Site accessible sur l'URL Azure
+- [ ] Site accessible sur le domaine personnalisé (après propagation DNS)
+
+### Erreurs Courantes à Éviter
+
+❌ **Nom du workflow ne correspond pas à l'App Service**
+❌ **Workflow uploade le repo entier (`.`) au lieu de `dist/`**
+❌ **Secret GitHub avec un nom différent du workflow**
+❌ **Fichiers `server.js` et `package.json` manquants dans `dist/`**
+❌ **Dépendance `better-sqlite3` non supprimée (incompatible Node 24)**
 
 ## 📝 Checklist Avant le Premier Déploiement
 

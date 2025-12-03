@@ -8,7 +8,7 @@ Les fichiers suivants ont été créés pour permettre le déploiement sur Azure
 2. **`production-package.json`** - Dépendances et scripts de production
 3. **`.deployment`** - Configuration Azure (désactive le rebuild)
 4. **`vite.config.ts`** - Modifié avec plugin de copie automatique
-5. **`.github/workflows/main_wanzo-portfolio.yml`** - Pipeline CI/CD
+5. **`.github/workflows/main_wzportfolio.yml`** - Pipeline CI/CD (⚠️ Le nom doit correspondre exactement à l'App Service)
 
 ---
 
@@ -19,10 +19,14 @@ Les fichiers suivants ont été créés pour permettre le déploiement sur Azure
 Dans le portail Azure :
 
 1. Créer un **Azure App Service**
-   - Nom : `wanzo-portfolio`
+   - Nom : `wzportfolio` (⚠️ **IMPORTANT** : Le nom doit correspondre exactement au workflow GitHub)
    - Système : **Linux**
    - Runtime : **Node 20 LTS**
    - Région : Canada Central (ou votre région préférée)
+   
+   **Note critique :** Le nom de l'App Service DOIT correspondre au nom du workflow :
+   - App Service `wzportfolio` → Workflow `.github/workflows/main_wzportfolio.yml`
+   - Sinon le déploiement automatique ne fonctionnera pas
 
 2. Configuration du domaine personnalisé
    - Aller dans **Custom domains**
@@ -31,29 +35,41 @@ Dans le portail Azure :
      ```
      Type: CNAME
      Name: portfolio
-     Value: wanzo-portfolio.azurewebsites.net
+     Value: wzportfolio.azurewebsites.net
      ```
+   
+   **URLs disponibles :**
+   - URL Azure par défaut : `https://wzportfolio.azurewebsites.net`
+   - URL domaine personnalisé : `https://portfolio.wanzzo.com` (après config DNS)
 
 3. Configuration SSL
    - Activer **HTTPS Only**
-   - Certificat géré par Azure (gratuit)
-
----
-
 ### 2. Télécharger le Publish Profile
+
+1. Dans le portail Azure, aller sur votre App Service `wzportfolio`
+2. Cliquer sur **Get publish profile** (dans la barre du haut)
+3. Un fichier `.PublishSettings` sera téléchargé
+
+**⚠️ Important :** Le contenu de ce fichier contient des identifiants sensibles. Ne JAMAIS le committer dans Git.
 
 1. Dans le portail Azure, aller sur votre App Service `wanzo-portfolio`
 2. Cliquer sur **Get publish profile** (dans la barre du haut)
 3. Un fichier `.PublishSettings` sera téléchargé
 
----
-
 ### 3. Ajouter le Secret GitHub
 
-1. Aller sur votre repository GitHub : `jaqcquesndav/Wanzo_Portfolio_loan`
+1. Aller sur votre repository GitHub : `https://github.com/jaqcquesndav/Wanzo_Portfolio_loan`
 2. Cliquer sur **Settings** → **Secrets and variables** → **Actions**
 3. Cliquer sur **New repository secret**
-4. Nom du secret : `AZUREAPPSERVICE_PUBLISHPROFILE_PORTFOLIO`
+4. Nom du secret : Le nom contient un hash unique (ex: `AZUREAPPSERVICE_PUBLISHPROFILE_44C23074E5C846A4ABE9B23065AC9A68`)
+5. Valeur : Copier-coller **tout le contenu** du fichier `.PublishSettings`
+6. Cliquer sur **Add secret**
+
+**⚠️ CRITIQUE :** Le nom du secret dans GitHub DOIT correspondre EXACTEMENT au nom utilisé dans le workflow :
+```yaml
+publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_44C23074E5C846A4ABE9B23065AC9A68 }}
+```
+Si les noms ne correspondent pas, vous obtiendrez l'erreur "No credentials found".ERVICE_PUBLISHPROFILE_PORTFOLIO`
 5. Valeur : Copier-coller **tout le contenu** du fichier `.PublishSettings`
 6. Cliquer sur **Add secret**
 
@@ -159,15 +175,17 @@ Site started
                     ↓
 ┌─────────────────────────────────────────────┐
 │    Express Server                           │
-│  • Port: 8080 (Azure PORT env var)          │
-│  • Sert fichiers statiques                  │
-│  • Catch-all → index.html (SPA routing)     │
-└─────────────────────────────────────────────┘
-```
-
----
-
 ## 🔄 Comparaison avec Landing Page
+
+| Aspect | Landing Page | Portfolio App |
+|--------|-------------|----------------|
+| **Domaine** | wanzzo.com | portfolio.wanzzo.com |
+| **App Service** | wanzzo | wzportfolio |
+| **Workflow** | main_wanzzo.yml | main_wzportfolio.yml |
+| **Base URL** | `/` | `/` |
+| **Secret GitHub** | AZUREAPPSERVICE_PUBLISHPROFILE_XXX | AZUREAPPSERVICE_PUBLISHPROFILE_44C23074... |
+| **Repository** | Wanzo_Land | Wanzo_Portfolio_loan |
+| **Runtime** | Node 20 LTS | Node 20 LTS (build) / Node 24 (Azure) |
 
 | Aspect | Landing Page | Portfolio App |
 |--------|-------------|----------------|
@@ -256,17 +274,73 @@ publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PORTFOLIO }}
 ```
 
 ### ⚠️ Problème : JavaScript heap out of memory
-
-**Solution :** Déjà configuré dans `package.json` :
-```json
-"build": "node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build"
-```
-
----
-
 ## 📝 Checklist Avant le Premier Déploiement
 
-- [ ] Azure App Service créé (wanzo-portfolio)
+- [x] Azure App Service créé (`wzportfolio`) ✅
+- [x] Publish Profile téléchargé depuis Azure ✅
+- [x] Secret GitHub configuré avec le nom exact du workflow ✅
+- [ ] DNS CNAME configuré (portfolio → wzportfolio.azurewebsites.net)
+- [x] SSL/HTTPS activé dans Azure ✅
+- [x] Fichiers de production créés localement ✅
+- [x] Workflow renommé pour correspondre à l'App Service (`main_wzportfolio.yml`) ✅
+- [x] Commit et push sur `main` ✅
+- [x] Workflow GitHub Actions vérifié (onglet Actions) ✅
+- [x] Site accessible sur https://wzportfolio.azurewebsites.net ✅
+- [ ] Site accessible sur portfolio.wanzzo.com (après config DNS)
+
+## ⚠️ Erreurs Courantes et Solutions
+
+### Erreur 1 : Le déploiement ne se déclenche pas automatiquement
+
+**Cause :** Le nom du workflow ne correspond pas au nom de l'App Service
+
+**Solution :**
+- App Service nommé `wzportfolio` → Workflow DOIT s'appeler `main_wzportfolio.yml`
+- Renommer le fichier workflow si nécessaire :
+  ```bash
+  mv .github/workflows/main_wanzo-portfolio.yml .github/workflows/main_wzportfolio.yml
+  ```
+
+### Erreur 2 : "No credentials found" dans les logs GitHub Actions
+
+**Cause :** Le nom du secret dans le workflow ne correspond pas au secret dans GitHub
+
+**Solution :**
+1. Vérifier le nom EXACT du secret dans GitHub Settings → Secrets
+2. Mettre à jour le workflow avec le nom exact :
+   ```yaml
+   publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_44C23074E5C846A4ABE9B23065AC9A68 }}
+   ```
+
+### Erreur 3 : Build réussit mais "better-sqlite3" échoue
+
+**Cause :** Dépendance native incompatible avec Node 24 utilisée par erreur
+
+**Solution :**
+```bash
+npm uninstall better-sqlite3 @types/better-sqlite3
+git add . && git commit -m "Remove incompatible dependency" && git push
+```
+
+### Erreur 4 : Site affiche "waiting for content"
+
+**Causes possibles :**
+1. `server.js` et `package.json` manquants dans `dist/`
+   - Vérifier avec `ls dist/` → Doit contenir `server.js`, `package.json`, `index.html`, `assets/`
+2. Workflow uploade le repo entier au lieu de `dist/`
+   - Dans workflow, `path: dist/` (PAS `path: .`)
+
+### Erreur 5 : Routes React ne fonctionnent pas (404)
+
+**Cause :** Le serveur Express ne redirige pas vers `index.html`
+
+**Solution :** Vérifier que `production-server.js` contient :
+```javascript
+// Catch-all route for SPA - Must be last
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+```
 - [ ] Publish Profile téléchargé depuis Azure
 - [ ] Secret GitHub `AZUREAPPSERVICE_PUBLISHPROFILE_PORTFOLIO` configuré
 - [ ] DNS CNAME configuré (portfolio → wanzo-portfolio.azurewebsites.net)

@@ -1,7 +1,31 @@
 import React, { useEffect, useRef } from 'react';
-import { Chart, ChartConfiguration, ChartOptions } from 'chart.js/auto';
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Filler,
+  type ChartConfiguration,
+  type ChartOptions
+} from 'chart.js';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+// Enregistrer les composants Chart.js nécessaires
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface EnhancedPerformanceChartProps {
   data: number[];
