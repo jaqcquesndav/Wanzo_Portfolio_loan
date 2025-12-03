@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { splitVendorChunkPlugin } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import fs from 'fs';
 import path from 'path';
@@ -33,7 +32,6 @@ function copyProductionFiles() {
 export default defineConfig({
   plugins: [
     react(),
-    splitVendorChunkPlugin(),
     visualizer({
       open: false,
       gzipSize: true,
@@ -61,40 +59,44 @@ export default defineConfig({
     // Optimisations spécifiques
     esbuildOptions: {
       target: 'es2020',
+      keepNames: true, // Préserver les noms pour éviter les erreurs d'héritage
     }
   },
   build: {
     // Optimisation de la construction
     minify: 'esbuild', // Changé de 'terser' à 'esbuild' pour éviter les problèmes de classe
+    target: 'es2020', // Cible ES2020 pour support des classes modernes
     cssCodeSplit: true,
+    // Configuration esbuild pour préserver les classes
+    esbuildOptions: {
+      target: 'es2020',
+      keepNames: true, // Préserver les noms de classe pour éviter les erreurs d'héritage
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Charts chunk for data visualization libraries
-          if (id.includes('node_modules/plotly.js/') || 
-              id.includes('node_modules/react-plotly.js/') ||
-              id.includes('node_modules/chart.js/') ||
-              id.includes('node_modules/react-chartjs-2/') ||
-              id.includes('node_modules/recharts/')) {
-            return 'charts';
+          // Séparer les bibliothèques volumineuses pour optimiser le chargement
+          if (id.includes('node_modules')) {
+            // Plotly dans son propre chunk (très volumineux)
+            if (id.includes('plotly.js') || id.includes('react-plotly.js')) {
+              return 'plotly';
+            }
+            
+            // Chart.js et Recharts ensemble
+            if (id.includes('chart.js') || id.includes('react-chartjs-2') || 
+                id.includes('recharts') || id.includes('/d3-')) {
+              return 'charts';
+            }
+            
+            // React core
+            if (id.includes('react') || id.includes('react-dom') || 
+                id.includes('react-router') || id.includes('scheduler')) {
+              return 'vendor';
+            }
+            
+            // Tout le reste des node_modules dans un chunk séparé
+            return 'libs';
           }
-          
-          // Vendor chunk for core React libraries
-          if (id.includes('node_modules/react/') || 
-              id.includes('node_modules/react-dom/') || 
-              id.includes('node_modules/react-router-dom/')) {
-            return 'vendor';
-          }
-          
-          // UI chunk for UI-related libraries
-          if (id.includes('node_modules/react-hot-toast/') || 
-              id.includes('node_modules/@heroicons/') ||
-              id.includes('node_modules/lucide-react/')) {
-            return 'ui';
-          }
-          
-          // Let splitVendorChunkPlugin handle the rest
-          return null;
         },
       },
     },
@@ -135,8 +137,8 @@ export default defineConfig({
     // Optimisation de l'analyseur TypeScript
     target: 'es2020',
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
-    // Réduire l'utilisation mémoire
-    keepNames: false,
+    // IMPORTANT: Garder keepNames: true pour préserver l'héritage de classe
+    keepNames: true,
   },
   // Résolution des modules optimisée
   resolve: {

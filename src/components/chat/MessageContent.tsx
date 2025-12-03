@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import Plot from 'react-plotly.js';
 import { Copy, Download, ZoomIn, BarChart, LineChart, PieChart } from 'lucide-react';
 import { Button } from '../ui/Button';
+
+// Lazy load Plotly pour réduire la taille du bundle initial
+const Plot = lazy(() => import('react-plotly.js'));
 
 interface MessageContentProps {
   content: string;
@@ -138,20 +140,22 @@ export function MessageContent({ content, onEdit }: MessageContentProps) {
                       </div>
                     </div>
                     <div className={isZoomed ? 'fixed inset-4 z-50 bg-white p-4 shadow-xl rounded-lg' : ''}>
-                      <Plot
-                        data={[{
-                          ...chartData.data,
-                          type: selectedChartType
-                        }]}
-                        layout={{
-                          autosize: true,
-                          margin: { t: 60, r: 10, l: 60, b: 40 },
-                          paper_bgcolor: 'transparent',
-                          plot_bgcolor: 'transparent'
-                        }}
-                        style={{ width: '100%', height: isZoomed ? '90vh' : '400px' }}
-                        config={{ responsive: true }}
-                      />
+                      <Suspense fallback={<div className="flex items-center justify-center h-96">Chargement du graphique...</div>}>
+                        <Plot
+                          data={[{
+                            ...chartData.data,
+                            type: selectedChartType
+                          }]}
+                          layout={{
+                            autosize: true,
+                            margin: { t: 60, r: 10, l: 60, b: 40 },
+                            paper_bgcolor: 'transparent',
+                            plot_bgcolor: 'transparent'
+                          }}
+                          style={{ width: '100%', height: isZoomed ? '90vh' : '400px' }}
+                          config={{ responsive: true }}
+                        />
+                      </Suspense>
                     </div>
                   </div>
                 );
