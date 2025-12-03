@@ -2,6 +2,32 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { splitVendorChunkPlugin } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
+import fs from 'fs';
+import path from 'path';
+
+// Plugin to copy production files to dist/
+function copyProductionFiles() {
+  return {
+    name: 'copy-production-files',
+    closeBundle() {
+      const distDir = path.resolve(__dirname, 'dist');
+      
+      // Copy production-server.js to dist/server.js
+      fs.copyFileSync(
+        path.resolve(__dirname, 'production-server.js'),
+        path.join(distDir, 'server.js')
+      );
+      
+      // Copy production-package.json to dist/package.json
+      fs.copyFileSync(
+        path.resolve(__dirname, 'production-package.json'),
+        path.join(distDir, 'package.json')
+      );
+      
+      console.log('✅ Production files copied to dist/');
+    }
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,6 +39,7 @@ export default defineConfig({
       gzipSize: true,
       brotliSize: true,
     }),
+    copyProductionFiles(),
   ],
   optimizeDeps: {
     include: [
