@@ -30,7 +30,7 @@ export default function AuthCallback() {
       // Exchange code for tokens
       const domain = import.meta.env.VITE_AUTH0_DOMAIN;
       const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
-      const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI;
+      const redirectUri = `${window.location.origin}/auth/callback`;
       
       try {
         console.log('Échange du code contre des tokens...');

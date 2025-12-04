@@ -37,7 +37,7 @@ export default function PortfolioTypeSelector() {
       const domain = import.meta.env.VITE_AUTH0_DOMAIN;
       const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
       const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
-      const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI;
+      const redirectUri = `${window.location.origin}/auth/callback`;
       const state = Math.random().toString(36).substring(2);
       auth0Service.saveState(state);
 
