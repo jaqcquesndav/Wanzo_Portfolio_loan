@@ -129,7 +129,7 @@ export default function CentralRisque() {
   // Afficher un message d'erreur si nécessaire
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         <h1 className="text-2xl font-bold mb-6">Centrale de Risque</h1>
         <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700">
           Une erreur est survenue lors du chargement des données: {String(error)}
@@ -145,7 +145,7 @@ export default function CentralRisque() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 sm:p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Centrale de Risque</h1>
         <div className="flex space-x-2">

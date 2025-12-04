@@ -225,7 +225,7 @@ export default function TraditionalReports() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger 
             value="tableau" 
             currentValue={activeTab} 

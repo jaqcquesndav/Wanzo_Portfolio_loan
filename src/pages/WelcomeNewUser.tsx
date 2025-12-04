@@ -31,7 +31,7 @@ export default function WelcomeNewUser() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-2xl w-full text-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8 max-w-2xl w-full text-center">
         <h1 className="text-3xl font-bold text-primary mb-6">
           Bienvenue sur votre plateforme de gestion de portefeuilles
         </h1>

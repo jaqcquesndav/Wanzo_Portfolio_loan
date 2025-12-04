@@ -12,7 +12,7 @@ export default function ErrorBoundary() {
   
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 max-w-2xl w-full">
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 sm:p-8 max-w-2xl w-full">
         <div className="flex items-center mb-6">
           <AlertCircle className="h-8 w-8 text-red-500 mr-3" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

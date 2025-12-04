@@ -102,8 +102,6 @@ export function PortfolioPerformanceChart({ data, labels, color = '#2563eb' }: P
           <Line
             data={chartDataObj}
             options={options}
-            height={220}
-            width={600}
           />
         </div>
       </div>

@@ -300,7 +300,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
 
         {/* KPIs Overview */}
         {isWidgetVisible('kpi-overview') && adaptedMetrics && (
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* Montant total */}
           <Card className="relative overflow-hidden">
             <CardContent className="p-4">

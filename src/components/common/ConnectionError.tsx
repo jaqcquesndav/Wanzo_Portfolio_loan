@@ -9,7 +9,7 @@ interface ConnectionErrorProps {
 export const ConnectionError: React.FC<ConnectionErrorProps> = ({ onRetry, message }) => {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 text-center">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-8">
         <div className="flex flex-col items-center">
           <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mb-6">
             <svg 

@@ -17,7 +17,7 @@ export default function CreditContractSchedulePage() {
   
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
           <Card className="p-6">
@@ -37,7 +37,7 @@ export default function CreditContractSchedulePage() {
   
   if (!contract) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         <Breadcrumb 
           items={[
             { label: 'Portefeuilles', href: '/app/traditional' },
@@ -65,7 +65,7 @@ export default function CreditContractSchedulePage() {
   }
   
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 sm:p-6">
       <Breadcrumb 
         items={[
           { label: 'Portefeuilles', href: '/app/traditional' },

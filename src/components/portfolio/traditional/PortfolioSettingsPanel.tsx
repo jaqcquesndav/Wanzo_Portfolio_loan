@@ -64,7 +64,7 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-8 space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-6 sm:p-8 space-y-6">
       <h2 className="text-xl font-semibold mb-2">Paramètres du portefeuille</h2>
       <div className="space-y-4">
         <div>

@@ -252,7 +252,7 @@ export default function TraditionalPortfolioDetails() {
   const config = portfolioTypeConfig[portfolioType as keyof typeof portfolioTypeConfig] || portfolioTypeConfig['traditional'];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Breadcrumb sécurisé */}
       <Breadcrumb
         items={[

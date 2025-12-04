@@ -451,7 +451,7 @@ const EnhancedPortfolioDashboard: React.FC<EnhancedPortfolioDashboardProps> = ({
                     <Spinner size="lg" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                     {/* Répartition visuelle */}
                     <div className="lg:col-span-2 space-y-4">
                       <h4 className="text-lg font-semibold text-gray-900 dark:text-white">

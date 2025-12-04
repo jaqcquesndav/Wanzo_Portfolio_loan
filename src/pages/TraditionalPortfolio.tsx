@@ -90,7 +90,7 @@ export default function TraditionalPortfolio() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Afficher différents états en fonction des conditions */}
       {!loading && error && backendFailed && (
         <ConnectionError onRetry={refresh} />

@@ -44,7 +44,7 @@ export default function CreditContractDetail() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -63,7 +63,7 @@ export default function CreditContractDetail() {
   
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         <div className="bg-red-50 p-4 rounded-md border border-red-200">
           <h3 className="text-lg font-medium text-red-800">Erreur</h3>
           <p className="mt-2 text-sm text-red-700">{error}</p>
@@ -81,7 +81,7 @@ export default function CreditContractDetail() {
   
   if (!contract) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
       <Breadcrumb 
         items={[
           { label: 'Tableau de bord', href: '/app' },
@@ -108,7 +108,7 @@ export default function CreditContractDetail() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 sm:p-6">
       <Breadcrumb 
         items={[
           { label: 'Tableau de bord', href: '/app' },

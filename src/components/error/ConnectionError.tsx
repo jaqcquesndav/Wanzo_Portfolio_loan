@@ -9,7 +9,7 @@ interface ConnectionErrorProps {
 export default function ConnectionError({ onRetry, message }: ConnectionErrorProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-2xl w-full text-center border-t-4 border-red-500">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8 max-w-2xl w-full text-center border-t-4 border-red-500">
         <div className="flex justify-center mb-6">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500" />
         </div>
