@@ -15,7 +15,6 @@ import { CreditRequestsTable } from '../components/portfolio/traditional/CreditR
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
-import { CompanyDetails } from '../components/prospection/CompanyDetails';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockCompanies } from '../data/mockCompanies';
@@ -106,21 +105,20 @@ export default function TraditionalPortfolioDetails() {
   const handleViewCompany = (companyName: string) => {
     // Chercher l'entreprise dans mockCompanies
     const companyFound = mockCompanies.find(c => c.name === companyName);
-    
+    let companyToUse: Company;
+
     if (companyFound) {
-      setSelectedCompany(companyFound);
-      setCompanyDetailModalOpen(true);
+      companyToUse = companyFound;
     } else if (companyName === 'TechInnovate Congo') {
       // Cas particulier pour TechInnovate Congo - conversion depuis mockCompanyDetails
-      // Need to adapt the TechInnovate structure to match Company interface
-      const adaptedCompany: Company = {
+      companyToUse = {
         id: mockCompanyDetails.id,
         name: mockCompanyDetails.name,
         sector: mockCompanyDetails.sector,
         size: 'medium', // Default value
         status: 'active',
-        annual_revenue: 100000, // Default value
-        employee_count: 50, // Default value
+        annual_revenue: 100000,
+        employee_count: 50,
         financial_metrics: {
           revenue_growth: 0,
           profit_margin: 0,
@@ -138,11 +136,10 @@ export default function TraditionalPortfolioDetails() {
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      };
-      setSelectedCompany(adaptedCompany);
+      } as Company;
     } else {
       // Créer une entreprise de base avec le nom fourni
-      const basicCompany: Company = {
+      companyToUse = {
         id: 'unknown',
         name: companyName,
         sector: 'Non spécifié',
@@ -167,11 +164,12 @@ export default function TraditionalPortfolioDetails() {
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      };
-      setSelectedCompany(basicCompany);
+      } as Company;
     }
-    
-    setCompanyDetailModalOpen(true);
+
+    setSelectedCompany(companyToUse);
+    // Naviguer vers la page de consultation en passant les données via location state
+    navigate(`/company/${encodeURIComponent(companyToUse.id || companyToUse.name)}/view`, { state: { company: companyToUse } });
     showNotification(`Détails de l'entreprise ${companyName} affichés`, 'info');
   };
 
@@ -418,7 +416,7 @@ export default function TraditionalPortfolioDetails() {
                     }
                     
                     setSelectedCompany(company);
-                    setCompanyDetailModalOpen(true);
+                    navigate(`/company/${encodeURIComponent(company.id || company.name)}/view`, { state: { company } });
                   }}
                   onCreateContract={(id) => console.log('Créer contrat', id)}
                 />
@@ -440,7 +438,6 @@ export default function TraditionalPortfolioDetails() {
                   }}
                   onViewCompany={(companyName: string) => {
                     handleViewCompany(companyName);
-                    setCompanyDetailModalOpen(true);
                   }}
                 />
               </TabsContent>
@@ -465,7 +462,6 @@ export default function TraditionalPortfolioDetails() {
                   }}
                   onViewCompany={(companyName: string) => {
                     handleViewCompany(companyName);
-                    setCompanyDetailModalOpen(true);
                   }}
                 />
               </TabsContent>
@@ -482,7 +478,6 @@ export default function TraditionalPortfolioDetails() {
                   portfolioId={id || 'default'} 
                   onViewCompany={(companyName: string) => {
                     handleViewCompany(companyName);
-                    setCompanyDetailModalOpen(true);
                   }}
                 />
               </TabsContent>
@@ -511,13 +506,7 @@ export default function TraditionalPortfolioDetails() {
         </div>
       )}
       
-      {/* Modal de détails de l'entreprise */}
-      {selectedCompany && companyDetailModalOpen && (
-        <CompanyDetails
-          company={selectedCompany}
-          onClose={() => setCompanyDetailModalOpen(false)}
-        />
-      )}
+      {/* CompanyDetails modal removed — navigation to CompanyViewPage used instead */}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CompanyFilters } from '../components/prospection/CompanyFilters';
 import { CompanyListPaginated } from '../components/prospection/CompanyListPaginated';
 import { CompanyMap } from '../components/prospection/CompanyMap';
 import { ViewToggle } from '../components/prospection/ViewToggle';
-import { CompanyDetails } from '../components/prospection/CompanyDetails';
 import { MeetingScheduler } from '../components/prospection/MeetingScheduler';
 import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -34,6 +34,8 @@ export default function Prospection() {
     showMeetingScheduler,
     setShowMeetingScheduler,
   } = useProspection([]);
+
+  const navigate = useNavigate();
 
   // Fonction pour vérifier si on peut faire un appel API
   const canCallApi = useCallback(() => {
@@ -98,10 +100,13 @@ export default function Prospection() {
       // Charger les détails complets de l'entreprise
       const detailedCompany = await companyApi.getCompanyById(company.id);
       setSelectedCompany(detailedCompany);
+      // Naviguer vers la page de consultation en passant les données via location state
+      navigate(`/company/${company.id}/view`, { state: { company: detailedCompany } });
     } catch (err) {
       console.error('Erreur lors du chargement des détails:', err);
       // Fallback sur les données de base
       setSelectedCompany(company);
+      navigate(`/company/${company.id}/view`, { state: { company } });
     }
   };
 
@@ -180,13 +185,7 @@ export default function Prospection() {
         />
       )}
 
-      {/* Modals */}
-      {selectedCompany && (
-        <CompanyDetails
-          company={selectedCompany}
-          onClose={() => setSelectedCompany(null)}
-        />
-      )}
+      {/* Modals - replaced by navigation to CompanyViewPage - CompanyDetails modal removed */}
 
       {showMeetingScheduler && selectedCompany && (
         <MeetingScheduler

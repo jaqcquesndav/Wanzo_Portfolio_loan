@@ -1,182 +1,317 @@
+// ============================================================================
+// ÉNUMÉRATIONS ET TYPES PRIMITIFS
+// ============================================================================
+
+/** Taille d'entreprise selon classification standard */
 export type CompanySize = 'micro' | 'small' | 'medium' | 'large';
-export type CompanyStatus = 'active' | 'pending' | 'rejected' | 'funded' | 'contacted' | 'qualified';
 
-// Rating financier conforme à la documentation (AAA à E)
-export type FinancialRating = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'C' | 'D' | 'E';
+/** Statut de l'entreprise dans le pipeline commercial */
+export type CompanyStatus = 'lead' | 'contacted' | 'qualified' | 'active' | 'funded' | 'pending' | 'rejected';
 
-// Types de comptes de trésorerie selon SYSCOHADA
+/** Rating financier conforme à la notation de crédit (AAA à E) */
+export type FinancialRating = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'C' | 'D' | 'E' | 'NR';
+
+/** Types de comptes de trésorerie selon SYSCOHADA */
 export type TreasuryAccountType = 'bank' | 'cash' | 'investment' | 'transit';
 
-// Devise supportée
+/** Devises supportées */
 export type Currency = 'CDF' | 'USD' | 'EUR';
 
-// Échelle temporelle pour les séries de trésorerie
+/** Échelle temporelle pour les séries de trésorerie */
 export type TimeseriesScale = 'weekly' | 'monthly' | 'quarterly' | 'annual';
+
+/** Forme juridique de l'entreprise */
+export type LegalForm = 'SARL' | 'SA' | 'SAS' | 'EIRL' | 'SPRL' | 'Autres';
+
+/** Rating ESG */
+export type ESGRating = 'A' | 'B' | 'C' | 'D' | 'NR';
+
+// ============================================================================
+// INTERFACES FINANCIÈRES
+// ============================================================================
 
 /**
  * Compte de trésorerie SYSCOHADA
- * Classes SYSCOHADA : 521 (banques), 53 (caisse), 54 (placements), 57 (virements internes)
+ * Classes : 521 (banques), 53 (caisse), 54 (placements), 57 (virements)
  */
 export interface TreasuryAccount {
-  code: string;                    // Code comptable SYSCOHADA (521*, 53*, 54*, 57*)
-  name: string;                    // Libellé du compte
-  type: TreasuryAccountType;       // Type de compte
-  balance: number;                 // Solde actuel
-  currency: Currency;              // Devise
-  bankName?: string;               // Nom de la banque (pour type=bank)
-  accountNumber?: string;          // Numéro de compte (pour type=bank)
+  code: string;
+  name: string;
+  type: TreasuryAccountType;
+  balance: number;
+  currency: Currency;
+  bankName?: string;
+  accountNumber?: string;
 }
 
 /**
- * Résumé d'une période temporelle
+ * Période temporelle pour la trésorerie
  */
 export interface TreasuryPeriod {
-  periodId: string;                // Identifiant période (2025-W46, 2025-11, 2025-Q4, 2025)
-  startDate: string;               // Date début période (ISO 8601)
-  endDate: string;                 // Date fin période (ISO 8601)
-  totalBalance: number;            // Solde total pour la période
-  accountsCount: number;           // Nombre de comptes actifs
-  treasuryAccounts?: TreasuryAccount[]; // Détails des comptes (optionnel)
+  periodId: string;
+  startDate: string;
+  endDate: string;
+  totalBalance: number;
+  accountsCount: number;
+  treasuryAccounts?: TreasuryAccount[];
 }
 
 /**
- * Séries temporelles multi-échelles
+ * Séries temporelles multi-échelles de trésorerie
  */
 export interface TreasuryTimeseries {
-  weekly: TreasuryPeriod[];        // 12 dernières semaines
-  monthly: TreasuryPeriod[];       // 12 derniers mois
-  quarterly: TreasuryPeriod[];     // 4 derniers trimestres
-  annual: TreasuryPeriod[];        // 3 dernières années
+  weekly: TreasuryPeriod[];
+  monthly: TreasuryPeriod[];
+  quarterly: TreasuryPeriod[];
+  annual: TreasuryPeriod[];
 }
 
 /**
  * Données complètes de trésorerie
  */
 export interface TreasuryData {
-  total_treasury_balance: number;  // Solde total trésorerie
-  accounts: TreasuryAccount[];     // Liste des comptes de trésorerie
-  timeseries?: TreasuryTimeseries; // Séries temporelles (optionnel)
+  total_treasury_balance: number;
+  accounts: TreasuryAccount[];
+  timeseries?: TreasuryTimeseries;
 }
 
+/**
+ * Métriques financières de l'entreprise
+ */
+export interface FinancialMetrics {
+  annual_revenue: number;
+  revenue_growth: number;
+  profit_margin: number;
+  cash_flow: number;
+  debt_ratio: number;
+  working_capital: number;
+  credit_score: number;
+  financial_rating: FinancialRating;
+  ebitda?: number;
+  treasury_data?: TreasuryData;
+}
+
+/**
+ * Métriques financières de l'entreprise
+ */
+export interface FinancialMetrics {
+  annual_revenue: number;
+  revenue_growth: number;
+  profit_margin: number;
+  cash_flow: number;
+  debt_ratio: number;
+  working_capital: number;
+  credit_score: number;
+  financial_rating: FinancialRating;
+  ebitda?: number;
+  treasury_data?: TreasuryData;
+}
+
+// ============================================================================
+// INTERFACES DE CONTACT ET LOCALISATION
+// ============================================================================
+
+/**
+ * Informations de contact
+ */
+export interface ContactInfo {
+  email?: string;
+  phone?: string;
+  address?: string;
+  website?: string;
+}
+
+/**
+ * Localisation d'un site (siège ou succursale)
+ */
+export interface Location {
+  id: string;
+  address: string;
+  city: string;
+  country: string;
+  isPrimary: boolean;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
+/**
+ * Personne de contact dans l'entreprise
+ */
+export interface ContactPerson {
+  id?: string;
+  nom?: string;
+  prenoms?: string;
+  fonction?: string;
+  email?: string;
+  telephone?: string;
+  pourcentageActions?: number;
+  role?: string;
+}
+
+/**
+ * Propriétaire ou dirigeant
+ */
+export interface Owner {
+  id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+// ============================================================================
+// INTERFACES LÉGALES ET PAIEMENT
+// ============================================================================
+
+/**
+ * Informations légales
+ */
+export interface LegalInfo {
+  legalForm?: LegalForm;
+  rccm?: string;
+  taxId?: string;
+  yearFounded?: number;
+}
+
+/**
+ * Compte bancaire pour paiement
+ */
+export interface BankAccount {
+  accountNumber: string;
+  accountName: string;
+  bankName: string;
+  currency: Currency;
+  isPrimary: boolean;
+  swiftCode?: string;
+  iban?: string;
+}
+
+/**
+ * Compte Mobile Money pour paiement
+ */
+export interface MobileMoneyAccount {
+  phoneNumber: string;
+  accountName: string;
+  provider: string;
+  currency: Currency;
+  isPrimary: boolean;
+}
+
+/**
+ * Informations de paiement
+ */
+export interface PaymentInfo {
+  preferredMethod?: 'bank' | 'mobile_money';
+  bankAccounts?: BankAccount[];
+  mobileMoneyAccounts?: MobileMoneyAccount[];
+}
+
+// ============================================================================
+// INTERFACES ACTIFS (PATRIMOINE)
+// ============================================================================
+
+/**
+ * Asset (immobilisation ou bien patrimonial)
+ */
+export interface Asset {
+  designation?: string;
+  type?: string;
+  valeurActuelle?: number;
+  etatActuel?: string;
+  observations?: string;
+}
+
+/**
+ * Stock/Inventaire
+ */
+export interface Stock {
+  designation?: string;
+  categorie?: string;
+  quantiteStock?: number;
+  valeurTotaleStock?: number;
+  etatStock?: string;
+}
+
+// ============================================================================
+// INTERFACES ESG
+// ============================================================================
+
+/**
+ * Métriques ESG (Environnement, Social, Gouvernance)
+ */
+export interface ESGMetrics {
+  esg_rating?: string;
+  carbon_footprint: number;
+  environmental_rating: ESGRating;
+  social_rating: ESGRating;
+  governance_rating: ESGRating;
+  gender_ratio?: {
+    male: number;
+    female: number;
+  };
+}
+
+// ============================================================================
+// INTERFACE PRINCIPALE: COMPANY
+// ============================================================================
+
+/**
+ * Représentation complète d'une entreprise
+ * Regroupe identité, financials, contact, patrimoine, et métriques ESG
+ */
 export interface Company {
+  // IDENTITÉ ET CONTEXTE
   id: string;
   name: string;
   sector: string;
   size: CompanySize;
-  annual_revenue: number;
+  status: CompanyStatus;
+  
+  // DONNÉES OPÉRATIONNELLES
   employee_count: number;
   website_url?: string;
   pitch_deck_url?: string;
-  status: CompanyStatus;
   lastContact?: string;
   
-  // Métriques financières (conformes à ProspectDto)
-  financial_metrics: {
-    annual_revenue: number;      // CA annuel (peut différer du champ racine si consolidé)
-    revenue_growth: number;      // Croissance YoY (%)
-    profit_margin: number;       // Marge bénéficiaire (%)
-    cash_flow: number;           // Flux de trésorerie
-    debt_ratio: number;          // Ratio d'endettement (0.0-1.0)
-    working_capital: number;     // Fonds de roulement
-    credit_score: number;        // Score de crédit (0-100)
-    financial_rating: FinancialRating; // Rating financier (AAA-E)
-    ebitda?: number;             // EBITDA (optionnel)
-    treasury_data?: TreasuryData; // Données de trésorerie SYSCOHADA (optionnel)
-  };
+  // DONNÉES FINANCIÈRES
+  annual_revenue: number;
+  financial_metrics: FinancialMetrics;
   
-  // Informations de contact (essentielles pour prospection)
-  contact_info?: {
-    email?: string;              // Email de contact
-    phone?: string;              // Téléphone
-    address?: string;            // Adresse physique
-    website?: string;            // Site web (peut dupliquer website_url)
-  };
+  // DONNÉES DE CONTACT ET LOCALISATION
+  contact_info?: ContactInfo;
+  locations?: Location[];
+  latitude?: number;
+  longitude?: number;
   
-  // Informations de paiement (pour ordres de paiement)
-  payment_info?: {
-    preferredMethod?: 'bank' | 'mobile_money'; // Méthode de paiement préférée
-    bankAccounts?: Array<{        // Comptes bancaires
-      accountNumber: string;      // Numéro de compte
-      accountName: string;        // Titulaire du compte
-      bankName: string;           // Nom de la banque
-      swiftCode?: string;         // Code SWIFT/BIC
-      iban?: string;              // IBAN (si applicable)
-      currency: Currency;         // Devise du compte
-      isPrimary: boolean;         // Compte principal
-    }>;
-    mobileMoneyAccounts?: Array<{ // Comptes Mobile Money
-      phoneNumber: string;        // Numéro de téléphone
-      accountName: string;        // Nom du titulaire
-      provider: string;           // Opérateur (Orange Money, M-Pesa, Airtel Money, etc.)
-      currency: Currency;         // Devise
-      isPrimary: boolean;         // Compte principal
-    }>;
-  };
+  // DONNÉES LÉGALES ET PAIEMENT
+  legal_info?: LegalInfo;
+  payment_info?: PaymentInfo;
   
-  // Informations légales (pour vérification conformité)
-  legal_info?: {
-    legalForm?: string;          // Forme juridique (SARL, SA, SAS, etc.)
-    rccm?: string;               // Numéro RCCM
-    taxId?: string;              // Numéro fiscal
-    yearFounded?: number;        // Année de création
-  };
+  // PERSONNES
+  owner?: Owner;
+  contactPersons?: ContactPerson[];
   
-  // Géolocalisation (pour recherche nearby)
-  latitude?: number;             // Latitude GPS (-90 à 90)
-  longitude?: number;            // Longitude GPS (-180 à 180)
+  // PATRIMOINES ET ACTIFS
+  assets?: Asset[];
+  stocks?: Stock[];
   
-  // Emplacements multiples (optionnel, pour entreprises multi-sites)
-  locations?: Array<{
-    id: string;
-    address: string;
-    city: string;
-    country: string;
-    isPrimary: boolean;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  }>;
+  // MÉTRIQUES ESG
+  esg_metrics: ESGMetrics;
   
-  // Propriétaire principal (optionnel, pour contexte décisionnel)
-  owner?: {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-  };
+  // MÉTADONNÉES DE SYNCHRONISATION
+  profileCompleteness?: number;
+  lastSyncFromAccounting?: string;
+  lastSyncFromCustomer?: string;
   
-  // Personnes de contact (optionnel, pour faciliter la prospection)
-  contactPersons?: Array<{
-    name: string;
-    role: string;
-    email: string;
-    phone: string;
-  }>;
-  
-  // Métadonnées de synchronisation (indicateurs de fraîcheur des données)
-  profileCompleteness?: number;        // Complétude du profil (0-100%)
-  lastSyncFromAccounting?: string;     // Dernière sync accounting-service (ISO 8601)
-  lastSyncFromCustomer?: string;       // Dernière sync customer-service (ISO 8601)
-  
-  // Métriques ESG (conservées pour compatibilité)
-  esg_metrics: {
-    esg_rating?: string;
-    carbon_footprint: number;
-    environmental_rating: 'A' | 'B' | 'C' | 'D';
-    social_rating: 'A' | 'B' | 'C' | 'D';
-    governance_rating: 'A' | 'B' | 'C' | 'D';
-    gender_ratio?: {
-      male: number;
-      female: number;
-    };
-  };
-  
+  // TIMESTAMPS
   created_at: string;
   updated_at: string;
 }
 
-export interface Meeting {
+// ============================================================================
+// INTERFACES SECONDAIRES ET CONTEXTE
+// ============================================================================
   id: string;
   company_id: string;
   portfolio_manager_id: string;

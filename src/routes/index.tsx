@@ -25,6 +25,7 @@ import CentralRisque from '../pages/CentralRisque';
 import PortfolioNotFound from '../pages/PortfolioNotFound';
 import PortfolioErrorBoundary from '../pages/PortfolioErrorBoundary';
 import { ChatPage } from '../pages/chat/ChatPage';
+import CompanyViewPage from '../pages/CompanyViewPage';
 
 
 export const router = createBrowserRouter([
@@ -75,6 +76,11 @@ export const router = createBrowserRouter([
   {
     path: '/central-risque',
     element: <Navigate to="/app/traditional/central-risque" replace />
+  },
+  // Routes pour affichage d'entreprise (consultation)
+  {
+    path: '/company/:id/view',
+    element: <CompanyViewPage />
   },
   {
     path: '/app/:portfolioType',

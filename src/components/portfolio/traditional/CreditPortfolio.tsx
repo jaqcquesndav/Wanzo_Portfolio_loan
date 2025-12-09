@@ -1,4 +1,5 @@
 ﻿import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tab } from '../../../components/ui/Tab';
 import { CreditRequestsTable } from './CreditRequestsTable';
 import { CreditContractsList } from './credit-contract/CreditContractsList';
@@ -7,7 +8,6 @@ import { Button } from '../../../components/ui/Button';
 import { useCreditRequests } from '../../../hooks/useCreditRequests';
 import { useCreditContracts } from '../../../hooks/useCreditContracts';
 import { ScheduleManagementList } from './amortization/ScheduleManagementList';
-import { CompanyDetails } from '../../prospection/CompanyDetails';
 import { mockCompanies } from '../../../data/mockCompanies';
 import { useNotification } from '../../../contexts/useNotification';
 import { Company } from '../../../types/company';
@@ -51,7 +51,9 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
   
   console.log('CreditPortfolio - Using portfolioId:', portfolioId);
   
-  // Fonction pour gérer l'affichage des dûtails d'une entreprise
+  const navigate = useNavigate();
+
+  // Fonction pour gérer l'affichage des dûtails d'une entreprise — navigue vers la page de consultation
   const handleViewCompany = useCallback((companyNameOrId: string) => {
     // Chercher l'entreprise dans mockCompanies par nom d'abord
     let companyFound = mockCompanies.find(c => c.name === companyNameOrId);
@@ -64,7 +66,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
     // Si l'entreprise est trouvée par nom ou ID
     if (companyFound) {
       setSelectedCompany(companyFound);
-      setCompanyDetailModalOpen(true);
+      navigate(`/company/${encodeURIComponent(companyFound.id)}/view`, { state: { company: companyFound } });
     } else {
       // CRéer une entreprise de base avec le nom/id fourni
       const basicCompany: Company = {
@@ -94,11 +96,11 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
         updated_at: new Date().toISOString()
       };
       setSelectedCompany(basicCompany);
-      setCompanyDetailModalOpen(true);
+      navigate(`/company/${encodeURIComponent(basicCompany.id)}/view`, { state: { company: basicCompany } });
     }
     
     showNotification(`dûtails de l'entreprise ${companyNames[companyNameOrId] || companyNameOrId} affichés`, 'info');
-  }, [showNotification, companyNames]);
+  }, [showNotification, companyNames, navigate]);
   
   const tabs: CustomTabProps[] = [
     { id: 'requests', label: 'Demandes', icon: 'FileText' },
@@ -186,13 +188,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
         {renderTabContent()}
       </div>
       
-      {/* Modal pour les dûtails de l'entreprise */}
-      {selectedCompany && companyDetailModalOpen && (
-        <CompanyDetails
-          company={selectedCompany}
-          onClose={() => setCompanyDetailModalOpen(false)}
-        />
-      )}
+      {/* CompanyDetails modal removed — navigation to CompanyViewPage used instead */}
     </div>
   );
 }
