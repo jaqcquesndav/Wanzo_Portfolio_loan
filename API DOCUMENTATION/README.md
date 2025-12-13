@@ -82,15 +82,33 @@ Gestion des risques et évaluations
 - **Endpoint** : `/risk`
 - **Fonctionnalités** : Évaluation risques, scoring, alertes
 
-## 🔧 Configuration
+## � Structures de Données
+
+### [Structures Company](./company-data-structures.md)
+Types et interfaces pour les entreprises (PME/Startups)
+- Types primitifs : CompanySize, CompanyStatus, FinancialRating, LegalForm, Currency
+- Interfaces financières : FinancialMetrics, TreasuryData, TreasuryAccount
+- Interfaces contact : ContactInfo, Location, ContactPerson, Owner
+- Interfaces légales : LegalInfo, BankAccount, PaymentInfo
+- Interfaces patrimoine : Asset, Stock
+- Interface ESG : ESGMetrics
+- Interface principale : Company (complète avec 40+ champs)
+
+## �🔧 Configuration
 
 ### [Configuration de Base](./01-configuration.md)
 - URLs de base, headers, formats de réponse
 - Gestion des erreurs, pagination, sécurité
 
 ### [Authentification](./02-authentification.md)
-- JWT tokens, authentification OAuth
-- Gestion des permissions et rôles
+- JWT tokens, authentification OAuth avec Auth0
+- Flux PKCE, gestion des permissions et rôles
+- Interface de connexion standardisée
+
+### [Structures de Données Company](./company-data-structures.md)
+- Types TypeScript complets (40+ interfaces)
+- Énumérations et validations
+- Exemples d'utilisation conformes au code source
 
 ## 📖 Conventions
 
@@ -133,7 +151,7 @@ Toutes les dates utilisent le format ISO 8601 : `YYYY-MM-DDTHH:mm:ss.sssZ`
 
 ---
 
-*Dernière mise à jour : 16 novembre 2025*  
+*Dernière mise à jour : 13 décembre 2025*  
 *Version synchronisée avec le code source*
 
 ## 📝 Changelog - Novembre 2025

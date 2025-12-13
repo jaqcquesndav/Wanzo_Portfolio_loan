@@ -1,6 +1,10 @@
-﻿# Centrale de Risque
+﻿# Centrale des Risques
 
-Ce document décrit les endpoints pour la gestion des données de la centrale de risque dans l'API Wanzo Portfolio Institution.
+Ce document décrit les endpoints pour la gestion des données de la Centrale des Risques dans l'API Wanzo Portfolio Institution.
+
+**Route UI**: `/app/:portfolioType/central-risque`  
+**Page**: `src/pages/CentralRisque.tsx`  
+**Label Navigation**: "Centrale des Risques"
 
 ## API de Risque
 

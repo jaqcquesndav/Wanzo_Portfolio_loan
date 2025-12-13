@@ -8,12 +8,39 @@ L'API Wanzo Portfolio Institution utilise Auth0 comme fournisseur d'identité pr
 
 ### Flux d'authentification
 
-1. L'utilisateur sélectionne un type de portefeuille dans l'application
-2. Le système redirige l'utilisateur vers la page de connexion Auth0 en utilisant le flux PKCE (Proof Key for Code Exchange)
-3. L'utilisateur s'authentifie via l'interface Auth0
-4. Auth0 redirige l'utilisateur vers l'application avec un code d'autorisation
-5. L'application échange ce code contre des tokens d'accès et d'identification
-6. Ces tokens sont utilisés pour les requêtes API ultérieures
+1. L'utilisateur accède à la page d'accueil de l'application (`PortfolioTypeSelector`)
+2. L'utilisateur clique sur "Continuer avec Auth0"
+3. Le système génère un code PKCE (Proof Key for Code Exchange) et redirige vers la page de connexion Auth0
+4. L'utilisateur s'authentifie via l'interface Auth0
+5. Auth0 redirige l'utilisateur vers `/auth/callback` avec un code d'autorisation
+6. L'application échange ce code et le code_verifier PKCE contre des tokens d'accès et d'identification
+7. Le type de portefeuille est défini automatiquement sur 'traditional' et stocké dans localStorage
+8. L'utilisateur est redirigé vers le tableau de bord principal
+9. Ces tokens sont utilisés pour les requêtes API ultérieures
+
+## Interface de connexion
+
+### Page PortfolioTypeSelector (`/`)
+
+L'application affiche une page de connexion unique avec le style Auth0 standardisé:
+
+**Composant**: `src/pages/PortfolioTypeSelector.tsx`
+
+**Éléments visuels**:
+- Titre: "Wanzo Portfolio"
+- Sous-titre: "Accès à votre espace de gestion"
+- Section principale:
+  - Titre: "Connexion"
+  - Description: "Connectez-vous pour accéder à votre tableau de bord."
+- Bouton avec logo Auth0: "Continuer avec Auth0"
+- Liens: Conditions d'utilisation et politique de confidentialité
+
+**Comportement**:
+- Au clic sur "Continuer avec Auth0", le système:
+  1. Définit le type de portefeuille sur 'traditional'
+  2. Stocke ce choix dans localStorage
+  3. Génère les codes PKCE (code_verifier et code_challenge)
+  4. Redirige vers Auth0 pour l'authentification
 
 ## Intégration avec Auth0
 
