@@ -57,7 +57,9 @@ Le module de prospection repose sur une **architecture hybride** de synchronisat
 ## 🔗 Base URL
 
 **Développement :** `http://localhost:8000/portfolio/api/v1/companies`  
-**Production :** `https://api.wanzo-portfolio.com/portfolio/api/v1/companies`
+**Production :** `https://api.wanzo.com/portfolio/api/v1/companies`
+
+**Note:** Toutes les requêtes passent par l'API Gateway qui route vers les microservices internes.
 
 ## 📡 Endpoints
 

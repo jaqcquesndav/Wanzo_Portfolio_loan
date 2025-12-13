@@ -8,12 +8,27 @@ Cette documentation décrit les endpoints et structures de données de l'API tel
 
 ## 🏗️ Architecture API
 
-L'API suit une architecture REST avec les préfixes suivants :
-- **Base URL Développement** : `http://localhost:8000`
-- **Préfixe API Portfolio** : `/portfolio/api/v1`
-- **URL complète Développement** : `http://localhost:8000/portfolio/api/v1`
-- **Base URL Production** : `https://api.wanzo-portfolio.com/portfolio/api/v1`
-- **Port API Gateway** : 8000
+L'API suit une architecture microservices avec API Gateway :
+
+### Environnement de développement
+- **API Gateway** : `http://localhost:8000`
+- **Préfixe Portfolio** : `/portfolio/api/v1`
+- **URL complète** : `http://localhost:8000/portfolio/api/v1`
+
+### Environnement de production
+- **API Gateway** : `https://api.wanzo.com` (port 8000)
+- **Préfixe Portfolio** : `/portfolio/api/v1`
+- **URL complète** : `https://api.wanzo.com/portfolio/api/v1`
+- **Serveur** : VM Azure (Canada Central) - IP: 4.205.236.59
+
+### Architecture interne
+```
+Frontend → API Gateway (port 8000) → Microservices internes
+                                    ├─ portfolio-institution-service (3005)
+                                    ├─ accounting-service
+                                    ├─ customer-service
+                                    └─ autres services...
+```
 
 ## 📚 Modules Disponibles
 

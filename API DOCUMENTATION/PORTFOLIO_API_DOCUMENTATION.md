@@ -6,11 +6,19 @@ Cette documentation décrit la structure des URLs et les endpoints disponibles p
 
 ## Informations générales
 
-- **Base URL**: `http://localhost:8000`
+### Environnement de développement
+- **API Gateway**: `http://localhost:8000`
 - **Préfixe API Portfolio**: `/portfolio/api/v1`
 - **URL complète**: `http://localhost:8000/portfolio/api/v1`
-- **Port API Gateway**: 8000
-- **Port Microservice Portfolio Institution**: 3005 (interne)
+
+### Environnement de production
+- **API Gateway**: `https://api.wanzo.com`
+- **Préfixe API Portfolio**: `/portfolio/api/v1`
+- **URL complète**: `https://api.wanzo.com/portfolio/api/v1`
+
+### Architecture
+- **API Gateway**: Port 8000 (point d'entrée unique)
+- **Portfolio Institution Service**: Port 3005 (interne, routé par API Gateway)
 
 ## Authentification
 
