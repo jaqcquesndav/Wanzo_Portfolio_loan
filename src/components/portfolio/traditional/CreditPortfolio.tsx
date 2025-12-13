@@ -9,6 +9,7 @@ import { useCreditRequests } from '../../../hooks/useCreditRequests';
 import { useCreditContracts } from '../../../hooks/useCreditContracts';
 import { ScheduleManagementList } from './amortization/ScheduleManagementList';
 import { mockCompanies } from '../../../data/mockCompanies';
+import { getMockCompanyByMemberId } from '../../../data/mockCompanyDetails';
 import { useNotification } from '../../../contexts/useNotification';
 import { Company } from '../../../types/company';
 
@@ -53,54 +54,58 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
   
   const navigate = useNavigate();
 
-  // Fonction pour gérer l'affichage des dûtails d'une entreprise — navigue vers la page de consultation
-  const handleViewCompany = useCallback((companyNameOrId: string) => {
-    // Chercher l'entreprise dans mockCompanies par nom d'abord
-    let companyFound = mockCompanies.find(c => c.name === companyNameOrId);
+  // Fonction pour gérer l'affichage des détails d'une entreprise — navigue vers la page de consultation
+  const handleViewCompany = useCallback((companyId: string) => {
+    // ✅ FIX: Try to resolve as memberId first (mem-001, mem-002, etc.)
+    let companyFound = getMockCompanyByMemberId(companyId);
     
-    // Si non trouvé par nom, essayer par ID
+    // If not found, search in mockCompanies by name or id
     if (!companyFound) {
-      companyFound = mockCompanies.find(c => c.id === companyNameOrId);
+      companyFound = mockCompanies.find(c => c.name === companyId || c.id === companyId);
     }
     
-    // Si l'entreprise est trouvée par nom ou ID
+    // Si l'entreprise est trouvée
     if (companyFound) {
       setSelectedCompany(companyFound);
-      navigate(`/company/${encodeURIComponent(companyFound.id)}/view`, { state: { company: companyFound } });
+      navigate(`/app/traditional/company/${encodeURIComponent(companyFound.id)}/view`, { state: { company: companyFound } });
+      showNotification(`Détails de l'entreprise ${companyFound.name} affichés`, 'info');
+      showNotification(`Détails de l'entreprise ${companyFound.name} affichés`, 'info');
     } else {
-      // CRéer une entreprise de base avec le nom/id fourni
+      // Créer une entreprise de base avec l'id fourni - avec tous les champs requis
+      const companyIdFormatted = companyId.toLowerCase().replace(/\s+/g, '-');
       const basicCompany: Company = {
-        id: companyNameOrId,
-        name: companyNames[companyNameOrId] || companyNameOrId,
+        id: companyIdFormatted,
+        name: companyId,
         sector: 'Non spécifié',
         size: 'small',
         status: 'active',
         annual_revenue: 0,
         employee_count: 0,
         financial_metrics: {
+          annual_revenue: 0,
           revenue_growth: 0,
           profit_margin: 0,
           cash_flow: 0,
           debt_ratio: 0,
           working_capital: 0,
           credit_score: 0,
-          financial_rating: 'C'
+          financial_rating: 'NR'
         },
         esg_metrics: {
+          esg_rating: 'NR',
           carbon_footprint: 0,
-          environmental_rating: 'C',
-          social_rating: 'C',
-          governance_rating: 'C'
+          environmental_rating: 'NR',
+          social_rating: 'NR',
+          governance_rating: 'NR'
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       setSelectedCompany(basicCompany);
-      navigate(`/company/${encodeURIComponent(basicCompany.id)}/view`, { state: { company: basicCompany } });
+      navigate(`/app/traditional/company/${encodeURIComponent(basicCompany.id)}/view`, { state: { company: basicCompany } });
+      showNotification(`Détails de l'entreprise ${companyId} affichés`, 'info');
     }
-    
-    showNotification(`dûtails de l'entreprise ${companyNames[companyNameOrId] || companyNameOrId} affichés`, 'info');
-  }, [showNotification, companyNames, navigate]);
+  }, [showNotification, navigate]);
   
   const tabs: CustomTabProps[] = [
     { id: 'requests', label: 'Demandes', icon: 'FileText' },

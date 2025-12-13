@@ -40,3 +40,6 @@ export const ChatPage = lazy(() =>
   import('../pages/chat/ChatPage').then(module => ({ default: module.ChatPage }))
 );
 export const Prospection = lazy(() => import('../pages/Prospection'));
+
+// Company pages
+export const CompanyViewPage = lazy(() => import('../pages/CompanyViewPage'));

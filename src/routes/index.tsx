@@ -77,30 +77,35 @@ export const router = createBrowserRouter([
     path: '/central-risque',
     element: <Navigate to="/app/traditional/central-risque" replace />
   },
-  // Routes pour affichage d'entreprise (consultation)
-  {
-    path: '/company/:id/view',
-    element: <CompanyViewPage />
-  },
   {
     path: '/app/:portfolioType',
     element: <Layout />, 
     children: [
       { path: '', element: <Dashboard /> },
-      // Traditional
-      // Gérer le cas où "traditional" est répété dans l'URL (doit être avant les autres routes)
-      { path: 'traditional/traditional/:id', element: <TraditionalPortfolioView /> },
+      
+      // ==========================================
+      // COMPANY ROUTES - Must be FIRST to prevent capture by traditional/:id
+      // ==========================================
+      { path: 'company/:id/view', element: <CompanyViewPage /> },
+      
+      // ==========================================
+      // TRADITIONAL PORTFOLIO ROUTES
+      // Order matters: specific routes BEFORE generic catch-all routes
+      // ==========================================
+      // Specific routes with exact paths (highest priority)
       { path: 'traditional', element: <TraditionalPortfolio /> },
-      { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Route spécifique pour le cas particulier de trad-1/guarantees/G001
       { path: 'traditional/trad-1/guarantees/G001', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Routes génériques pour les garanties
+      
+      // Routes with multiple segments (medium priority)
+      { path: 'traditional/traditional/:id', element: <TraditionalPortfolioView /> },
+      { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
+      { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
       { path: 'traditional/:id/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       { path: 'traditional/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      // Route additionnelle pour correspondre au format exact utilisé dans useGuaranteeActions
       { path: 'traditional/:portfolioId/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
-      { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
-      { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
+      
+      // Generic catch-all route (LOWEST priority - must be LAST)
+      { path: 'traditional/:id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
       // Métier detail routes (must be before :id and *)
       { path: 'portfolio/:portfolioId/requests/:requestId', element: <CreditRequestDetails />, errorElement: <OperationNotFound /> },
       { path: 'portfolio/:portfolioId/contracts/:contractId', element: <CreditContractDetail />, errorElement: <OperationNotFound /> },
@@ -125,9 +130,8 @@ export const router = createBrowserRouter([
       // Help & Documentation
       { path: 'docs', element: <Documentation /> },
       { path: 'help', element: <Help /> },
-      // 404 Not Found pour les détails de portefeuille
-      // Les routes catch-all doivent être à la toute fin pour ne pas intercepter les routes métier
-      { path: 'traditional/*', element: <PortfolioNotFound /> }
+      // ✅ FIX: Removed traditional/* catch-all route that was blocking company/:id/view
+      // The specific routes above handle all traditional portfolio paths
     ]
   }
 ]);

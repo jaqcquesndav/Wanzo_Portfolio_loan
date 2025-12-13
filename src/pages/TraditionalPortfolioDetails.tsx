@@ -169,7 +169,7 @@ export default function TraditionalPortfolioDetails() {
 
     setSelectedCompany(companyToUse);
     // Naviguer vers la page de consultation en passant les données via location state
-    navigate(`/company/${encodeURIComponent(companyToUse.id || companyToUse.name)}/view`, { state: { company: companyToUse } });
+    navigate(`/app/traditional/company/${encodeURIComponent(companyToUse.id || companyToUse.name)}/view`, { state: { company: companyToUse } });
     showNotification(`Détails de l'entreprise ${companyName} affichés`, 'info');
   };
 
@@ -416,7 +416,7 @@ export default function TraditionalPortfolioDetails() {
                     }
                     
                     setSelectedCompany(company);
-                    navigate(`/company/${encodeURIComponent(company.id || company.name)}/view`, { state: { company } });
+                    navigate(`/app/traditional/company/${encodeURIComponent(company.id || company.name)}/view`, { state: { company } });
                   }}
                   onCreateContract={(id) => console.log('Créer contrat', id)}
                 />

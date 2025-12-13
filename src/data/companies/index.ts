@@ -2,6 +2,7 @@
 // Ce fichier centralise toutes les données mockées des entreprises
 // Avec extensions de fichiers .ts pour compatibilité
 
+import { entrepriseAlpha } from './entreprisealpha.ts';
 import { techinnovate } from './techinnovate.ts';
 import { agritech } from './agritech.ts';
 import { cleanenergy } from './cleanenergy.ts';
@@ -31,6 +32,7 @@ export type CompanyData = {
 
 // Exporter toutes les entreprises dans un tableau pour faciliter l'utilisation
 export const mockCompanies = [
+  entrepriseAlpha,
   techinnovate,
   agritech,
   cleanenergy,
@@ -40,6 +42,7 @@ export const mockCompanies = [
 
 // Exporter chaque entreprise individuellement
 export {
+  entrepriseAlpha,
   techinnovate,
   agritech,
   cleanenergy,
@@ -60,7 +63,7 @@ export const getCompanyById = (id: string): CompanyData | null => {
 
 // Mapping des entreprises par scénario pour faciliter l'utilisation dans différents contextes
 export const companyScenarios = {
-  prospect: [techinnovate, healthsolutions],
+  prospect: [entrepriseAlpha, techinnovate, healthsolutions],
   funding_requested: [agritech],
   funding_in_progress: [cleanenergy],
   funded: [constructionplus],

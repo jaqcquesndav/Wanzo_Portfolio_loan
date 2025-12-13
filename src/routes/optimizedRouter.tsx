@@ -60,16 +60,29 @@ export function createOptimizedRouter() {
       element: <components.Layout />,
       children: [
         { path: '', element: <components.Dashboard /> },
-        // Traditional Portfolio
-        { path: 'traditional/traditional/:id', element: <components.TraditionalPortfolioView /> },
+        // ==========================================
+        // COMPANY ROUTES - Must be FIRST
+        // ==========================================
+        { path: 'company/:id/view', element: <components.CompanyViewPage /> },
+        
+        // ==========================================
+        // TRADITIONAL PORTFOLIO ROUTES
+        // Order matters: specific routes BEFORE generic catch-all routes
+        // ==========================================
+        // Specific routes with exact paths (highest priority)
         { path: 'traditional', element: <components.TraditionalPortfolio /> },
-        { path: 'traditional/:id', element: <components.TraditionalPortfolioDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         { path: 'traditional/trad-1/guarantees/G001', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
+        
+        // Routes with multiple segments (medium priority)
+        { path: 'traditional/traditional/:id', element: <components.TraditionalPortfolioView /> },
+        { path: 'traditional/view/:id', element: <components.TraditionalPortfolioView /> },
+        { path: 'traditional/:id/view', element: <components.TraditionalPortfolioView /> },
         { path: 'traditional/:id/guarantees/:guaranteeId', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         { path: 'traditional/guarantees/:guaranteeId', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         { path: 'traditional/:portfolioId/guarantees/:guaranteeId', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
-        { path: 'traditional/:id/view', element: <components.TraditionalPortfolioView /> },
-        { path: 'traditional/view/:id', element: <components.TraditionalPortfolioView /> },
+        
+        // Generic catch-all route (LOWEST priority - must be LAST)
+        { path: 'traditional/:id', element: <components.TraditionalPortfolioDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         // Métier detail routes
         { path: 'portfolio/:portfolioId/requests/:requestId', element: <components.CreditRequestDetails /> },
         { path: 'portfolio/:portfolioId/contracts/:contractId', element: <components.CreditContractDetail /> },
@@ -93,8 +106,7 @@ export function createOptimizedRouter() {
         // Help & Documentation
         { path: 'docs', element: <components.Documentation /> },
         { path: 'help', element: <components.Help /> },
-        // 404 Not Found pour les détails de portefeuille
-        { path: 'traditional/*', element: <components.PortfolioNotFound /> }
+        // ✅ FIX: Removed traditional/* catch-all that was blocking company/:id/view
       ]
     }
   ]);

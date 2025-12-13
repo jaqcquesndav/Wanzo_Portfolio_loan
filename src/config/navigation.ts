@@ -25,7 +25,7 @@ export const navigation = {
         permissions: ['canViewProspects']
       },
       {
-        name: 'Central de risque',
+        name: 'Centrale des Risques',
         href: '/central-risque',
         icon: Shield,
         permissions: ['canViewRiskCentral']

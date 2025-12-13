@@ -91,22 +91,6 @@ export interface FinancialMetrics {
   treasury_data?: TreasuryData;
 }
 
-/**
- * Métriques financières de l'entreprise
- */
-export interface FinancialMetrics {
-  annual_revenue: number;
-  revenue_growth: number;
-  profit_margin: number;
-  cash_flow: number;
-  debt_ratio: number;
-  working_capital: number;
-  credit_score: number;
-  financial_rating: FinancialRating;
-  ebitda?: number;
-  treasury_data?: TreasuryData;
-}
-
 // ============================================================================
 // INTERFACES DE CONTACT ET LOCALISATION
 // ============================================================================
@@ -234,6 +218,120 @@ export interface Stock {
 }
 
 // ============================================================================
+// INTERFACES PITCH ET PRÉSENTATION
+// ============================================================================
+
+/**
+ * Lien vers réseau social
+ */
+export interface SocialLink {
+  platform: string;
+  url: string;
+  label: string;
+}
+
+/**
+ * Données de pitch et présentation
+ */
+export interface PitchData {
+  elevator_pitch?: string;
+  value_proposition?: string;
+  target_market?: string;
+  competitive_advantage?: string;
+  pitch_deck_url?: string;
+  demo_video_url?: string;
+}
+
+// ============================================================================
+// INTERFACES INCUBATION ET SPÉCIFICITÉS
+// ============================================================================
+
+/**
+ * Données d'incubation/accélération
+ */
+export interface IncubationData {
+  enIncubation: boolean;
+  typeAccompagnement?: 'incubation' | 'acceleration';
+  nomIncubateur?: string;
+  certificatAffiliation?: string;
+}
+
+/**
+ * Spécificités pour les startups
+ */
+export interface StartupSpecifics {
+  niveauMaturiteTechnologique?: string; // TRL
+  modeleEconomique?: string;
+  proprieteIntellectuelle?: string[];
+}
+
+/**
+ * Spécificités pour les entreprises traditionnelles
+ */
+export interface TraditionalSpecifics {
+  certificationQualite?: boolean;
+  licencesExploitation?: string[];
+}
+
+// ============================================================================
+// INTERFACES FINANCE ÉTENDUE ET JURIDIQUE
+// ============================================================================
+
+/**
+ * Prêt ou concours financier en cours
+ */
+export interface Loan {
+  id: string;
+  type: string;
+  amount: number;
+  currency: Currency;
+  lender: string;
+  startDate: string;
+  endDate?: string;
+  interestRate?: number;
+  status: 'active' | 'completed' | 'defaulted';
+}
+
+/**
+ * Levée de fonds (funding round)
+ */
+export interface FundingRound {
+  id: string;
+  roundType: string; // Seed, Series A, Series B, etc.
+  amount: number;
+  currency: Currency;
+  valuation?: number;
+  investors?: string[];
+  date: string;
+}
+
+/**
+ * Aspects juridiques et réglementaires
+ */
+export interface LegalAspects {
+  failliteAnterieure: boolean;
+  detailsFaillite?: string;
+  poursuiteJudiciaire: boolean;
+  detailsPoursuites?: string;
+  garantiePrets: boolean;
+  detailsGaranties?: string;
+  antecedentsFiscaux: boolean;
+  detailsAntecedentsFiscaux?: string;
+}
+
+/**
+ * Documents de l'entreprise par catégorie
+ */
+export interface CompanyDocuments {
+  documentsEntreprise?: string[]; // URLs ou IDs
+  documentsPersonnel?: string[];
+  documentsFinanciers?: string[];
+  documentsPatrimoine?: string[];
+  documentsProprieteIntellectuelle?: string[];
+  documentsSectoriels?: string[];
+}
+
+// ============================================================================
 // INTERFACES ESG
 // ============================================================================
 
@@ -307,6 +405,59 @@ export interface Company {
   // TIMESTAMPS
   created_at: string;
   updated_at: string;
+  
+  // ========== NOUVEAUX CHAMPS ÉTENDUS ==========
+  
+  // IDENTIFICATION ÉTENDUE
+  sigle?: string;
+  typeEntreprise?: 'traditional' | 'startup';
+  numeroIdentificationNationale?: string;
+  secteursActiviteSecondaires?: string[];
+  secteursPersonalises?: string[];
+  descriptionActivites?: string;
+  produitsServices?: string[];
+  capitalSocial?: number;
+  deviseCapital?: Currency;
+  dateCreation?: string;
+  dateDebutActivites?: string;
+  
+  // INCUBATION ET ACCOMPAGNEMENT
+  incubation?: IncubationData;
+  
+  // SPÉCIFICITÉS SELON TYPE
+  startupSpecifics?: StartupSpecifics;
+  traditionalSpecifics?: TraditionalSpecifics;
+  
+  // PITCH ET PRÉSENTATION
+  pitch?: PitchData;
+  
+  // LOCALISATION DÉTAILLÉE
+  siegeSocial?: Location;
+  siegeExploitation?: Location;
+  unitesProduction?: Location[];
+  pointsVente?: Location[];
+  telephoneFixe?: string;
+  telephoneMobile?: string;
+  fax?: string;
+  boitePostale?: string;
+  reseauxSociaux?: SocialLink[];
+  
+  // PATRIMOINE ÉTENDU
+  moyensTechniques?: string[];
+  capaciteProduction?: string;
+  
+  // STRUCTURE ÉTENDUE
+  organigramme?: string;
+  
+  // FINANCE ÉTENDUE
+  pretsEnCours?: Loan[];
+  leveeDeFonds?: FundingRound[];
+  
+  // ASPECTS JURIDIQUES
+  legalAspects?: LegalAspects;
+  
+  // DOCUMENTS
+  documents?: CompanyDocuments;
 }
 
 // ============================================================================

@@ -1,6 +1,7 @@
 // src/data/mockCreditContracts.ts
 import { CreditContract } from '../types/credit-contract';
 import { mockCreditRequests } from './mockCreditRequests';
+import { getMockCompanyByMemberId } from './mockCompanyDetails';
 
 // Générer des données de contrats de crédit réalistes basées sur les demandes de crédit
 export const mockCreditContracts: CreditContract[] = mockCreditRequests
@@ -29,11 +30,15 @@ export const mockCreditContracts: CreditContract[] = mockCreditRequests
       ? 'active' // 70% actifs 
       : statuses[Math.floor(Math.random() * statuses.length)];
     
+    // Resolve company name from memberId
+    const company = getMockCompanyByMemberId(request.memberId);
+    const companyName = company?.name || request.memberId; // Fallback to memberId if not found
+    
     return {
       id: `CONT-${request.id.substring(4)}`,
       portfolioId: "default-portfolio",
       client_id: `MEM-${100000 + index}`,
-      company_name: request.memberId,
+      company_name: companyName, // ✅ FIX: Use actual company name instead of memberId
       product_type: request.productId,
       contract_number: `CRDT-${100000 + index}`,
       amount: request.requestAmount,
@@ -49,8 +54,8 @@ export const mockCreditContracts: CreditContract[] = mockCreditRequests
       // Legacy compatibility fields
       reference: `CRDT-${100000 + index}`,
       creditRequestId: `REQ-${100000 + index}`,
-      memberId: `MEM-${100000 + index}`,
-      memberName: request.memberId,
+      memberId: request.memberId, // ✅ Keep the actual memberId for reference
+      memberName: companyName, // ✅ FIX: Use actual company name
       productId: `PROD-${index % 5 + 1}`,
       productName: request.productId,
       disbursedAmount: request.requestAmount,

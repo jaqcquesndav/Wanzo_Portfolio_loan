@@ -101,12 +101,12 @@ export default function Prospection() {
       const detailedCompany = await companyApi.getCompanyById(company.id);
       setSelectedCompany(detailedCompany);
       // Naviguer vers la page de consultation en passant les données via location state
-      navigate(`/company/${company.id}/view`, { state: { company: detailedCompany } });
+      navigate(`/app/traditional/company/${company.id}/view`, { state: { company: detailedCompany } });
     } catch (err) {
       console.error('Erreur lors du chargement des détails:', err);
       // Fallback sur les données de base
       setSelectedCompany(company);
-      navigate(`/company/${company.id}/view`, { state: { company } });
+      navigate(`/app/traditional/company/${company.id}/view`, { state: { company } });
     }
   };
 

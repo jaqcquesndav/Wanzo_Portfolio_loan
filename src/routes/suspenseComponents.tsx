@@ -35,3 +35,6 @@ export const PortfolioNotFound = withSuspense(lazyComponents.PortfolioNotFound);
 export const PortfolioErrorBoundary = withSuspense(lazyComponents.PortfolioErrorBoundary);
 export const ChatPage = withSuspense(lazyComponents.ChatPage);
 export const Prospection = withSuspense(lazyComponents.Prospection);
+
+// Company pages
+export const CompanyViewPage = withSuspense(lazyComponents.CompanyViewPage);

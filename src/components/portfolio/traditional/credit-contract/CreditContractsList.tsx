@@ -19,7 +19,7 @@ import { CreditContract } from '../../../../types/credit-contract';
 
 interface CreditContractsListProps {
   portfolioId?: string;
-  onViewCompany?: (companyName: string) => void;
+  onViewCompany?: (companyId: string) => void; // ✅ FIX: Changed from companyName to companyId
 }
 
 export function CreditContractsList({ 
@@ -528,7 +528,8 @@ export function CreditContractsList({
                               className="cursor-pointer hover:text-blue-600 hover:underline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onViewCompany(contract.company_name);
+                                // ✅ FIX: Pass memberId (company ID) instead of company_name
+                                onViewCompany(contract.memberId || contract.company_name);
                               }}
                             >
                               {contract.company_name}
