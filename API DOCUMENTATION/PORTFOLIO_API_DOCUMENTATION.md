@@ -269,42 +269,272 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 **Module:** Prospection (CompaniesController)  
 **Base Route:** `/companies`  
+**Documentation complète:** [API DOCUMENTATION/prospection/README.md](./prospection/README.md)  
+**Structures de données:** [Profil d'Entreprise Complet](./prospection/company-profile.md)  
 **Description:** Gestion des prospects avec architecture hybride de synchronisation (accounting-service HTTP + customer-service Kafka)
 
-#### Consultation des prospects
+#### Architecture de synchronisation
 
-| Méthode | URL | Description | Authentification |
-|---------|-----|-------------|------------------|
-| GET | `/companies` | Liste paginée des prospects avec filtres métier (secteur, taille, score crédit, rating) | JWT Required |
-| GET | `/companies/stats` | Statistiques de prospection agrégées (total, par secteur, taille, statut) | JWT Required |
-| GET | `/companies/nearby` | Recherche géographique par proximité (Haversine) | JWT Required |
-| GET | `/companies/${id}` | Détails complets d'un prospect avec auto-refresh si données stale (> 24h) | JWT Required |
+```
+┌─────────────────────────┐         ┌──────────────────────────┐         ┌─────────────────────────┐
+│  Accounting Service     │  HTTP   │  Portfolio Institution   │  Kafka  │  Customer Service       │
+│  (Source Primaire)      │────────►│  CompanyProfile Cache    │◄────────│  (Source Secondaire)    │
+│                         │         │                          │         │                         │
+│  • Données financières  │         │  • Cache unifié          │         │  • Données légales      │
+│  • Métriques            │         │  • 60+ champs            │         │  • Contacts             │
+│  • Scores crédit        │         │  • Coordonnées GPS       │         │  • Emplacements         │
+└─────────────────────────┘         └──────────────────────────┘         └─────────────────────────┘
+```
 
-#### Synchronisation manuelle (Roles: admin, portfolio_manager)
+**Règles de réconciliation:**
+- Données financières → exclusif `accounting-service`
+- Données légales (RCCM, taxId) → exclusif `customer-service`
+- En cas de conflit nom → `accounting-service` prioritaire
+- Coordonnées GPS → extraites de `locations[isPrimary].coordinates` depuis `customer-service`
 
-| Méthode | URL | Description | Authentification |
-|---------|-----|-------------|------------------|
-| POST | `/companies/${id}/sync` | Synchronisation forcée depuis accounting-service uniquement | JWT + Roles |
-| POST | `/companies/${id}/sync-complete` | Synchronisation complète (accounting + customer services) | JWT + Roles |
+#### Workflow de prospection
 
-#### Paramètres de filtrage (GET /companies)
+1. **Découverte** → GET `/companies` avec filtres (secteur, score crédit, taille)
+2. **Détails** → GET `/companies/:id` pour profil complet (7 onglets)
+3. **Proximité** → GET `/companies/nearby` pour recherche géographique (Haversine)
+4. **Synchronisation** → POST `/companies/:id/sync` si données stale (> 24h)
+5. **Statistiques** → GET `/companies/stats` pour métriques agrégées
 
-- **sector** (string, optional) - Filtre par secteur d'activité
-- **size** (enum, optional) - Taille: `small`, `medium`, `large`
-- **status** (enum, optional) - Statut: `active`, `pending`, `contacted`, `qualified`, `rejected`
-- **minCreditScore** (number, 0-100, optional) - Score de crédit minimum (défaut: 50)
-- **maxCreditScore** (number, 0-100, optional) - Score de crédit maximum
-- **financialRating** (string, optional) - Rating: AAA, AA, A, BBB, BB, B, C, D, E
-- **searchTerm** (string, optional) - Recherche par nom ou secteur
-- **page** (number, optional) - Numéro de page (défaut: 1)
-- **limit** (number, 1-100, optional) - Éléments par page (défaut: 20, max: 100)
+#### 8.1. Liste des prospects avec filtres
 
-#### Paramètres de recherche géographique (GET /companies/nearby)
+**Endpoint:** `GET /companies`  
+**Description:** Récupère la liste paginée des prospects avec filtres métier  
+**Authentification:** JWT Required
 
-- **latitude** (number, required) - Latitude (-90 à 90)
-- **longitude** (number, required) - Longitude (-180 à 180)
-- **radiusKm** (number, optional) - Rayon de recherche en km (défaut: 50, max: 1000)
+**Paramètres de requête:**
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| sector | string | Non | Filtre par secteur d'activité |
+| size | enum | Non | Taille: `small`, `medium`, `large` |
+| status | enum | Non | Statut: `active`, `pending`, `contacted`, `qualified`, `rejected` |
+| minCreditScore | number | Non | Score de crédit minimum (0-100, défaut: 50) |
+| maxCreditScore | number | Non | Score de crédit maximum (0-100) |
+| financialRating | string | Non | Rating: AAA, AA, A, BBB, BB, B, C, D, E |
+| searchTerm | string | Non | Recherche par nom ou secteur |
+| page | number | Non | Numéro de page (défaut: 1) |
+| limit | number | Non | Éléments par page (défaut: 20, max: 100) |
+
+**Exemple de requête:**
+```bash
+GET /companies?sector=Technologies&minCreditScore=70&page=1&limit=10
+```
+
+**Réponse (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "company-tc-001",
+      "name": "TechCongo Innovation SARL",
+      "sector": "Technologies de l'Information",
+      "size": "small",
+      "status": "active",
+      "annual_revenue": 250000,
+      "financial_metrics": {
+        "credit_score": 78,
+        "financial_rating": "BBB",
+        "profit_margin": 18.2
+      },
+      "contact_info": {
+        "email": "contact@techcongo.cd",
+        "phone": "+243 81 234 5678"
+      },
+      "latitude": -4.3276,
+      "longitude": 15.3136
+    }
+  ],
+  "meta": {
+    "total": 145,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 15
+  }
+}
+```
+
+#### 8.2. Détails d'un prospect
+
+**Endpoint:** `GET /companies/:id`  
+**Description:** Récupère le profil complet avec auto-refresh si données stale (> 24h)  
+**Authentification:** JWT Required
+
+**Réponse (200 OK):** Voir [company-profile.md](./prospection/company-profile.md) pour structure complète
+
+**Erreurs:**
+- **404 Not Found** - Prospect inexistant
+
+#### 8.3. Statistiques de prospection
+
+**Endpoint:** `GET /companies/stats`  
+**Description:** Métriques agrégées de prospection  
+**Authentification:** JWT Required
+
+**Réponse (200 OK):**
+```json
+{
+  "totalProspects": 145,
+  "byStatus": {
+    "active": 89,
+    "contacted": 32,
+    "qualified": 15,
+    "rejected": 9
+  },
+  "bySector": {
+    "Technologies": 42,
+    "Commerce": 38,
+    "Services": 35,
+    "Agriculture": 30
+  },
+  "bySize": {
+    "small": 78,
+    "medium": 52,
+    "large": 15
+  },
+  "avgCreditScore": 72.5,
+  "lastCalculated": "2025-12-13T14:30:00.000Z"
+}
+```
+
+#### 8.4. Recherche par proximité géographique
+
+**Endpoint:** `GET /companies/nearby`  
+**Description:** Recherche prospects dans un rayon géographique (formule Haversine)  
+**Authentification:** JWT Required
+
+**Paramètres requis:**
+- **latitude** (number, -90 à 90) - Latitude du point de référence
+- **longitude** (number, -180 à 180) - Longitude du point de référence
+- **radiusKm** (number, optional) - Rayon en km (défaut: 50, max: 1000)
 - Tous les filtres de `/companies` sont également supportés
+
+**Exemple:**
+```bash
+GET /companies/nearby?latitude=-4.3276&longitude=15.3136&radiusKm=25&minCreditScore=70
+```
+
+**Réponse (200 OK):** Tableau de prospects avec champ `distance` ajouté, triés par distance croissante
+
+```json
+[
+  {
+    "id": "company-tc-001",
+    "name": "TechCongo Innovation SARL",
+    "sector": "Technologies",
+    "distance": 12.5,
+    "latitude": -4.3150,
+    "longitude": 15.3200
+  }
+]
+```
+
+#### 8.5. Recherche de prospects par terme
+
+**Endpoint:** `GET /companies/search`  
+**Description:** Recherche full-text par nom ou secteur  
+**Authentification:** JWT Required
+
+**Paramètres:**
+- **q** (string, required) - Terme de recherche
+
+**Exemple:**
+```bash
+GET /companies/search?q=TechCongo
+```
+
+**Réponse (200 OK):** Tableau de prospects correspondants
+
+```json
+[
+  {
+    "id": "company-tc-001",
+    "name": "TechCongo Innovation SARL",
+    "sector": "Technologies de l'Information",
+    "size": "small",
+    "status": "active"
+  }
+]
+```
+
+#### 8.6. Synchronisation manuelle
+
+**Endpoint:** `POST /companies/:id/sync`  
+**Description:** Force la synchronisation depuis accounting-service uniquement  
+**Authentification:** JWT + Roles (admin, portfolio_manager)
+
+**Réponse (200 OK):**
+```json
+{
+  "message": "Prospect data synchronized successfully from accounting service",
+  "data": {
+    "id": "company-tc-001",
+    "lastSyncFromAccounting": "2025-12-13T15:00:00.000Z"
+  }
+}
+```
+
+**Erreurs:**
+- **403 Forbidden** - Permissions insuffisantes
+- **404 Not Found** - Prospect inexistant
+- **503 Service Unavailable** - Service accounting indisponible
+
+#### 8.7. Synchronisation complète (toutes sources)
+
+**Endpoint:** `POST /companies/:id/sync-complete`  
+**Description:** Synchronise depuis accounting + customer services  
+**Authentification:** JWT + Roles (admin, portfolio_manager)
+
+**Réponse (200 OK):** Profil complet mis à jour
+
+**Erreurs:** Identiques à `/sync`
+
+#### 8.8. Gestion des documents d'entreprise
+
+**Upload de document:**
+
+**Endpoint:** `POST /companies/:id/documents`  
+**Description:** Téléverse un document pour une entreprise  
+**Authentification:** JWT Required  
+**Content-Type:** `multipart/form-data`
+
+**Paramètres:**
+- **file** (File, required) - Fichier à uploader
+- **type** (string, required) - Type de document
+- **description** (string, optional) - Description du document
+
+**Réponse (201 Created):**
+```json
+{
+  "id": "doc-123",
+  "url": "https://storage.wanzo.com/companies/tc-001/documents/doc-123.pdf"
+}
+```
+
+**Liste des documents:**
+
+**Endpoint:** `GET /companies/:id/documents`  
+**Description:** Récupère tous les documents d'une entreprise  
+**Authentification:** JWT Required
+
+**Réponse (200 OK):**
+```json
+[
+  {
+    "id": "doc-123",
+    "name": "RCCM.pdf",
+    "type": "legal",
+    "url": "https://storage.wanzo.com/companies/tc-001/documents/doc-123.pdf",
+    "size": 2048576,
+    "uploadDate": "2025-12-13T10:00:00.000Z",
+    "description": "Registre de Commerce"
+  }
+]
+```
 
 ### 9. Gestion des risques
 

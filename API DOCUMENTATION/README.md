@@ -47,9 +47,10 @@ Système de messagerie et communication
 - **Endpoint** : `/chat`
 - **Fonctionnalités** : Messages, conversations, notifications
 
-### 🎯 [Prospection](./prospection/API_PROSPECTION_V2.md)
+### 🎯 [Prospection](./prospection/README.md)
 Gestion de la prospection commerciale avec synchronisation hybride
 - **Endpoint** : `/companies`
+- **Documentation Profil** : [Profil d'Entreprise Complet](./prospection/company-profile.md)
 - **Fonctionnalités** : 
   - Gestion prospects (PME/SME) avec cache CompanyProfile unifié
   - Recherche géographique par proximité (Haversine)
@@ -84,15 +85,18 @@ Gestion des risques et évaluations
 
 ## � Structures de Données
 
-### [Structures Company](./company-data-structures.md)
-Types et interfaces pour les entreprises (PME/Startups)
-- Types primitifs : CompanySize, CompanyStatus, FinancialRating, LegalForm, Currency
-- Interfaces financières : FinancialMetrics, TreasuryData, TreasuryAccount
-- Interfaces contact : ContactInfo, Location, ContactPerson, Owner
-- Interfaces légales : LegalInfo, BankAccount, PaymentInfo
-- Interfaces patrimoine : Asset, Stock
-- Interface ESG : ESGMetrics
-- Interface principale : Company (complète avec 40+ champs)
+### [Profil d'Entreprise Complet](./prospection/company-profile.md)
+Documentation complète des structures de données pour les profils d'entreprise (PME/Startups)
+- **7 onglets** : Général, Patrimoine, Structure, Finance, Localisation, Pitch, Documents
+- **Types primitifs** : CompanySize, CompanyStatus, FinancialRating, LegalForm, Currency
+- **Interfaces financières** : FinancialMetrics, TreasuryData, BankAccount, Loan, FundingRound
+- **Interfaces contact** : ContactInfo, Location, ContactPerson, Owner, SocialLink
+- **Interfaces légales** : LegalInfo, LegalAspects, PaymentInfo
+- **Interfaces patrimoine** : Asset, Stock
+- **Interfaces spécifiques** : IncubationData, StartupSpecifics, TraditionalSpecifics, PitchData
+- **Interface ESG** : ESGMetrics
+- **Interface principale** : Company (complète avec 60+ champs organisés par onglet)
+- **Exemples concrets** : Profil complet de TechCongo Innovation SARL
 
 ## �🔧 Configuration
 
