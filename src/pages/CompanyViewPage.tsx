@@ -1,14 +1,22 @@
 import { useState, useMemo, useCallback } from 'react';
-import { ArrowLeft, Download, Copy, Check, Phone, Mail, Globe } from 'lucide-react';
+import { 
+  ArrowLeft, Download, Copy, Check, Phone, Mail, Globe, Users, Building2, Shield, Briefcase,
+  Building, Wrench, Car, Package, BarChart3, Settings, FileText, Landmark, Smartphone,
+  Wallet, Rocket, Scale, MapPin, Factory, Store
+} from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
 import { useCompanyData } from '../hooks/useCompanyData';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../components/ui/DropdownMenu';
-import type { Company, Asset, Stock, BankAccount, MobileMoneyAccount, Location, ContactPerson, CompanyDocuments } from '../types/company';
+import type { Company, Asset, Stock, BankAccount, MobileMoneyAccount, Location, CompanyDocuments } from '../types/company';
 import { exportToExcel, exportToPDF } from '../utils/export';
 import { exportToCSV } from '../utils/exportToCSV';
+import DirigeantTable from '../components/company/DirigeantTable';
+import ActionnaireTable from '../components/company/ActionnaireTable';
+import EmployeTable from '../components/company/EmployeTable';
+import AssuranceTable from '../components/company/AssuranceTable';
 
 function getCreditScoreStyles(score: number | null) {
   if (score == null || Number.isNaN(score)) {
@@ -374,14 +382,32 @@ export default function CompanyViewPage() {
           </div>
 
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                {company.name}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">{company.sector}</p>
-              {company.size && (
-                <p className="text-sm text-gray-500 mt-1">Taille: {company.size}</p>
-              )}
+            <div className="flex items-start gap-4">
+              {/* Logo de l'entreprise */}
+              <div className="flex-shrink-0">
+                {company.logo_url ? (
+                  <img
+                    src={company.logo_url}
+                    alt={`Logo ${company.name}`}
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-lg object-cover border border-gray-200 dark:border-gray-700 bg-white"
+                  />
+                ) : (
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                    <Building2 className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Informations principales */}
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                  {company.name}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">{company.sector || 'N/A'}</p>
+                {company.size && (
+                  <p className="text-sm text-gray-500 mt-1">Taille: {company.size}</p>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -620,41 +646,83 @@ export default function CompanyViewPage() {
 
           {/* ONGLET: PATRIMOINE */}
           <TabsContent value="patrimoine" currentValue={activeTab} className="space-y-6">
-            {/* Immobilisations */}
+            {/* Immobilisations (bâtiments, terrains) */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                Immobilisations et équipements
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Building className="w-5 h-5 text-blue-600" />
+                Immobilisations (Bâtiments, Terrains)
+              </h2>
+              {company.immobilisations && company.immobilisations.length > 0 ? (
+                <AssetsTable assets={company.immobilisations} showCategory={false} />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucune immobilisation enregistrée (0)</p>
+              )}
+            </section>
+
+            {/* Équipements */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-orange-600" />
+                Équipements et Machines
+              </h2>
+              {company.equipements && company.equipements.length > 0 ? (
+                <AssetsTable assets={company.equipements} showCategory={false} />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucun équipement enregistré (0)</p>
+              )}
+            </section>
+
+            {/* Véhicules */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Car className="w-5 h-5 text-purple-600" />
+                Véhicules
+              </h2>
+              {company.vehicules && company.vehicules.length > 0 ? (
+                <AssetsTable assets={company.vehicules} showCategory={false} />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucun véhicule enregistré (0)</p>
+              )}
+            </section>
+
+            {/* Tous les actifs (si pas de séparation par catégorie) */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Package className="w-5 h-5 text-indigo-600" />
+                Autres actifs
               </h2>
               {company.assets && company.assets.length > 0 ? (
-                <AssetsTable assets={company.assets} />
+                <AssetsTable assets={company.assets} showCategory={true} />
               ) : (
-                <p className="text-gray-500 italic">Aucune immobilisation enregistrée</p>
+                <p className="text-gray-500 dark:text-gray-400">Aucun autre actif enregistré (0)</p>
               )}
             </section>
 
             {/* Stocks */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-teal-600" />
                 Stocks et inventaire
               </h2>
               {company.stocks && company.stocks.length > 0 ? (
                 <StocksTable stocks={company.stocks} />
               ) : (
-                <p className="text-gray-500 italic">Aucun stock enregistré</p>
+                <p className="text-gray-500 dark:text-gray-400">Aucun stock enregistré (0)</p>
               )}
             </section>
 
             {/* Moyens techniques et capacités */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-gray-600" />
                 Moyens techniques et capacités
               </h2>
               <div className="space-y-4">
-                {company.moyensTechniques && company.moyensTechniques.length > 0 ? (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">
-                      Moyens techniques et technologiques
-                    </label>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                    Moyens techniques et technologiques
+                  </label>
+                  {company.moyensTechniques && company.moyensTechniques.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {company.moyensTechniques.map((moyen, idx) => (
                         <span key={idx} className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 rounded text-sm">
@@ -662,10 +730,10 @@ export default function CompanyViewPage() {
                         </span>
                       ))}
                     </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic">Aucun moyen technique enregistré</p>
-                )}
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                  )}
+                </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">
@@ -683,13 +751,16 @@ export default function CompanyViewPage() {
           <TabsContent value="structure" currentValue={activeTab} className="space-y-6">
             {/* Structure organisationnelle */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-primary-600" />
                 Structure organisationnelle
               </h2>
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <ViewField label="Nombre total d'employés" value={company.employee_count?.toString()} />
                   <ViewField label="Taille de l'entreprise" value={company.size} />
+                  <ViewField label="Capital social" value={company.capitalSocial ? `${company.capitalSocial.toLocaleString()} ${company.deviseCapital || 'USD'}` : undefined} />
+                  <ViewField label="Forme juridique" value={company.legal_info?.legalForm} />
                 </div>
                 
                 {company.organigramme && (
@@ -704,103 +775,213 @@ export default function CompanyViewPage() {
                 )}
               </div>
             </section>
+
+            {/* Dirigeants */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-blue-600" />
+                Dirigeants
+              </h2>
+              {company.dirigeants && company.dirigeants.length > 0 ? (
+                <DirigeantTable dirigeants={company.dirigeants} />
+              ) : (
+                <p className="text-gray-500 italic">Aucun dirigeant enregistré</p>
+              )}
+            </section>
+
+            {/* Actionnariat */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-green-600" />
+                Actionnariat
+              </h2>
+              {company.actionnaires && company.actionnaires.length > 0 ? (
+                <ActionnaireTable actionnaires={company.actionnaires} />
+              ) : (
+                <p className="text-gray-500 italic">Aucun actionnaire enregistré</p>
+              )}
+            </section>
+
+            {/* Employés */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600" />
+                Employés
+              </h2>
+              {company.employes && company.employes.length > 0 ? (
+                <EmployeTable employes={company.employes} />
+              ) : (
+                <p className="text-gray-500 italic">Aucun employé enregistré</p>
+              )}
+            </section>
           </TabsContent>
 
           {/* ONGLET: FINANCE & JURIDIQUE */}
           <TabsContent value="financier" currentValue={activeTab} className="space-y-6">
+            {/* Métriques financières clés */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+                Métriques financières
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-400">Chiffre d'affaires</p>
+                  <p className="text-xl font-bold text-blue-900 dark:text-blue-200 mt-1">
+                    {company.financial_metrics?.annual_revenue ? `${company.financial_metrics.annual_revenue.toLocaleString()} USD` : 'N/A'}
+                  </p>
+                </div>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="text-xs uppercase tracking-wide text-green-600 dark:text-green-400">Marge bénéficiaire</p>
+                  <p className="text-xl font-bold text-green-900 dark:text-green-200 mt-1">
+                    {company.financial_metrics?.profit_margin != null ? `${company.financial_metrics.profit_margin}%` : 'N/A'}
+                  </p>
+                </div>
+                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <p className="text-xs uppercase tracking-wide text-purple-600 dark:text-purple-400">Cash flow</p>
+                  <p className="text-xl font-bold text-purple-900 dark:text-purple-200 mt-1">
+                    {company.financial_metrics?.cash_flow ? `${company.financial_metrics.cash_flow.toLocaleString()} USD` : 'N/A'}
+                  </p>
+                </div>
+                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <p className="text-xs uppercase tracking-wide text-orange-600 dark:text-orange-400">Ratio d'endettement</p>
+                  <p className="text-xl font-bold text-orange-900 dark:text-orange-200 mt-1">
+                    {company.financial_metrics?.debt_ratio != null ? `${company.financial_metrics.debt_ratio}%` : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             {/* Informations juridiques */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-600" />
                 Informations juridiques
               </h2>
-              {company.legal_info ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <ViewField label="Forme juridique" value={company.legal_info.legalForm} />
-                  <ViewField label="RCCM" value={company.legal_info.rccm} copyable />
-                  <ViewField label="Numéro fiscal" value={company.legal_info.taxId} />
-                  <ViewField label="Année de création" value={company.legal_info.yearFounded?.toString()} />
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">Informations juridiques non disponibles</p>
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ViewField label="Forme juridique" value={company.legal_info?.legalForm || 'N/A'} />
+                <ViewField label="RCCM" value={company.legal_info?.rccm || 'N/A'} copyable />
+                <ViewField label="Numéro fiscal" value={company.legal_info?.taxId || 'N/A'} copyable />
+                <ViewField label="Année de création" value={company.legal_info?.yearFounded?.toString() || 'N/A'} />
+              </div>
             </section>
 
             {/* Comptes bancaires */}
-            {company.payment_info?.bankAccounts && company.payment_info.bankAccounts.length > 0 && (
-              <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                  Comptes bancaires
-                </h2>
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Landmark className="w-5 h-5 text-green-600" />
+                Comptes bancaires
+              </h2>
+              {company.payment_info?.bankAccounts && company.payment_info.bankAccounts.length > 0 ? (
                 <BankAccountsTable accounts={company.payment_info.bankAccounts} />
-              </section>
-            )}
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucun compte bancaire enregistré (0)</p>
+              )}
+            </section>
+
+            {/* Comptes Mobile Money */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-cyan-600" />
+                Comptes Mobile Money
+              </h2>
+              {company.payment_info?.mobileMoneyAccounts && company.payment_info.mobileMoneyAccounts.length > 0 ? (
+                <MobileMoneyTable accounts={company.payment_info.mobileMoneyAccounts} />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucun compte Mobile Money enregistré (0)</p>
+              )}
+            </section>
+
+            {/* Assurances */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                Assurances
+              </h2>
+              {company.payment_info?.assurances && company.payment_info.assurances.length > 0 ? (
+                <AssuranceTable assurances={company.payment_info.assurances} />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucune assurance enregistrée (0)</p>
+              )}
+            </section>
 
             {/* Prêts en cours */}
-            {company.pretsEnCours && company.pretsEnCours.length > 0 && (
-              <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                  Concours financiers et prêts en cours
-                </h2>
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-red-600" />
+                Concours financiers et prêts en cours
+              </h2>
+              {company.pretsEnCours && company.pretsEnCours.length > 0 ? (
                 <LoansTable loans={company.pretsEnCours} />
-              </section>
-            )}
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucun prêt en cours (0)</p>
+              )}
+            </section>
 
-            {/* Levées de fonds (Startup) */}
-            {company.typeEntreprise === 'startup' && company.leveeDeFonds && company.leveeDeFonds.length > 0 && (
-              <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                  Levées de fonds
-                </h2>
-                <FundingRoundsTable rounds={company.leveeDeFonds} />
-              </section>
-            )}
+            {/* Levées de fonds */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Rocket className="w-5 h-5 text-violet-600" />
+                Levées de fonds
+                {company.typeEntreprise !== 'startup' && (
+                  <span className="text-xs font-normal text-gray-500 ml-2">(Startups uniquement)</span>
+                )}
+              </h2>
+              {company.typeEntreprise === 'startup' ? (
+                company.leveeDeFonds && company.leveeDeFonds.length > 0 ? (
+                  <FundingRoundsTable rounds={company.leveeDeFonds} />
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">Aucune levée de fonds enregistrée (0)</p>
+                )
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Cette section s'applique uniquement aux startups</p>
+              )}
+            </section>
 
             {/* Aspects juridiques et réglementaires */}
-            {company.legalAspects && (
-              <section className="bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700 p-6">
-                <h2 className="text-lg font-semibold text-red-900 dark:text-red-300 mb-6 flex items-center gap-2">
-                  <span className="text-2xl">⚖️</span>
-                  Aspects juridiques et réglementaires
-                </h2>
-                <div className="space-y-4">
-                  <div className="bg-white dark:bg-gray-800 rounded p-4">
-                    <ViewField label="Faillite ou insolvabilité antérieure" value={company.legalAspects.failliteAnterieure ? 'Oui' : 'Non'} />
-                    {company.legalAspects.failliteAnterieure && company.legalAspects.detailsFaillite && (
-                      <div className="mt-2 pl-4 border-l-2 border-red-300">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsFaillite}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 rounded p-4">
-                    <ViewField label="Poursuites judiciaires en cours" value={company.legalAspects.poursuiteJudiciaire ? 'Oui' : 'Non'} />
-                    {company.legalAspects.poursuiteJudiciaire && company.legalAspects.detailsPoursuites && (
-                      <div className="mt-2 pl-4 border-l-2 border-red-300">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsPoursuites}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 rounded p-4">
-                    <ViewField label="Garant de prêts pour tiers" value={company.legalAspects.garantiePrets ? 'Oui' : 'Non'} />
-                    {company.legalAspects.garantiePrets && company.legalAspects.detailsGaranties && (
-                      <div className="mt-2 pl-4 border-l-2 border-red-300">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsGaranties}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 rounded p-4">
-                    <ViewField label="Antécédents avec l'administration fiscale" value={company.legalAspects.antecedentsFiscaux ? 'Oui' : 'Non'} />
-                    {company.legalAspects.antecedentsFiscaux && company.legalAspects.detailsAntecedentsFiscaux && (
-                      <div className="mt-2 pl-4 border-l-2 border-red-300">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsAntecedentsFiscaux}</p>
-                      </div>
-                    )}
-                  </div>
+            <section className="bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700 p-6">
+              <h2 className="text-lg font-semibold text-red-900 dark:text-red-300 mb-6 flex items-center gap-2">
+                <Scale className="w-5 h-5" />
+                Aspects juridiques et réglementaires
+              </h2>
+              <div className="space-y-4">
+                <div className="bg-white dark:bg-gray-800 rounded p-4">
+                  <ViewField label="Faillite ou insolvabilité antérieure" value={company.legalAspects?.failliteAnterieure ? 'Oui' : company.legalAspects?.failliteAnterieure === false ? 'Non' : 'N/A'} />
+                  {company.legalAspects?.failliteAnterieure && company.legalAspects.detailsFaillite && (
+                    <div className="mt-2 pl-4 border-l-2 border-red-300">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsFaillite}</p>
+                    </div>
+                  )}
                 </div>
-              </section>
-            )}
+
+                <div className="bg-white dark:bg-gray-800 rounded p-4">
+                  <ViewField label="Poursuites judiciaires en cours" value={company.legalAspects?.poursuiteJudiciaire ? 'Oui' : company.legalAspects?.poursuiteJudiciaire === false ? 'Non' : 'N/A'} />
+                  {company.legalAspects?.poursuiteJudiciaire && company.legalAspects.detailsPoursuites && (
+                    <div className="mt-2 pl-4 border-l-2 border-red-300">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsPoursuites}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded p-4">
+                  <ViewField label="Garant de prêts pour tiers" value={company.legalAspects?.garantiePrets ? 'Oui' : company.legalAspects?.garantiePrets === false ? 'Non' : 'N/A'} />
+                  {company.legalAspects?.garantiePrets && company.legalAspects.detailsGaranties && (
+                    <div className="mt-2 pl-4 border-l-2 border-red-300">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsGaranties}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded p-4">
+                  <ViewField label="Antécédents avec l'administration fiscale" value={company.legalAspects?.antecedentsFiscaux ? 'Oui' : company.legalAspects?.antecedentsFiscaux === false ? 'Non' : 'N/A'} />
+                  {company.legalAspects?.antecedentsFiscaux && company.legalAspects.detailsAntecedentsFiscaux && (
+                    <div className="mt-2 pl-4 border-l-2 border-red-300">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{company.legalAspects.detailsAntecedentsFiscaux}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
 
           </TabsContent>
 
@@ -808,96 +989,116 @@ export default function CompanyViewPage() {
           <TabsContent value="localisation" currentValue={activeTab} className="space-y-6">
             {/* Sièges et localisations */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-red-600" />
                 Sièges et implantations
               </h2>
               <div className="space-y-6">
                 {/* Siège social */}
-                {company.siegeSocial && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Siège social</h3>
-                    <p className="text-gray-700 dark:text-gray-300">{company.siegeSocial.address}, {company.siegeSocial.city}, {company.siegeSocial.country}</p>
-                  </div>
-                )}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    Siège social
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {company.siegeSocial 
+                      ? `${company.siegeSocial.address || 'N/A'}, ${company.siegeSocial.city || 'N/A'}, ${company.siegeSocial.country || 'N/A'}`
+                      : 'N/A'}
+                  </p>
+                </div>
                 
                 {/* Siège d'exploitation */}
-                {company.siegeExploitation && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Siège d'exploitation</h3>
-                    <p className="text-gray-700 dark:text-gray-300">{company.siegeExploitation.address}, {company.siegeExploitation.city}, {company.siegeExploitation.country}</p>
-                  </div>
-                )}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-green-600" />
+                    Siège d'exploitation
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {company.siegeExploitation 
+                      ? `${company.siegeExploitation.address || 'N/A'}, ${company.siegeExploitation.city || 'N/A'}, ${company.siegeExploitation.country || 'N/A'}`
+                      : 'N/A'}
+                  </p>
+                </div>
+                
+                {/* Coordonnées GPS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ViewField label="Latitude" value={company.latitude?.toString() || 'N/A'} />
+                  <ViewField label="Longitude" value={company.longitude?.toString() || 'N/A'} />
+                </div>
                 
                 {/* Autres localisations */}
-                {company.locations && company.locations.length > 0 ? (
+                {company.locations && company.locations.length > 0 && (
                   <LocationsTable locations={company.locations} />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {company.latitude && company.longitude && (
-                      <>
-                        <ViewField label="Latitude" value={company.latitude.toString()} />
-                        <ViewField label="Longitude" value={company.longitude.toString()} />
-                      </>
-                    )}
-                  </div>
-                )}
-                
-                {/* Unités de production */}
-                {company.unitesProduction && company.unitesProduction.length > 0 && (
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-3">Unités de production</h3>
-                    <div className="space-y-2">
-                      {company.unitesProduction.map((unite, idx) => (
-                        <div key={idx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded text-sm">
-                          {unite.address}, {unite.city}, {unite.country}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Points de vente */}
-                {company.pointsVente && company.pointsVente.length > 0 && (
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-3">Points de vente</h3>
-                    <div className="space-y-2">
-                      {company.pointsVente.map((point, idx) => (
-                        <div key={idx} className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded text-sm">
-                          {point.address}, {point.city}, {point.country}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 )}
               </div>
             </section>
 
+            {/* Unités de production */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Factory className="w-5 h-5 text-amber-600" />
+                Unités de production
+              </h2>
+              {company.unitesProduction && company.unitesProduction.length > 0 ? (
+                <div className="space-y-2">
+                  {company.unitesProduction.map((unite, idx) => (
+                    <div key={idx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded text-sm">
+                      {unite.address}, {unite.city}, {unite.country}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucune unité de production enregistrée (0)</p>
+              )}
+            </section>
+
+            {/* Points de vente */}
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Store className="w-5 h-5 text-purple-600" />
+                Points de vente
+              </h2>
+              {company.pointsVente && company.pointsVente.length > 0 ? (
+                <div className="space-y-2">
+                  {company.pointsVente.map((point, idx) => (
+                    <div key={idx} className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded text-sm">
+                      {point.address}, {point.city}, {point.country}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Aucun point de vente enregistré (0)</p>
+              )}
+            </section>
+
             {/* Coordonnées de contact détaillées */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Phone className="w-5 h-5 text-blue-600" />
                 Informations de contact
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ViewField label="Téléphone fixe" value={company.telephoneFixe} copyable />
-                <ViewField label="Téléphone mobile" value={company.telephoneMobile} copyable />
-                <ViewField label="Fax" value={company.fax} copyable />
-                <ViewField label="Email" value={company.contact_info?.email} copyable />
-                <ViewField label="Boîte postale" value={company.boitePostale} />
-                <ViewField label="Adresse" value={company.contact_info?.address} />
+                <ViewField label="Téléphone fixe" value={company.telephoneFixe || 'N/A'} copyable />
+                <ViewField label="Téléphone mobile" value={company.telephoneMobile || 'N/A'} copyable />
+                <ViewField label="Fax" value={company.fax || 'N/A'} copyable />
+                <ViewField label="Email" value={company.contact_info?.email || 'N/A'} copyable />
+                <ViewField label="Boîte postale" value={company.boitePostale || 'N/A'} />
+                <ViewField label="Adresse" value={company.contact_info?.address || 'N/A'} />
               </div>
             </section>
 
             {/* Présence numérique et réseaux sociaux */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-cyan-600" />
                 Présence numérique
               </h2>
               <div className="space-y-4">
-                <ViewField label="Site web" value={company.website_url || company.contact_info?.website} copyable isLink />
+                <ViewField label="Site web" value={company.website_url || company.contact_info?.website || 'N/A'} copyable isLink />
                 
-                {company.reseauxSociaux && company.reseauxSociaux.length > 0 && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-3">Réseaux sociaux</label>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-3">Réseaux sociaux</label>
+                  {company.reseauxSociaux && company.reseauxSociaux.length > 0 ? (
                     <div className="space-y-2">
                       {company.reseauxSociaux.map((social, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded">
@@ -916,8 +1117,10 @@ export default function CompanyViewPage() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400">Aucun réseau social enregistré (0)</p>
+                  )}
+                </div>
               </div>
             </section>
           </TabsContent>
@@ -925,52 +1128,52 @@ export default function CompanyViewPage() {
           {/* ONGLET: PITCH & PRÉSENTATION */}
           <TabsContent value="presentation" currentValue={activeTab} className="space-y-6">
             {/* Pitch complet */}
-            {company.pitch && (
-              <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                  Pitch et proposition de valeur
-                </h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Elevator Pitch (30s)</label>
-                    <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
-                      {company.pitch.elevator_pitch || 'N/A'}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Proposition de valeur</label>
-                    <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
-                      {company.pitch.value_proposition || 'N/A'}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Marché cible</label>
-                    <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
-                      {company.pitch.target_market || 'N/A'}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Avantage concurrentiel</label>
-                    <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
-                      {company.pitch.competitive_advantage || 'N/A'}
-                    </p>
-                  </div>
+            <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-indigo-600" />
+                Pitch et proposition de valeur
+              </h2>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Elevator Pitch (30s)</label>
+                  <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
+                    {company.pitch?.elevator_pitch || 'N/A'}
+                  </p>
                 </div>
-              </section>
-            )}
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Proposition de valeur</label>
+                  <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
+                    {company.pitch?.value_proposition || 'N/A'}
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Marché cible</label>
+                  <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
+                    {company.pitch?.target_market || 'N/A'}
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Avantage concurrentiel</label>
+                  <p className="text-gray-900 dark:text-white mt-2 whitespace-pre-wrap">
+                    {company.pitch?.competitive_advantage || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </section>
 
             {/* Documents de présentation */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
                 Documents de présentation
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(company.pitch?.pitch_deck_url || company.pitch_deck_url) && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Pitch Deck</label>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Pitch Deck</label>
+                  {(company.pitch?.pitch_deck_url || company.pitch_deck_url) ? (
                     <a 
                       href={company.pitch?.pitch_deck_url || company.pitch_deck_url} 
                       target="_blank" 
@@ -979,11 +1182,13 @@ export default function CompanyViewPage() {
                     >
                       Voir le pitch deck →
                     </a>
-                  </div>
-                )}
-                {(company.pitch?.demo_video_url) && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Vidéo démo</label>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">N/A</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Vidéo démo</label>
+                  {company.pitch?.demo_video_url ? (
                     <a 
                       href={company.pitch.demo_video_url} 
                       target="_blank" 
@@ -992,11 +1197,13 @@ export default function CompanyViewPage() {
                     >
                       Voir la vidéo →
                     </a>
-                  </div>
-                )}
-                {(company.website_url || company.contact_info?.website) && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Site web</label>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">N/A</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Site web</label>
+                  {(company.website_url || company.contact_info?.website) ? (
                     <a 
                       href={company.website_url || company.contact_info?.website} 
                       target="_blank" 
@@ -1005,8 +1212,10 @@ export default function CompanyViewPage() {
                     >
                       Visiter le site →
                     </a>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">N/A</p>
+                  )}
+                </div>
               </div>
             </section>
 
@@ -1015,7 +1224,10 @@ export default function CompanyViewPage() {
           {/* ONGLET: DOCUMENTS */}
           <TabsContent value="documents" currentValue={activeTab} className="space-y-6">
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Documents</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-600" />
+                Documents
+              </h2>
               <DocumentsTable documents={company.documents} />
             </section>
           </TabsContent>
@@ -1095,43 +1307,162 @@ function ViewField({
 }
 
 /**
- * Tableau des immobilisations/actifs
+ * Tableau des immobilisations/actifs - avec affichage détaillé
  */
-function AssetsTable({ assets }: { assets: Asset[] }): JSX.Element {
+function AssetsTable({ assets, showCategory = true }: { assets: Asset[]; showCategory?: boolean }): JSX.Element {
+  // Labels pour les types d'actifs
+  const typeLabels: Record<string, string> = {
+    'immobilier': 'Immobilier',
+    'vehicule': 'Véhicule',
+    'equipement': 'Équipement',
+    'stock': 'Stock',
+    'autre': 'Autre'
+  };
+
+  // Labels pour les états
+  const conditionLabels: Record<string, string> = {
+    'neuf': 'Neuf',
+    'excellent': 'Excellent',
+    'bon': 'Bon',
+    'moyen': 'Moyen',
+    'mauvais': 'Mauvais',
+    'deteriore': 'Détérioré'
+  };
+
+  // Labels pour la propriété
+  const ownershipLabels: Record<string, string> = {
+    'propre': 'Propriété',
+    'location': 'Location',
+    'leasing': 'Leasing',
+    'emprunt': 'Emprunt'
+  };
+
+  // Couleurs pour les états
+  const conditionColors: Record<string, string> = {
+    'neuf': 'bg-green-100 text-green-800',
+    'excellent': 'bg-emerald-100 text-emerald-800',
+    'bon': 'bg-blue-100 text-blue-800',
+    'moyen': 'bg-yellow-100 text-yellow-800',
+    'mauvais': 'bg-orange-100 text-orange-800',
+    'deteriore': 'bg-red-100 text-red-800'
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 dark:bg-gray-700 border-b">
           <tr>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Désignation</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Type</th>
+            {showCategory && (
+              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Type</th>
+            )}
+            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Marque/Modèle</th>
+            <th className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">Prix d'achat</th>
             <th className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">Valeur actuelle</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">État</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Observations</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Propriété</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Localisation</th>
           </tr>
         </thead>
         <tbody>
           {assets.map((asset, idx) => (
-            <tr key={idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{asset.designation || 'N/A'}</td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{asset.type || 'N/A'}</td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-300">
-                {asset.valeurActuelle ? `${asset.valeurActuelle.toLocaleString()}` : 'N/A'}
+            <tr key={asset.id || idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+              <td className="px-4 py-3">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-300">{asset.designation || 'N/A'}</p>
+                  {asset.numeroSerie && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">N° série: {asset.numeroSerie}</p>
+                  )}
+                  {asset.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]" title={asset.description}>
+                      {asset.description}
+                    </p>
+                  )}
+                </div>
               </td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{asset.etatActuel || 'N/A'}</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">{asset.observations || 'N/A'}</td>
+              {showCategory && (
+                <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
+                  {asset.type ? typeLabels[asset.type] || asset.type : 'N/A'}
+                </td>
+              )}
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
+                {asset.marque || asset.modele ? (
+                  <span>{[asset.marque, asset.modele].filter(Boolean).join(' ')}</span>
+                ) : (
+                  'N/A'
+                )}
+              </td>
+              <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-300">
+                {asset.prixAchat ? `${asset.prixAchat.toLocaleString()} ${asset.devise || 'USD'}` : 'N/A'}
+              </td>
+              <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-300">
+                {asset.valeurActuelle ? `${asset.valeurActuelle.toLocaleString()} ${asset.devise || 'USD'}` : 'N/A'}
+              </td>
+              <td className="px-4 py-3">
+                {asset.etatActuel ? (
+                  <span className={`px-2 py-1 rounded-full text-xs ${conditionColors[asset.etatActuel] || 'bg-gray-100 text-gray-800'}`}>
+                    {conditionLabels[asset.etatActuel] || asset.etatActuel}
+                  </span>
+                ) : (
+                  'N/A'
+                )}
+              </td>
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
+                {asset.proprietaire ? ownershipLabels[asset.proprietaire] || asset.proprietaire : 'N/A'}
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">
+                {asset.localisation || 'N/A'}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      
+      {/* Résumé de la valeur totale */}
+      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded flex justify-between items-center">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Total: {assets.length} actif{assets.length > 1 ? 's' : ''}
+        </span>
+        <span className="font-semibold text-gray-900 dark:text-white">
+          Valeur totale: {assets.reduce((sum, a) => sum + (a.valeurActuelle || 0), 0).toLocaleString()} USD
+        </span>
+      </div>
     </div>
   );
 }
 
 /**
- * Tableau des stocks
+ * Tableau des stocks - avec affichage détaillé
  */
 function StocksTable({ stocks }: { stocks: Stock[] }): JSX.Element {
+  // Labels pour les catégories
+  const categoryLabels: Record<string, string> = {
+    'matiere_premiere': 'Matière première',
+    'produit_semi_fini': 'Produit semi-fini',
+    'produit_fini': 'Produit fini',
+    'fourniture': 'Fourniture',
+    'emballage': 'Emballage',
+    'autre': 'Autre'
+  };
+
+  // Labels pour les états
+  const conditionLabels: Record<string, string> = {
+    'excellent': 'Excellent',
+    'bon': 'Bon',
+    'moyen': 'Moyen',
+    'deteriore': 'Détérioré',
+    'perime': 'Périmé'
+  };
+
+  // Couleurs pour les états
+  const conditionColors: Record<string, string> = {
+    'excellent': 'bg-green-100 text-green-800',
+    'bon': 'bg-blue-100 text-blue-800',
+    'moyen': 'bg-yellow-100 text-yellow-800',
+    'deteriore': 'bg-orange-100 text-orange-800',
+    'perime': 'bg-red-100 text-red-800'
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -1140,32 +1471,92 @@ function StocksTable({ stocks }: { stocks: Stock[] }): JSX.Element {
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Désignation</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Catégorie</th>
             <th className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">Quantité</th>
+            <th className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">Coût unitaire</th>
             <th className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">Valeur totale</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">État</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Emplacement</th>
           </tr>
         </thead>
         <tbody>
-          {stocks.map((stock, idx) => (
-            <tr key={idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{stock.designation || 'N/A'}</td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{stock.categorie || 'N/A'}</td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-300">{stock.quantiteStock || 'N/A'}</td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-300">
-                {stock.valeurTotaleStock ? `${stock.valeurTotaleStock.toLocaleString()}` : 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{stock.etatStock || 'N/A'}</td>
-            </tr>
-          ))}
+          {stocks.map((stock, idx) => {
+            // Vérifier si stock est sous le seuil minimum
+            const isLowStock = stock.seuilMinimum && stock.quantiteStock && stock.quantiteStock < stock.seuilMinimum;
+            
+            return (
+              <tr key={stock.id || idx} className={`border-b hover:bg-gray-50 dark:hover:bg-gray-700 ${isLowStock ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
+                <td className="px-4 py-3">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-300">{stock.designation || 'N/A'}</p>
+                    {stock.codeArticle && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Code: {stock.codeArticle}</p>
+                    )}
+                    {stock.fournisseurPrincipal && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Fournisseur: {stock.fournisseurPrincipal}</p>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
+                  {stock.categorie ? categoryLabels[stock.categorie] || stock.categorie : 'N/A'}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <div>
+                    <span className={`font-medium ${isLowStock ? 'text-red-600' : 'text-gray-900 dark:text-gray-300'}`}>
+                      {stock.quantiteStock?.toLocaleString() || 'N/A'} {stock.unite || ''}
+                    </span>
+                    {stock.seuilMinimum && (
+                      <p className="text-xs text-gray-500">Min: {stock.seuilMinimum}</p>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-300">
+                  {stock.coutUnitaire ? `${stock.coutUnitaire.toLocaleString()} ${stock.devise || 'USD'}` : 'N/A'}
+                </td>
+                <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-300">
+                  {stock.valeurTotaleStock ? `${stock.valeurTotaleStock.toLocaleString()} ${stock.devise || 'USD'}` : 'N/A'}
+                </td>
+                <td className="px-4 py-3">
+                  {stock.etatStock ? (
+                    <span className={`px-2 py-1 rounded-full text-xs ${conditionColors[stock.etatStock] || 'bg-gray-100 text-gray-800'}`}>
+                      {conditionLabels[stock.etatStock] || stock.etatStock}
+                    </span>
+                  ) : (
+                    'N/A'
+                  )}
+                </td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">
+                  {stock.emplacement || 'N/A'}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      
+      {/* Résumé */}
+      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded flex justify-between items-center">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Total: {stocks.length} type{stocks.length > 1 ? 's' : ''} de stock
+        </span>
+        <span className="font-semibold text-gray-900 dark:text-white">
+          Valeur totale: {stocks.reduce((sum, s) => sum + (s.valeurTotaleStock || 0), 0).toLocaleString()} USD
+        </span>
+      </div>
     </div>
   );
 }
 
 /**
- * Tableau des comptes bancaires
+ * Tableau des comptes bancaires - avec affichage détaillé
  */
 function BankAccountsTable({ accounts }: { accounts: BankAccount[] }): JSX.Element {
+  // Labels pour les types de compte
+  const typeLabels: Record<string, string> = {
+    'courant': 'Courant',
+    'epargne': 'Épargne',
+    'professionnel': 'Professionnel',
+    'devise': 'Devise'
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -1173,21 +1564,38 @@ function BankAccountsTable({ accounts }: { accounts: BankAccount[] }): JSX.Eleme
           <tr>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Titulaire</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Banque</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Type</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Numéro de compte</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">SWIFT/IBAN</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Devise</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-900 dark:text-white">Principal</th>
           </tr>
         </thead>
         <tbody>
           {accounts.map((account, idx) => (
-            <tr key={idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{account.accountName || 'N/A'}</td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{account.bankName || 'N/A'}</td>
+            <tr key={account.id || idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-300 font-medium">{account.accountName || 'N/A'}</td>
+              <td className="px-4 py-3">
+                <div>
+                  <p className="text-gray-900 dark:text-gray-300">{account.bankName || 'N/A'}</p>
+                  {account.agence && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Agence: {account.agence}</p>
+                  )}
+                </div>
+              </td>
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
+                {account.typeCompte ? typeLabels[account.typeCompte] || account.typeCompte : 'Courant'}
+              </td>
               <td className="px-4 py-3 text-gray-900 dark:text-gray-300 font-mono text-xs">{account.accountNumber || 'N/A'}</td>
               <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">
                 {account.swiftCode || account.iban || 'N/A'}
               </td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{account.currency || 'N/A'}</td>
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{account.currency || 'USD'}</td>
+              <td className="px-4 py-3 text-center">
+                {account.isPrimary && (
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓</span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -1249,48 +1657,6 @@ function LocationsTable({ locations }: { locations: Location[] }): JSX.Element {
               <td className="px-4 py-3 text-gray-900 dark:text-gray-300">{location.country || 'N/A'}</td>
               <td className="px-4 py-3">
                 {location.isPrimary && <Badge variant="success">Principal</Badge>}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/**
- * Tableau des personnes de contact (dirigeants, actionnaires, etc.)
- */
-function ContactPersonsTable({ persons }: { persons: ContactPerson[] }): JSX.Element {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-gray-50 dark:bg-gray-700 border-b">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Nom complet</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Fonction</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Email</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Téléphone</th>
-            <th className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">% Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {persons.map((person, idx) => (
-            <tr key={person.id || idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
-                {[person.prenoms, person.nom].filter(Boolean).join(' ') || person.role || 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-gray-900 dark:text-gray-300">
-                {person.fonction || person.role || 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">
-                {person.email || 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">
-                {person.telephone || 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-300">
-                {person.pourcentageActions ? `${person.pourcentageActions}%` : 'N/A'}
               </td>
             </tr>
           ))}

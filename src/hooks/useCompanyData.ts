@@ -14,7 +14,19 @@ import type {
   SocialLink,
   Loan,
   FundingRound,
-  LegalAspects
+  LegalAspects,
+  ContactPerson,
+  Asset,
+  Stock,
+  Insurance,
+  PaymentInfo,
+  HolderType,
+  AssetType,
+  AssetCondition,
+  OwnershipType,
+  StockCategory,
+  StockCondition,
+  InsuranceType
 } from '../types/company';
 import { mockCompanyDetails, getMockCompanyByMemberId, getMockCompanyByInternalId } from '../data/mockCompanyDetails';
 
@@ -420,6 +432,337 @@ function normalizeCompanyDocuments(value: unknown): CompanyDocuments | undefined
   return hasContent ? documents : undefined;
 }
 
+// ============================================================================
+// NORMALISATEURS POUR PERSONNES (Dirigeants, Actionnaires, Employés)
+// ============================================================================
+
+const VALID_HOLDER_TYPES: HolderType[] = ['physique', 'morale'];
+
+function normalizeHolderType(value: unknown): HolderType | undefined {
+  if (typeof value === 'string' && VALID_HOLDER_TYPES.includes(value as HolderType)) {
+    return value as HolderType;
+  }
+  return undefined;
+}
+
+/**
+ * Normalise un ContactPerson (dirigeant, actionnaire, employé)
+ */
+function normalizeContactPerson(value: unknown): ContactPerson | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  
+  const person: ContactPerson = {
+    id: safeString(value.id),
+    typeDetenteur: normalizeHolderType(value.typeDetenteur),
+    
+    // Champs personne physique
+    nom: safeString(value.nom),
+    prenoms: safeString(value.prenoms),
+    fonction: safeString(value.fonction),
+    nationalite: safeString(value.nationalite),
+    telephone: safeString(value.telephone),
+    email: safeString(value.email),
+    adresse: safeString(value.adresse),
+    linkedin: safeString(value.linkedin),
+    cv: safeString(value.cv),
+    cvFileName: safeString(value.cvFileName),
+    
+    // Champs personne morale
+    raisonSociale: safeString(value.raisonSociale),
+    formeJuridique: safeString(value.formeJuridique),
+    rccm: safeString(value.rccm),
+    idnat: safeString(value.idnat),
+    siegeSocial: safeString(value.siegeSocial),
+    representantLegal: safeString(value.representantLegal),
+    representantFonction: safeString(value.representantFonction),
+    
+    // Champs actionnariat
+    nombreActions: safeNumber(value.nombreActions),
+    pourcentageActions: safeNumber(value.pourcentageActions),
+    
+    // Champs employé
+    dateNomination: safeString(value.dateNomination),
+    typeContrat: safeString(value.typeContrat),
+    salaire: safeNumber(value.salaire),
+    diplomes: toStringArray(value.diplomes),
+    
+    // Legacy
+    role: safeString(value.role),
+  };
+  
+  // Vérifier qu'il y a au moins des données significatives
+  const hasPhysicalPerson = person.nom || person.prenoms;
+  const hasMoralPerson = person.raisonSociale;
+  const hasIdentity = hasPhysicalPerson || hasMoralPerson;
+  
+  return hasIdentity ? person : undefined;
+}
+
+function normalizeContactPersonArray(value: unknown): ContactPerson[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const result = value
+    .map((item) => normalizeContactPerson(item))
+    .filter((person): person is ContactPerson => Boolean(person));
+  return result.length > 0 ? result : undefined;
+}
+
+// ============================================================================
+// NORMALISATEURS POUR ACTIFS (Assets, Immobilisations, Équipements, Véhicules)
+// ============================================================================
+
+const VALID_ASSET_TYPES: AssetType[] = ['immobilier', 'vehicule', 'equipement', 'stock', 'autre'];
+const VALID_ASSET_CONDITIONS: AssetCondition[] = ['neuf', 'excellent', 'bon', 'moyen', 'mauvais', 'deteriore'];
+const VALID_OWNERSHIP_TYPES: OwnershipType[] = ['propre', 'location', 'leasing', 'emprunt'];
+
+function normalizeAssetType(value: unknown): AssetType | undefined {
+  if (typeof value === 'string' && VALID_ASSET_TYPES.includes(value as AssetType)) {
+    return value as AssetType;
+  }
+  return undefined;
+}
+
+function normalizeAssetCondition(value: unknown): AssetCondition | undefined {
+  if (typeof value === 'string' && VALID_ASSET_CONDITIONS.includes(value as AssetCondition)) {
+    return value as AssetCondition;
+  }
+  return undefined;
+}
+
+function normalizeOwnershipType(value: unknown): OwnershipType | undefined {
+  if (typeof value === 'string' && VALID_OWNERSHIP_TYPES.includes(value as OwnershipType)) {
+    return value as OwnershipType;
+  }
+  return undefined;
+}
+
+/**
+ * Normalise un Asset (immobilisation, équipement, véhicule)
+ */
+function normalizeAsset(value: unknown): Asset | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  
+  const asset: Asset = {
+    id: safeString(value.id),
+    designation: safeString(value.designation),
+    type: normalizeAssetType(value.type),
+    description: safeString(value.description),
+    
+    // Valeurs financières
+    prixAchat: safeNumber(value.prixAchat),
+    valeurActuelle: safeNumber(value.valeurActuelle),
+    devise: normalizeCurrency(value.devise),
+    
+    // Informations temporelles
+    dateAcquisition: safeString(value.dateAcquisition),
+    
+    // État et localisation
+    etatActuel: normalizeAssetCondition(value.etatActuel),
+    localisation: safeString(value.localisation),
+    
+    // Informations techniques
+    numeroSerie: safeString(value.numeroSerie),
+    marque: safeString(value.marque),
+    modele: safeString(value.modele),
+    quantite: safeNumber(value.quantite),
+    unite: safeString(value.unite),
+    
+    // Statut de propriété
+    proprietaire: normalizeOwnershipType(value.proprietaire),
+    
+    // Observations
+    observations: safeString(value.observations),
+  };
+  
+  // Vérifier qu'il y a au moins des données significatives
+  const hasContent = asset.designation || asset.description || asset.prixAchat !== undefined || asset.valeurActuelle !== undefined;
+  
+  return hasContent ? asset : undefined;
+}
+
+function normalizeAssetArray(value: unknown): Asset[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const result = value
+    .map((item) => normalizeAsset(item))
+    .filter((asset): asset is Asset => Boolean(asset));
+  return result.length > 0 ? result : undefined;
+}
+
+// ============================================================================
+// NORMALISATEURS POUR STOCKS
+// ============================================================================
+
+const VALID_STOCK_CATEGORIES: StockCategory[] = ['matiere_premiere', 'produit_semi_fini', 'produit_fini', 'fourniture', 'emballage', 'autre'];
+const VALID_STOCK_CONDITIONS: StockCondition[] = ['excellent', 'bon', 'moyen', 'deteriore', 'perime'];
+
+function normalizeStockCategory(value: unknown): StockCategory | undefined {
+  if (typeof value === 'string' && VALID_STOCK_CATEGORIES.includes(value as StockCategory)) {
+    return value as StockCategory;
+  }
+  return undefined;
+}
+
+function normalizeStockCondition(value: unknown): StockCondition | undefined {
+  if (typeof value === 'string' && VALID_STOCK_CONDITIONS.includes(value as StockCondition)) {
+    return value as StockCondition;
+  }
+  return undefined;
+}
+
+/**
+ * Normalise un Stock
+ */
+function normalizeStock(value: unknown): Stock | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  
+  const stock: Stock = {
+    id: safeString(value.id),
+    designation: safeString(value.designation),
+    categorie: normalizeStockCategory(value.categorie),
+    description: safeString(value.description),
+    
+    // Quantités et unités
+    quantiteStock: safeNumber(value.quantiteStock),
+    unite: safeString(value.unite),
+    seuilMinimum: safeNumber(value.seuilMinimum),
+    seuilMaximum: safeNumber(value.seuilMaximum),
+    
+    // Valeurs financières
+    coutUnitaire: safeNumber(value.coutUnitaire),
+    valeurTotaleStock: safeNumber(value.valeurTotaleStock),
+    devise: normalizeCurrency(value.devise),
+    
+    // Informations temporelles
+    dateDernierInventaire: safeString(value.dateDernierInventaire),
+    dureeRotationMoyenne: safeNumber(value.dureeRotationMoyenne),
+    datePeremption: safeString(value.datePeremption),
+    
+    // Localisation et stockage
+    emplacement: safeString(value.emplacement),
+    conditionsStockage: safeString(value.conditionsStockage),
+    
+    // Suivi et gestion
+    fournisseurPrincipal: safeString(value.fournisseurPrincipal),
+    numeroLot: safeString(value.numeroLot),
+    codeArticle: safeString(value.codeArticle),
+    
+    // État
+    etatStock: normalizeStockCondition(value.etatStock),
+    observations: safeString(value.observations),
+  };
+  
+  // Vérifier qu'il y a au moins des données significatives
+  const hasContent = stock.designation || stock.quantiteStock !== undefined || stock.valeurTotaleStock !== undefined;
+  
+  return hasContent ? stock : undefined;
+}
+
+function normalizeStockArray(value: unknown): Stock[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const result = value
+    .map((item) => normalizeStock(item))
+    .filter((stock): stock is Stock => Boolean(stock));
+  return result.length > 0 ? result : undefined;
+}
+
+// ============================================================================
+// NORMALISATEURS POUR ASSURANCES
+// ============================================================================
+
+const VALID_INSURANCE_TYPES: InsuranceType[] = ['responsabilite_civile', 'incendie', 'vol', 'accidents_travail', 'marchandises', 'vehicules', 'multirisque', 'autre'];
+const VALID_PAYMENT_FREQUENCIES = ['mensuel', 'trimestriel', 'annuel'] as const;
+
+function normalizeInsuranceType(value: unknown): InsuranceType | undefined {
+  if (typeof value === 'string' && VALID_INSURANCE_TYPES.includes(value as InsuranceType)) {
+    return value as InsuranceType;
+  }
+  return undefined;
+}
+
+function normalizePaymentFrequency(value: unknown): 'mensuel' | 'trimestriel' | 'annuel' | undefined {
+  if (typeof value === 'string' && VALID_PAYMENT_FREQUENCIES.includes(value as typeof VALID_PAYMENT_FREQUENCIES[number])) {
+    return value as 'mensuel' | 'trimestriel' | 'annuel';
+  }
+  return undefined;
+}
+
+/**
+ * Normalise une Insurance
+ */
+function normalizeInsurance(value: unknown): Insurance | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  
+  const compagnie = safeString(value.compagnie);
+  const numeroPolice = safeString(value.numeroPolice);
+  
+  // Une assurance doit avoir au minimum une compagnie et un numéro de police
+  if (!compagnie || !numeroPolice) {
+    return undefined;
+  }
+  
+  return {
+    id: safeString(value.id),
+    compagnie,
+    typeAssurance: normalizeInsuranceType(value.typeAssurance) || 'autre',
+    numeroPolice,
+    montantCouverture: safeNumber(value.montantCouverture),
+    devise: normalizeCurrency(value.devise),
+    dateDebut: safeString(value.dateDebut),
+    dateExpiration: safeString(value.dateExpiration),
+    prime: safeNumber(value.prime),
+    frequencePaiement: normalizePaymentFrequency(value.frequencePaiement),
+    observations: safeString(value.observations),
+  };
+}
+
+function normalizeInsuranceArray(value: unknown): Insurance[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const result = value
+    .map((item) => normalizeInsurance(item))
+    .filter((insurance): insurance is Insurance => Boolean(insurance));
+  return result.length > 0 ? result : undefined;
+}
+
+/**
+ * Normalise les informations de paiement incluant les assurances
+ */
+function normalizePaymentInfo(value: unknown): PaymentInfo | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  
+  const paymentInfo: PaymentInfo = {
+    preferredMethod: value.preferredMethod === 'bank' || value.preferredMethod === 'mobile_money' 
+      ? value.preferredMethod 
+      : undefined,
+    bankAccounts: Array.isArray(value.bankAccounts) ? value.bankAccounts as PaymentInfo['bankAccounts'] : undefined,
+    mobileMoneyAccounts: Array.isArray(value.mobileMoneyAccounts) ? value.mobileMoneyAccounts as PaymentInfo['mobileMoneyAccounts'] : undefined,
+    assurances: normalizeInsuranceArray(value.assurances),
+  };
+  
+  const hasContent = paymentInfo.preferredMethod || 
+                     (paymentInfo.bankAccounts && paymentInfo.bankAccounts.length > 0) ||
+                     (paymentInfo.mobileMoneyAccounts && paymentInfo.mobileMoneyAccounts.length > 0) ||
+                     (paymentInfo.assurances && paymentInfo.assurances.length > 0);
+  
+  return hasContent ? paymentInfo : undefined;
+}
+
 /**
  * Validate and normalise a loose 'size' value into a `CompanySize`.
  * Accepts strings (various languages/variants) or numeric employee counts.
@@ -503,6 +846,7 @@ function normalizeToCompany(data: unknown): Company {
     sector: String(input.sector || 'Non spécifié'),
     size: validateCompanySize(input.size) || 'medium',
     status: validateCompanyStatus(input.status) || 'active',
+    logo_url: safeString(input.logo_url),
     employee_count: Number(input.employee_count || input.employees || 0),
     website_url: String(input.website_url || socialData?.website || ''),
     pitch_deck_url: input.pitch_deck_url ? String(input.pitch_deck_url) : undefined,
@@ -539,16 +883,28 @@ function normalizeToCompany(data: unknown): Company {
       taxId: input.taxId ? String(input.taxId) : undefined,
       yearFounded: input.founded ? Number(input.founded) : undefined,
     },
-    payment_info: input.payment_info as Record<string, unknown> | undefined,
+    payment_info: normalizePaymentInfo(input.payment_info),
     owner: (input.owner as Record<string, unknown>) || (ceoData ? {
       id: 'owner',
       name: String(ceoData.name || ''),
       email: ceoData.email ? String(ceoData.email) : undefined,
       phone: ceoData.phone ? String(ceoData.phone) : undefined,
     } : undefined),
-    contactPersons: (input.contactPersons as unknown[]) || leadershipData,
-    assets: input.assets as unknown[] | undefined,
-    stocks: input.stocks as unknown[] | undefined,
+    contactPersons: normalizeContactPersonArray(input.contactPersons) || (leadershipData ? normalizeContactPersonArray(leadershipData) : undefined),
+    
+    // Personnes par catégorie
+    dirigeants: normalizeContactPersonArray(input.dirigeants),
+    actionnaires: normalizeContactPersonArray(input.actionnaires),
+    employes: normalizeContactPersonArray(input.employes),
+    
+    // Actifs génériques (legacy)
+    assets: normalizeAssetArray(input.assets),
+    stocks: normalizeStockArray(input.stocks),
+    
+    // Actifs par catégorie
+    immobilisations: normalizeAssetArray(input.immobilisations),
+    equipements: normalizeAssetArray(input.equipements),
+    vehicules: normalizeAssetArray(input.vehicules),
     esg_metrics: (input.esg_metrics as Record<string, unknown>) || {
       esg_rating: input.esgScore && Number(input.esgScore) >= 80 ? 'A' : 'NR',
       carbon_footprint: 0,

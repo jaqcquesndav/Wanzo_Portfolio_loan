@@ -8,7 +8,7 @@ Ce document décrit la structure complète du profil d'une entreprise dans le sy
 
 ### Onglets du profil
 1. **Général** - Identification de base, immatriculations, activités, incubation
-2. **Patrimoine** - Immobilisations, stocks, moyens techniques
+2. **Patrimoine** - Immobilisations, équipements, véhicules, stocks, moyens techniques
 3. **Structure** - Organisation, employés, organigramme
 4. **Finance** - Informations juridiques, comptes bancaires, prêts, aspects juridiques
 5. **Localisation** - Sièges, implantations, contacts, présence numérique
@@ -56,8 +56,10 @@ type FinancialRating = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'C' | 'D' | 'E'
 
 ```typescript
 {
+  id: string;                      // Identifiant unique
   name: string;                    // Raison sociale
   sigle?: string;                  // Sigle/Acronyme
+  logo_url?: string;               // URL du logo de l'entreprise
   sector: string;                  // Secteur principal
   typeEntreprise?: 'traditional' | 'startup';
   size: CompanySize;               // Taille
@@ -70,8 +72,10 @@ type FinancialRating = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'C' | 'D' | 'E'
 **Exemple:**
 ```json
 {
+  "id": "COMP-0001",
   "name": "TechCongo Innovation SARL",
   "sigle": "TCI",
+  "logo_url": "https://cdn.wanzo.com/logos/techcongo.png",
   "sector": "Technologies de l'Information",
   "typeEntreprise": "startup",
   "size": "small",
@@ -221,39 +225,108 @@ interface TraditionalSpecifics {
 
 ## Onglet 2: PATRIMOINE
 
-### Section: Immobilisations et équipements
+### Section: Immobilisations (Bâtiments, Terrains)
 
 ```typescript
+/** Type d'actif */
+type AssetType = 'immobilier' | 'vehicule' | 'equipement' | 'stock' | 'autre';
+
+/** État d'un actif */
+type AssetCondition = 'neuf' | 'excellent' | 'bon' | 'moyen' | 'mauvais' | 'deteriore';
+
+/** Type de propriété */
+type OwnershipType = 'propre' | 'location' | 'leasing' | 'emprunt';
+
 interface Asset {
-  designation?: string;     // Désignation de l'actif
-  type?: string;            // Type d'actif
-  valeurActuelle?: number;  // Valeur actuelle
-  etatActuel?: string;      // État actuel
-  observations?: string;    // Observations
+  id?: string;
+  designation?: string;         // Désignation de l'actif
+  type?: AssetType;             // Type d'actif
+  description?: string;         // Description détaillée
+  
+  // Valeurs financières
+  prixAchat?: number;           // Prix d'achat
+  valeurActuelle?: number;      // Valeur actuelle
+  devise?: Currency;
+  
+  // Informations temporelles
+  dateAcquisition?: string;     // Date d'acquisition (ISO 8601)
+  
+  // État et localisation
+  etatActuel?: AssetCondition;  // État actuel
+  localisation?: string;        // Localisation physique
+  
+  // Informations techniques
+  numeroSerie?: string;
+  marque?: string;
+  modele?: string;
+  quantite?: number;
+  unite?: string;
+  
+  // Statut de propriété
+  proprietaire?: OwnershipType;
+  
+  // Observations
+  observations?: string;
 }
 
 {
+  // Actifs génériques (legacy)
   assets?: Asset[];
+  
+  // Actifs par catégorie (recommandé)
+  immobilisations?: Asset[];    // Bâtiments, terrains
+  equipements?: Asset[];        // Équipements et matériel
+  vehicules?: Asset[];          // Parc automobile
 }
 ```
 
 **Exemple:**
 ```json
 {
-  "assets": [
+  "immobilisations": [
     {
+      "id": "immo-001",
+      "designation": "Entrepôt Zone Industrielle",
+      "type": "immobilier",
+      "description": "Entrepôt de stockage de 500m²",
+      "prixAchat": 150000,
+      "valeurActuelle": 180000,
+      "devise": "USD",
+      "dateAcquisition": "2020-06-15",
+      "etatActuel": "bon",
+      "localisation": "Zone Industrielle de Limete, Kinshasa",
+      "proprietaire": "propre"
+    }
+  ],
+  "equipements": [
+    {
+      "id": "equip-001",
       "designation": "Serveur Dell PowerEdge R740",
-      "type": "Matériel informatique",
+      "type": "equipement",
+      "prixAchat": 18000,
       "valeurActuelle": 15000,
-      "etatActuel": "Bon état",
-      "observations": "Acheté en janvier 2023, garantie 3 ans"
-    },
+      "devise": "USD",
+      "dateAcquisition": "2023-01-15",
+      "etatActuel": "excellent",
+      "marque": "Dell",
+      "modele": "PowerEdge R740",
+      "numeroSerie": "SN-2023-001234"
+    }
+  ],
+  "vehicules": [
     {
-      "designation": "Véhicule Toyota Hilux",
-      "type": "Véhicule",
+      "id": "veh-001",
+      "designation": "Toyota Hilux 4x4",
+      "type": "vehicule",
+      "prixAchat": 45000,
       "valeurActuelle": 35000,
-      "etatActuel": "Excellent",
-      "observations": "Utilisé pour les déplacements clients"
+      "devise": "USD",
+      "dateAcquisition": "2022-03-20",
+      "etatActuel": "bon",
+      "marque": "Toyota",
+      "modele": "Hilux Double Cabine",
+      "numeroSerie": "JTFSS22P8H0123456",
+      "proprietaire": "propre"
     }
   ]
 }
@@ -262,12 +335,46 @@ interface Asset {
 ### Section: Stocks et inventaire
 
 ```typescript
+/** Catégorie de stock */
+type StockCategory = 'matiere_premiere' | 'produit_semi_fini' | 'produit_fini' | 'fourniture' | 'emballage' | 'autre';
+
+/** État du stock */
+type StockCondition = 'excellent' | 'bon' | 'moyen' | 'deteriore' | 'perime';
+
 interface Stock {
-  designation?: string;        // Désignation du stock
-  categorie?: string;          // Catégorie
-  quantiteStock?: number;      // Quantité en stock
-  valeurTotaleStock?: number;  // Valeur totale
-  etatStock?: string;          // État du stock
+  id?: string;
+  designation?: string;           // Désignation du stock
+  categorie?: StockCategory;      // Catégorie
+  description?: string;
+  
+  // Quantités et unités
+  quantiteStock?: number;         // Quantité en stock
+  unite?: string;                 // Unité de mesure
+  seuilMinimum?: number;          // Seuil de réapprovisionnement
+  seuilMaximum?: number;          // Capacité maximale
+  
+  // Valeurs financières
+  coutUnitaire?: number;          // Coût unitaire
+  valeurTotaleStock?: number;     // Valeur totale
+  devise?: Currency;
+  
+  // Informations temporelles
+  dateDernierInventaire?: string;
+  dureeRotationMoyenne?: number;  // Durée de rotation (jours)
+  datePeremption?: string;        // Date de péremption (si applicable)
+  
+  // Localisation et stockage
+  emplacement?: string;
+  conditionsStockage?: string;
+  
+  // Suivi et gestion
+  fournisseurPrincipal?: string;
+  numeroLot?: string;
+  codeArticle?: string;
+  
+  // État
+  etatStock?: StockCondition;
+  observations?: string;
 }
 
 {
@@ -322,7 +429,7 @@ interface Stock {
 {
   employee_count: number;     // Nombre total d'employés
   size: CompanySize;          // Taille de l'entreprise
-  organigramme?: string;      // Description de l'organigramme
+  organigramme?: string;      // Description ou URL de l'organigramme
 }
 ```
 
@@ -335,6 +442,137 @@ interface Stock {
 }
 ```
 
+### Section: Dirigeants, Actionnaires et Employés
+
+```typescript
+/** Type de détenteur pour l'actionnariat */
+type HolderType = 'physique' | 'morale';
+
+/**
+ * Personne de contact (dirigeant, actionnaire, employé)
+ * Interface unifiée pour tous les types de personnes liées à l'entreprise
+ */
+interface ContactPerson {
+  id?: string;
+  
+  // Type de détenteur (personne physique ou morale)
+  typeDetenteur?: HolderType;
+  
+  // Champs personne physique
+  nom?: string;                    // Nom de famille
+  prenoms?: string;                // Prénoms
+  fonction?: string;               // Fonction dans l'entreprise
+  nationalite?: string;
+  telephone?: string;
+  email?: string;
+  adresse?: string;
+  linkedin?: string;               // URL LinkedIn
+  cv?: string;                     // URL du CV uploadé
+  cvFileName?: string;             // Nom du fichier CV
+  
+  // Champs personne morale (actionnaire)
+  raisonSociale?: string;          // Raison sociale (si personne morale)
+  formeJuridique?: string;         // Forme juridique
+  rccm?: string;                   // Numéro RCCM
+  idnat?: string;                  // ID National
+  siegeSocial?: string;
+  representantLegal?: string;      // Nom du représentant légal
+  representantFonction?: string;   // Fonction du représentant
+  
+  // Champs actionnariat
+  nombreActions?: number;          // Nombre d'actions ou de parts sociales
+  pourcentageActions?: number;     // Pourcentage du capital (0-100)
+  
+  // Champs employé
+  dateNomination?: string;         // Date de nomination (ISO 8601)
+  typeContrat?: string;            // Type de contrat (CDI, CDD, etc.)
+  salaire?: number;                // Salaire mensuel
+  diplomes?: string[];             // Liste des diplômes
+}
+
+{
+  // Personnes de contact (legacy - générique)
+  owner?: Owner;
+  contactPersons?: ContactPerson[];
+  
+  // Personnes par catégorie (recommandé)
+  dirigeants?: ContactPerson[];     // Dirigeants et managers
+  actionnaires?: ContactPerson[];   // Actionnaires et associés
+  employes?: ContactPerson[];       // Employés clés
+}
+```
+
+**Exemple - Dirigeants:**
+```json
+{
+  "dirigeants": [
+    {
+      "id": "dir-001",
+      "typeDetenteur": "physique",
+      "nom": "Kabila",
+      "prenoms": "Jean-Pierre",
+      "fonction": "Directeur Général",
+      "nationalite": "Congolaise",
+      "telephone": "+243 81 234 5678",
+      "email": "jp.kabila@techcongo.cd",
+      "linkedin": "https://linkedin.com/in/jpkabila",
+      "cv": "https://docs.techcongo.cd/cv/jpkabila.pdf",
+      "dateNomination": "2020-03-15",
+      "diplomes": ["MBA - UNIKIN", "Ingénieur Informatique - ISP Gombe"]
+    }
+  ]
+}
+```
+
+**Exemple - Actionnaires (personnes physiques et morales):**
+```json
+{
+  "actionnaires": [
+    {
+      "id": "act-001",
+      "typeDetenteur": "physique",
+      "nom": "Kabila",
+      "prenoms": "Jean-Pierre",
+      "nombreActions": 5000,
+      "pourcentageActions": 50
+    },
+    {
+      "id": "act-002",
+      "typeDetenteur": "morale",
+      "raisonSociale": "Africa Tech Ventures SA",
+      "formeJuridique": "SA",
+      "rccm": "CD/KIN/RCCM/18-A-12345",
+      "siegeSocial": "45 Avenue des Investisseurs, Kinshasa",
+      "representantLegal": "Marie Lukusa",
+      "representantFonction": "Directrice des Investissements",
+      "nombreActions": 3000,
+      "pourcentageActions": 30
+    }
+  ]
+}
+```
+
+**Exemple - Employés:**
+```json
+{
+  "employes": [
+    {
+      "id": "emp-001",
+      "typeDetenteur": "physique",
+      "nom": "Mwamba",
+      "prenoms": "David",
+      "fonction": "Développeur Senior",
+      "telephone": "+243 85 987 6543",
+      "email": "david.mwamba@techcongo.cd",
+      "typeContrat": "CDI",
+      "salaire": 2500,
+      "dateNomination": "2021-06-01",
+      "diplomes": ["Licence Informatique - UNIKIN"]
+    }
+  ]
+}
+```
+
 ---
 
 ## Onglet 4: FINANCE & JURIDIQUE
@@ -343,10 +581,11 @@ interface Stock {
 
 Voir la structure `LegalInfo` dans l'onglet Général.
 
-### Section: Comptes bancaires
+### Section: Comptes bancaires et Assurances
 
 ```typescript
 interface BankAccount {
+  id?: string;
   accountNumber: string;
   accountName: string;
   bankName: string;
@@ -354,12 +593,40 @@ interface BankAccount {
   isPrimary: boolean;
   swiftCode?: string;
   iban?: string;
+  typeCompte?: 'courant' | 'epargne' | 'professionnel' | 'devise';
+  agence?: string;
+}
+
+interface MobileMoneyAccount {
+  phoneNumber: string;
+  accountName: string;
+  provider: string;
+  currency: Currency;
+  isPrimary: boolean;
+}
+
+/** Type d'assurance */
+type InsuranceType = 'responsabilite_civile' | 'incendie' | 'vol' | 'accidents_travail' | 'marchandises' | 'vehicules' | 'multirisque' | 'autre';
+
+interface Insurance {
+  id?: string;
+  compagnie: string;               // Compagnie d'assurance
+  typeAssurance: InsuranceType;    // Type d'assurance
+  numeroPolice: string;            // Numéro de police
+  montantCouverture?: number;      // Montant de couverture
+  devise?: Currency;
+  dateDebut?: string;              // Date de début (ISO 8601)
+  dateExpiration?: string;         // Date d'expiration (ISO 8601)
+  prime?: number;                  // Montant de la prime
+  frequencePaiement?: 'mensuel' | 'trimestriel' | 'annuel';
+  observations?: string;
 }
 
 interface PaymentInfo {
   preferredMethod?: 'bank' | 'mobile_money';
   bankAccounts?: BankAccount[];
   mobileMoneyAccounts?: MobileMoneyAccount[];
+  assurances?: Insurance[];        // Polices d'assurance
 }
 
 {
@@ -374,12 +641,51 @@ interface PaymentInfo {
     "preferredMethod": "bank",
     "bankAccounts": [
       {
+        "id": "bank-001",
         "accountNumber": "0123456789",
         "accountName": "TechCongo Innovation SARL",
         "bankName": "Equity Bank Congo",
         "currency": "USD",
         "isPrimary": true,
-        "swiftCode": "EQBLCDKI"
+        "swiftCode": "EQBLCDKI",
+        "typeCompte": "professionnel",
+        "agence": "Kinshasa Centre"
+      }
+    ],
+    "mobileMoneyAccounts": [
+      {
+        "phoneNumber": "+243812345678",
+        "accountName": "TechCongo SARL",
+        "provider": "M-Pesa",
+        "currency": "CDF",
+        "isPrimary": false
+      }
+    ],
+    "assurances": [
+      {
+        "id": "assur-001",
+        "compagnie": "SONAS",
+        "typeAssurance": "responsabilite_civile",
+        "numeroPolice": "RC-2023-001234",
+        "montantCouverture": 50000,
+        "devise": "USD",
+        "dateDebut": "2023-01-01",
+        "dateExpiration": "2024-12-31",
+        "prime": 1200,
+        "frequencePaiement": "annuel"
+      },
+      {
+        "id": "assur-002",
+        "compagnie": "Rawsur",
+        "typeAssurance": "multirisque",
+        "numeroPolice": "MR-2023-005678",
+        "montantCouverture": 100000,
+        "devise": "USD",
+        "dateDebut": "2023-06-01",
+        "dateExpiration": "2024-05-31",
+        "prime": 2500,
+        "frequencePaiement": "annuel",
+        "observations": "Couvre locaux et équipements"
       }
     ]
   }
