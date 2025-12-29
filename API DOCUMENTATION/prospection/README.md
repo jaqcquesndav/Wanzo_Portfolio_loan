@@ -4,16 +4,17 @@ Documentation complète du module de prospection, synchronisée avec l'implémen
 
 ## 🏗️ Architecture
 
-Le module de prospection repose sur une **architecture hybride** de synchronisation des données :
+Le module de prospection repose sur une **architecture événementielle Kafka** de synchronisation des données :
 
 ```
 ┌─────────────────────────┐         ┌──────────────────────────┐         ┌─────────────────────────┐
-│  Accounting Service     │  HTTP   │  Portfolio Institution   │  Kafka  │  Customer Service       │
-│  (Source Primaire)      │────────►│  CompanyProfile Cache    │◄────────│  (Source Secondaire)    │
+│  Accounting Service     │  Kafka  │  Portfolio Institution   │  Kafka  │  Customer Service       │
+│  (Source Financière)    │────────►│  CompanyProfile Cache    │◄────────│  (Source Légale)        │
 │                         │         │                          │         │                         │
 │  • Données financières  │         │  • Cache unifié          │         │  • Données légales      │
-│  • Métriques            │         │  • 40+ champs            │         │  • Contacts             │
+│  • Métriques/Ratios     │         │  • 70+ champs            │         │  • Contacts             │
 │  • Scores crédit        │         │  • Coordonnées GPS       │         │  • Emplacements         │
+│  • Trésorerie SYSCOHADA │         │  • Treasury data         │         │  • Structure capital    │
 └─────────────────────────┘         └──────────────────────────┘         └─────────────────────────┘
                                               │
                                               ▼
@@ -27,14 +28,17 @@ Le module de prospection repose sur une **architecture hybride** de synchronisat
 
 ### Stratégie de Synchronisation
 
-**Source Primaire (HTTP) :** `accounting-service`
+**Source Financière (Kafka) :** `accounting-service`
+- Topic: `company.financial.data.shared` (StandardKafkaTopics.COMPANY_FINANCIAL_DATA_SHARED)
 - Données financières opérationnelles (20+ métriques)
 - Scores de crédit (0-100) et ratings (AAA à E)
 - Métriques de performance (CA, profit, EBITDA, cash flow)
 - Ratios financiers (endettement, marge, croissance)
-- Synchronisation manuelle ou automatique (> 24h = stale)
+- **Données de trésorerie SYSCOHADA** (comptes 52x, 53x, 54x, 57x)
+- Séries temporelles multi-échelles (weekly, monthly, quarterly, annual)
+- Synchronisation temps réel via événements Kafka
 
-**Source Secondaire (Kafka) :** `customer-service`
+**Source Légale/Administrative (Kafka) :** `customer-service`
 - Enrichissement avec données administratives/légales
 - Informations de contact (owner, contactPersons, email, phone)
 - Emplacements multiples avec coordonnées géographiques (lat/lng)

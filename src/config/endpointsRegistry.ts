@@ -182,12 +182,114 @@ export const ENDPOINTS_REGISTRY: Record<string, EndpointInfo> = {
   'users.me': {
     method: 'GET',
     path: API_ENDPOINTS.users.me,
-    description: 'Profil de l\'utilisateur actuellement connecté',
+    description: 'Utilisateur courant avec son institution (version lite ~5KB). Retourne: { user, institution, auth0Id, role, permissions }',
     category: 'Users',
     authenticated: true,
     responses: {
-      200: 'Profil utilisateur',
+      200: 'Utilisateur avec institution',
       401: 'Non authentifié'
+    }
+  },
+
+  'users.profile': {
+    method: 'GET',
+    path: API_ENDPOINTS.users.profile,
+    description: 'Profil simple de l\'utilisateur courant (sans institution ~2KB)',
+    category: 'Users',
+    authenticated: true,
+    responses: {
+      200: 'Profil utilisateur simple',
+      401: 'Non authentifié'
+    }
+  },
+
+  'users.status': {
+    method: 'PATCH',
+    path: '/users/{id}/status',
+    description: 'Change le statut d\'un utilisateur (active, inactive, suspended)',
+    category: 'Users',
+    authenticated: true,
+    parameters: {
+      path: ['id'],
+      body: 'ChangeUserStatusDto'
+    },
+    responses: {
+      200: 'Statut modifié',
+      404: 'Utilisateur non trouvé',
+      403: 'Action non autorisée'
+    }
+  },
+
+  'users.activities': {
+    method: 'GET',
+    path: '/users/{id}/activities',
+    description: 'Historique des activités d\'un utilisateur spécifique',
+    category: 'Users',
+    authenticated: true,
+    parameters: {
+      path: ['id']
+    },
+    responses: {
+      200: 'Liste des activités',
+      404: 'Utilisateur non trouvé'
+    }
+  },
+
+  'users.preferences.getAll': {
+    method: 'GET',
+    path: '/users/{id}/preferences',
+    description: 'Récupère toutes les préférences d\'un utilisateur',
+    category: 'Users',
+    authenticated: true,
+    parameters: {
+      path: ['id'],
+      query: ['category']
+    },
+    responses: {
+      200: 'Liste des préférences'
+    }
+  },
+
+  'users.preferences.set': {
+    method: 'POST',
+    path: '/users/{id}/preferences',
+    description: 'Définit ou met à jour une préférence utilisateur',
+    category: 'Users',
+    authenticated: true,
+    parameters: {
+      path: ['id'],
+      body: 'UserPreferenceDto'
+    },
+    responses: {
+      201: 'Préférence créée/mise à jour'
+    }
+  },
+
+  'users.sessions.getAll': {
+    method: 'GET',
+    path: '/users/{id}/sessions',
+    description: 'Récupère toutes les sessions actives d\'un utilisateur',
+    category: 'Users',
+    authenticated: true,
+    parameters: {
+      path: ['id']
+    },
+    responses: {
+      200: 'Liste des sessions'
+    }
+  },
+
+  'users.sessions.terminate': {
+    method: 'DELETE',
+    path: '/users/{id}/sessions/{sessionId}',
+    description: 'Termine une session spécifique',
+    category: 'Users',
+    authenticated: true,
+    parameters: {
+      path: ['id', 'sessionId']
+    },
+    responses: {
+      200: 'Session terminée'
     }
   },
 

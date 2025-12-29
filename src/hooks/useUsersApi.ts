@@ -2,8 +2,8 @@
 // Hook pour accéder à la gestion des utilisateurs via l'API backend
 
 import { useState, useEffect, useCallback } from 'react';
-import { userApi, type UserDetails, type UserActivity, type UserRoleDetails } from '../services/api/shared/user.api';
-import type { User, UserSettings, UserRole, UserType, Permission } from '../types/user';
+import { userApi, type UserDetails, type UserActivity, type UserRoleDetails, type UserPreference, type UserSession } from '../services/api/shared/user.api';
+import type { User, UserSettings, UserRole, UserType, Permission, UserWithInstitutionResponse } from '../types/user';
 import type { FlexiblePaginatedResponse } from '../services/api/types';
 import { useNotification } from '../contexts/useNotification';
 
@@ -252,7 +252,85 @@ export function useUserDetails(userId?: string) {
 }
 
 /**
- * Hook pour le profil de l'utilisateur courant
+ * Hook pour le profil de l'utilisateur courant AVEC son institution
+ * Utilise l'endpoint optimisé GET /users/me qui retourne ~5KB
+ * Idéal pour: Login, Dashboard, Header (contexte institutionnel)
+ */
+export function useCurrentUserWithInstitution() {
+  const [user, setUser] = useState<User | null>(null);
+  const [institution, setInstitution] = useState<UserWithInstitutionResponse['institution'] | null>(null);
+  const [auth0Id, setAuth0Id] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
+
+  const loadCurrentUser = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await userApi.getCurrentUserWithInstitution();
+      
+      // Extraire les données de la réponse structurée
+      setUser(response.user);
+      setInstitution(response.institution);
+      setAuth0Id(response.auth0Id);
+      setRole(response.role);
+      setPermissions(response.permissions);
+      
+      console.log('✅ Utilisateur et institution chargés:', {
+        userId: response.user.id,
+        userName: response.user.name,
+        institutionId: response.institution.id,
+        institutionName: response.institution.name
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement du profil utilisateur';
+      setError(errorMessage);
+      console.error('❌ Erreur profil utilisateur avec institution:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updatePreferences = useCallback(async (settings: Partial<UserSettings>) => {
+    try {
+      setError(null);
+      const response = await userApi.updateUserPreferences(settings);
+      setUser(prev => prev ? { ...prev, settings: response.settings } : null);
+      showNotification('Préférences mises à jour avec succès', 'success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour des préférences';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      console.error('Erreur préférences:', err);
+      throw err;
+    }
+  }, [showNotification]);
+
+  useEffect(() => {
+    loadCurrentUser();
+  }, [loadCurrentUser]);
+
+  return {
+    user,
+    institution,
+    auth0Id,
+    role,
+    permissions,
+    loading,
+    error,
+    updatePreferences,
+    refetch: loadCurrentUser
+  };
+}
+
+/**
+ * Hook pour le profil simple de l'utilisateur courant (sans institution)
+ * Utilise l'endpoint GET /users/profile qui retourne ~2KB
+ * Pour les cas où seules les données utilisateur sont nécessaires
+ * @deprecated Préférer useCurrentUserWithInstitution pour avoir le contexte institutionnel
  */
 export function useCurrentUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -264,7 +342,8 @@ export function useCurrentUser() {
     try {
       setLoading(true);
       setError(null);
-      const userData = await userApi.getCurrentUser();
+      // Utilise le nouveau endpoint /users/profile pour profil simple
+      const userData = await userApi.getUserProfile();
       setUser(userData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement du profil utilisateur';
@@ -395,5 +474,186 @@ export function useUserActivity() {
     pagination,
     loadActivity,
     refetch: () => loadActivity()
+  };
+}
+/**
+ * Hook pour la gestion des sessions utilisateur
+ */
+export function useUserSessions(userId: string) {
+  const [sessions, setSessions] = useState<UserSession[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
+
+  const loadSessions = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await userApi.getUserSessions(userId);
+      setSessions(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des sessions';
+      setError(errorMessage);
+      console.error('Erreur sessions:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  const terminateSession = useCallback(async (sessionId: string) => {
+    try {
+      await userApi.terminateSession(userId, sessionId);
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      showNotification('Session terminée avec succès', 'success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la terminaison de la session';
+      showNotification(errorMessage, 'error');
+      throw err;
+    }
+  }, [userId, showNotification]);
+
+  const terminateAllSessions = useCallback(async (exceptCurrent: boolean = false) => {
+    try {
+      await userApi.terminateAllSessions(userId, exceptCurrent);
+      if (exceptCurrent) {
+        // Recharger pour avoir uniquement la session courante
+        await loadSessions();
+      } else {
+        setSessions([]);
+      }
+      showNotification('Toutes les sessions terminées avec succès', 'success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la terminaison des sessions';
+      showNotification(errorMessage, 'error');
+      throw err;
+    }
+  }, [userId, loadSessions, showNotification]);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
+  return {
+    sessions,
+    loading,
+    error,
+    terminateSession,
+    terminateAllSessions,
+    refetch: loadSessions
+  };
+}
+
+/**
+ * Hook pour la gestion des préférences d'un utilisateur spécifique
+ */
+export function useUserPreferences(userId: string) {
+  const [preferences, setPreferences] = useState<UserPreference[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
+
+  const loadPreferences = useCallback(async (category?: 'GENERAL' | 'NOTIFICATIONS' | 'DASHBOARD' | 'SECURITY') => {
+    if (!userId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await userApi.getUserPreferences(userId, category);
+      setPreferences(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des préférences';
+      setError(errorMessage);
+      console.error('Erreur préférences:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  const setPreference = useCallback(async (preference: {
+    category: 'GENERAL' | 'NOTIFICATIONS' | 'DASHBOARD' | 'SECURITY';
+    key: string;
+    value: string;
+  }) => {
+    try {
+      const newPreference = await userApi.setUserPreference(userId, preference);
+      setPreferences(prev => {
+        // Remplacer si existe, sinon ajouter
+        const index = prev.findIndex(p => p.category === preference.category && p.key === preference.key);
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = newPreference;
+          return updated;
+        }
+        return [...prev, newPreference];
+      });
+      showNotification('Préférence mise à jour avec succès', 'success');
+      return newPreference;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour de la préférence';
+      showNotification(errorMessage, 'error');
+      throw err;
+    }
+  }, [userId, showNotification]);
+
+  const deletePreference = useCallback(async (preferenceId: string) => {
+    try {
+      await userApi.deleteUserPreference(userId, preferenceId);
+      setPreferences(prev => prev.filter(p => p.id !== preferenceId));
+      showNotification('Préférence supprimée avec succès', 'success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression de la préférence';
+      showNotification(errorMessage, 'error');
+      throw err;
+    }
+  }, [userId, showNotification]);
+
+  useEffect(() => {
+    loadPreferences();
+  }, [loadPreferences]);
+
+  return {
+    preferences,
+    loading,
+    error,
+    loadPreferences,
+    setPreference,
+    deletePreference,
+    refetch: () => loadPreferences()
+  };
+}
+
+/**
+ * Hook pour changer le statut d'un utilisateur
+ */
+export function useChangeUserStatus() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
+
+  const changeStatus = useCallback(async (
+    userId: string, 
+    status: 'active' | 'inactive' | 'suspended', 
+    reason?: string
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await userApi.changeUserStatus(userId, status, reason);
+      showNotification(`Statut de l'utilisateur modifié en "${status}"`, 'success');
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du changement de statut';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [showNotification]);
+
+  return {
+    changeStatus,
+    loading,
+    error
   };
 }

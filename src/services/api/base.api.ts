@@ -3,6 +3,7 @@ import { auth0Service } from './auth/auth0Service';
 import { apiCache, CacheOptions } from './cache';
 import { interceptorManager, RequestConfig } from './interceptors';
 import { apiCoordinator } from './apiCoordinator';
+import { getInstitutionId, isAppContextReady } from '../../stores/appContextStore';
 
 // Gestionnaire global de rate limiting
 class RateLimitManager {
@@ -119,6 +120,9 @@ export const apiClient = {
     // Récupération du token d'authentification via auth0Service
     const token = auth0Service.getAccessToken() || localStorage.getItem('token');
     
+    // Récupération de l'institutionId depuis le store global (CRITIQUE pour l'intégrité des données)
+    const institutionId = getInstitutionId();
+    
     const requestConfig: RequestConfig = {
       ...options,
       url: endpoint,
@@ -126,6 +130,8 @@ export const apiClient = {
       headers: new Headers({
         ...API_CONFIG.headers,
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        // Inclure l'institutionId dans les headers si disponible
+        ...(institutionId ? { 'X-Institution-Id': institutionId } : {}),
         ...(options.headers || {})
       })
     };

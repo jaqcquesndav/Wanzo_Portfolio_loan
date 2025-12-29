@@ -242,6 +242,18 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 ### 7. Utilisateurs
 
+#### Profil utilisateur courant
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/users/me` | Récupère l'utilisateur courant **avec son institution** (version lite, optimisée ~5KB) |
+| GET | `/users/profile` | Récupère le profil simple de l'utilisateur courant (sans institution) |
+
+> **Note importante** : 
+> - `/users/me` retourne `{ user, institution, auth0Id, role, permissions }` - idéal pour login/dashboard
+> - `/users/profile` retourne uniquement les données de l'utilisateur
+> - L'institution dans `/users/me` est chargée en version "lite" (documents uniquement, pas tous les users)
+
 #### Gestion des utilisateurs
 
 | Méthode | URL | Description |
@@ -713,6 +725,52 @@ GET /companies/search?q=TechCongo
 
 ## Exemples d'utilisation
 
+### Récupérer l'utilisateur courant avec son institution
+
+```javascript
+// Idéal pour initialiser l'état après login ou dans le dashboard
+const fetchCurrentUserWithInstitution = async () => {
+  try {
+    const response = await fetch('http://localhost:8000/portfolio/api/v1/users/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const { user, institution, auth0Id, role, permissions } = result.data;
+      
+      // Utilisation typique dans le frontend
+      setCurrentUser(user);
+      setInstitution(institution);  // Logo, nom, settings...
+      setPermissions(permissions);
+      
+      return result.data;
+    } else {
+      throw new Error(result.message);
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil:', error);
+    throw error;
+  }
+};
+
+// Structure de la réponse:
+// {
+//   "success": true,
+//   "data": {
+//     "user": { id, name, email, role, permissions, ... },
+//     "institution": { id, name, logo, type, documents, settings, ... },
+//     "auth0Id": "auth0|xxx",
+//     "role": "portfolio_manager",
+//     "permissions": ["read:portfolios", "write:portfolios", ...]
+//   }
+// }
+```
+
 ### Récupérer tous les portefeuilles
 
 ```javascript
@@ -995,6 +1053,21 @@ const completeWorkflow = async () => {
 
 ## ✨ Nouvelles fonctionnalités découvertes
 
+### Mises à jour du 29 décembre 2025
+
+#### 👤 Endpoint utilisateur optimisé `/users/me`
+- **Nouveau endpoint** : `GET /users/me` retourne l'utilisateur courant **avec son institution**
+- **Chargement optimisé** : Institution chargée en version "lite" (documents uniquement, pas tous les users)
+- **Performance** : ~5KB vs ~100KB+ pour l'endpoint `/institutions` complet
+- **Cas d'utilisation** : Login, Dashboard, Header (contexte institutionnel sans liste des employés)
+- **Structure de réponse** : `{ user, institution, auth0Id, role, permissions }`
+- **Différenciation claire** :
+  - `/users/me` → User + Institution (lite) pour login/dashboard
+  - `/users/profile` → User uniquement pour profil simple
+  - `/institutions` → Institution complète avec tous les users pour admin
+
+---
+
 ### Mises à jour du 18 novembre 2025
 
 #### 🎯 Module de Prospection Avancée
@@ -1066,4 +1139,4 @@ const completeWorkflow = async () => {
 
 ---
 
-*Documentation mise à jour le 10 novembre 2025 suite à l'analyse complète du code source du portfolio-institution-service.*
+*Documentation mise à jour le 29 décembre 2025 - Ajout de l'endpoint GET /users/me avec chargement optimisé de l'institution.*

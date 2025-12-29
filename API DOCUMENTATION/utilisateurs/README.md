@@ -372,31 +372,55 @@ Récupère les informations sur l'utilisateur actuellement authentifié.
 
 ```json
 {
-  "id": "user123",
-  "email": "jean.dupont@exemple.com",
-  "name": "Jean Dupont",
-  "givenName": "Jean",
-  "familyName": "Dupont",
-  "picture": "https://example.com/profiles/jean.jpg",
-  "phone": "+243810123456",
-  "role": "Portfolio_Manager",
-  "permissions": ["read:users", "write:portfolios", "read:reports"],
-  "settings": {
-    "notifications": {
-      "email": true,
-      "sms": true,
-      "app": false
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user123",
+      "email": "jean.dupont@exemple.com",
+      "name": "Jean Dupont",
+      "givenName": "Jean",
+      "familyName": "Dupont",
+      "picture": "https://example.com/profiles/jean.jpg",
+      "phone": "+243810123456",
+      "role": "Portfolio_Manager",
+      "permissions": ["read:users", "write:portfolios", "read:reports"],
+      "language": "fr",
+      "createdAt": "2025-01-15T08:00:00.000Z",
+      "updatedAt": "2025-07-24T09:00:00.000Z"
     },
-    "theme": "dark",
-    "dashboard": {
-      "widgets": ["performance", "risk", "payments"]
-    }
-  },
-  "language": "fr",
-  "createdAt": "2025-01-15T08:00:00.000Z",
-  "updatedAt": "2025-07-24T09:00:00.000Z"
+    "institution": {
+      "id": "inst-456",
+      "name": "Banque Commerciale du Congo",
+      "type": "bank",
+      "status": "active",
+      "country": "RDC",
+      "city": "Kinshasa",
+      "logo": "https://storage.wanzo.com/logos/bcc.png",
+      "documents": [
+        {
+          "id": "doc-001",
+          "type": "license",
+          "name": "Licence bancaire",
+          "status": "verified"
+        }
+      ],
+      "settings": {
+        "currency": "CDF",
+        "timezone": "Africa/Kinshasa"
+      }
+    },
+    "auth0Id": "auth0|abc123xyz",
+    "role": "Portfolio_Manager",
+    "permissions": ["read:users", "write:portfolios", "read:reports"]
+  }
 }
 ```
+
+**Notes** :
+- Cet endpoint retourne l'utilisateur **et** son institution (version optimisée)
+- L'institution est chargée sans la liste complète des utilisateurs (~5KB vs ~100KB+)
+- Idéal pour le login/dashboard qui nécessite le contexte institutionnel
+- Pour le profil simple sans institution, utiliser `GET /users/profile`
 
 ## Mise à jour des préférences utilisateur
 

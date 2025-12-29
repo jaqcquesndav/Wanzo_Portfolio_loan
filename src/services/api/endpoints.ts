@@ -32,8 +32,22 @@ export const API_ENDPOINTS = {
     update: (id: string) => `/users/${id}`,
     delete: (id: string) => `/users/${id}`,
     me: '/users/me',
+    profile: '/users/profile',
     preferences: '/users/me/preferences',
     resetPassword: (id: string) => `/users/${id}/reset-password`,
+    status: (id: string) => `/users/${id}/status`,
+    activities: (id: string) => `/users/${id}/activities`,
+    userPreferences: {
+      getAll: (id: string) => `/users/${id}/preferences`,
+      getByCategory: (id: string, category: string) => `/users/${id}/preferences/${category}`,
+      set: (id: string) => `/users/${id}/preferences`,
+      delete: (id: string, preferenceId: string) => `/users/${id}/preferences/${preferenceId}`
+    },
+    sessions: {
+      getAll: (id: string) => `/users/${id}/sessions`,
+      terminate: (id: string, sessionId: string) => `/users/${id}/sessions/${sessionId}`,
+      terminateAll: (id: string) => `/users/${id}/sessions`
+    },
     portfolios: {
       assign: (userId: string) => `/users/${userId}/portfolios`,
       remove: (userId: string, portfolioId: string) => `/users/${userId}/portfolios/${portfolioId}`

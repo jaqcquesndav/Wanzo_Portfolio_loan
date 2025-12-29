@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { auth0Service } from '../services/api/auth/auth0Service';
+import { userApi } from '../services/api/shared/user.api';
+import { useAppContextStore } from '../stores/appContextStore';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string>('Finalisation de votre connexion...');
+  const { setContext: setGlobalContext } = useAppContextStore();
 
   useEffect(() => {
     async function handleAuth() {
@@ -33,7 +37,9 @@ export default function AuthCallback() {
       const redirectUri = `${window.location.origin}/auth/callback`;
       
       try {
+        setStatusMessage('Échange des tokens...');
         console.log('Échange du code contre des tokens...');
+        
         const res = await fetch(`https://${domain}/oauth/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -50,7 +56,7 @@ export default function AuthCallback() {
         const data = await res.json();
         
         if (data.access_token) {
-          console.log('Token récupéré avec succès!');
+          console.log('✅ Token récupéré avec succès!');
           
           // Stocker les tokens avec le service Auth0
           auth0Service.saveTokens(
@@ -59,30 +65,72 @@ export default function AuthCallback() {
             data.refresh_token
           );
           
-          // Récupérer le profil utilisateur Auth0
+          // Récupérer le profil utilisateur Auth0 (basique)
           try {
-            console.log('Récupération du profil utilisateur...');
+            setStatusMessage('Récupération du profil Auth0...');
+            console.log('Récupération du profil utilisateur Auth0...');
             const userRes = await fetch(`https://${domain}/userinfo`, {
               headers: { Authorization: `Bearer ${data.access_token}` }
             });
             
             if (userRes.ok) {
-              const user = await userRes.json();
-              // Sauvegarder les informations utilisateur avec le service Auth0
-              auth0Service.saveUser(user);
-              console.log('Profil utilisateur récupéré avec succès!');
+              const auth0User = await userRes.json();
+              auth0Service.saveUser(auth0User);
+              console.log('✅ Profil Auth0 récupéré');
             }
           } catch (error) {
-            console.error('Erreur lors de la récupération du profil utilisateur:', error);
+            console.error('Erreur lors de la récupération du profil Auth0:', error);
             // Continue despite userinfo fetch error
           }
           
-          // Nettoyer les données d'authentification temporaires
-          auth0Service.clearAuthTemp();
+          // CRITIQUE: Charger le contexte complet depuis /users/me
+          setStatusMessage('Chargement de votre contexte...');
+          console.log('🔄 Chargement du contexte depuis /users/me...');
           
-          // Redirect to app - only use traditional type
-          console.log(`Redirection vers /app/traditional...`);
-          navigate(`/app/traditional`);
+          try {
+            const meResponse = await userApi.getCurrentUserWithInstitution();
+            const { user: userData, institution: institutionData, auth0Id, role, permissions } = meResponse;
+            
+            // Vérifier si l'utilisateur a une institution
+            if (institutionData && institutionData.id) {
+              // Institution présente - synchroniser avec le store global
+              console.log('✅ Contexte chargé avec institution:', institutionData.name);
+              
+              setGlobalContext({
+                user: { ...userData, role: role || userData.role, permissions },
+                institution: institutionData,
+                auth0Id,
+                permissions: permissions || []
+              });
+              
+              // Nettoyer les données temporaires et rediriger
+              auth0Service.clearAuthTemp();
+              console.log('🚀 Redirection vers /app/traditional');
+              navigate('/app/traditional');
+              
+            } else {
+              // Pas d'institution - rediriger avec un flag
+              console.warn('⚠️ Utilisateur sans institution');
+              auth0Service.clearAuthTemp();
+              
+              // Stocker l'info que l'utilisateur n'a pas d'institution
+              localStorage.setItem('wanzo_no_institution', 'true');
+              
+              // Rediriger vers l'app - le composant gérera l'affichage du choix
+              console.log('🚀 Redirection vers /app/traditional (sans institution)');
+              navigate('/app/traditional');
+            }
+            
+          } catch (meError) {
+            console.error('❌ Erreur /users/me:', meError);
+            
+            // En cas d'erreur API, on redirige quand même vers l'app
+            // L'AuthContext gérera le fallback
+            auth0Service.clearAuthTemp();
+            console.log('🚀 Redirection vers /app/traditional (fallback)');
+            navigate('/app/traditional');
+          }
+          
         } else {
           console.error('Erreur lors de la récupération du token:', data);
           setErrorMessage('Erreur lors de la récupération du token.');
@@ -94,7 +142,7 @@ export default function AuthCallback() {
     }
     
     handleAuth();
-  }, [navigate]);
+  }, [navigate, setGlobalContext]);
 
   if (errorMessage) {
     return (
@@ -113,5 +161,5 @@ export default function AuthCallback() {
     );
   }
 
-  return <LoadingScreen message="Finalisation de votre connexion..." />;
+  return <LoadingScreen message={statusMessage} />;
 }

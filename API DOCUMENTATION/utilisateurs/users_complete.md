@@ -74,6 +74,78 @@ Récupère le profil de l'utilisateur actuellement authentifié.
 }
 ```
 
+### Utilisateur courant avec Institution (Me)
+
+Récupère les informations complètes de l'utilisateur authentifié **avec les données de son institution**. Cet endpoint est optimisé pour les besoins du dashboard/login - il charge l'institution sans tous ses utilisateurs (version "lite").
+
+**Endpoint** : `GET /users/me`
+
+**Différence avec `/users/profile`** :
+- `/users/profile` : Retourne uniquement les données de l'utilisateur
+- `/users/me` : Retourne l'utilisateur + l'institution (version optimisée ~5KB vs ~100KB+ pour `/institutions`)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-123",
+      "name": "Jean Dupont",
+      "email": "jean.dupont@exemple.com",
+      "role": "portfolio_manager",
+      "status": "active",
+      "institutionId": "inst-456",
+      "permissions": ["read:portfolios", "write:portfolios"],
+      "createdAt": "2025-01-15T08:00:00.000Z",
+      "updatedAt": "2025-11-10T10:30:00.000Z"
+    },
+    "institution": {
+      "id": "inst-456",
+      "name": "Banque Commerciale du Congo",
+      "type": "bank",
+      "status": "active",
+      "country": "RDC",
+      "city": "Kinshasa",
+      "address": "123 Boulevard du 30 Juin",
+      "phone": "+243810000000",
+      "email": "contact@bcc.cd",
+      "website": "https://www.bcc.cd",
+      "logo": "https://storage.wanzo.com/logos/bcc.png",
+      "documents": [
+        {
+          "id": "doc-001",
+          "type": "license",
+          "name": "Licence bancaire",
+          "status": "verified"
+        }
+      ],
+      "settings": {
+        "currency": "CDF",
+        "timezone": "Africa/Kinshasa"
+      },
+      "createdAt": "2024-06-01T00:00:00.000Z",
+      "updatedAt": "2025-11-10T10:00:00.000Z"
+    },
+    "auth0Id": "auth0|abc123xyz",
+    "role": "portfolio_manager",
+    "permissions": ["read:portfolios", "write:portfolios"]
+  }
+}
+```
+
+**Notes d'implémentation** :
+- Utilise `InstitutionService.findByIdLite()` qui charge uniquement les `documents` (pas tous les `users`)
+- Optimisé pour le frontend (login, dashboard, header) qui a besoin du contexte institution sans la liste complète des employés
+- Pour la gestion des utilisateurs de l'institution, utiliser `GET /institutions` qui charge toutes les relations
+
+**Cas d'utilisation** :
+- Affichage du header/sidebar avec nom de l'institution et logo
+- Dashboard utilisateur avec contexte institutionnel
+- Vérification des permissions basées sur l'institution
+- Initialisation de l'état global de l'application après login
+
 ### Détails d'un utilisateur
 
 Récupère les détails complets d'un utilisateur spécifique.
@@ -555,6 +627,7 @@ enum PreferenceCategory {
 |----------|-------|---------|---------|------|
 | GET /users | ✅ | ✅ | ❌ | ❌ |
 | GET /users/profile | ✅ | ✅ | ✅ | ✅ |
+| GET /users/me | ✅ | ✅ | ✅ | ✅ |
 | GET /users/{id} | ✅ | ✅ | ❌ | ❌* |
 | POST /users | ✅ | ❌ | ❌ | ❌ |
 | PUT /users/{id} | ✅ | ❌ | ❌ | ❌* |
@@ -567,6 +640,14 @@ enum PreferenceCategory {
 
 *\* Uniquement pour ses propres données*
 
+### Différences entre endpoints similaires
+
+| Endpoint | Données retournées | Taille typique | Cas d'utilisation |
+|----------|-------------------|----------------|-------------------|
+| `GET /users/me` | User + Institution (lite) | ~5 KB | Login, Dashboard, Header |
+| `GET /users/profile` | User uniquement | ~2 KB | Profil simple |
+| `GET /institutions` | Institution + tous les users | ~100 KB+ | Admin, gestion utilisateurs |
+
 ---
 
-*Documentation mise à jour le 10 novembre 2025 basée sur le UserController réellement implémenté dans le portfolio-institution-service.*
+*Documentation mise à jour le 29 décembre 2025 - Ajout de l'endpoint GET /users/me avec chargement optimisé de l'institution.*

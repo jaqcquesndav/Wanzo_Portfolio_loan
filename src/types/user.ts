@@ -77,6 +77,49 @@ export interface User {
   plan?: string;
   tokenBalance?: number;
   tokenTotal?: number;
+  // Champ optionnel pour l'ID de l'institution associée
+  institutionId?: string;
+  // Champ optionnel pour le statut de l'utilisateur
+  status?: 'active' | 'inactive' | 'suspended';
+  // Département de l'utilisateur (optionnel)
+  department?: string;
+}
+
+/**
+ * Réponse de l'endpoint GET /users/me
+ * Retourne l'utilisateur courant avec son institution (version lite)
+ * Optimisé pour le login, dashboard, header (~5KB vs ~100KB+)
+ */
+export interface UserWithInstitutionResponse {
+  user: User;
+  institution: {
+    id: string;
+    name: string;
+    type: string;
+    status: string;
+    country?: string;
+    city?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    website?: string;
+    logo?: string;
+    documents?: Array<{
+      id: string;
+      type: string;
+      name: string;
+      status?: string;
+    }>;
+    settings?: {
+      currency?: string;
+      timezone?: string;
+    };
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  auth0Id: string;
+  role: UserRole;
+  permissions: string[];
 }
 
 // Schémas Zod pour la validation
