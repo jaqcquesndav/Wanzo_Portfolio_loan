@@ -5,37 +5,109 @@ import { useState, useEffect, useCallback } from 'react';
 import { institutionApi } from '../services/api/shared/institution.api';
 import type { Institution, InstitutionManager } from '../types/institution';
 import { useNotification } from '../contexts/useNotification';
+import { useAuth } from '../contexts/useAuth';
 
 /**
  * Hook principal pour la gestion de l'institution courante
+ * 
+ * IMPORTANT: L'institutionId est obtenu depuis le contexte d'authentification
+ * (chargé via /users/me lors du login). Cet ID est nécessaire pour toutes
+ * les opérations car le token JWT ne contient pas cette information.
+ * 
+ * WORKFLOW:
+ * 1. AuthContext charge /users/me → institution LITE + institutionId
+ * 2. Ce hook fait TOUJOURS un appel à /institutions/${id} pour les données FULL
+ * 3. Si besoin de rafraîchir, appeler refetch()
  */
 export function useInstitutionApi() {
-  const [institution, setInstitution] = useState<Institution | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { showNotification } = useNotification();
+  
+  // Obtenir l'institutionId et le statut du contexte depuis useAuth
+  const { institutionId, isContextLoaded } = useAuth();
+  
+  // État local
+  const [institution, setInstitution] = useState<Institution | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Charger les informations de l'institution courante
-  const loadInstitution = useCallback(async () => {
+  // Charger les informations de l'institution courante via l'API
+  const loadInstitution = useCallback(async (forceInstitutionId?: string) => {
+    const idToUse = forceInstitutionId || institutionId;
+    
+    if (!idToUse) {
+      console.warn('⚠️ useInstitutionApi: institutionId non disponible');
+      setError('Institution ID non disponible. Veuillez vous reconnecter.');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data = await institutionApi.getCurrentInstitution();
+      console.log('🏢 useInstitutionApi: GET /institutions/' + idToUse);
+      const data = await institutionApi.getInstitution(idToUse);
+      console.log('✅ useInstitutionApi: Institution chargée:', data);
       setInstitution(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement de l\'institution';
       setError(errorMessage);
-      console.error('Erreur institution:', err);
+      console.error('❌ useInstitutionApi: Erreur:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [institutionId]);
+
+  // Charger l'institution quand institutionId devient disponible
+  useEffect(() => {
+    // DEBUG: Alerte pour vérifier que le code s'exécute
+    console.log('========== useInstitutionApi MOUNT ==========');
+    console.log('🔍 useInstitutionApi useEffect TRIGGER:', {
+      isContextLoaded,
+      institutionId,
+      loading
+    });
+    
+    if (!isContextLoaded) {
+      console.log('⏳ useInstitutionApi: Contexte pas encore chargé, attente...');
+      return;
+    }
+    
+    if (institutionId) {
+      console.log('🏢 useInstitutionApi: institutionId disponible, appel API maintenant!');
+      // Appel direct de l'API
+      (async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          console.log('🌐 FETCH: GET /institutions/' + institutionId);
+          const data = await institutionApi.getInstitution(institutionId);
+          console.log('✅ FETCH SUCCESS:', data);
+          setInstitution(data);
+        } catch (err) {
+          console.error('❌ FETCH ERROR:', err);
+          setError(err instanceof Error ? err.message : 'Erreur');
+        } finally {
+          setLoading(false);
+        }
+      })();
+    } else {
+      console.log('⚠️ useInstitutionApi: Pas d\'institutionId après chargement du contexte');
+      setLoading(false);
+    }
+  }, [isContextLoaded, institutionId]);
 
   // Mettre à jour l'institution
   const updateInstitution = useCallback(async (updates: Partial<Institution>) => {
+    if (!institutionId) {
+      const errorMessage = 'Institution ID non disponible';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+
     try {
       setError(null);
-      const updatedInstitution = await institutionApi.updateInstitution(updates);
+      const updatedInstitution = await institutionApi.updateInstitution(institutionId, updates);
       setInstitution(updatedInstitution);
       showNotification('Institution mise à jour avec succès', 'success');
       return updatedInstitution;
@@ -46,7 +118,7 @@ export function useInstitutionApi() {
       console.error('Erreur mise à jour institution:', err);
       throw err;
     }
-  }, [showNotification]);
+  }, [institutionId, showNotification]);
 
   // Valider l'institution
   const validateInstitution = useCallback(async (validationData: {
@@ -55,9 +127,16 @@ export function useInstitutionApi() {
     regulatory_status: string;
     legal_representative: string;
   }) => {
+    if (!institutionId) {
+      const errorMessage = 'Institution ID non disponible';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+
     try {
       setError(null);
-      const result = await institutionApi.validateInstitution(validationData);
+      const result = await institutionApi.validateInstitution(institutionId, validationData);
       showNotification('Institution validée avec succès', 'success');
       // Recharger les données de l'institution après validation
       await loadInstitution();
@@ -69,20 +148,16 @@ export function useInstitutionApi() {
       console.error('Erreur validation institution:', err);
       throw err;
     }
-  }, [showNotification, loadInstitution]);
-
-  // Charger l'institution au montage du composant
-  useEffect(() => {
-    loadInstitution();
-  }, [loadInstitution]);
+  }, [institutionId, showNotification, loadInstitution]);
 
   return {
     institution,
+    institutionId,
     loading,
     error,
     updateInstitution,
     validateInstitution,
-    refetch: loadInstitution
+    refetch: () => loadInstitution(institutionId || undefined)
   };
 }
 
@@ -94,13 +169,19 @@ export function useInstitutionManagers() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification } = useNotification();
+  const { institutionId } = useAuth();
 
   // Charger les gestionnaires
   const loadManagers = useCallback(async () => {
+    if (!institutionId) {
+      console.warn('⚠️ Impossible de charger les gestionnaires: institutionId non disponible');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data = await institutionApi.getInstitutionManagers();
+      const data = await institutionApi.getInstitutionManagers(institutionId);
       setManagers(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des gestionnaires';
@@ -109,16 +190,20 @@ export function useInstitutionManagers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [institutionId]);
 
   // Ajouter un gestionnaire
   const addManager = useCallback(async (manager: { 
     user_id: string; 
     role: 'admin' | 'manager';
   }) => {
+    if (!institutionId) {
+      throw new Error('Institution ID non disponible');
+    }
+
     try {
       setError(null);
-      const newManager = await institutionApi.addInstitutionManager(manager);
+      const newManager = await institutionApi.addInstitutionManager(institutionId, manager);
       setManagers(prev => [...prev, newManager]);
       showNotification('Gestionnaire ajouté avec succès', 'success');
       return newManager;
@@ -129,16 +214,20 @@ export function useInstitutionManagers() {
       console.error('Erreur ajout gestionnaire:', err);
       throw err;
     }
-  }, [showNotification]);
+  }, [institutionId, showNotification]);
 
   // Mettre à jour un gestionnaire
-  const updateManager = useCallback(async (id: string, updates: {
+  const updateManager = useCallback(async (managerId: string, updates: {
     role?: 'admin' | 'manager';
   }) => {
+    if (!institutionId) {
+      throw new Error('Institution ID non disponible');
+    }
+
     try {
       setError(null);
-      const updatedManager = await institutionApi.updateInstitutionManager(id, updates);
-      setManagers(prev => prev.map(m => m.id === id ? updatedManager : m));
+      const updatedManager = await institutionApi.updateInstitutionManager(institutionId, managerId, updates);
+      setManagers(prev => prev.map(m => m.id === managerId ? updatedManager : m));
       showNotification('Gestionnaire mis à jour avec succès', 'success');
       return updatedManager;
     } catch (err) {
@@ -148,14 +237,18 @@ export function useInstitutionManagers() {
       console.error('Erreur mise à jour gestionnaire:', err);
       throw err;
     }
-  }, [showNotification]);
+  }, [institutionId, showNotification]);
 
   // Supprimer un gestionnaire
-  const removeManager = useCallback(async (id: string) => {
+  const removeManager = useCallback(async (managerId: string) => {
+    if (!institutionId) {
+      throw new Error('Institution ID non disponible');
+    }
+
     try {
       setError(null);
-      await institutionApi.removeInstitutionManager(id);
-      setManagers(prev => prev.filter(m => m.id !== id));
+      await institutionApi.removeInstitutionManager(institutionId, managerId);
+      setManagers(prev => prev.filter(m => m.id !== managerId));
       showNotification('Gestionnaire supprimé avec succès', 'success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression du gestionnaire';
@@ -164,12 +257,14 @@ export function useInstitutionManagers() {
       console.error('Erreur suppression gestionnaire:', err);
       throw err;
     }
-  }, [showNotification]);
+  }, [institutionId, showNotification]);
 
   // Charger les gestionnaires au montage du composant
   useEffect(() => {
-    loadManagers();
-  }, [loadManagers]);
+    if (institutionId) {
+      loadManagers();
+    }
+  }, [institutionId, loadManagers]);
 
   return {
     managers,
@@ -198,13 +293,19 @@ export function useInstitutionDocuments() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showNotification } = useNotification();
+  const { institutionId } = useAuth();
 
   // Charger les documents
   const loadDocuments = useCallback(async () => {
+    if (!institutionId) {
+      console.warn('⚠️ Impossible de charger les documents: institutionId non disponible');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data = await institutionApi.getInstitutionDocuments();
+      const data = await institutionApi.getInstitutionDocuments(institutionId);
       setDocuments(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des documents';
@@ -213,7 +314,7 @@ export function useInstitutionDocuments() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [institutionId]);
 
   // Téléverser un document
   const uploadDocument = useCallback(async (file: File, metadata: { 
@@ -221,9 +322,13 @@ export function useInstitutionDocuments() {
     name: string;
     description?: string;
   }) => {
+    if (!institutionId) {
+      throw new Error('Institution ID non disponible');
+    }
+
     try {
       setError(null);
-      const result = await institutionApi.uploadInstitutionDocument(file, metadata);
+      const result = await institutionApi.uploadInstitutionDocument(institutionId, file, metadata);
       showNotification('Document téléversé avec succès', 'success');
       // Recharger la liste des documents
       await loadDocuments();
@@ -235,12 +340,14 @@ export function useInstitutionDocuments() {
       console.error('Erreur téléversement document:', err);
       throw err;
     }
-  }, [showNotification, loadDocuments]);
+  }, [institutionId, showNotification, loadDocuments]);
 
   // Charger les documents au montage du composant
   useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
+    if (institutionId) {
+      loadDocuments();
+    }
+  }, [institutionId, loadDocuments]);
 
   return {
     documents,

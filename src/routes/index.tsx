@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import PortfolioTypeSelector from '../pages/PortfolioTypeSelector';
 import AuthCallback from '../pages/AuthCallback';
+import AuthDebug from '../pages/AuthDebug';
 import InstitutionValidation from '../pages/InstitutionValidation';
 import Dashboard from '../pages/Dashboard';
 import Prospection from '../pages/Prospection';
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
   {
     path: '/auth/callback',
     element: <AuthCallback />
+  },
+  {
+    path: '/auth/debug',
+    element: <AuthDebug />
   },
   {
     path: '/institution/validation',

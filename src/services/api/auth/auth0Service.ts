@@ -121,13 +121,17 @@ class Auth0Service {
    * Supprime toutes les données d'authentification
    */
   clearAuth(): void {
-    // Supprimer les tokens
+    console.log('🧹 Nettoyage complet des données d\'authentification...');
+    
+    // Supprimer les tokens - nouvelles clés
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.ID_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.STATE);
+    localStorage.removeItem(STORAGE_KEYS.CODE_VERIFIER);
     
-    // Supprimer les anciennes clés aussi
+    // Supprimer les anciennes clés pour compatibilité
     localStorage.removeItem('token');
     localStorage.removeItem('auth0_token');
     localStorage.removeItem('accessToken');
@@ -135,6 +139,19 @@ class Auth0Service {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('auth0_user');
+    
+    // Supprimer les données Wanzo spécifiques
+    localStorage.removeItem('wanzo_no_institution');
+    localStorage.removeItem('wanzo_backend_unavailable');
+    localStorage.removeItem('portfolioType');
+    
+    // Nettoyer sessionStorage aussi
+    sessionStorage.removeItem('auth_callback_in_progress');
+    
+    // Nettoyer le store Zustand persisté
+    localStorage.removeItem('app-context-storage');
+    
+    console.log('✅ Nettoyage terminé');
   }
 
   /**

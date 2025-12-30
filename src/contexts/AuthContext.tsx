@@ -3,7 +3,9 @@ import { Institution, InstitutionLite } from '../types/institution';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { UserRole, UserType } from '../types/users';
 import { userApi } from '../services/api/shared/user.api';
+import { institutionApi } from '../services/api/shared/institution.api';
 import { useAppContextStore } from '../stores/appContextStore';
+import { resetTokenExchangeFlag } from '../pages/AuthCallback';
 
 // Interface pour l'utilisateur adapté avec les nouveaux types
 export interface User {
@@ -105,9 +107,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔄 Chargement du contexte utilisateur depuis /users/me...');
       
       const response = await userApi.getCurrentUserWithInstitution();
+      console.log('📦 Réponse brute /users/me:', response);
       
       // Extraire les données de la réponse
+      // Le backend renvoie: { user, institution, auth0Id, role, permissions }
       const { user: userData, institution: institutionData, auth0Id: authId, role, permissions: userPermissions } = response;
+      
+      console.log('👤 Données utilisateur extraites:', {
+        id: userData?.id,
+        name: userData?.name,
+        email: userData?.email,
+        institutionId: userData?.institutionId
+      });
       
       // Construire l'objet utilisateur complet
       const fullUser: User = {
@@ -122,7 +133,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setPermissions(userPermissions || []);
       
       // Vérifier si l'utilisateur a une institution associée
-      if (!institutionData || !institutionData.id) {
+      // L'institution peut être fournie directement OU via userData.institutionId
+      const effectiveInstitutionId = institutionData?.id || userData?.institutionId;
+      
+      if (!effectiveInstitutionId) {
         console.warn('⚠️ Utilisateur authentifié mais SANS institution');
         console.log('💡 L\'utilisateur doit créer son institution sur wanzo.com ou utiliser le mode démo');
         
@@ -134,9 +148,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return 'no_institution';
       }
       
-      // Institution présente - tout est OK
-      setInstitution(institutionData);
-      setInstitutionId(institutionData.id);
+      // Institution présente - charger les données COMPLÈTES
+      // /users/me retourne InstitutionLite, on récupère Institution FULL via /institutions/:id
+      console.log('🏢 Chargement des données complètes de l\'institution...');
+      
+      let fullInstitution: Institution | InstitutionLite = institutionData;
+      
+      try {
+        const institutionResponse = await institutionApi.getInstitution(effectiveInstitutionId);
+        fullInstitution = institutionResponse;
+        console.log('✅ Institution FULL chargée:', {
+          id: fullInstitution.id,
+          name: fullInstitution.name,
+          hasManagers: 'managers' in fullInstitution,
+          hasFullSettings: 'settings' in fullInstitution
+        });
+      } catch (institutionErr) {
+        // En cas d'erreur, on garde l'institution LITE de /users/me
+        console.warn('⚠️ Impossible de charger l\'institution FULL, utilisation des données LITE:', institutionErr);
+        fullInstitution = institutionData;
+      }
+      
+      // Stocker l'institution (FULL ou LITE en fallback)
+      setInstitution(fullInstitution);
+      setInstitutionId(effectiveInstitutionId);
       setIsContextLoaded(true);
       setContextStatus('authenticated');
       setIsDemoMode(false);
@@ -144,7 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // IMPORTANT: Synchroniser avec le store Zustand pour les services API
       setGlobalContext({
         user: fullUser,
-        institution: institutionData,
+        institution: fullInstitution,
         auth0Id: authId,
         permissions: userPermissions || []
       });
@@ -152,8 +187,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('✅ Contexte chargé avec succès:', {
         userId: userData.id,
         userName: userData.name,
-        institutionId: institutionData.id,
-        institutionName: institutionData.name,
+        institutionId: effectiveInstitutionId,
+        institutionName: fullInstitution?.name || 'N/A',
+        institutionType: 'managers' in fullInstitution ? 'FULL' : 'LITE',
         role,
         permissionsCount: userPermissions?.length || 0
       });
@@ -165,7 +201,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setContextStatus('error');
       return 'error';
     }
-  }, [setGlobalContext]);
+  }, []); // Pas de dépendances dynamiques
 
   /**
    * Rafraîchit le contexte utilisateur/institution
@@ -225,44 +261,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       institutionId: mockInstitution.id,
       institutionName: mockInstitution.name
     });
-  }, [user, auth0Id, permissions, setGlobalContext]);
+  }, []); // Pas de dépendances dynamiques
 
   // Effet pour vérifier si l'utilisateur est déjà connecté au chargement de l'application
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔐 AuthContext: checkAuth démarré');
       setContextStatus('loading');
       
       try {
+        const isAuth = auth0Service.isAuthenticated();
+        const token = auth0Service.getAccessToken();
+        console.log('🔐 AuthContext: isAuthenticated =', isAuth, 'token =', token ? 'present' : 'absent');
+        
         // Vérifier s'il y a un utilisateur authentifié via Auth0
-        if (auth0Service.isAuthenticated()) {
-          const storedUser = auth0Service.getUser();
+        if (isAuth) {
+          // Token présent = utilisateur authentifié
+          // On charge TOUJOURS le contexte depuis /users/me pour avoir les vraies données
+          console.log('🔐 AuthContext: Token présent, appel /users/me pour charger le contexte...');
+          const result = await loadUserContext();
+          console.log('🔐 AuthContext: loadUserContext result =', result);
           
-          if (storedUser) {
-            // Charger le contexte complet depuis /users/me
-            const result = await loadUserContext();
+          if (result === 'error') {
+            // Erreur API - essayer avec les données stockées localement en fallback
+            const storedUser = auth0Service.getUser();
+            console.log('🔐 AuthContext: storedUser fallback =', storedUser);
             
-            if (result === 'error') {
-              // Erreur API - fallback vers les données stockées
+            if (storedUser) {
               console.warn('⚠️ /users/me échoué, fallback vers données Auth0 stockées');
               setUser(storedUser);
               setInstitutionId(storedUser.institutionId || null);
               setContextStatus(storedUser.institutionId ? 'authenticated' : 'no_institution');
+              setIsContextLoaded(true);
+            } else {
+              // Pas de données locales non plus - mode démo
+              console.log('🔐 AuthContext: Erreur API et pas de données locales, activation mode démo');
+              enableDemoMode();
             }
-            // 'success' et 'no_institution' sont gérés dans loadUserContext
           }
         } else {
-          setContextStatus('unauthenticated');
+          // PAS AUTHENTIFIÉ - Activer le mode démo automatiquement en développement
+          console.log('🔐 AuthContext: Pas authentifié (pas de token), activation mode démo automatique');
+          enableDemoMode();
         }
       } catch (err) {
-        console.error('Erreur lors de la vérification de l\'authentification:', err);
+        console.error('❌ AuthContext: Erreur lors de la vérification de l\'authentification:', err);
         setContextStatus('error');
+        setIsContextLoaded(true);
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [loadUserContext]);
+  }, []); // Exécuter une seule fois au montage
 
   // Fonction de connexion
   const login = async (email: string, password: string) => {
@@ -375,6 +427,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Nettoyer le stockage local
     localStorage.removeItem('user');
     auth0Service.clearAuth();
+    
+    // IMPORTANT: Réinitialiser le flag d'échange de token pour permettre une nouvelle connexion
+    resetTokenExchangeFlag();
     
     // IMPORTANT: Nettoyer le store Zustand global
     clearGlobalContext();

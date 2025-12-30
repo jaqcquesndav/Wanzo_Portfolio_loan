@@ -6,17 +6,100 @@ Ce document décrit le système d'authentification utilisé par l'API Wanzo Port
 
 L'API Wanzo Portfolio Institution utilise Auth0 comme fournisseur d'identité principal. Ce service gère l'authentification des utilisateurs et la génération de tokens JWT (JSON Web Tokens) qui sont ensuite utilisés pour sécuriser les requêtes API.
 
-### Flux d'authentification
+### Flux d'authentification complet
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           FLUX D'AUTHENTIFICATION WANZO                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  1. FRONTEND                    2. AUTH0                    3. BACKEND                   │
+│  ─────────────────────────────────────────────────────────────────────────────────────   │
+│                                                                                          │
+│  ┌──────────────────┐                                                                    │
+│  │ User clicks      │                                                                    │
+│  │ "Login Auth0"    │────────────────┐                                                   │
+│  └──────────────────┘                │                                                   │
+│                                      ▼                                                   │
+│                            ┌──────────────────┐                                          │
+│                            │ Auth0 Login Page │                                          │
+│                            │ (email/password) │                                          │
+│                            └────────┬─────────┘                                          │
+│                                     │                                                    │
+│                                     ▼                                                    │
+│                            ┌──────────────────┐                                          │
+│                            │ Auth0 génère     │                                          │
+│                            │ access_token JWT │                                          │
+│                            └────────┬─────────┘                                          │
+│                                     │                                                    │
+│  ┌──────────────────┐               │                                                    │
+│  │ AuthCallback.tsx │◄──────────────┘                                                    │
+│  │ reçoit le token  │                                                                    │
+│  └────────┬─────────┘                                                                    │
+│           │                                                                              │
+│           │ GET /users/me (avec Bearer token)                                            │
+│           └─────────────────────────────────────────────────►┌──────────────────────┐    │
+│                                                              │ Backend identifie    │    │
+│                                                              │ l'utilisateur via    │    │
+│                                                              │ le token JWT         │    │
+│                                                              └──────────┬───────────┘    │
+│                                                                         │                │
+│                                                                         ▼                │
+│                                                              ┌──────────────────────┐    │
+│                                                              │ Retourne:            │    │
+│                                                              │ - user (id, email)   │    │
+│                                                              │ - institution (id)   │    │
+│                                                              │ - role, permissions  │    │
+│                                                              └──────────┬───────────┘    │
+│  ┌──────────────────┐                                                   │                │
+│  │ AppContextStore  │◄──────────────────────────────────────────────────┘                │
+│  │ stocke:          │                                                                    │
+│  │ - institutionId  │                                                                    │
+│  │ - user           │                                                                    │
+│  │ - permissions    │                                                                    │
+│  └────────┬─────────┘                                                                    │
+│           │                                                                              │
+│           ▼                                                                              │
+│  ┌──────────────────┐                                                                    │
+│  │ Navigation vers  │                                                                    │
+│  │ /app/traditional │                                                                    │
+│  └──────────────────┘                                                                    │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Étapes détaillées
 
 1. L'utilisateur accède à la page d'accueil de l'application (`PortfolioTypeSelector`)
 2. L'utilisateur clique sur "Continuer avec Auth0"
 3. Le système génère un code PKCE (Proof Key for Code Exchange) et redirige vers la page de connexion Auth0
 4. L'utilisateur s'authentifie via l'interface Auth0
 5. Auth0 redirige l'utilisateur vers `/auth/callback` avec un code d'autorisation
-6. L'application échange ce code et le code_verifier PKCE contre des tokens d'accès et d'identification
-7. Le type de portefeuille est défini automatiquement sur 'traditional' et stocké dans localStorage
-8. L'utilisateur est redirigé vers le tableau de bord principal
-9. Ces tokens sont utilisés pour les requêtes API ultérieures
+6. L'application échange ce code et le code_verifier PKCE contre des tokens d'accès
+7. **CRITIQUE**: L'application appelle `GET /users/me` avec le token JWT pour récupérer:
+   - Les données de l'utilisateur (id, name, email, role)
+   - L'ID de l'institution associée à cet utilisateur
+   - Les permissions de l'utilisateur
+8. Le contexte global (`AppContextStore`) est mis à jour avec ces données
+9. L'utilisateur est redirigé vers le tableau de bord principal
+
+### ⚠️ Point important : L'institution vient du backend
+
+**L'`institutionId` est toujours fourni par le backend**, jamais par Auth0 directement. Auth0 gère uniquement l'authentification (qui est l'utilisateur), tandis que le backend gère l'autorisation (à quelle institution appartient l'utilisateur).
+
+```javascript
+// AuthCallback.tsx - Après l'obtention du token Auth0
+const meResponse = await userApi.getCurrentUserWithInstitution();
+const { user, institution, auth0Id, role, permissions } = meResponse;
+
+// L'institutionId provient de la réponse du backend
+setGlobalContext({
+  user: { ...user, role, permissions },
+  institution,  // Fourni par le backend
+  auth0Id,
+  permissions
+});
+```
 
 ## Interface de connexion
 

@@ -2,15 +2,17 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
-// import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/useAuth';
 import { Button } from '../ui/Button';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
 import { auth0Service } from '../../services/api/auth/auth0Service';
+import { resetTokenExchangeFlag } from '../../pages/AuthCallback';
 
 export function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
+  const { logout: contextLogout } = useAuth();
 
   // Récupérer l'utilisateur connecté via le service Auth0
   let user = { name: 'Utilisateur', email: '', picture: '' };
@@ -25,18 +27,22 @@ export function ProfileMenu() {
   } else {
     console.warn('[Auth0] Aucun utilisateur trouvé via auth0Service');
   }
-  const logout = () => {
-    // Nettoyer l'authentification et rediriger
-    auth0Service.clearAuth();
-    window.location.href = '/';
-  };
+  
   const navigate = useNavigate();
 
   useOnClickOutside(menuRef, () => setIsOpen(false));
 
   const handleLogout = async () => {
     try {
-      await logout();
+      console.log('🚪 Déconnexion en cours...');
+      
+      // Utiliser la fonction logout du contexte pour nettoyer complètement
+      contextLogout();
+      
+      // Réinitialiser le flag d'échange de token
+      resetTokenExchangeFlag();
+      
+      // Rediriger vers la page de connexion
       navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);

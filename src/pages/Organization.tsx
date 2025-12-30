@@ -7,18 +7,57 @@ import { OrganizationSkeleton } from '../components/ui/OrganizationSkeleton';
 import { useUserContext } from '../hooks/useUserContext';
 import { useEffect } from 'react';
 
+// DEBUG: Log au chargement du module
+console.log('🔴🔴🔴 Organization.tsx MODULE LOADED 🔴🔴🔴');
+
 export default function Organization() {
-  const { institution, loading: isLoading, refetch } = useInstitutionApi();
+  // DEBUG: Log à chaque render
+  console.log('🟢🟢🟢 Organization COMPONENT RENDER 🟢🟢🟢');
+  
+  // Charger les données FULL de l'institution via l'API /institutions/${id}
+  // Le hook utilise l'institutionId du contexte d'auth pour faire l'appel
+  const { institution, loading, error, refetch, institutionId } = useInstitutionApi();
   const { isNewUser } = useUserContext();
 
-  // Charger l'institution au montage du composant
+  // Debug: Log à chaque render
   useEffect(() => {
-    refetch();
-  }, [refetch]);
+    console.log('📄 Organization page mounted/updated:', {
+      institutionId,
+      loading,
+      error,
+      hasInstitution: !!institution
+    });
+  }, [institutionId, loading, error, institution]);
 
   // Affichage du chargement
-  if (isLoading) {
+  if (loading) {
+    console.log('📄 Organization: Affichage du skeleton (loading)');
     return <OrganizationSkeleton />;
+  }
+
+  // Affichage en cas d'erreur
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center">
+          <Building2 className="h-6 w-6 text-primary mr-2" />
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Informations de l'Institution
+          </h1>
+        </div>
+        
+        <EmptyState
+          icon={Building2}
+          title="Erreur de chargement"
+          description={error}
+          action={{
+            label: "Réessayer",
+            onClick: () => refetch()
+          }}
+          size="lg"
+        />
+      </div>
+    );
   }
   
   // Affichage si aucune institution n'est configurée

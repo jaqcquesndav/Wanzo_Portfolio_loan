@@ -50,7 +50,7 @@ export interface AppContextActions {
   // Définir le contexte complet après l'appel à /users/me
   setContext: (context: {
     user: User;
-    institution: InstitutionLite;
+    institution: InstitutionLite | null;  // Peut être null pour les nouveaux utilisateurs
     auth0Id: string;
     permissions: string[];
     isDemoMode?: boolean;
@@ -100,10 +100,11 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
       ...initialState,
       
       setContext: ({ user, institution, auth0Id, permissions, isDemoMode = false }) => {
+        // Gérer le cas où institution peut être null (nouvel utilisateur sans institution)
         set({
           user,
-          institution,
-          institutionId: institution.id,
+          institution: institution || null,
+          institutionId: institution?.id || null,
           auth0Id,
           permissions,
           isContextLoaded: true,

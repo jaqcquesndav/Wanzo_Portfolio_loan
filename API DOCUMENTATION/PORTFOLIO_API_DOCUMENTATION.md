@@ -716,19 +716,46 @@ GET /companies/search?q=TechCongo
 
 #### Gestion d'institution
 
+> **⚠️ Architecture importante**: 
+> - L'institution est chargée **automatiquement en 2 étapes** après la connexion :
+>   1. `GET /users/me` → Récupère l'utilisateur + **Institution LITE** (optimisée ~5KB)
+>   2. `GET /institutions/${institutionId}` → Récupère l'**Institution FULL** (données complètes)
+> - Les deux appels sont faits automatiquement par le `AuthContext`
+> - L'`institutionId` est stocké dans le contexte global et utilisé pour toutes les opérations
+
+**Flux de chargement de l'institution:**
+```
+1. User Login → Auth0 → Token JWT
+2. Frontend appelle GET /users/me (automatique)
+3. Backend retourne { user, institution (LITE), auth0Id, role, permissions }
+4. Frontend extrait institutionId
+5. Frontend appelle GET /institutions/${institutionId} (automatique)
+6. Backend retourne Institution FULL (avec managers, documents, settings complets)
+7. Frontend stocke Institution FULL dans AuthContext + AppContextStore
+8. Page /institution utilise directement le contexte (pas d'appel API supplémentaire)
+```
+
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/institution/managers` | Récupère tous les gestionnaires d'institution |
-| POST | `/institution/managers` | Crée un nouveau gestionnaire |
-| PUT | `/institution/managers/${id}` | Met à jour un gestionnaire d'institution |
-| DELETE | `/institution/managers/${id}` | Supprime un gestionnaire d'institution |
+| GET | `/institutions/${institutionId}` | Récupère les données complètes d'une institution |
+| PUT | `/institutions/${institutionId}` | Met à jour une institution |
+| GET | `/institutions/${institutionId}/managers` | Récupère tous les gestionnaires d'institution |
+| POST | `/institutions/${institutionId}/managers` | Crée un nouveau gestionnaire |
+| PUT | `/institutions/${institutionId}/managers/${managerId}` | Met à jour un gestionnaire d'institution |
+| DELETE | `/institutions/${institutionId}/managers/${managerId}` | Supprime un gestionnaire d'institution |
+| POST | `/institutions/${institutionId}/documents` | Téléverse un document institutionnel |
+| GET | `/institutions/${institutionId}/documents` | Récupère les documents de l'institution |
+| POST | `/institutions/${institutionId}/validate` | Valide une institution |
 
 ## Exemples d'utilisation
 
 ### Récupérer l'utilisateur courant avec son institution
 
 ```javascript
-// Idéal pour initialiser l'état après login ou dans le dashboard
+// CRITIQUE: Cet appel est fait AUTOMATIQUEMENT après le login
+// Il charge l'utilisateur ET l'institution en une seule requête
+// Le frontend stocke ces données dans le contexte global
+
 const fetchCurrentUserWithInstitution = async () => {
   try {
     const response = await fetch('http://localhost:8000/portfolio/api/v1/users/me', {
