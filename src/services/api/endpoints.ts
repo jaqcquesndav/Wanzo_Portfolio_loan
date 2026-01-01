@@ -144,12 +144,35 @@ export const API_ENDPOINTS = {
     base: '/messages',
     getAll: '/messages',
     getById: (id: string) => `/messages/${id}`,
-    send: '/messages',
-    
-    // Chat endpoints
-    getConversations: '/chat/conversations',
-    getMessages: '/chat/messages',
-    sendMessage: '/chat/messages'
+    send: '/messages'
+  },
+
+  // Chat ADHA - Endpoints alignés avec la documentation API
+  chat: {
+    base: '/chat',
+    // Contextes de conversation
+    contexts: {
+      base: '/chat/contexts',
+      getAll: '/chat/contexts',
+      getById: (id: string) => `/chat/contexts/${id}`,
+      create: '/chat/contexts',
+      update: (id: string) => `/chat/contexts/${id}`,
+      delete: (id: string) => `/chat/contexts/${id}`,
+      getMessages: (contextId: string) => `/chat/contexts/${contextId}/messages`
+    },
+    // Messages
+    messages: {
+      base: '/chat/messages',
+      send: '/chat/messages',
+      getById: (id: string) => `/chat/messages/${id}`,
+      update: (id: string) => `/chat/messages/${id}`,
+      rate: (messageId: string) => `/chat/messages/${messageId}/rating`,
+      addAttachment: (messageId: string) => `/chat/messages/${messageId}/attachments`
+    },
+    // Fonctionnalités avancées
+    suggestions: '/chat/suggestions',
+    reports: '/chat/reports',
+    predefinedResponses: '/chat/predefined-responses'
   },
 
   // Settings

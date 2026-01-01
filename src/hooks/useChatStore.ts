@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Message, Conversation, AIModel } from '../types/chat';
+import type { Message, Conversation, AIModel, ChatMetadata, ChatMode } from '../types/chat';
 import { AI_MODELS } from '../types/chat';
-import { generateResponse } from '../data/mockChatResponses';
 import { chatApi } from '../services/api/chat.api';
+
+// Mode API activé par défaut en production
+const IS_PRODUCTION = import.meta.env.PROD;
+const DEFAULT_API_MODE = IS_PRODUCTION || import.meta.env.VITE_USE_API === 'true';
 
 // Définition du type Task
 export interface Task {
@@ -54,10 +57,13 @@ interface ChatStore {
   
   
   // Actions messages
-  addMessage: (content: string, type: 'user' | 'bot', attachment?: Message['attachment'], mode?: 'chat' | 'analyse') => void;
+  addMessage: (content: string, type: 'user' | 'bot', attachment?: Message['attachment'], mode?: ChatMode) => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
   toggleLike: (messageId: string) => void;
   toggleDislike: (messageId: string) => void;
+  
+  // Contexte métadonnées
+  buildChatMetadata: () => ChatMetadata;
   
   // Simulation réponse bot
   simulateBotResponse: () => Promise<void>;
@@ -71,7 +77,7 @@ export const useChatStore = create<ChatStore>()(
       isOpen: false,
       isTyping: false,
       isRecording: false,
-      isApiMode: false, // Par défaut, on utilise les mocks pour les tests
+      isApiMode: DEFAULT_API_MODE, // true en production, configurable en dev
       selectedModel: AI_MODELS[0],
       currentPortfolioType: 'traditional',
       currentPortfolioId: null,
@@ -121,8 +127,11 @@ export const useChatStore = create<ChatStore>()(
           let newConversation: Conversation;
           
           if (store.isApiMode) {
-            // Créer une conversation via l'API
-            newConversation = await chatApi.createConversation('Nouvelle conversation');
+            // Construire les métadonnées du contexte
+            const metadata = store.buildChatMetadata();
+            
+            // Créer une conversation via l'API avec métadonnées
+            newConversation = await chatApi.createConversation('Nouvelle conversation', metadata);
           } else {
             // Version mock
             newConversation = {
@@ -139,7 +148,8 @@ export const useChatStore = create<ChatStore>()(
               }],
               isActive: true,
               model: store.selectedModel,
-              context: []
+              context: [],
+              metadata: store.buildChatMetadata()
             };
           }
 
@@ -214,6 +224,18 @@ export const useChatStore = create<ChatStore>()(
         }
       },
 
+      // Construit les métadonnées pour le contexte de chat
+      buildChatMetadata: (): ChatMetadata => {
+        const store = get();
+        return {
+          portfolioId: store.currentPortfolioId || undefined,
+          portfolioType: store.currentPortfolioType,
+          taskId: store.selectedTask?.id,
+          modelId: store.selectedModel.id,
+          screenPath: typeof window !== 'undefined' ? window.location.pathname : undefined
+        };
+      },
+
       // Actions messages
       addMessage: async (content, type, attachment, mode = 'chat') => {
         // Validation : garantir que le contenu est une string
@@ -272,18 +294,36 @@ export const useChatStore = create<ChatStore>()(
           }));
           
           try {
-            // Envoyer le message via l'API
-            const sentMessage = await chatApi.sendMessage(
-              activeConversation.id,
+            // Construire les métadonnées du contexte
+            const metadata = store.buildChatMetadata();
+            
+            // Envoyer le message via l'API avec le nouveau format
+            const response = await chatApi.sendMessage({
               content,
-              attachment,
-              mode
-            );
+              contextId: activeConversation.id,
+              metadata,
+              mode: mode || 'chat',
+              attachment: attachment ? {
+                id: `attach-${Date.now()}`,
+                type: attachment.type === 'document' ? 'document' : 'image',
+                name: attachment.name,
+                url: attachment.url,
+                size: 0,
+                createdAt: new Date().toISOString()
+              } : undefined
+            });
             
             // Remplacer le message en attente par le message réel
             newMessage = {
-              ...sentMessage,
-              pending: false
+              id: response.id,
+              sender: 'user',
+              content: response.content,
+              timestamp: response.timestamp,
+              likes: 0,
+              dislikes: 0,
+              attachment,
+              contextId: response.contextId,
+              metadata: response.metadata
             };
             
             set(state => ({
@@ -298,6 +338,33 @@ export const useChatStore = create<ChatStore>()(
                   : conv
               )
             }));
+            
+            // Si l'API a renvoyé une réponse de l'assistant, l'ajouter
+            if (response.response) {
+              const botMessage: Message = {
+                id: response.response.id,
+                sender: 'bot',
+                content: response.response.content,
+                timestamp: response.response.timestamp,
+                likes: 0,
+                dislikes: 0,
+                attachments: response.response.attachments
+              };
+              
+              set(state => ({
+                conversations: state.conversations.map(conv => 
+                  conv.id === state.activeConversationId
+                    ? {
+                        ...conv,
+                        messages: [...conv.messages, botMessage]
+                      }
+                    : conv
+                )
+              }));
+              
+              // Ne pas simuler de réponse bot si l'API en a déjà fourni une
+              return;
+            }
           } catch (error) {
             console.error('Erreur lors de l\'envoi du message:', error);
             
@@ -447,7 +514,7 @@ export const useChatStore = create<ChatStore>()(
         }));
       },
 
-      // Simulation réponse bot
+      // Simulation réponse bot (utilisé uniquement en dev sans API)
       simulateBotResponse: async () => {
         const store = get();
         const conversation = store.conversations.find(
@@ -456,31 +523,35 @@ export const useChatStore = create<ChatStore>()(
 
         if (!conversation) return;
 
+        // En mode API, la réponse vient du serveur - pas de simulation nécessaire
+        if (store.isApiMode) {
+          return;
+        }
+
+        // Mode développement sans API - réponse par défaut
         set({ isTyping: true });
         try {
-          // Si en mode API, ne pas simuler de réponse - elle viendra du serveur
-          if (store.isApiMode) {
-            // Attendre un peu pour simuler le délai de l'API
-            await new Promise(resolve => setTimeout(resolve, 500));
-            set({ isTyping: false });
-            return;
-          }
+          await new Promise(resolve => setTimeout(resolve, 1500));
           
-          // Mode mock - générer une réponse localement
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Récupérer le dernier message et le contexte
           const lastMessage = conversation.messages[conversation.messages.length - 1];
+          const defaultResponse = `Je comprends votre question sur "${lastMessage.content.substring(0, 50)}...". En mode développement, connectez-vous à l'API pour obtenir une réponse complète.`;
           
-          // Détecter le mode à partir du contexte
-          const isAnalyseMode = conversation.context.some(ctx => ctx.includes('[MODE ANALYSE]'));
+          const botMessage: Message = {
+            id: Date.now().toString(),
+            sender: 'bot',
+            content: defaultResponse,
+            timestamp: new Date().toISOString(),
+            likes: 0,
+            dislikes: 0
+          };
           
-          // Générer une réponse adaptée au mode
-          const currentMode = isAnalyseMode ? 'analyse' : 'chat';
-          const response = generateResponse(lastMessage.content, currentMode);
-          
-          // Ajouter la réponse dans le même mode
-          store.addMessage(response, 'bot', undefined, currentMode);
+          set(state => ({
+            conversations: state.conversations.map(conv => 
+              conv.id === state.activeConversationId
+                ? { ...conv, messages: [...conv.messages, botMessage] }
+                : conv
+            )
+          }));
         } finally {
           set({ isTyping: false });
         }

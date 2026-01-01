@@ -1,7 +1,6 @@
 // src/data/index.ts
 // Re-export all mock data for easier imports
 
-export * from './mockChatResponses';
 export * from './mockCompanies';
 export * from './mockCompanyDetails';
 export * from './mockDisbursements';
