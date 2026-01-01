@@ -21,12 +21,14 @@ import { mockCompanies } from '../data/mockCompanies';
 import { mockCompanyDetails } from '../data/mockCompanyDetails';
 import { useNotification } from '../contexts/useNotification';
 import { useCreditRequests } from '../hooks/useCreditRequests';
+import { useCreditContracts } from '../hooks/useCreditContracts';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
 import type { FinancialProduct } from '../types/traditional-portfolio';
 import type { ProductFormData } from '../components/portfolio/traditional/ProductForm';
 import type { Company } from '../types/company';
+import type { CreditContract } from '../types/credit-contract';
 // import CreditRequestDetails from './CreditRequestDetails';
 // import DisbursementDetails from './DisbursementDetails';
 // import RepaymentDetails from './RepaymentDetails';
@@ -86,9 +88,67 @@ export default function TraditionalPortfolioDetails() {
     getCreditProductName
   } = useCreditRequests();
   
+  // Hook pour les contrats de crédit
+  const { addContract } = useCreditContracts(id || 'default');
+  
   // Préparer les mappings pour les noms
   const companyNames = Object.fromEntries(requests.map(req => [req.memberId, getMemberName(req.memberId)]));
   const productNames = Object.fromEntries(requests.map(req => [req.productId, getCreditProductName(req.productId)]));
+
+  // Fonction pour créer un contrat depuis une demande approuvée
+  const handleCreateContract = useCallback(async (requestId: string) => {
+    const request = requests.find(r => r.id === requestId);
+    if (!request) {
+      showNotification('Demande non trouvée', 'error');
+      return;
+    }
+    
+    if (request.status !== 'approved') {
+      showNotification('La demande doit être approuvée pour créer un contrat', 'warning');
+      return;
+    }
+    
+    try {
+      const memberName = getMemberName(request.memberId);
+      const productName = getCreditProductName(request.productId);
+      
+      const contractData: Omit<CreditContract, 'id' | 'createdAt'> = {
+        portfolioId: id || 'default',
+        client_id: request.memberId,
+        company_name: memberName,
+        product_type: productName,
+        contract_number: `CTR-${Date.now().toString().slice(-8)}`,
+        amount: request.requestAmount,
+        interest_rate: request.interestRate,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + (request.schedulesCount * 30 * 24 * 60 * 60 * 1000)).toISOString(),
+        status: 'active',
+        terms: `${request.schedulesCount} échéances - ${request.periodicity}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        creditRequestId: request.id,
+        memberId: request.memberId,
+        memberName: memberName,
+        productId: request.productId,
+        productName: productName,
+        disbursedAmount: 0,
+        remainingAmount: request.requestAmount,
+        duration: request.schedulesCount,
+        gracePeriod: request.gracePeriod,
+        amortization_method: request.scheduleType === 'constant' ? 'linear' : 'degressive',
+      };
+      
+      const newContract = await addContract(contractData);
+      await changeRequestStatus(requestId, 'disbursed');
+      
+      showNotification(`Contrat ${newContract.contract_number} créé avec succès pour ${memberName}`, 'success');
+      setTab('contracts');
+      
+    } catch (error) {
+      console.error('Erreur lors de la création du contrat:', error);
+      showNotification('Erreur lors de la création du contrat', 'error');
+    }
+  }, [requests, id, addContract, changeRequestStatus, getMemberName, getCreditProductName, showNotification]);
 
   // Hooks d'action (toujours avant tout return)
   const handleSaveSettings = useCallback(() => {
@@ -418,7 +478,7 @@ export default function TraditionalPortfolioDetails() {
                     setSelectedCompany(company);
                     navigate(`/app/traditional/company/${encodeURIComponent(company.id || company.name)}/view`, { state: { company } });
                   }}
-                  onCreateContract={(id) => console.log('Créer contrat', id)}
+                  onCreateContract={handleCreateContract}
                 />
               </TabsContent>
             );

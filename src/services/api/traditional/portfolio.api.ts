@@ -69,21 +69,19 @@ export const traditionalPortfolioApi = {
 
   /**
    * Crée un nouveau portefeuille traditionnel
+   * NOTE: Cette méthode ne fait PAS de fallback - elle propage l'erreur
+   * Le fallback est géré par le hook useTraditionalPortfolios
    */
   createPortfolio: async (portfolio: Omit<TraditionalPortfolio, 'id' | 'created_at' | 'updated_at'>) => {
+    console.log('📡 API: POST /portfolios/traditional', portfolio);
     try {
-      return await apiClient.post<TraditionalPortfolio>('/portfolios/traditional', portfolio);
+      const response = await apiClient.post<TraditionalPortfolio>('/portfolios/traditional', portfolio);
+      console.log('✅ API: Portefeuille créé avec succès', response);
+      return response;
     } catch (error) {
-      // Fallback sur les données en localStorage si l'API échoue
-      console.warn('Fallback to localStorage for creating traditional portfolio', error);
-      const newPortfolio: TraditionalPortfolio = {
-        ...portfolio,
-        id: traditionalDataService.generatePortfolioId(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      traditionalDataService.addTraditionalPortfolio(newPortfolio);
-      return newPortfolio;
+      // Ne PAS faire de fallback ici - propager l'erreur pour que le hook gère le fallback
+      console.error('❌ API: Erreur création portefeuille', error);
+      throw error;
     }
   },
 

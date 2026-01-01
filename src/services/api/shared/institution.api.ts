@@ -19,15 +19,6 @@ export const institutionApi = {
   },
 
   /**
-   * @deprecated Utiliser getInstitution(institutionId) à la place
-   * Cette méthode nécessite que l'institutionId soit dans le token JWT, ce qui n'est pas le cas.
-   */
-  getCurrentInstitution: () => {
-    console.warn('⚠️ getCurrentInstitution() est déprécié. Utilisez getInstitution(institutionId) à la place.');
-    return apiClient.get<Institution>('/institution');
-  },
-
-  /**
    * Met à jour les informations d'une institution
    * @param institutionId - L'ID de l'institution
    * @param updates - Les champs à mettre à jour

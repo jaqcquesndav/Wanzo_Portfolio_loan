@@ -1,6 +1,8 @@
 # Documentation API Prospection v2.0
 
-Documentation complète du module de prospection, synchronisée avec l'implémentation réelle du code source (Novembre 2025).
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
+Documentation complète du module de prospection, synchronisée avec l'implémentation réelle du code source.
 
 ## 🏗️ Architecture
 

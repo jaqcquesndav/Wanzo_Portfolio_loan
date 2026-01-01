@@ -1,5 +1,7 @@
 # Intégration et Compatibilité Inter-Services
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Documentation de l'intégration entre Portfolio Institution et les autres services de l'écosystème Wanzo.
 
 ## Vue d'ensemble
@@ -27,7 +29,7 @@ Le service Portfolio Institution s'intègre avec le service Gestion Commerciale 
 │  Gestion Commerciale        │         │  Portfolio Institution       │
 │                             │         │                              │
 │  FinancingRecord            │◄───────►│  CreditRequest              │
-│  (8 statuts)                │  Kafka  │  (14 statuts)               │
+│  (8 statuts)                │  Kafka  │  (15 statuts)               │
 │                             │         │                              │
 └─────────────────────────────┘         └──────────────────────────────┘
 ```
@@ -38,30 +40,34 @@ Le service Portfolio Institution s'intègre avec le service Gestion Commerciale 
 
 | Statut GC | Statut PI | Description |
 |-----------|-----------|-------------|
-| `PENDING` | `PENDING` | En attente d'analyse |
-| `UNDER_REVIEW` | `UNDER_REVIEW` | En cours d'examen |
-| `APPROVED` | `APPROVED` | Approuvée |
-| `REJECTED` | `REJECTED` | Rejetée |
-| `DISBURSED` | `DISBURSED` | Décaissée |
-| `ACTIVE` | `ACTIVE` | Active |
-| `CLOSED` | `CLOSED` | Fermée |
-| `DEFAULTED` | `DEFAULTED` | En défaut |
+| `PENDING` | `pending` | En attente d'analyse |
+| `UNDER_REVIEW` | `under_review` | En cours d'examen |
+| `APPROVED` | `approved` | Approuvée |
+| `REJECTED` | `rejected` | Rejetée |
+| `DISBURSED` | `disbursed` | Décaissée |
+| `ACTIVE` | `active` | Active |
+| `CLOSED` | `closed` | Fermée |
+| `DEFAULTED` | `defaulted` | En défaut |
 
 ### Portfolio Institution → Gestion Commerciale
 
 | Statut PI | Statut GC | Description |
 |-----------|-----------|-------------|
-| `DRAFT` | `PENDING` | Brouillon → En attente |
-| `SUBMITTED` | `UNDER_REVIEW` | Soumise → En examen |
-| `UNDER_REVIEW` | `UNDER_REVIEW` | En revue |
-| `PENDING` | `PENDING` | En attente |
-| `ANALYSIS` | `UNDER_REVIEW` | En analyse → En examen |
-| `APPROVED` | `APPROVED` | Approuvée |
-| `REJECTED` | `REJECTED` | Rejetée |
-| `CANCELED` | `REJECTED` | Annulée → Rejetée |
-| `DISBURSED` | `DISBURSED` | Décaissée |
-| `ACTIVE` | `ACTIVE` | Active |
-| `CLOSED` | `CLOSED` | Fermée |
+| `draft` | `PENDING` | Brouillon → En attente |
+| `submitted` | `UNDER_REVIEW` | Soumise → En examen |
+| `under_review` | `UNDER_REVIEW` | En revue |
+| `pending` | `PENDING` | En attente |
+| `analysis` | `UNDER_REVIEW` | En analyse → En examen |
+| `approved` | `APPROVED` | Approuvée |
+| `rejected` | `REJECTED` | Rejetée |
+| `canceled` | `REJECTED` | Annulée → Rejetée |
+| `disbursed` | `DISBURSED` | Décaissée |
+| `active` | `ACTIVE` | Active |
+| `closed` | `CLOSED` | Fermée |
+| `defaulted` | `DEFAULTED` | En défaut |
+| `restructured` | `ACTIVE` | Restructuré → Active |
+| `consolidated` | `ACTIVE` | Consolidé → Active |
+| `in_litigation` | `DEFAULTED` | En contentieux → En défaut |
 
 ## Synchronisation des Données
 

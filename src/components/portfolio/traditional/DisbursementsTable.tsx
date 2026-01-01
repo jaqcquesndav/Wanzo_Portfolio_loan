@@ -191,28 +191,41 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   
   // Gestionnaire d'événements pour la confirmation de paiement
   const handleConfirmPayment = (disbursement: Disbursement) => {
-    // Information de base sur l'opération (sans pRéjuger du dûtail)
+    // Information de base sur l'opération
     const operationType = 
       portfolioType === 'investment' ? 'Ordre d\'achat' : 
       portfolioType === 'leasing' ? 'Acquisition' : 
       'Ordre de paiement';
     
-    // CRéer les données initiales de l'ordre de paiement
-    // L'utilisateur pourra compléter les dûtails dans le modal
+    // Déterminer le type de compte bénéficiaire (bank ou mobile_money)
+    const beneficiaryAccountType = disbursement.beneficiary?.accountType || disbursement.accountType || 'bank';
+    const isMobileMoney = beneficiaryAccountType === 'mobile_money';
+    
+    // Créer les données initiales de l'ordre de paiement
+    // Adapter selon le type de compte (bancaire ou Mobile Money)
     const paymentOrderData: PaymentOrderData = {
       id: `payment-${Date.now()}`,
       orderNumber: `OP${Date.now().toString().slice(-8)}`,
       date: new Date().toISOString(),
       amount: disbursement.amount,
-      currency: 'FCFA',
-      beneficiary: {
+      currency: disbursement.currency || 'FCFA',
+      // Adapter les données du bénéficiaire selon le type de compte
+      paymentMethod: isMobileMoney ? 'mobile_money' : 'bank',
+      beneficiary: isMobileMoney ? {
+        // Données Mobile Money
+        name: disbursement.beneficiary?.accountName || disbursement.company,
+        phoneNumber: disbursement.beneficiary?.phoneNumber || '',
+        provider: disbursement.beneficiary?.provider,
+        accountNumber: '', // Non utilisé pour Mobile Money
+      } : {
+        // Données bancaires
         name: disbursement.beneficiary?.accountName || disbursement.company,
         accountNumber: disbursement.beneficiary?.accountNumber || '',
         bankName: disbursement.beneficiary?.bankName || '',
         swiftCode: disbursement.beneficiary?.swiftCode
       },
       reference: disbursement.id,
-      description: `${operationType} - ${disbursement.product}`,
+      description: `${operationType} - ${disbursement.product}${isMobileMoney ? ' (Mobile Money)' : ''}`,
       portfolioId: disbursement.portfolioId,
       portfolioName: portfolioInfo.portfolioType,
       status: 'pending',
@@ -391,8 +404,20 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
                     <div onClick={() => onView(d.id)}>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{d.beneficiary?.accountName || d.company}</span>
-                        <span className="text-xs text-gray-500">{d.beneficiary?.accountNumber}</span>
-                        <span className="text-xs text-gray-500">{d.beneficiary?.bankName}</span>
+                        {/* Affichage conditionnel selon le type de compte */}
+                        {d.beneficiary?.accountType === 'mobile_money' || d.accountType === 'mobile_money' ? (
+                          <>
+                            <span className="text-xs text-green-600 flex items-center gap-1">
+                              📱 {d.beneficiary?.provider?.replace('_', ' ').toUpperCase() || 'Mobile Money'}
+                            </span>
+                            <span className="text-xs text-gray-500">{d.beneficiary?.phoneNumber}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs text-gray-500">{d.beneficiary?.accountNumber}</span>
+                            <span className="text-xs text-gray-500">{d.beneficiary?.bankName}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </TableCell>

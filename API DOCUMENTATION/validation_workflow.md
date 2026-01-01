@@ -128,14 +128,23 @@ permissions: [
 ### 1. Workflow des Demandes de Crédit
 
 ```typescript
-enum CreditRequestStatus {
-  DRAFT = 'draft',
-  PENDING = 'pending',
-  ANALYSIS = 'analysis',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  DISBURSED = 'disbursed'
-}
+// 15 statuts conformes au code source (src/types/credit.ts)
+type CreditRequestStatus = 
+  | 'draft'          // Brouillon initial
+  | 'submitted'      // Soumis pour traitement
+  | 'under_review'   // En cours de révision
+  | 'pending'        // En attente de validation
+  | 'analysis'       // En analyse de risque
+  | 'approved'       // Approuvé
+  | 'rejected'       // Rejeté
+  | 'canceled'       // Annulé
+  | 'disbursed'      // Déboursé
+  | 'active'         // Actif (prêt en cours)
+  | 'closed'         // Clôturé normalement
+  | 'defaulted'      // En défaut de paiement
+  | 'restructured'   // Restructuré
+  | 'consolidated'   // Consolidé avec d'autres prêts
+  | 'in_litigation'; // En contentieux
 ```
 
 **Étapes de validation** :
@@ -163,16 +172,22 @@ enum CreditRequestStatus {
 ### 2. Workflow des Déboursements
 
 ```typescript
-enum DisbursementStatus {
-  DRAFT = 'draft',
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELED = 'canceled'
-}
+// 8 statuts conformes au code source (src/types/disbursement.ts)
+type DisbursementStatus = 
+  | 'draft'        // Brouillon
+  | 'pending'      // En attente de validation
+  | 'approved'     // Approuvé
+  | 'rejected'     // Rejeté
+  | 'processing'   // En cours de traitement
+  | 'completed'    // Terminé avec succès
+  | 'failed'       // Échoué
+  | 'canceled';    // Annulé
+
+// Méthodes de paiement supportées
+type PaymentMethod = 'bank_transfer' | 'mobile_money' | 'cash' | 'check';
+
+// Providers Mobile Money RDC
+type MobileMoneyProvider = 'Orange Money' | 'M-Pesa' | 'Airtel Money' | 'Africell Money' | 'Vodacom M-Pesa';
 ```
 
 **Processus de validation** :
@@ -197,13 +212,18 @@ enum DisbursementStatus {
 ### 3. Workflow des Remboursements
 
 ```typescript
-enum RepaymentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  PARTIAL = 'partial'
-}
+// Statuts de remboursement conformes au code source (src/types/credit-payment.ts)
+type PaymentStatus = 
+  | 'pending'     // En attente de traitement
+  | 'processing'  // En cours de traitement
+  | 'completed'   // Terminé avec succès
+  | 'failed'      // Échoué
+  | 'partial';    // Paiement partiel
+
+type PaymentType = 'standard' | 'partial' | 'advance' | 'early_payoff';
+
+// Méthodes de paiement supportées
+type PaymentMethod = 'bank_transfer' | 'mobile_money' | 'cash' | 'check';
 ```
 
 ## Modèle de Validation Blockchain à Trois Parties

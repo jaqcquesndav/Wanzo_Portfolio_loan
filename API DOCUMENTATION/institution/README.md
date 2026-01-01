@@ -1,5 +1,7 @@
 # Documentation de l'API Institution
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Cette section détaille les endpoints de l'API liés à la gestion des institutions financières dans la plateforme Wanzo Portfolio Institution. Ces endpoints permettent de gérer les informations institutionnelles, les gestionnaires, et les documents réglementaires.
 
 ## ⚠️ Important : Obtention de l'institutionId

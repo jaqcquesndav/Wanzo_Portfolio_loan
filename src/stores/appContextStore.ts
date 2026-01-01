@@ -51,6 +51,7 @@ export interface AppContextActions {
   setContext: (context: {
     user: User;
     institution: InstitutionLite | null;  // Peut être null pour les nouveaux utilisateurs
+    institutionId?: string | null;  // EXPLICITE: peut venir de user.institutionId même si institution est null
     auth0Id: string;
     permissions: string[];
     isDemoMode?: boolean;
@@ -99,12 +100,24 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
     (set, get) => ({
       ...initialState,
       
-      setContext: ({ user, institution, auth0Id, permissions, isDemoMode = false }) => {
-        // Gérer le cas où institution peut être null (nouvel utilisateur sans institution)
+      setContext: ({ user, institution, institutionId: explicitInstitutionId, auth0Id, permissions, isDemoMode = false }) => {
+        // L'institutionId peut venir de:
+        // 1. Paramètre explicite (prioritaire) - utilisé quand institution est null mais user.institutionId existe
+        // 2. institution.id si institution est présente
+        // 3. null si aucun des deux n'est disponible
+        const effectiveInstitutionId = explicitInstitutionId || institution?.id || null;
+        
+        console.log('📦 appContextStore.setContext:', {
+          userId: user?.id,
+          institutionId: effectiveInstitutionId,
+          hasInstitution: !!institution,
+          isDemoMode
+        });
+        
         set({
           user,
           institution: institution || null,
-          institutionId: institution?.id || null,
+          institutionId: effectiveInstitutionId,
           auth0Id,
           permissions,
           isContextLoaded: true,

@@ -163,8 +163,14 @@ export const apiClient = {
     // Récupération du token d'authentification via auth0Service
     const token = auth0Service.getAccessToken() || localStorage.getItem('token');
     
-    // Récupération de l'institutionId depuis le store global (CRITIQUE pour l'intégrité des données)
+    // Récupération de l'institutionId depuis le store global
+    // NOTE: Le header X-Institution-Id est désactivé temporairement car le backend
+    // doit configurer CORS pour l'autoriser (Access-Control-Allow-Headers)
+    // L'institutionId devrait être extrait du token JWT côté backend
     const institutionId = getInstitutionId();
+    if (institutionId) {
+      console.debug('📍 Institution ID disponible:', institutionId);
+    }
     
     const requestConfig: RequestConfig = {
       ...options,
@@ -173,8 +179,9 @@ export const apiClient = {
       headers: new Headers({
         ...API_CONFIG.headers,
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        // Inclure l'institutionId dans les headers si disponible
-        ...(institutionId ? { 'X-Institution-Id': institutionId } : {}),
+        // NOTE: Header X-Institution-Id désactivé - CORS non configuré sur le backend
+        // Réactiver quand le backend aura ajouté 'X-Institution-Id' dans Access-Control-Allow-Headers
+        // ...(institutionId ? { 'X-Institution-Id': institutionId } : {}),
         ...(options.headers || {})
       })
     };

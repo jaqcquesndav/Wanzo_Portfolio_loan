@@ -1,5 +1,7 @@
 ﻿# Chat API
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document décrit les endpoints pour la gestion des conversations et messages dans l'API Wanzo Portfolio Institution.
 
 ## Types de données

@@ -29,19 +29,25 @@ export interface CreditPayment {
   
   // Informations du compte source (compte de l'entreprise emprunteuse)
   source_account?: {
+    account_type: 'bank' | 'mobile_money';
     accountNumber: string;
     accountName: string;
-    bankName: string;
+    bankName?: string; // Pour compte bancaire
     bankCode?: string;
+    provider?: string; // Pour Mobile Money (Orange Money, M-Pesa, etc.)
     companyName: string;
   };
   
   // Informations du compte destination (compte de l'institution/portefeuille)
   destination_account?: {
+    account_type: 'bank' | 'mobile_money';
+    accountId: string; // ID du compte dans le portefeuille
     accountNumber: string;
     accountName: string;
-    bankName: string;
+    bankName?: string; // Pour compte bancaire
     bankCode?: string;
+    provider?: string; // Pour Mobile Money
+    portfolioId?: string;
     portfolioName?: string;
   };
   

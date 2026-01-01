@@ -3,7 +3,6 @@ import { Institution, InstitutionLite } from '../types/institution';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { UserRole, UserType } from '../types/users';
 import { userApi } from '../services/api/shared/user.api';
-import { institutionApi } from '../services/api/shared/institution.api';
 import { useAppContextStore } from '../stores/appContextStore';
 import { resetTokenExchangeFlag } from '../pages/AuthCallback';
 
@@ -109,27 +108,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await userApi.getCurrentUserWithInstitution();
       console.log('📦 Réponse brute /users/me:', response);
       
+      // Gérer les deux formats possibles de réponse :
+      // Format 1: { user, institution, auth0Id, role, permissions } (déjà extrait par base.api.ts)
+      // Format 2: { data: { user, institution, auth0Id, role, permissions } } (non extrait)
+      const responseData = (response as { data?: unknown }).data || response;
+      
       // Extraire les données de la réponse
-      // Le backend renvoie: { user, institution, auth0Id, role, permissions }
-      const { user: userData, institution: institutionData, auth0Id: authId, role, permissions: userPermissions } = response;
+      const { 
+        user: userData, 
+        institution: institutionData, 
+        auth0Id: authId, 
+        role, 
+        permissions: userPermissions 
+      } = responseData as {
+        user: User & { institutionId?: string; firstName?: string; lastName?: string; givenName?: string; familyName?: string };
+        institution: InstitutionLite | null;
+        auth0Id: string;
+        role: string;
+        permissions: string[];
+      };
+      
+      // Vérifier que les données utilisateur sont présentes
+      if (!userData) {
+        console.error('❌ Données utilisateur manquantes dans la réponse /users/me');
+        throw new Error('Données utilisateur non disponibles');
+      }
       
       console.log('👤 Données utilisateur extraites:', {
         id: userData?.id,
         name: userData?.name,
+        firstName: userData?.firstName,
+        lastName: userData?.lastName,
         email: userData?.email,
         institutionId: userData?.institutionId
       });
       
       // Construire l'objet utilisateur complet
+      // L'API peut renvoyer firstName/lastName au lieu de givenName/familyName
+      // On construit le nom complet si nécessaire
+      const firstName = userData?.firstName || userData?.givenName || '';
+      const lastName = userData?.lastName || userData?.familyName || '';
+      const fullName = userData?.name || `${firstName} ${lastName}`.trim() || userData?.email?.split('@')[0] || 'Utilisateur';
+      
       const fullUser: User = {
         ...userData,
-        role: role || userData.role,
-        permissions: userPermissions
+        name: fullName,
+        givenName: firstName,
+        familyName: lastName,
+        role: role || userData?.role || 'user',  // Fallback sécurisé
+        permissions: userPermissions || []
       };
       
       // Stocker l'utilisateur dans tous les cas
       setUser(fullUser);
-      setAuth0Id(authId);
+      setAuth0Id(authId || '');
       setPermissions(userPermissions || []);
       
       // Vérifier si l'utilisateur a une institution associée
@@ -148,48 +180,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return 'no_institution';
       }
       
-      // Institution présente - charger les données COMPLÈTES
-      // /users/me retourne InstitutionLite, on récupère Institution FULL via /institutions/:id
-      console.log('🏢 Chargement des données complètes de l\'institution...');
+      // Institution présente - utiliser les données de /users/me directement
+      // Note: Le backend n'a pas d'endpoint GET /institutions/:id, donc on utilise
+      // les données d'institution retournées par /users/me
+      console.log('🏢 Institution chargée depuis /users/me:', effectiveInstitutionId);
       
-      let fullInstitution: Institution | InstitutionLite = institutionData;
+      const fullInstitution: Institution | InstitutionLite | null = institutionData || null;
       
-      try {
-        const institutionResponse = await institutionApi.getInstitution(effectiveInstitutionId);
-        fullInstitution = institutionResponse;
-        console.log('✅ Institution FULL chargée:', {
-          id: fullInstitution.id,
-          name: fullInstitution.name,
-          hasManagers: 'managers' in fullInstitution,
-          hasFullSettings: 'settings' in fullInstitution
-        });
-      } catch (institutionErr) {
-        // En cas d'erreur, on garde l'institution LITE de /users/me
-        console.warn('⚠️ Impossible de charger l\'institution FULL, utilisation des données LITE:', institutionErr);
-        fullInstitution = institutionData;
-      }
-      
-      // Stocker l'institution (FULL ou LITE en fallback)
+      // Stocker l'institution ET l'institutionId (TOUJOURS défini à ce point)
       setInstitution(fullInstitution);
-      setInstitutionId(effectiveInstitutionId);
+      setInstitutionId(effectiveInstitutionId);  // CRITIQUE: toujours défini ici
       setIsContextLoaded(true);
       setContextStatus('authenticated');
       setIsDemoMode(false);
       
       // IMPORTANT: Synchroniser avec le store Zustand pour les services API
-      setGlobalContext({
+      // On utilise getState() pour éviter les problèmes de closure avec dépendances []
+      // On passe EXPLICITEMENT l'institutionId car institution peut être null
+      useAppContextStore.getState().setContext({
         user: fullUser,
         institution: fullInstitution,
+        institutionId: effectiveInstitutionId,  // EXPLICITE: pour que le store ait l'ID même si institution est null
         auth0Id: authId,
         permissions: userPermissions || []
       });
       
       console.log('✅ Contexte chargé avec succès:', {
         userId: userData.id,
-        userName: userData.name,
+        userName: fullName,
         institutionId: effectiveInstitutionId,
         institutionName: fullInstitution?.name || 'N/A',
-        institutionType: 'managers' in fullInstitution ? 'FULL' : 'LITE',
         role,
         permissionsCount: userPermissions?.length || 0
       });
@@ -223,8 +243,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const enableDemoMode = useCallback(() => {
     console.log('🎮 Activation du mode DEMO...');
     
+    const mockInstitutionId = 'demo-institution-001';
     const mockInstitution: InstitutionLite = {
-      id: 'demo-institution-001',
+      id: mockInstitutionId,
       name: 'Institution Démo - Wanzo',
       type: 'bank',
       status: 'active',
@@ -239,29 +260,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
     
-    // Mettre à jour avec les données mock
+    const mockUser: User = {
+      id: 'demo-user-001',
+      email: 'demo@wanzo.io',
+      name: 'Utilisateur Démo',
+      givenName: 'Utilisateur',
+      familyName: 'Démo',
+      role: 'Admin',
+      institutionId: mockInstitutionId,
+      permissions: ['view_dashboard', 'view_reports', 'manage_portfolios']
+    };
+    
+    // Mettre à jour l'état React
+    setUser(mockUser);
     setInstitution(mockInstitution);
-    setInstitutionId(mockInstitution.id);
+    setInstitutionId(mockInstitutionId);
+    setAuth0Id('demo-auth0-id');
+    setPermissions(mockUser.permissions || []);
     setIsDemoMode(true);
     setContextStatus('demo_mode');
     setIsContextLoaded(true);
     
     // Synchroniser avec le store Zustand pour les services API en mode démo
-    if (user) {
-      setGlobalContext({
-        user: user,
-        institution: mockInstitution,
-        auth0Id: auth0Id || 'demo-auth0-id',
-        permissions: permissions.length > 0 ? permissions : ['view_dashboard', 'view_reports'],
-        isDemoMode: true
-      });
-    }
+    // IMPORTANT: On utilise useAppContextStore.getState().setContext directement
+    // pour éviter les problèmes de closure avec les dépendances vides
+    useAppContextStore.getState().setContext({
+      user: mockUser,
+      institution: mockInstitution,
+      institutionId: mockInstitutionId,  // EXPLICITE
+      auth0Id: 'demo-auth0-id',
+      permissions: mockUser.permissions || [],
+      isDemoMode: true
+    });
     
     console.log('✅ Mode DEMO activé:', {
-      institutionId: mockInstitution.id,
-      institutionName: mockInstitution.name
+      institutionId: mockInstitutionId,
+      institutionName: mockInstitution.name,
+      userId: mockUser.id
     });
-  }, []); // Pas de dépendances dynamiques
+  }, []); // Pas de dépendances - utilise getState() pour le store
 
   // Effet pour vérifier si l'utilisateur est déjà connecté au chargement de l'application
   useEffect(() => {
@@ -293,6 +330,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setInstitutionId(storedUser.institutionId || null);
               setContextStatus(storedUser.institutionId ? 'authenticated' : 'no_institution');
               setIsContextLoaded(true);
+              
+              // IMPORTANT: Synchroniser aussi avec le store Zustand pour les appels API
+              if (storedUser.institutionId) {
+                useAppContextStore.getState().setContext({
+                  user: storedUser,
+                  institution: null,  // On n'a pas l'institution en local
+                  institutionId: storedUser.institutionId,
+                  auth0Id: storedUser.id || 'unknown',
+                  permissions: storedUser.permissions || []
+                });
+              }
             } else {
               // Pas de données locales non plus - mode démo
               console.log('🔐 AuthContext: Erreur API et pas de données locales, activation mode démo');

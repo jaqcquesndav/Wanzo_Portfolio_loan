@@ -1,8 +1,8 @@
 # Rapport d'Analyse : Workflow des Portefeuilles Traditionnels
 
-**Date de l'analyse** : 18 novembre 2025  
+**Date de l'analyse** : Janvier 2026 (mis à jour)  
 **Périmètre** : Système complet des portefeuilles traditionnels  
-**Version de l'application** : Current codebase
+**Version de l'application** : Synchronisée avec code source TypeScript
 
 ---
 
@@ -51,7 +51,9 @@ interface Portfolio {
   id: string;
   name: string;
   type: 'traditional';
-  status: 'active' | 'inactive' | 'pending' | 'archived';
+  // 9 statuts conformes OHADA
+  status: 'draft' | 'pending' | 'active' | 'suspended' | 'inactive' | 
+          'closing' | 'for_sale' | 'sold' | 'archived';
   target_amount: number;
   target_return: number;
   target_sectors: string[];
@@ -184,12 +186,24 @@ interface CreditRequest {
 - ⚠️ Champ `currency` présent dans le code mais pas toujours documenté
 - ❌ Incohérence sur les statuts entre code et documentation
 
-**Statuts disponibles** :
+**Statuts disponibles** (15 valeurs conformes au code source):
 ```typescript
 type CreditRequestStatus = 
-  'draft' | 'submitted' | 'under_review' | 'pending' | 'analysis' | 
-  'approved' | 'rejected' | 'canceled' | 'disbursed' | 'active' | 
-  'closed' | 'defaulted' | 'restructured' | 'consolidated' | 'in_litigation';
+  | 'draft'          // Brouillon
+  | 'submitted'      // Soumis
+  | 'under_review'   // En révision
+  | 'pending'        // En attente
+  | 'analysis'       // En analyse
+  | 'approved'       // Approuvé
+  | 'rejected'       // Rejeté
+  | 'canceled'       // Annulé
+  | 'disbursed'      // Déboursé
+  | 'active'         // Actif
+  | 'closed'         // Clôturé
+  | 'defaulted'      // En défaut
+  | 'restructured'   // Restructuré
+  | 'consolidated'   // Consolidé
+  | 'in_litigation'; // En contentieux
 ```
 
 ---
@@ -877,4 +891,7 @@ Disponible dans un fichier séparé pour analyse détaillée :
 
 **Fin du rapport**
 
-*Généré le 18 novembre 2025 par l'équipe d'analyse qualité*
+*Mis à jour en Janvier 2026 - Synchronisé avec le code source TypeScript*
+
+> Note: Ce rapport a été mis à jour pour refléter les modifications apportées au code source.
+> Les enums et structures de données sont conformes aux fichiers `src/types/*.ts`.

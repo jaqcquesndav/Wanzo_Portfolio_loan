@@ -1,5 +1,7 @@
 # Dashboard API
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document décrit les endpoints pour la gestion des tableaux de bord et métriques dans l'API Wanzo Portfolio Institution.
 
 ## Types de données

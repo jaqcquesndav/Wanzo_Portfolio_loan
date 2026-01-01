@@ -1,66 +1,226 @@
-# API des Déboursements - Portefeuille Traditionnel
+# API des Déboursements (Disbursements)
 
-Cette API permet de gérer les déboursements (virements de fonds) associés aux contrats de crédit dans le cadre des portefeuilles traditionnels, incluant la préparation, l'exécution et le suivi des virements.
+Cette API permet de gérer les déboursements (virements de fonds) associés aux contrats de crédit, incluant le support des comptes bancaires et Mobile Money.
+
+## Entités et DTOs
+
+### Disbursement (Entité principale)
+
+```typescript
+interface Disbursement {
+  id: string;
+  company: string;
+  product: string;
+  amount: number;
+  currency: string;                    // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF)
+  status: DisbursementStatus;
+  date: string;                        // ISO 8601
+  requestId?: string;
+  portfolioId: string;
+  contractReference: string;           // Référence du contrat associé (obligatoire)
+  
+  // Validation
+  validatedBy?: string;                // ID utilisateur validateur
+  validatedAt?: string;                // Date de validation ISO 8601
+  rejectionReason?: string;            // Raison du rejet si status=rejected
+  errorCode?: string;                  // Code d'erreur si status=failed
+  errorMessage?: string;               // Message d'erreur détaillé
+  
+  // Informations bancaires de l'ordre de virement
+  transactionReference?: string;       // Référence de transaction bancaire
+  valueDate?: string;                  // Date de valeur
+  executionDate?: string;              // Date d'exécution
+  
+  // Type de compte utilisé pour le déboursement
+  accountType: AccountType;            // 'bank' | 'mobile_money'
+  accountId?: string;                  // ID du compte source
+  
+  // Compte débité (compte de l'institution)
+  debitAccount?: BankDebitAccount;
+  mobileMoneySource?: MobileMoneySource;
+  
+  // Compte crédité (bénéficiaire)
+  beneficiary: Beneficiary;
+  
+  // Informations de paiement
+  paymentMethod: PaymentMethod;
+  paymentReference?: string;
+  description?: string;
+  
+  // Informations spécifiques selon le type de portefeuille
+  investmentType?: InvestmentType;
+  leasingEquipmentDetails?: LeasingEquipment;
+}
+```
+
+### Enums et Types
+
+```typescript
+// Statuts du déboursement (8 valeurs)
+type DisbursementStatus = 
+  | 'draft'      // Brouillon
+  | 'pending'    // En attente de validation
+  | 'approved'   // Approuvé, en attente d'exécution
+  | 'rejected'   // Rejeté
+  | 'processing' // En cours de traitement
+  | 'completed'  // Effectué avec succès
+  | 'failed'     // Échec de l'exécution
+  | 'canceled';  // Annulé
+
+// Type de compte
+type AccountType = 'bank' | 'mobile_money';
+
+// Méthode de paiement (4 valeurs)
+type PaymentMethod = 
+  | 'bank_transfer'  // Virement bancaire
+  | 'mobile_money'   // Mobile Money
+  | 'check'          // Chèque
+  | 'cash';          // Espèces
+
+// Fournisseurs Mobile Money (RDC) - 5 valeurs
+// Note: Dans le type Disbursement.mobileMoneySource, le format snake_case est utilisé
+// pour compatibilité avec les APIs de paiement externes
+type MobileMoneyProvider = 
+  | 'orange_money'    // Orange Money
+  | 'mpesa'           // M-Pesa (Vodacom)
+  | 'airtel_money'    // Airtel Money
+  | 'africell_money'  // Africell Money
+  | 'vodacom_mpesa';  // Vodacom M-Pesa (alias de mpesa)
+
+// Note: Le type MobileMoneyAccount utilise les noms display:
+// 'Orange Money' | 'M-Pesa' | 'Airtel Money' | 'Africell Money' | 'Vodacom M-Pesa'
+
+// Type d'investissement (pour portefeuille investissement)
+type InvestmentType = 
+  | 'prise de participation'
+  | 'complément'
+  | 'dividende'
+  | 'cession';
+```
+
+### Types imbriqués
+
+```typescript
+// Compte bancaire débité (institution)
+interface BankDebitAccount {
+  accountNumber: string;
+  accountName: string;
+  bankName: string;
+  bankCode: string;
+  branchCode?: string;
+}
+
+// Compte Mobile Money source (institution)
+interface MobileMoneySource {
+  provider: MobileMoneyProvider;
+  phoneNumber: string;
+  accountName: string;
+  transactionId?: string;
+}
+
+// Bénéficiaire du déboursement
+interface Beneficiary {
+  accountType: AccountType;
+  
+  // Pour compte bancaire
+  accountNumber?: string;
+  accountName: string;              // Nom du titulaire du compte
+  bankName?: string;
+  bankCode?: string;
+  branchCode?: string;
+  swiftCode?: string;
+  
+  // Pour Mobile Money
+  provider?: MobileMoneyProvider;
+  phoneNumber?: string;
+  
+  // Infos communes
+  companyName: string;
+  address?: string;
+}
+
+// Équipement leasing
+interface LeasingEquipment {
+  equipmentId?: string;
+  equipmentName?: string;
+  equipmentCategory?: string;
+  supplier?: string;
+}
+```
 
 ## Points d'accès
 
-### Liste des déboursements d'un contrat
-
-Récupère la liste des déboursements effectués pour un contrat de crédit spécifique.
+### Liste des déboursements
 
 **Endpoint** : `GET /portfolios/traditional/disbursements`
 
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-
 **Paramètres de requête** :
-- `page` (optionnel) : Numéro de la page (défaut : 1)
-- `limit` (optionnel) : Nombre d'éléments par page (défaut : 10, max : 100)
-- `status` (optionnel) : Filtre par statut (pending, approved, executed, rejected, canceled)
-- `dateFrom` (optionnel) : Filtre par date de déboursement (début)
-- `dateTo` (optionnel) : Filtre par date de déboursement (fin)
-- `sortBy` (optionnel) : Trier par (created_at, amount, disbursement_date)
-- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `portfolioId` | string | Non | Filtrer par portefeuille |
+| `contractId` | string | Non | Filtrer par contrat |
+| `status` | DisbursementStatus | Non | Filtrer par statut |
+| `accountType` | AccountType | Non | Filtrer par type de compte |
+| `dateFrom` | string | Non | Date de début (ISO 8601) |
+| `dateTo` | string | Non | Date de fin (ISO 8601) |
+| `page` | number | Non | Numéro de page (défaut: 1) |
+| `limit` | number | Non | Éléments par page (défaut: 10, max: 100) |
 
 **Réponse réussie** (200 OK) :
-
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "disbursement1",
+      "id": "DISB-00001",
       "company": "Entreprise ABC",
-      "product": "Crédit d'investissement",
+      "product": "Crédit PME",
       "amount": 50000.00,
-      "status": "effectué",
+      "currency": "CDF",
+      "status": "completed",
       "date": "2025-01-15T09:30:00.000Z",
-      "portfolioId": "portfolio123",
-      "contractReference": "CONT-2025-001",
-      "transactionReference": "TRX-12345678",
-      "executionDate": "2025-01-15T09:30:00.000Z",
-      "valueDate": "2025-01-15T09:30:00.000Z",
-      "debitAccount": {
-        "accountNumber": "00123456789",
-        "accountName": "Compte Principal Institution",
-        "bankName": "BCEAO",
-        "bankCode": "BC001"
-      },
+      "portfolioId": "TP-00001",
+      "contractReference": "CTR-20250001",
+      "accountType": "bank",
+      "paymentMethod": "bank_transfer",
       "beneficiary": {
-        "accountNumber": "98765432100",
+        "accountType": "bank",
         "accountName": "Compte Entreprise ABC",
-        "bankName": "Banque Commerciale",
-        "bankCode": "BC002",
-        "companyName": "Entreprise ABC",
-        "address": "123 Rue Principale, Dakar"
+        "accountNumber": "00123456789",
+        "bankName": "Rawbank",
+        "companyName": "Entreprise ABC"
       },
-      "paymentMethod": "virement",
-      "description": "Déboursement crédit d'investissement"
+      "transactionReference": "TRX-12345678"
+    },
+    {
+      "id": "DISB-00002",
+      "company": "Société XYZ",
+      "product": "Microcrédit",
+      "amount": 5000.00,
+      "currency": "CDF",
+      "status": "completed",
+      "date": "2025-01-16T10:00:00.000Z",
+      "portfolioId": "TP-00001",
+      "contractReference": "CTR-20250002",
+      "accountType": "mobile_money",
+      "paymentMethod": "mobile_money",
+      "beneficiary": {
+        "accountType": "mobile_money",
+        "accountName": "Jean Mukendi",
+        "provider": "orange_money",
+        "phoneNumber": "+243851234567",
+        "companyName": "Société XYZ"
+      },
+      "mobileMoneySource": {
+        "provider": "orange_money",
+        "phoneNumber": "+243850000001",
+        "accountName": "Portefeuille PME",
+        "transactionId": "MM-98765432"
+      }
     }
   ],
   "meta": {
-    "total": 1,
+    "total": 2,
     "page": 1,
     "limit": 10,
     "totalPages": 1
@@ -70,789 +230,109 @@ Récupère la liste des déboursements effectués pour un contrat de crédit sp�
 
 ### Détails d'un déboursement
 
-Récupère les détails complets d'un déboursement spécifique.
+**Endpoint** : `GET /portfolios/traditional/disbursements/{id}`
 
-**Endpoint** : `GET /portfolios/traditional/disbursements/{disbursementId}`
+**Réponse réussie** (200 OK) : Retourne l'objet `Disbursement` complet.
 
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-- `disbursementId` : Identifiant unique du déboursement
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "disbursement1",
-    "company": "Entreprise ABC",
-    "product": "Crédit d'investissement",
-    "amount": 50000.00,
-    "status": "effectué",
-    "date": "2025-01-15T09:30:00.000Z",
-    "portfolioId": "portfolio123",
-    "contractReference": "CONT-2025-001",
-    "transactionReference": "TRX-12345678",
-    "executionDate": "2025-01-15T09:30:00.000Z",
-    "valueDate": "2025-01-15T09:30:00.000Z",
-    "debitAccount": {
-      "accountNumber": "00123456789",
-      "accountName": "Compte Principal Institution",
-      "bankName": "BCEAO",
-      "bankCode": "BC001"
-    },
-    "beneficiary": {
-      "accountNumber": "CI123456789012345",
-      "accountName": "Entreprise ABC",
-      "bankName": "Ecobank",
-      "bankCode": "BC002",
-      "swiftCode": "ECOCCIAB",
-      "companyName": "Entreprise ABC",
-      "address": "123 Rue Principale, Abidjan"
-    },
-    "paymentMethod": "virement",
-    "description": "Premier déboursement du crédit d'investissement"
-      "bank_address": "Avenue Houdaille, Plateau, Abidjan",
-      "correspondent_bank": null
-    },
-    "fees": [
-      {
-        "name": "Frais de virement",
-        "amount": 2500.00,
-        "currency": "XOF",
-        "deducted_from_disbursement": true
-      },
-      {
-        "name": "Frais de dossier",
-        "amount": 5000.00,
-        "currency": "XOF",
-        "deducted_from_disbursement": true
-      }
-    ],
-    "net_disbursed_amount": 42500.00,
-    "requested_by": "user456",
-    "requester_name": "Pierre Dubois",
-    "approved_by": "user458",
-    "approver_name": "Marie Martin",
-    "executed_by": "user459",
-    "executor_name": "Jean Kouassi",
-    "notes": "Déboursement initial pour le contrat CONT-2025-001",
-    "prerequisites": [
-      {
-        "description": "Contrat signé",
-        "status": "completed",
-        "completed_at": "2025-01-13T14:30:00.000Z"
-      },
-      {
-        "description": "Garanties validées",
-        "status": "completed",
-        "completed_at": "2025-01-14T10:15:00.000Z"
-      },
-      {
-        "description": "Assurance validée",
-        "status": "completed",
-        "completed_at": "2025-01-14T11:30:00.000Z"
-      }
-    ],
-    "documents": [
-      {
-        "id": "doc1",
-        "name": "Ordre de virement",
-        "type": "transfer_order",
-        "url": "https://example.com/documents/ordre-virement-123.pdf",
-        "created_at": "2025-01-14T16:50:00.000Z"
-      },
-      {
-        "id": "doc2",
-        "name": "Preuve de virement",
-        "type": "transfer_proof",
-        "url": "https://example.com/documents/preuve-virement-123.pdf",
-        "created_at": "2025-01-15T09:35:00.000Z"
-      }
-    ],
-    "created_at": "2025-01-14T15:20:00.000Z",
-    "updated_at": "2025-01-15T09:35:00.000Z"
-  }
-}
-```
-
-### Création d'une demande de déboursement
-
-Crée une nouvelle demande de déboursement pour un contrat de crédit.
+### Créer un déboursement
 
 **Endpoint** : `POST /portfolios/traditional/disbursements`
 
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-
-**Corps de la requête** :
-
+**Corps de la requête (Virement bancaire)** :
 ```json
 {
-  "amount": 25000.00,
-  "currency": "XOF",
-  "requested_disbursement_date": "2025-07-28",
-  "method": "bank_transfer",
-  "transfer_details": {
-    "bank_name": "Ecobank",
-    "account_number": "CI123456789012345",
-    "account_name": "Entreprise ABC",
-    "swift_code": "ECOCCIAB",
-    "bank_address": "Avenue Houdaille, Plateau, Abidjan"
+  "portfolioId": "TP-00001",
+  "contractReference": "CTR-20250001",
+  "company": "Entreprise ABC",
+  "product": "Crédit PME",
+  "amount": 50000.00,
+  "currency": "CDF",
+  "accountType": "bank",
+  "paymentMethod": "bank_transfer",
+  "debitAccount": {
+    "accountNumber": "00987654321",
+    "accountName": "Compte Portefeuille PME",
+    "bankName": "Rawbank",
+    "bankCode": "RWB"
   },
-  "notes": "Deuxième tranche du crédit d'investissement",
-  "prerequisites": [
-    {
-      "description": "Rapport d'avancement validé",
-      "status": "completed",
-      "completed_at": "2025-07-24T14:30:00.000Z"
-    },
-    {
-      "description": "Factures proforma fournies",
-      "status": "completed",
-      "completed_at": "2025-07-25T10:15:00.000Z"
-    }
-  ]
-}
-```
-
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "disbursement2",
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "request_date": "2025-07-25T20:30:00.000Z",
-    "requested_disbursement_date": "2025-07-28T00:00:00.000Z",
-    "amount": 25000.00,
-    "currency": "XOF",
-    "status": "pending",
-    "method": "bank_transfer",
-    "requested_by": "user456",
-    "requester_name": "Pierre Dubois",
-    "notes": "Deuxième tranche du crédit d'investissement",
-    "created_at": "2025-07-25T20:30:00.000Z",
-    "updated_at": "2025-07-25T20:30:00.000Z"
-  }
-}
-```
-
-### Approbation d'une demande de déboursement
-
-Approuve une demande de déboursement en attente.
-
-**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/approve`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-- `disbursementId` : Identifiant unique du déboursement
-
-**Corps de la requête** :
-
-```json
-{
-  "approved_amount": 25000.00,
-  "disbursement_date": "2025-07-28",
-  "fees": [
-    {
-      "name": "Frais de virement",
-      "amount": 2500.00,
-      "currency": "XOF",
-      "deducted_from_disbursement": true
-    }
-  ],
-  "notes": "Demande approuvée, déboursement prévu pour le 28/07/2025"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "disbursement2",
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "approval_date": "2025-07-25T21:00:00.000Z",
-    "disbursement_date": "2025-07-28T00:00:00.000Z",
-    "amount": 25000.00,
-    "currency": "XOF",
-    "status": "approved",
-    "fees": [
-      {
-        "name": "Frais de virement",
-        "amount": 2500.00,
-        "currency": "XOF",
-        "deducted_from_disbursement": true
-      }
-    ],
-    "net_disbursed_amount": 22500.00,
-    "approved_by": "user458",
-    "approver_name": "Marie Martin",
-    "notes": "Demande approuvée, déboursement prévu pour le 28/07/2025",
-    "updated_at": "2025-07-25T21:00:00.000Z"
-  }
-}
-```
-
-### Rejet d'une demande de déboursement
-
-Rejette une demande de déboursement en attente.
-
-**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/reject`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-- `disbursementId` : Identifiant unique du déboursement
-
-**Corps de la requête** :
-
-```json
-{
-  "rejection_reason": "Documentation insuffisante",
-  "notes": "Les factures proforma fournies ne correspondent pas aux spécifications du projet approuvé.",
-  "required_actions": "Fournir des factures proforma détaillées correspondant au projet d'investissement validé."
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "disbursement2",
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "rejection_date": "2025-07-25T21:15:00.000Z",
-    "status": "rejected",
-    "rejection_reason": "Documentation insuffisante",
-    "rejected_by": "user458",
-    "rejector_name": "Marie Martin",
-    "notes": "Les factures proforma fournies ne correspondent pas aux spécifications du projet approuvé.",
-    "required_actions": "Fournir des factures proforma détaillées correspondant au projet d'investissement validé.",
-    "updated_at": "2025-07-25T21:15:00.000Z"
-  }
-}
-```
-
-### Exécution d'un déboursement
-
-Marque un déboursement approuvé comme exécuté.
-
-**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/execute`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-- `disbursementId` : Identifiant unique du déboursement
-
-**Corps de la requête** :
-
-```json
-{
-  "execution_date": "2025-07-28",
-  "reference": "TRX-87654321",
-  "documents": [
-    {
-      "name": "Preuve de virement",
-      "type": "transfer_proof",
-      "content": "base64_encoded_content",
-      "contentType": "application/pdf"
-    }
-  ],
-  "notes": "Virement exécuté via le système bancaire"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "disbursement2",
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "disbursement_date": "2025-07-28T00:00:00.000Z",
-    "execution_date": "2025-07-28T00:00:00.000Z",
-    "amount": 25000.00,
-    "currency": "XOF",
-    "net_disbursed_amount": 22500.00,
-    "status": "executed",
-    "method": "bank_transfer",
-    "reference": "TRX-87654321",
-    "executed_by": "user459",
-    "executor_name": "Jean Kouassi",
-    "documents": [
-      {
-        "id": "doc3",
-        "name": "Preuve de virement",
-        "type": "transfer_proof",
-        "url": "https://example.com/documents/preuve-virement-456.pdf",
-        "created_at": "2025-07-28T09:30:00.000Z"
-      }
-    ],
-    "notes": "Virement exécuté via le système bancaire",
-    "updated_at": "2025-07-28T09:30:00.000Z"
-  }
-}
-```
-
-### Annulation d'un déboursement
-
-Annule un déboursement approuvé mais non encore exécuté.
-
-**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/cancel`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-- `disbursementId` : Identifiant unique du déboursement
-
-**Corps de la requête** :
-
-```json
-{
-  "cancellation_reason": "Annulation à la demande du client",
-  "notes": "Le client a décidé de reporter ce déboursement au mois prochain."
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "disbursement2",
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "cancellation_date": "2025-07-26T10:00:00.000Z",
-    "status": "canceled",
-    "cancellation_reason": "Annulation à la demande du client",
-    "canceled_by": "user456",
-    "canceler_name": "Pierre Dubois",
-    "notes": "Le client a décidé de reporter ce déboursement au mois prochain.",
-    "updated_at": "2025-07-26T10:00:00.000Z"
-  }
-}
-```
-
-### Ajout d'un document à un déboursement
-
-Ajoute un nouveau document à un déboursement existant.
-
-**Endpoint** : `POST /portfolios/traditional/disbursements/{disbursementId}/documents`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-- `disbursementId` : Identifiant unique du déboursement
-
-**Corps de la requête** :
-
-```json
-{
-  "name": "Confirmation de réception",
-  "type": "receipt_confirmation",
-  "content": "base64_encoded_content",
-  "contentType": "application/pdf",
-  "description": "Confirmation de réception des fonds signée par le client"
-}
-```
-
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "doc4",
-    "name": "Confirmation de réception",
-    "type": "receipt_confirmation",
-    "url": "https://example.com/documents/confirmation-reception-123.pdf",
-    "created_at": "2025-07-29T14:30:00.000Z"
-  }
-}
-```
-
-### Déboursement par tranches pour un contrat
-
-Crée un plan de déboursement par tranches pour un contrat de crédit.
-
-**Endpoint** : `POST /portfolios/traditional/disbursements/schedule`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-
-**Corps de la requête** :
-
-```json
-{
-  "total_amount": 100000.00,
-  "currency": "XOF",
-  "method": "bank_transfer",
-  "transfer_details": {
-    "bank_name": "Ecobank",
-    "account_number": "CI123456789012345",
-    "account_name": "Entreprise ABC",
-    "swift_code": "ECOCCIAB",
-    "bank_address": "Avenue Houdaille, Plateau, Abidjan"
+  "beneficiary": {
+    "accountType": "bank",
+    "accountNumber": "00123456789",
+    "accountName": "Compte Entreprise ABC",
+    "bankName": "Rawbank",
+    "bankCode": "RWB",
+    "companyName": "Entreprise ABC",
+    "address": "123 Avenue Commerce, Kinshasa"
   },
-  "tranches": [
-    {
-      "amount": 50000.00,
-      "scheduled_date": "2025-08-01",
-      "description": "Première tranche - Initial",
-      "prerequisites": [
-        {
-          "description": "Contrat signé et validé",
-          "required": true
-        },
-        {
-          "description": "Garanties validées",
-          "required": true
-        }
-      ]
-    },
-    {
-      "amount": 30000.00,
-      "scheduled_date": "2025-09-01",
-      "description": "Deuxième tranche - Phase intermédiaire",
-      "prerequisites": [
-        {
-          "description": "Rapport d'avancement phase 1",
-          "required": true
-        },
-        {
-          "description": "Factures justificatives phase 1",
-          "required": true
-        }
-      ]
-    },
-    {
-      "amount": 20000.00,
-      "scheduled_date": "2025-10-01",
-      "description": "Troisième tranche - Phase finale",
-      "prerequisites": [
-        {
-          "description": "Rapport d'avancement phase 2",
-          "required": true
-        },
-        {
-          "description": "Inspection sur site",
-          "required": true
-        }
-      ]
-    }
-  ],
-  "notes": "Plan de déboursement pour le projet d'expansion"
+  "description": "Déboursement crédit PME - Première tranche"
 }
 ```
 
-**Réponse réussie** (201 Created) :
-
+**Corps de la requête (Mobile Money)** :
 ```json
 {
-  "success": true,
-  "data": {
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "total_amount": 100000.00,
-    "currency": "XOF",
-    "method": "bank_transfer",
-    "schedule_id": "schedule123",
-    "tranches": [
-      {
-        "id": "tranche1",
-        "amount": 50000.00,
-        "scheduled_date": "2025-08-01T00:00:00.000Z",
-        "description": "Première tranche - Initial",
-        "status": "pending",
-        "disbursement_id": null
-      },
-      {
-        "id": "tranche2",
-        "amount": 30000.00,
-        "scheduled_date": "2025-09-01T00:00:00.000Z",
-        "description": "Deuxième tranche - Phase intermédiaire",
-        "status": "pending",
-        "disbursement_id": null
-      },
-      {
-        "id": "tranche3",
-        "amount": 20000.00,
-        "scheduled_date": "2025-10-01T00:00:00.000Z",
-        "description": "Troisième tranche - Phase finale",
-        "status": "pending",
-        "disbursement_id": null
-      }
-    ],
-    "created_at": "2025-07-30T10:00:00.000Z",
-    "updated_at": "2025-07-30T10:00:00.000Z"
-  }
+  "portfolioId": "TP-00001",
+  "contractReference": "CTR-20250002",
+  "company": "Société XYZ",
+  "product": "Microcrédit",
+  "amount": 5000.00,
+  "currency": "CDF",
+  "accountType": "mobile_money",
+  "paymentMethod": "mobile_money",
+  "mobileMoneySource": {
+    "provider": "orange_money",
+    "phoneNumber": "+243850000001",
+    "accountName": "Portefeuille PME"
+  },
+  "beneficiary": {
+    "accountType": "mobile_money",
+    "accountName": "Jean Mukendi",
+    "provider": "orange_money",
+    "phoneNumber": "+243851234567",
+    "companyName": "Société XYZ"
+  },
+  "description": "Déboursement microcrédit"
 }
 ```
 
-### Statistiques des déboursements par contrat
+### Confirmer un déboursement
 
-Récupère des statistiques sur les déboursements d'un contrat spécifique.
+**Endpoint** : `POST /portfolios/traditional/disbursements/{id}/confirm`
 
-**Endpoint** : `GET /portfolios/traditional/disbursements/stats`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-
-**Réponse réussie** (200 OK) :
-
+**Corps de la requête** :
 ```json
 {
-  "success": true,
-  "data": {
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "contract_amount": 100000.00,
-    "total_disbursed": 75000.00,
-    "remaining_amount": 25000.00,
-    "disbursement_progress": 75.0,
-    "disbursement_count": 2,
-    "first_disbursement_date": "2025-01-15T09:30:00.000Z",
-    "last_disbursement_date": "2025-07-28T00:00:00.000Z",
-    "disbursements": [
-      {
-        "id": "disbursement1",
-        "date": "2025-01-15T09:30:00.000Z",
-        "amount": 50000.00,
-        "status": "executed",
-        "percentage": 50.0
-      },
-      {
-        "id": "disbursement2",
-        "date": "2025-07-28T00:00:00.000Z",
-        "amount": 25000.00,
-        "status": "executed",
-        "percentage": 25.0
-      }
-    ],
-    "schedule": {
-      "id": "schedule123",
-      "tranches_count": 3,
-      "tranches_completed": 2,
-      "next_scheduled_date": "2025-10-01T00:00:00.000Z",
-      "next_scheduled_amount": 20000.00
-    }
-  }
+  "transactionReference": "TRX-12345678",
+  "executionDate": "2025-01-15T09:30:00.000Z",
+  "valueDate": "2025-01-15T09:30:00.000Z"
 }
 ```
 
-### Statistiques des déboursements par portefeuille
+### Annuler un déboursement
 
-Récupère des statistiques sur les déboursements d'un portefeuille traditionnel.
+**Endpoint** : `POST /portfolios/traditional/disbursements/{id}/cancel`
 
-**Endpoint** : `GET /portfolios/traditional/disbursements/stats`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-
-**Paramètres de requête** :
-- `period` (optionnel) : Période d'analyse (month, quarter, year, all) - défaut : all
-- `from` (optionnel) : Date de début pour la période personnalisée
-- `to` (optionnel) : Date de fin pour la période personnalisée
-
-**Réponse réussie** (200 OK) :
-
+**Corps de la requête** :
 ```json
 {
-  "success": true,
-  "data": {
-    "total_contracts": 35,
-    "contracts_with_disbursements": 28,
-    "total_approved_amount": 2750000.00,
-    "total_disbursed_amount": 2100000.00,
-    "disbursement_rate": 76.36,
-    "disbursement_count": 42,
-    "disbursements_by_method": [
-      {
-        "method": "bank_transfer",
-        "count": 36,
-        "amount": 1950000.00,
-        "percentage": 92.86
-      },
-      {
-        "method": "mobile_money",
-        "count": 4,
-        "amount": 100000.00,
-        "percentage": 4.76
-      },
-      {
-        "method": "check",
-        "count": 2,
-        "amount": 50000.00,
-        "percentage": 2.38
-      }
-    ],
-    "monthly_trend": [
-      {
-        "period": "2025-01",
-        "count": 8,
-        "amount": 550000.00
-      },
-      {
-        "period": "2025-02",
-        "count": 6,
-        "amount": 420000.00
-      },
-      {
-        "period": "2025-03",
-        "count": 5,
-        "amount": 350000.00
-      },
-      {
-        "period": "2025-04",
-        "count": 7,
-        "amount": 380000.00
-      },
-      {
-        "period": "2025-05",
-        "count": 5,
-        "amount": 200000.00
-      },
-      {
-        "period": "2025-06",
-        "count": 6,
-        "amount": 150000.00
-      },
-      {
-        "period": "2025-07",
-        "count": 5,
-        "amount": 50000.00
-      }
-    ],
-    "processing_time": {
-      "request_to_approval": 1.2,
-      "approval_to_execution": 0.8,
-      "total": 2.0
-    },
-    "pending_disbursements": {
-      "count": 5,
-      "amount": 200000.00
-    },
-    "scheduled_disbursements": {
-      "count": 8,
-      "amount": 450000.00
-    }
-  }
+  "reason": "Annulé à la demande du client"
 }
 ```
 
-## Modèles de données
+## Codes d'erreur
 
-### Déboursement
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du déboursement |
-| contract_id | string | Identifiant du contrat de crédit |
-| contract_number | string | Numéro de référence du contrat |
-| client_id | string | Identifiant du client |
-| company_name | string | Nom de l'entreprise cliente |
-| request_date | string | Date de la demande (format ISO) |
-| approval_date | string | Date d'approbation (format ISO) |
-| disbursement_date | string | Date prévue du déboursement (format ISO) |
-| execution_date | string | Date d'exécution effective (format ISO) |
-| amount | number | Montant du déboursement |
-| currency | string | Devise du montant |
-| status | string | Statut ('pending', 'approved', 'executed', 'rejected', 'canceled') |
-| method | string | Méthode de paiement utilisée |
-| reference | string | Référence de la transaction |
-| transfer_details | object | Détails du compte bancaire ou autre moyen de transfert |
-| fees | array | Frais associés au déboursement |
-| net_disbursed_amount | number | Montant net déboursé après déduction des frais |
-| requested_by | string | Identifiant de l'utilisateur ayant demandé le déboursement |
-| requester_name | string | Nom de l'utilisateur ayant demandé le déboursement |
-| approved_by | string | Identifiant de l'utilisateur ayant approuvé le déboursement |
-| approver_name | string | Nom de l'utilisateur ayant approuvé le déboursement |
-| executed_by | string | Identifiant de l'utilisateur ayant exécuté le déboursement |
-| executor_name | string | Nom de l'utilisateur ayant exécuté le déboursement |
-| rejected_by | string | Identifiant de l'utilisateur ayant rejeté le déboursement |
-| rejector_name | string | Nom de l'utilisateur ayant rejeté le déboursement |
-| canceled_by | string | Identifiant de l'utilisateur ayant annulé le déboursement |
-| canceler_name | string | Nom de l'utilisateur ayant annulé le déboursement |
-| rejection_reason | string | Raison du rejet (si applicable) |
-| cancellation_reason | string | Raison de l'annulation (si applicable) |
-| notes | string | Notes additionnelles sur le déboursement |
-| required_actions | string | Actions requises (en cas de rejet) |
-| prerequisites | array | Conditions préalables au déboursement |
-| documents | array | Documents associés au déboursement |
-| created_at | string | Date de création (format ISO) |
-| updated_at | string | Date de dernière modification (format ISO) |
+| Code | Description |
+|------|-------------|
+| 400 | Données invalides |
+| 404 | Déboursement non trouvé |
+| 409 | Conflit (ex: déboursement déjà confirmé) |
+| 422 | Fonds insuffisants sur le compte source |
+| 503 | Service de paiement indisponible |
 
-### Détails de transfert
-| Champ | Type | Description |
-|-------|------|-------------|
-| bank_name | string | Nom de la banque |
-| account_number | string | Numéro de compte |
-| account_name | string | Nom du titulaire du compte |
-| swift_code | string | Code SWIFT/BIC de la banque |
-| bank_address | string | Adresse de la banque |
-| correspondent_bank | string | Banque correspondante (si applicable) |
-| provider | string | Fournisseur du service (pour mobile money) |
-| phone_number | string | Numéro de téléphone (pour mobile money) |
+## Règles métier
 
-### Frais
-| Champ | Type | Description |
-|-------|------|-------------|
-| name | string | Nom des frais |
-| amount | number | Montant des frais |
-| currency | string | Devise des frais |
-| deducted_from_disbursement | boolean | Indique si les frais sont déduits du montant du déboursement |
-
-### Prérequis
-| Champ | Type | Description |
-|-------|------|-------------|
-| description | string | Description du prérequis |
-| status | string | Statut ('pending', 'completed') |
-| required | boolean | Indique si le prérequis est obligatoire |
-| completed_at | string | Date de complétion (format ISO) |
-
-### Document
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du document |
-| name | string | Nom du document |
-| type | string | Type de document |
-| url | string | URL d'accès au document |
-| created_at | string | Date de création/téléchargement (format ISO) |
-
-### Plan de déboursement
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du plan de déboursement |
-| contract_id | string | Identifiant du contrat de crédit |
-| total_amount | number | Montant total à débourser |
-| currency | string | Devise du montant |
-| method | string | Méthode de paiement à utiliser |
-| tranches | array | Liste des tranches de déboursement |
-| created_at | string | Date de création (format ISO) |
-| updated_at | string | Date de dernière modification (format ISO) |
-
-### Tranche de déboursement
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de la tranche |
-| amount | number | Montant de la tranche |
-| scheduled_date | string | Date prévue pour le déboursement (format ISO) |
-| description | string | Description de la tranche |
-| status | string | Statut ('pending', 'processing', 'disbursed', 'canceled') |
-| disbursement_id | string | Identifiant du déboursement associé (si applicable) |
-| prerequisites | array | Conditions préalables au déboursement de cette tranche |
+1. **Validation du compte source** : Le compte source doit avoir un solde suffisant
+2. **Mobile Money** : Les limites journalières/mensuelles doivent être respectées
+3. **Statuts autorisés pour confirmation** : `pending` ou `approved`
+4. **Statuts autorisés pour annulation** : `draft`, `pending`, `approved`
+5. **Traçabilité** : Chaque déboursement doit être lié à un contrat existant

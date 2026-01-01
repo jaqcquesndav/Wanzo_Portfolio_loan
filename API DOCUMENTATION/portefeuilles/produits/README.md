@@ -1,5 +1,7 @@
 # Produits Financiers - Documentation Technique
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document détaille le système de produits financiers utilisé dans le module de portefeuille traditionnel.
 
 ## 1. Aperçu du Système de Produits Financiers
@@ -10,13 +12,13 @@ Le module de produits financiers permet aux institutions de définir, configurer
 
 ### 2.1 Produit Financier
 
-La structure principale est l'interface `FinancialProduct` :
+La structure principale est l'interface `FinancialProduct` définie dans `src/types/traditional-portfolio.ts` :
 
 ```typescript
 interface FinancialProduct {
   id: string;
   name: string;
-  type: 'credit' | 'savings' | 'investment';
+  type: ProductType;                      // Type de crédit spécifique
   description: string;
   minAmount: number;
   maxAmount: number;
@@ -31,36 +33,37 @@ interface FinancialProduct {
     max?: number;
   };
   requirements: string[];
-  acceptedGuarantees?: string[]; // Types de garanties acceptées pour ce produit
+  acceptedGuarantees?: string[];          // Types de garanties acceptées
   isPublic: boolean;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
 }
+
+// Types de produits disponibles (6 valeurs)
+type ProductType = 
+  | 'credit_personnel'      // Crédit à la consommation personnel
+  | 'credit_immobilier'     // Crédit immobilier
+  | 'credit_auto'           // Crédit automobile
+  | 'credit_professionnel'  // Crédit professionnel PME
+  | 'microcredit'           // Microcrédit
+  | 'credit_consommation';  // Crédit à la consommation général
 ```
 
 ### 2.2 Types de Produits
 
-Le système prend en charge trois types principaux de produits :
+Le système prend en charge **6 types de crédits** spécifiques :
 
-1. **Crédit** - Prêts et avances de fonds
-   - Crédits commerciaux
-   - Crédits d'investissement
-   - Lignes de crédit
-   - Microcrédits
-   - etc.
+| Type | Valeur | Description |
+|------|--------|-------------|
+| Crédit Personnel | `credit_personnel` | Prêt personnel non affecté |
+| Crédit Immobilier | `credit_immobilier` | Financement achat/construction immobilière |
+| Crédit Auto | `credit_auto` | Financement véhicule |
+| Crédit Professionnel | `credit_professionnel` | Crédit PME et entrepreneurs |
+| Microcrédit | `microcredit` | Petits prêts pour activités génératrices de revenus |
+| Crédit Consommation | `credit_consommation` | Prêt pour biens de consommation |
 
-2. **Épargne** - Produits de dépôt et d'épargne
-   - Comptes d'épargne
-   - Dépôts à terme
-   - Plans d'épargne programmée
-   - etc.
-
-3. **Investissement** - Produits d'investissement
-   - Fonds communs de placement
-   - Obligations
-   - Actions
-   - etc.
+> **Note**: Une interface alternative existe dans `src/types/financial-product.ts` avec une structure différente orientée équipement. L'interface principale pour les portefeuilles traditionnels est celle définie dans `traditional-portfolio.ts`.
 
 ### 2.3 Configuration des Taux d'Intérêt
 
@@ -115,7 +118,7 @@ Le module expose plusieurs services API pour gérer les produits financiers :
 // API pour les produits financiers
 export const financialProductApi = {
   getAllProducts: async (filters?: {
-    type?: 'credit' | 'savings' | 'investment';
+    type?: ProductType;  // credit_personnel, credit_immobilier, etc.
     status?: 'active' | 'inactive';
     isPublic?: boolean;
   }) => { /* ... */ },
@@ -152,7 +155,7 @@ export const financialProductApi = {
 ```json
 {
   "name": "Crédit Investissement PME",
-  "type": "credit",
+  "type": "credit_professionnel",
   "description": "Crédit d'investissement pour petites et moyennes entreprises",
   "minAmount": 10000,
   "maxAmount": 500000,
@@ -170,9 +173,9 @@ export const financialProductApi = {
     "Projections financières"
   ],
   "acceptedGuarantees": [
-    "real_estate",
-    "equipment",
-    "cash_collateral"
+    "immobilier",
+    "materiel",
+    "depot_especes"
   ],
   "isPublic": true,
   "status": "active"

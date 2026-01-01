@@ -1,689 +1,314 @@
 # API des Contrats de Crédit
 
-Cette API permet de gérer les contrats de crédit, y compris la création, la consultation, la mise à jour, la restructuration et la gestion complète du cycle de vie des contrats basée sur le ContractController réellement implémenté.
+Cette API permet de gérer les contrats de crédit, y compris la création, la consultation, la mise à jour, la restructuration et la gestion complète du cycle de vie des contrats.
+
+## Entités et DTOs
+
+### CreditContract (Entité principale)
+
+```typescript
+interface CreditContract {
+  id: string;
+  portfolioId: string;
+  client_id: string;
+  company_name: string;
+  product_type: string;
+  contract_number: string;
+  amount: number;
+  interest_rate: number;
+  start_date: string;        // ISO 8601
+  end_date: string;          // ISO 8601
+  status: ContractStatus;
+  amortization_method?: AmortizationMethod;
+  terms: string;
+  created_at: string;
+  updated_at: string;
+  funding_request_id?: string;
+  
+  // Champs additionnels
+  creditRequestId?: string;
+  memberId?: string;
+  memberName?: string;
+  productId?: string;
+  productName?: string;
+  disbursedAmount?: number;
+  remainingAmount?: number;
+  lastPaymentDate?: string;
+  nextPaymentDate?: string;
+  delinquencyDays?: number;
+  riskClass?: RiskClass;
+  guaranteesTotalValue?: number;
+  guaranteeId?: string;
+  scheduleId?: string;
+  documentUrl?: string;
+  duration?: number;
+  grace_period?: number;
+  
+  // Consolidation
+  consolidatedFrom?: string[];
+  isConsolidated?: boolean;
+  consolidatedTo?: string;
+  
+  // Défaut et litige
+  default_date?: string;
+  default_reason?: string;
+  litigation_date?: string;
+  litigation_reason?: string;
+  completion_date?: string;
+  
+  // Relations imbriquées
+  guarantees?: ContractGuarantee[];
+  disbursements?: ContractDisbursement[];
+  payment_schedule?: PaymentScheduleItem[];
+  restructuring_history?: RestructuringEntry[];
+  documents?: ContractDocument[];
+}
+```
+
+### Enums et Types
+
+```typescript
+// Statuts du contrat (6 valeurs)
+type ContractStatus = 
+  | 'active'        // Contrat actif en cours
+  | 'completed'     // Contrat terminé normalement
+  | 'defaulted'     // Contrat en défaut de paiement
+  | 'restructured'  // Contrat restructuré
+  | 'in_litigation' // Contrat en contentieux
+  | 'suspended';    // Contrat suspendu temporairement
+
+// Méthode d'amortissement (4 valeurs)
+type AmortizationMethod = 
+  | 'linear'       // Amortissement linéaire (échéances constantes)
+  | 'degressive'   // Amortissement dégressif
+  | 'progressive'  // Amortissement progressif
+  | 'balloon';     // Remboursement in fine (balloon)
+
+// Classification du risque (5 valeurs - normes OHADA/BCC)
+type RiskClass = 
+  | 'standard'     // Créance saine
+  | 'watch'        // À surveiller (1-30 jours)
+  | 'substandard'  // Sous-standard (31-90 jours)
+  | 'doubtful'     // Douteux (91-180 jours)
+  | 'loss';        // Perte (>180 jours)
+
+// Statut des échéances
+type PaymentScheduleStatus = 
+  | 'pending'   // En attente
+  | 'paid'      // Payé
+  | 'partial'   // Partiellement payé
+  | 'late'      // En retard
+  | 'defaulted';// En défaut
+```
+
+### Types imbriqués
+
+```typescript
+interface ContractGuarantee {
+  id: string;
+  type: string;
+  description: string;
+  value: number;
+  currency: string;
+  documents?: Array<{
+    id: string;
+    name: string;
+    url: string;
+  }>;
+}
+
+interface ContractDisbursement {
+  id: string;
+  date: string;
+  amount: number;
+  method: string;
+  reference: string;
+}
+
+interface PaymentScheduleItem {
+  id: string;
+  due_date: string;
+  principal_amount: number;
+  interest_amount: number;
+  total_amount: number;
+  status: PaymentScheduleStatus;
+  payment_date?: string;
+  payment_amount?: number;
+  payment_reference?: string;
+  installment_number: number;
+  remaining_percentage?: number;
+  remaining_amount?: number;
+  transaction_reference?: string;
+}
+
+interface RestructuringEntry {
+  date: string;
+  reason: string;
+  previous_terms: string;
+  previous_rate: number;
+  previous_end_date: string;
+}
+
+interface ContractDocument {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  created_at: string;
+}
+```
 
 ## Points d'accès
 
 ### Liste des contrats de crédit
 
-Récupère la liste des contrats de crédit avec pagination et filtrage.
-
-**Endpoint** : `GET /contracts`
+**Endpoint** : `GET /portfolios/traditional/credit-contracts`
 
 **Paramètres de requête** :
-- `portfolioId` (optionnel) : Identifiant unique du portefeuille traditionnel
-- `status` (optionnel) : Filtre par statut (active, completed, defaulted, restructured)
-- `clientId` (optionnel) : Filtre par identifiant du client
-- `productType` (optionnel) : Filtre par type de produit
-- `dateFrom` (optionnel) : Filtre par date de début du contrat (début)
-- `dateTo` (optionnel) : Filtre par date de début du contrat (fin)
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `portfolioId` | string | Non | Filtrer par portefeuille |
+| `status` | ContractStatus | Non | Filtrer par statut |
+| `clientId` | string | Non | Filtrer par client |
+| `productType` | string | Non | Filtrer par type de produit |
+| `dateFrom` | string | Non | Date de début (ISO 8601) |
+| `dateTo` | string | Non | Date de fin (ISO 8601) |
+| `page` | number | Non | Numéro de page (défaut: 1) |
+| `limit` | number | Non | Éléments par page (défaut: 10, max: 100) |
 
 **Réponse réussie** (200 OK) :
-
-```json
-[
-  {
-    "id": "CC-00001",
-    "portfolioId": "TP-00001",
-    "contract_number": "CONT-2025-001",
-    "clientId": "CL-00001",
-    "company_name": "Entreprise ABC",
-    "product_type": "Crédit PME",
-    "amount": 50000.00,
-    "interest_rate": 12.5,
-    "start_date": "2025-01-15T00:00:00.000Z",
-    "end_date": "2026-01-15T00:00:00.000Z",
-    "status": "active",
-    "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution...",
-    "created_at": "2025-01-10T08:00:00.000Z",
-    "updated_at": "2025-01-15T10:30:00.000Z",
-    "funding_request_id": "FR-00001"
-  },
-  {
-    "id": "CC-00002",
-    "portfolioId": "TP-00001",
-    "contract_number": "CONT-2025-002",
-    "clientId": "CL-00002",
-    "company_name": "Société XYZ",
-    "product_type": "Crédit Investissement",
-    "amount": 75000.00,
-    "interest_rate": 10.0,
-    "start_date": "2025-01-20T00:00:00.000Z",
-    "end_date": "2026-07-20T00:00:00.000Z",
-    "status": "active",
-    "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution...",
-    "created_at": "2025-01-15T14:30:00.000Z",
-    "updated_at": "2025-01-20T09:15:00.000Z",
-    "funding_request_id": "FR-00002"
-  }
-]
-```
-### Détails d'un contrat de crédit
-
-Récupère les détails complets d'un contrat de crédit spécifique.
-
-**Endpoint** : `GET /api/portfolio/traditional/credit-contracts/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Réponse réussie** (200 OK) :
-
 ```json
 {
-  "id": "CC-00001",
+  "success": true,
+  "data": [
+    {
+      "id": "CC-00001",
+      "portfolioId": "TP-00001",
+      "contract_number": "CTR-20250001",
+      "client_id": "CL-00001",
+      "company_name": "Entreprise ABC",
+      "product_type": "Crédit PME",
+      "amount": 50000.00,
+      "interest_rate": 12.5,
+      "start_date": "2025-01-15T00:00:00.000Z",
+      "end_date": "2026-01-15T00:00:00.000Z",
+      "status": "active",
+      "amortization_method": "linear",
+      "riskClass": "standard",
+      "disbursedAmount": 50000.00,
+      "remainingAmount": 45000.00,
+      "nextPaymentDate": "2025-02-15T00:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+
+### Détails d'un contrat
+
+**Endpoint** : `GET /portfolios/traditional/credit-contracts/{id}`
+
+**Réponse réussie** (200 OK) : Retourne l'objet `CreditContract` complet avec toutes les relations.
+
+### Créer un contrat depuis une demande approuvée
+
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/from-request`
+
+**Corps de la requête** :
+```json
+{
   "portfolioId": "TP-00001",
-  "contract_number": "CONT-2025-001",
-  "clientId": "CL-00001",
+  "creditRequestId": "CR-00001",
+  "client_id": "CL-00001",
   "company_name": "Entreprise ABC",
   "product_type": "Crédit PME",
   "amount": 50000.00,
   "interest_rate": 12.5,
   "start_date": "2025-01-15T00:00:00.000Z",
   "end_date": "2026-01-15T00:00:00.000Z",
-  "status": "active",
-  "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution...",
-  "funding_request_id": "FR-00001",
-  "guarantees": [
-    {
-      "id": "GUAR-00001",
-      "type": "real_estate",
-      "description": "Terrain situé à Cocody, parcelle 123",
-      "value": 80000.00,
-      "currency": "XOF",
-      "documents": [
-        {
-          "id": "DOC-00001",
-          "name": "Titre foncier",
-          "url": "https://example.com/documents/titre-foncier-123.pdf"
-        },
-        {
-          "id": "DOC-00002",
-          "name": "Évaluation immobilière",
-          "url": "https://example.com/documents/evaluation-123.pdf"
-        }
-      ]
-    }
-  ],
-  "disbursements": [
-    {
-      "id": "DISB-00001",
-      "date": "2025-01-15T09:30:00.000Z",
-      "amount": 50000.00,
-      "method": "bank_transfer",
-      "reference": "TRX-12345678"
-    }
-  ],
-  "payment_schedule": [
-    {
-      "id": "PAY-00001",
-      "due_date": "2025-02-15T00:00:00.000Z",
-      "principal_amount": 3750.00,
-      "interest_amount": 833.33,
-      "total_amount": 4583.33,
-      "status": "pending",
-      "installment_number": 1,
-      "remaining_amount": 46250.00,
-      "remaining_percentage": 92.5
-    },
-    {
-      "id": "PAY-00002",
-      "due_date": "2025-03-15T00:00:00.000Z",
-      "principal_amount": 3750.00,
-      "interest_amount": 781.25,
-      "total_amount": 4531.25,
-      "status": "pending",
-      "installment_number": 2,
-      "remaining_amount": 42500.00,
-      "remaining_percentage": 85.0
-    }
-  ],
-  "documents": [
-    {
-      "id": "DOC-00003",
-      "name": "Contrat original signé",
-      "type": "contrat_original",
-      "url": "https://example.com/documents/contrat-123.pdf",
-      "created_at": "2025-01-15T10:30:00.000Z"
-    }
-  ],
-  "restructuring_history": [],
-  "created_at": "2025-01-10T08:00:00.000Z",
-  "updated_at": "2025-01-15T10:30:00.000Z"
-}
-```
-### Création d'un contrat de crédit à partir d'une demande approuvée
-
-Crée un nouveau contrat de crédit à partir d'une demande de financement approuvée.
-
-**Endpoint** : `POST /contracts/from-request`
-
-**Corps de la requête** :
-
-```json
-{
-  "fundingRequestId": "FR-00003",
-  "contractTerms": {
-    "interestRate": 12.5,
-    "duration": 12,
-    "startDate": "2025-08-01",
-    "amortizationMethod": "linear"
-  },
-  "additionalConditions": "Conditions spécifiques supplémentaires..."
-}
-```
-
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "id": "CC-00003",
-  "portfolioId": "TP-00001",
-  "clientId": "CL-00001",
-  "company_name": "Entreprise ABC",
-  "product_type": "Crédit PME",
-  "contract_number": "CONT-2025-003",
-  "amount": 50000.00,
-  "interest_rate": 12.5,
-  "start_date": "2025-08-01T00:00:00.000Z",
-  "end_date": "2026-08-01T00:00:00.000Z",
-  "status": "active",
-  "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution...",
-  "funding_request_id": "FR-00003",
+  "terms": "12 échéances - monthly",
   "amortization_method": "linear",
-  "created_at": "2025-07-25T15:00:00.000Z",
-  "updated_at": "2025-07-25T15:00:00.000Z"
+  "grace_period": 0
 }
 ```
-### Mise à jour d'un contrat de crédit
 
-Met à jour les informations d'un contrat de crédit existant.
+### Mettre à jour un contrat
 
-**Endpoint** : `PUT /contracts/{id}`
+**Endpoint** : `PUT /portfolios/traditional/credit-contracts/{id}`
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
+**Corps de la requête** : Champs partiels de `CreditContract`
+
+### Marquer en défaut
+
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/default`
 
 **Corps de la requête** :
-
 ```json
 {
-  "interest_rate": 11.5,
-  "end_date": "2026-04-15",
-  "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution, révisées le 25/07/2025..."
+  "reason": "Non-paiement depuis 90 jours",
+  "default_date": "2025-04-15T00:00:00.000Z"
 }
 ```
 
-**Réponse réussie** (200 OK) :
+### Restructurer un contrat
 
-```json
-{
-  "id": "CC-00001",
-  "portfolio_id": "TP-00001",
-  "client_id": "CL-00001",
-  "company_name": "Entreprise ABC",
-  "product_type": "Crédit PME",
-  "contract_number": "CONT-2025-001",
-  "amount": 50000.00,
-  "interest_rate": 11.5,
-  "start_date": "2025-01-15T00:00:00.000Z",
-  "end_date": "2026-04-15T00:00:00.000Z",
-  "status": "active",
-  "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution, révisées le 25/07/2025...",
-  "funding_request_id": "FR-00001",
-  "created_at": "2025-01-10T08:00:00.000Z",
-  "updated_at": "2025-07-25T15:30:00.000Z"
-}
-```
-
-### Génération de document de contrat
-
-Génère un document PDF pour un contrat de crédit spécifique.
-
-**Endpoint** : `POST /api/portfolio/traditional/credit-contracts/{id}/generate-document`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Corps de la requête** : Vide
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "documentUrl": "https://example.com/contract-documents/CC-00001.pdf"
-}
-```
-### Marquer un contrat comme défaillant
-
-Marque un contrat de crédit comme étant en défaut de paiement.
-
-**Endpoint** : `POST /api/portfolio/traditional/credit-contracts/{id}/default`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/restructure`
 
 **Corps de la requête** :
-
 ```json
 {
-  "reason": "Insolvabilité du client"
+  "new_terms": "18 échéances - monthly",
+  "new_interest_rate": 10.0,
+  "new_end_date": "2026-07-15T00:00:00.000Z",
+  "reason": "Difficultés temporaires de trésorerie"
 }
 ```
 
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "CC-00001",
-  "portfolio_id": "TP-00001",
-  "contract_number": "CONT-2025-001",
-  "client_id": "CL-00001",
-  "company_name": "Entreprise ABC",
-  "product_type": "Crédit PME",
-  "amount": 50000.00,
-  "interest_rate": 11.5,
-  "start_date": "2025-01-15T00:00:00.000Z",
-  "end_date": "2026-04-15T00:00:00.000Z",
-  "status": "defaulted",
-  "terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution, révisées le 25/07/2025...",
-  "funding_request_id": "FR-00001",
-  "default_date": "2025-07-25T16:00:00.000Z",
-  "default_reason": "Insolvabilité du client",
-  "created_at": "2025-01-10T08:00:00.000Z",
-  "updated_at": "2025-07-25T16:00:00.000Z"
-}
-```
-
-### Restructuration d'un contrat
-
-Restructure un contrat de crédit existant (modification des termes, taux ou échéances).
-
-**Endpoint** : `POST /api/portfolio/traditional/credit-contracts/{id}/restructure`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Corps de la requête** :
-
-```json
-{
-  "new_terms": "Contrat restructuré suite à difficultés financières temporaires du client...",
-  "new_rate": 10.0,
-  "new_end_date": "2026-10-15",
-  "reason": "Difficultés de trésorerie temporaires"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "CC-00001",
-  "portfolio_id": "TP-00001",
-  "contract_number": "CONT-2025-001",
-  "client_id": "CL-00001",
-  "company_name": "Entreprise ABC",
-  "product_type": "Crédit PME",
-  "amount": 50000.00,
-  "interest_rate": 10.0,
-  "start_date": "2025-01-15T00:00:00.000Z",
-  "end_date": "2026-10-15T00:00:00.000Z",
-  "status": "restructured",
-  "terms": "Contrat restructuré suite à difficultés financières temporaires du client...",
-  "funding_request_id": "FR-00001",
-  "restructuring_history": [
-    {
-      "date": "2025-07-25T16:30:00.000Z",
-      "reason": "Difficultés de trésorerie temporaires",
-      "previous_terms": "Ce contrat est soumis aux conditions générales de crédit de l'institution, révisées le 25/07/2025...",
-      "previous_rate": 11.5,
-      "previous_end_date": "2026-04-15T00:00:00.000Z"
-    }
-  ],
-  "created_at": "2025-01-10T08:00:00.000Z",
-  "updated_at": "2025-07-25T16:30:00.000Z"
-}
-```
-### Échéancier de paiement d'un contrat
-
-Récupère l'échéancier de paiement d'un contrat de crédit.
-
-**Endpoint** : `GET /portfolios/traditional/{portfolioId}/credit-contracts/{contractId}/schedule`
-
-**Paramètres de chemin** :
-- `portfolioId` : Identifiant unique du portefeuille traditionnel
-- `contractId` : Identifiant unique du contrat de crédit
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "contract_id": "contract123",
-    "contract_number": "CONT-2025-001",
-    "total_amount": 50000.00,
-    "interest_rate": 11.5,
-    "schedule": [
-      {
-        "id": "payment1",
-        "due_date": "2025-02-15",
-        "principal_amount": 3750.00,
-        "interest_amount": 833.33,
-        "total_amount": 4583.33,
-        "status": "paid",
-        "payment_date": "2025-02-14",
-        "payment_amount": 4583.33,
-        "payment_reference": "PAY-12345678"
-      },
-      {
-        "id": "payment2",
-        "due_date": "2025-03-15",
-        "principal_amount": 3750.00,
-        "interest_amount": 781.25,
-        "total_amount": 4531.25,
-        "status": "pending"
-      }
-    ],
-    "summary": {
-      "total_principal": 50000.00,
-      "total_interest": 8020.83,
-      "total_amount": 58020.83,
-      "paid_principal": 3750.00,
-      "paid_interest": 833.33,
-      "paid_total": 4583.33,
-      "remaining_principal": 46250.00,
-      "remaining_interest": 7187.50,
-      "remaining_total": 53437.50,
-      "payment_count": 12,
-      "payments_made": 1,
-      "payments_remaining": 11
-    }
-  }
-}
-```
-
-### Activation d'un contrat
-
-Active un contrat de crédit en statut brouillon (draft).
-
-**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/activate`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "CC-00001",
-    "contract_number": "CONT-2025-001",
-    "status": "active",
-    "activated_at": "2025-11-10T16:00:00.000Z",
-    "updated_at": "2025-11-10T16:00:00.000Z"
-  }
-}
-```
-
-### Suspension d'un contrat
-
-Suspend temporairement un contrat de crédit actif.
-
-**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/suspend`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Corps de la requête** :
-
-```json
-{
-  "reason": "Défaut de paiement temporaire"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "CC-00001",
-    "contract_number": "CONT-2025-001",
-    "status": "suspended",
-    "suspension_reason": "Défaut de paiement temporaire",
-    "suspended_at": "2025-11-10T16:00:00.000Z",
-    "updated_at": "2025-11-10T16:00:00.000Z"
-  }
-}
-```
-
-### Mise en contentieux
-
-Met un contrat de crédit en procédure de contentieux.
-
-**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/litigation`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Corps de la requête** :
-
-```json
-{
-  "reason": "Défaut de paiement persistant malgré relances"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "CC-00001",
-    "contract_number": "CONT-2025-001",
-    "status": "litigation",
-    "litigation_reason": "Défaut de paiement persistant malgré relances",
-    "litigation_date": "2025-11-10T16:00:00.000Z",
-    "updated_at": "2025-11-10T16:00:00.000Z"
-  }
-}
-```
-
-### Finalisation d'un contrat
-
-Marque un contrat de crédit comme terminé après remboursement complet.
+### Clôturer un contrat
 
 **Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/complete`
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "CC-00001",
-    "contract_number": "CONT-2025-001",
-    "status": "completed",
-    "completion_date": "2025-11-10T16:00:00.000Z",
-    "updated_at": "2025-11-10T16:00:00.000Z"
-  }
-}
-```
-
-### Annulation d'un contrat
-
-Annule un contrat de crédit en statut brouillon.
-
-**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/cancel`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
 **Corps de la requête** :
-
 ```json
 {
-  "reason": "Client a retiré sa demande"
+  "completion_date": "2026-01-15T00:00:00.000Z",
+  "notes": "Remboursement intégral effectué"
 }
 ```
 
-**Réponse réussie** (200 OK) :
+### Générer le document du contrat
 
+**Endpoint** : `POST /portfolios/traditional/credit-contracts/{id}/generate-document`
+
+**Réponse réussie** (200 OK) :
 ```json
 {
   "success": true,
-  "data": {
-    "id": "CC-00001",
-    "contract_number": "CONT-2025-001",
-    "status": "canceled",
-    "cancellation_reason": "Client a retiré sa demande",
-    "canceled_at": "2025-11-10T16:00:00.000Z",
-    "updated_at": "2025-11-10T16:00:00.000Z"
-  }
+  "documentUrl": "https://storage.example.com/contracts/CTR-20250001.pdf"
 }
 ```
 
-### Récupération de l'échéancier de paiement
+## Codes d'erreur
 
-Récupère l'échéancier de paiement d'un contrat de crédit.
+| Code | Description |
+|------|-------------|
+| 400 | Données invalides |
+| 404 | Contrat non trouvé |
+| 409 | Conflit (ex: contrat déjà clôturé) |
+| 422 | Transition de statut invalide |
 
-**Endpoint** : `GET /portfolios/traditional/credit-contracts/{id}/schedule`
+## Règles métier
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique du contrat de crédit
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "contract_id": "CC-00001",
-    "contract_number": "CONT-2025-001",
-    "total_amount": 50000.00,
-    "interest_rate": 11.5,
-    "schedule": [
-      {
-        "id": "payment1",
-        "due_date": "2025-02-15",
-        "principal_amount": 3750.00,
-        "interest_amount": 833.33,
-        "total_amount": 4583.33,
-        "status": "paid",
-        "payment_date": "2025-02-14",
-        "payment_amount": 4583.33,
-        "payment_reference": "PAY-12345678"
-      },
-      {
-        "id": "payment2",
-        "due_date": "2025-03-15",
-        "principal_amount": 3750.00,
-        "interest_amount": 781.25,
-        "total_amount": 4531.25,
-        "status": "pending"
-      }
-    ],
-    "summary": {
-      "total_principal": 50000.00,
-      "total_interest": 8020.83,
-      "total_amount": 58020.83,
-      "paid_principal": 3750.00,
-      "paid_interest": 833.33,
-      "paid_total": 4583.33,
-      "remaining_principal": 46250.00,
-      "remaining_interest": 7187.50,
-      "remaining_total": 53437.50,
-      "payment_count": 12,
-      "payments_made": 1,
-      "payments_remaining": 11
-    }
-  }
-}
-```
-
-## Modèles de données
-
-### Contrat de crédit
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du contrat |
-| portfolio_id | string | Identifiant du portefeuille traditionnel |
-| contract_number | string | Numéro de référence du contrat |
-| client_id | string | Identifiant du client |
-| company_name | string | Nom de l'entreprise cliente |
-| product_type | string | Type de produit financier |
-| amount | number | Montant total du crédit |
-| interest_rate | number | Taux d'intérêt annuel (%) |
-| start_date | string | Date de début du contrat (format ISO) |
-| end_date | string | Date de fin du contrat (format ISO) |
-| status | string | Statut du contrat ('active', 'completed', 'defaulted', 'restructured') |
-| terms | string | Conditions générales du contrat |
-| funding_request_id | string | Identifiant de la demande de financement associée (optionnel) |
-| payment_schedule | array | Échéancier de paiement (optionnel) |
-| guarantees | array | Garanties associées au contrat (optionnel) |
-| disbursements | array | Historique des déboursements (optionnel) |
-| documents | array | Documents associés au contrat (optionnel) |
-| restructuring_history | array | Historique des restructurations (optionnel) |
-| default_date | string | Date du défaut de paiement (si applicable) |
-| default_reason | string | Raison du défaut de paiement (si applicable) |
-| completion_date | string | Date de clôture du contrat (si applicable) |
-| created_at | string | Date de création (format ISO) |
-| updated_at | string | Date de dernière modification (format ISO) |
-
-### Échéance de paiement
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de l'échéance |
-| due_date | string | Date d'échéance prévue (format ISO) |
-| principal_amount | number | Part de capital à rembourser |
-| interest_amount | number | Part d'intérêts à payer |
-| total_amount | number | Montant total de l'échéance |
-| status | string | Statut ('pending', 'paid', 'partial', 'late', 'defaulted') |
-| payment_date | string | Date du paiement effectif (si applicable) |
-| payment_amount | number | Montant payé (si applicable) |
-| payment_reference | string | Référence du paiement (si applicable) |
-
-### Garantie
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de la garantie |
-| type | string | Type de garantie (ex: "real_estate", "equipment") |
-| description | string | Description détaillée de la garantie |
-| value | number | Valeur estimée de la garantie |
-| currency | string | Devise de la valeur |
-| documents | array | Documents justificatifs de la garantie (optionnel) |
-
-### Document
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du document |
-| name | string | Nom du document |
-| type | string | Type de document (ex: "contrat_original", "avenant") |
-| url | string | URL d'accès au document |
-| created_at | string | Date de création/téléchargement (format ISO) |
-
-### Déboursement
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique du déboursement |
-| date | string | Date du déboursement (format ISO) |
-| amount | number | Montant déboursé |
-| method | string | Méthode de paiement utilisée |
-| reference | string | Référence de la transaction |
-
-### Historique de restructuration
-| Champ | Type | Description |
-|-------|------|-------------|
-| date | string | Date de la restructuration (format ISO) |
-| reason | string | Raison de la restructuration |
-| previous_terms | string | Conditions antérieures du contrat |
-| previous_rate | number | Taux d'intérêt antérieur |
-| previous_end_date | string | Date de fin antérieure du contrat (format ISO) |
+1. **Création de contrat** : Uniquement depuis une demande avec statut `approved`
+2. **Transitions de statut autorisées** :
+   - `active` → `suspended`, `defaulted`, `in_litigation`, `completed`
+   - `suspended` → `active`, `defaulted`, `in_litigation`
+   - `defaulted` → `restructured`, `in_litigation`, `completed`
+   - `in_litigation` → `completed`
+   - `restructured` → `active`, `defaulted`
+3. **Classification du risque** : Mise à jour automatique selon les jours de retard

@@ -2,7 +2,9 @@
 
 Cette documentation décrit la structure des URLs et les endpoints disponibles pour communiquer avec le microservice Portfolio Institution via l'API Gateway.
 
-*Cette documentation est générée automatiquement à partir du code source du frontend.*
+*Cette documentation est synchronisée avec le code source TypeScript (`src/types/*.ts`).*
+
+**Dernière mise à jour** : Janvier 2026
 
 ## Informations générales
 
@@ -19,6 +21,10 @@ Cette documentation décrit la structure des URLs et les endpoints disponibles p
 ### Architecture
 - **API Gateway**: Port 8000 (point d'entrée unique)
 - **Portfolio Institution Service**: Port 3005 (interne, routé par API Gateway)
+
+### Méthodes de paiement supportées
+- **Virement bancaire** : Comptes bancaires (BankAccount)
+- **Mobile Money** : Orange Money, M-Pesa, Airtel Money, Africell Money (MobileMoneyAccount)
 
 ## Authentification
 
@@ -90,6 +96,68 @@ Les réponses suivent un format standardisé:
   "message": "Description de l'erreur",
   "error": "Type d'erreur"
 }
+```
+
+## Référence des DTOs (Types TypeScript)
+
+Cette section référence les structures de données conformes au code source (`src/types/*.ts`).
+
+### Portefeuilles et Crédits
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| Portfolio | [portefeuilles/README.md](./portefeuilles/README.md) | `src/types/portfolio.ts` |
+| CreditRequest | [portefeuilles/demandes/README.md](./portefeuilles/demandes/README.md) | `src/types/credit.ts` |
+| CreditContract | [portefeuilles/contrats/README.md](./portefeuilles/contrats/README.md) | `src/types/credit-contract.ts` |
+| Disbursement | [portefeuilles/debloquements/README.md](./portefeuilles/debloquements/README.md) | `src/types/disbursement.ts` |
+| CreditPayment | [portefeuilles/remboursements/README.md](./portefeuilles/remboursements/README.md) | `src/types/credit-payment.ts` |
+| Guarantee | [portefeuilles/garanties/README.md](./portefeuilles/garanties/README.md) | `src/types/guarantee.ts` |
+
+### Comptes et Paiements
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| BankAccount | [portefeuilles/comptes/README.md](./portefeuilles/comptes/README.md) | `src/types/bankAccount.ts` |
+| MobileMoneyAccount | [portefeuilles/comptes/README.md](./portefeuilles/comptes/README.md) | `src/types/mobileMoneyAccount.ts` |
+
+### Utilisateurs et Institution
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| User | [utilisateurs/README.md](./utilisateurs/README.md) | `src/types/user.ts` |
+| UserWithInstitutionResponse | [utilisateurs/README.md](./utilisateurs/README.md) | `src/types/user.ts` |
+
+### Risques
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| CompanyRiskProfile | [centrale-risque/README.md](./centrale-risque/README.md) | `src/types/centrale-risque.ts` |
+| PaymentIncident | [centrale-risque/README.md](./centrale-risque/README.md) | `src/types/centrale-risque.ts` |
+| CentralRiskEntry | [centrale-risque/README.md](./centrale-risque/README.md) | `src/types/centrale-risque.ts` |
+
+### Enums principaux (conformes au code)
+
+```typescript
+// Statuts de portefeuille (9 valeurs - conformes OHADA)
+type PortfolioStatus = 'draft' | 'pending' | 'active' | 'suspended' | 'inactive' | 'closing' | 'for_sale' | 'sold' | 'archived';
+
+// Statuts de demande de crédit (15 valeurs)
+type CreditRequestStatus = 'draft' | 'submitted' | 'under_review' | 'pending' | 'analysis' | 'approved' | 'rejected' | 'canceled' | 'disbursed' | 'active' | 'closed' | 'defaulted' | 'restructured' | 'consolidated' | 'in_litigation';
+
+// Statuts de contrat (6 valeurs)
+type ContractStatus = 'active' | 'completed' | 'defaulted' | 'restructured' | 'in_litigation' | 'suspended';
+
+// Statuts de déboursement (8 valeurs)
+type DisbursementStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'canceled';
+
+// Types de garantie (10 valeurs)
+type GuaranteeType = 'materiel' | 'immobilier' | 'caution_bancaire' | 'fonds_garantie' | 'assurance_credit' | 'nantissement' | 'gage' | 'hypotheque' | 'depot_especes' | 'autre';
+
+// Fournisseurs Mobile Money RDC (5 valeurs)
+type MobileMoneyProvider = 'Orange Money' | 'M-Pesa' | 'Airtel Money' | 'Africell Money' | 'Vodacom M-Pesa';
+
+// Types de compte pour paiements
+type AccountType = 'bank' | 'mobile_money';
 ```
 
 ## Relations hiérarchiques et workflow

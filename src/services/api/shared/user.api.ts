@@ -175,14 +175,6 @@ export const userApi = {
   },
 
   /**
-   * @deprecated Utiliser getCurrentUserWithInstitution() pour le nouveau format de réponse
-   * Récupère l'utilisateur courant - maintenu pour rétrocompatibilité
-   */
-  getCurrentUser: () => {
-    return apiClient.get<User>('/users/me');
-  },
-
-  /**
    * Met à jour les préférences de l'utilisateur courant
    */
   updateUserPreferences: (settings: Partial<UserSettings>) => {

@@ -165,6 +165,8 @@ export default function AuthCallback() {
             console.log('👤 Données utilisateur:', {
               id: userData?.id,
               name: userData?.name,
+              firstName: userData?.firstName,
+              lastName: userData?.lastName,
               email: userData?.email,
               institutionId: userData?.institutionId,
               role: userData?.role
@@ -172,20 +174,38 @@ export default function AuthCallback() {
             console.log('🏢 Données institution:', {
               id: institutionData?.id,
               name: institutionData?.name,
-              type: institutionData?.type
+              type: institutionData?.type,
+              metadata: (institutionData as Record<string, unknown>)?.metadata
             });
+            
+            // Construire le nom complet si nécessaire (API peut retourner firstName/lastName au lieu de name)
+            const firstName = userData?.firstName || userData?.givenName || '';
+            const lastName = userData?.lastName || userData?.familyName || '';
+            const fullName = userData?.name || `${firstName} ${lastName}`.trim() || userData?.email?.split('@')[0] || 'Utilisateur';
+            
+            // Construire l'utilisateur avec le nom correctement mappé
+            const mappedUser = {
+              ...userData,
+              name: fullName,
+              givenName: firstName,
+              familyName: lastName,
+              role: role || userData.role,
+              permissions
+            };
             
             // Vérifier si l'utilisateur a une institution
             // L'institution peut être fournie directement ou via userData.institutionId
             const hasInstitution = (institutionData && institutionData.id) || userData?.institutionId;
+            const effectiveInstitutionId = institutionData?.id || userData?.institutionId;
             
             if (hasInstitution) {
               // Institution présente - synchroniser avec le store global
               console.log('✅ Contexte chargé avec institution:', institutionData?.name || userData?.institutionId);
               
               setGlobalContext({
-                user: { ...userData, role: role || userData.role, permissions },
+                user: mappedUser,
                 institution: institutionData,
+                institutionId: effectiveInstitutionId,  // EXPLICITE: pour que le store ait l'ID
                 auth0Id,
                 permissions: permissions || []
               });
@@ -203,7 +223,7 @@ export default function AuthCallback() {
               // Stocker l'utilisateur quand même pour le mode démo
               if (userData) {
                 setGlobalContext({
-                  user: { ...userData, role: role || userData.role || 'User', permissions: permissions || [] },
+                  user: mappedUser,
                   institution: null,
                   auth0Id,
                   permissions: permissions || []

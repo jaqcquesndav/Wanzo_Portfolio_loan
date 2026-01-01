@@ -1,5 +1,7 @@
 # Authentification
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document décrit le système d'authentification utilisé par l'API Wanzo Portfolio Institution, qui est basé sur Auth0.
 
 ## Vue d'ensemble de l'authentification

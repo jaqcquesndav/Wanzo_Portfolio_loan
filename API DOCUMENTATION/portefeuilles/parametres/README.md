@@ -1,8 +1,58 @@
 # API des Paramètres - Portefeuille Traditionnel
 
-Cette API permet de gérer les paramètres des portefeuilles traditionnels, incluant les configurations de risque, de produits financiers, de remboursements, de garanties et de provisionnement.
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
 
-## Points d'accès
+Cette API permet de gérer les paramètres des portefeuilles traditionnels, incluant les configurations de risque, de produits financiers, de remboursements, de garanties, de provisionnement et **de conformité réglementaire BCC**.
+
+## Architecture Frontend
+
+Les paramètres du portefeuille sont gérés via le composant `PortfolioSettingsDisplay.tsx` qui organise la configuration en **5 onglets** :
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Paramètres du Portefeuille                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  [Général] [Produits] [Comptes] [Paramètres BCC] [Surveillance BCC]         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Onglet actif :                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  • Général : Nom, statut, profil risque, objectifs                    │  │
+│  │  • Produits : Liste des produits financiers (FinancialProductsList)   │  │
+│  │  • Comptes : Comptes bancaires et Mobile Money (AccountsPanel)        │  │
+│  │  • Paramètres BCC : Configuration seuils BCC (BCCParametersPanel)     │  │
+│  │  • Surveillance BCC : Métriques temps réel (BCCSurveillancePanel)     │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Composants UI
+
+| Composant | Fichier Source | Description |
+|-----------|----------------|-------------|
+| `PortfolioSettingsDisplay` | `src/components/portfolio/traditional/PortfolioSettingsDisplay.tsx` | Container principal avec onglets |
+| `BCCParametersPanel` | `src/components/portfolio/traditional/BCCParametersPanel.tsx` | Configuration des seuils BCC |
+| `BCCSurveillancePanel` | `src/components/portfolio/traditional/BCCSurveillancePanel.tsx` | Dashboard métriques en temps réel |
+| `AccountsPanel` | `src/components/portfolio/shared/AccountsPanel.tsx` | Gestion comptes bancaires/Mobile Money |
+| `ProductList` | `src/components/portfolio/traditional/ProductList.tsx` | Liste des produits financiers |
+
+### Hooks
+
+| Hook | Fichier Source | Description |
+|------|----------------|-------------|
+| `useBCCCompliance` | `src/hooks/useBCCCompliance.ts` | Gestion conformité BCC (références, préférences, métriques) |
+| `usePortfolioAccounts` | `src/hooks/usePortfolioAccounts.ts` | Gestion comptes bancaires et Mobile Money |
+
+### Services API
+
+| Service | Fichier Source | Description |
+|---------|----------------|-------------|
+| `portfolioSettingsApi` | `src/services/api/traditional/portfolio-settings.api.ts` | CRUD paramètres portefeuille |
+| `bccComplianceApi` | `src/services/api/traditional/bccCompliance.api.ts` | Configuration et métriques BCC |
+
+---
+
+## Points d'accès - Paramètres Généraux
 
 ### Obtenir les paramètres d'un portefeuille
 ```
@@ -256,7 +306,9 @@ GET /api/portfolio/traditional/:portfolioId/products
 | page | number | Numéro de page (par défaut: 1) |
 | limit | number | Nombre d'éléments par page (par défaut: 10) |
 | status | string | Filtrer par statut ('active', 'inactive') |
-| type | string | Filtrer par type ('credit', 'savings', 'investment') |
+| type | string | Filtrer par type (voir ProductType ci-dessous) |
+
+> **ProductType** : `credit_personnel`, `credit_immobilier`, `credit_auto`, `credit_professionnel`, `microcredit`, `credit_consommation`
 
 #### Réponse
 ```json
@@ -267,7 +319,7 @@ GET /api/portfolio/traditional/:portfolioId/products
       {
         "id": "prod-001",
         "name": "Crédit PME",
-        "type": "credit",
+        "type": "credit_professionnel",
         "description": "Crédit pour les petites et moyennes entreprises",
         "minAmount": 5000000,
         "maxAmount": 50000000,
@@ -288,14 +340,14 @@ GET /api/portfolio/traditional/:portfolioId/products
       },
       {
         "id": "prod-002",
-        "name": "Dépôt à terme",
-        "type": "savings",
-        "description": "Compte d'épargne à terme fixe",
-        "minAmount": 1000000,
-        "maxAmount": 100000000,
+        "name": "Microcrédit Agricole",
+        "type": "microcredit",
+        "description": "Petit crédit pour agriculteurs",
+        "minAmount": 500000,
+        "maxAmount": 5000000,
         "duration": {
           "min": 3,
-          "max": 60
+          "max": 24
         },
         "interestRate": {
           "type": "fixed",
@@ -336,7 +388,7 @@ GET /api/portfolio/traditional/:portfolioId/products/:productId
   "data": {
     "id": "prod-001",
     "name": "Crédit PME",
-    "type": "credit",
+    "type": "credit_professionnel",
     "description": "Crédit pour les petites et moyennes entreprises",
     "minAmount": 5000000,
     "maxAmount": 50000000,
@@ -372,7 +424,7 @@ POST /api/portfolio/traditional/:portfolioId/products
 ```json
 {
   "name": "Microcrédit Agricole",
-  "type": "credit",
+  "type": "microcredit",
   "description": "Microcrédit destiné aux agriculteurs",
   "minAmount": 500000,
   "maxAmount": 5000000,
@@ -398,7 +450,7 @@ POST /api/portfolio/traditional/:portfolioId/products
   "data": {
     "id": "prod-003",
     "name": "Microcrédit Agricole",
-    "type": "credit",
+    "type": "microcredit",
     "description": "Microcrédit destiné aux agriculteurs",
     "minAmount": 500000,
     "maxAmount": 5000000,
@@ -449,7 +501,7 @@ PUT /api/portfolio/traditional/:portfolioId/products/:productId
   "data": {
     "id": "prod-003",
     "name": "Microcrédit Agricole",
-    "type": "credit",
+    "type": "microcredit",
     "description": "Microcrédit destiné aux agriculteurs",
     "minAmount": 500000,
     "maxAmount": 8000000,
@@ -530,7 +582,7 @@ DELETE /api/portfolio/traditional/:portfolioId/products/:productId
 |-------|------|-------------|
 | id | string | Identifiant unique du produit |
 | name | string | Nom du produit |
-| type | string | Type de produit ('credit', 'savings', 'investment') |
+| type | ProductType | Type de produit (voir ci-dessous) |
 | description | string | Description détaillée |
 | minAmount | number | Montant minimum |
 | maxAmount | number | Montant maximum |
@@ -548,3 +600,314 @@ DELETE /api/portfolio/traditional/:portfolioId/products/:productId
 | status | string | Statut du produit ('active', 'inactive') |
 | created_at | string | Date de création (format ISO) |
 | updated_at | string | Date de dernière modification (format ISO) |
+
+#### ProductType (6 valeurs)
+| Valeur | Description |
+|--------|-------------|
+| `credit_personnel` | Crédit personnel non affecté |
+| `credit_immobilier` | Crédit immobilier |
+| `credit_auto` | Crédit automobile |
+| `credit_professionnel` | Crédit professionnel PME |
+| `microcredit` | Microcrédit |
+| `credit_consommation` | Crédit à la consommation |
+
+---
+
+## Conformité BCC - Instruction 004 (RDC)
+
+La conformité réglementaire BCC est intégrée dans les paramètres du portefeuille via deux onglets dédiés dans l'interface utilisateur.
+
+### Base URL
+
+```
+/portfolio/api/v1/bcc
+```
+
+### 1. Récupérer la configuration BCC
+
+```
+GET /bcc/configuration
+GET /bcc/configuration/{portfolioId}
+```
+
+#### Paramètres de chemin
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| portfolioId | string | (optionnel) Identifiant du portefeuille |
+
+#### Réponse
+```json
+{
+  "success": true,
+  "data": {
+    "bccReferences": {
+      "maxNplRatio": 5,
+      "maxWriteOffRatio": 2,
+      "minRecoveryRate": 85,
+      "minRoa": 3,
+      "minPortfolioYield": 15,
+      "minCollectionEfficiency": 90,
+      "maxProcessingTime": 14
+    },
+    "managerPreferences": {
+      "maxNplRatio": 3,
+      "maxWriteOffRatio": 1,
+      "minRecoveryRate": 90,
+      "minRoa": 4,
+      "minPortfolioYield": 18,
+      "minCollectionEfficiency": 92,
+      "maxProcessingTime": 10,
+      "alertThresholds": {
+        "nplWarningRatio": 2,
+        "roaWarningLevel": 3.5,
+        "efficiencyWarningLevel": 88
+      }
+    },
+    "lastUpdated": "2026-01-15T10:30:00Z",
+    "updatedBy": "manager@institution.cd"
+  }
+}
+```
+
+### 2. Récupérer les références officielles BCC
+
+```
+GET /bcc/references
+```
+
+Retourne les seuils officiels non modifiables de l'Instruction 004.
+
+#### Réponse
+```json
+{
+  "success": true,
+  "data": {
+    "maxNplRatio": 5,
+    "maxWriteOffRatio": 2,
+    "minRecoveryRate": 85,
+    "minRoa": 3,
+    "minPortfolioYield": 15,
+    "minCollectionEfficiency": 90,
+    "maxProcessingTime": 14
+  }
+}
+```
+
+| Champ | Description | Article BCC |
+|-------|-------------|-------------|
+| `maxNplRatio` | NPL Ratio maximum (%) | Article 2 |
+| `maxWriteOffRatio` | Ratio d'abandon de créances maximum (%) | Article 2 |
+| `minRecoveryRate` | Taux de récupération minimum (%) | Article 2 |
+| `minRoa` | ROA minimum (%) | Article 4 |
+| `minPortfolioYield` | Rendement portefeuille minimum (%) | Article 4 |
+| `minCollectionEfficiency` | Efficacité de recouvrement minimum (%) | - |
+| `maxProcessingTime` | Temps de traitement maximum (jours) | - |
+
+### 3. Récupérer les métriques de conformité
+
+```
+GET /bcc/metrics/{portfolioId}
+```
+
+#### Paramètres de chemin
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| portfolioId | string | Identifiant du portefeuille (requis) |
+
+#### Réponse
+```json
+{
+  "success": true,
+  "data": {
+    "qualityMetrics": {
+      "nplRatio": 3.2,
+      "writeOffRatio": 0.8,
+      "par30": 2.5,
+      "recoveryRate": 88.5
+    },
+    "profitabilityMetrics": {
+      "roa": 4.2,
+      "portfolioYield": 16.8,
+      "netInterestMargin": 12.5,
+      "costOfRisk": 2.1
+    },
+    "operationalMetrics": {
+      "collectionEfficiency": 91.3,
+      "avgProcessingTime": 8,
+      "portfolioTurnover": 22.5
+    },
+    "calculatedAt": "2026-01-15T10:30:00Z",
+    "portfolioId": "portfolio-123"
+  }
+}
+```
+
+### 4. Sauvegarder les préférences du gestionnaire
+
+```
+PUT /bcc/preferences
+PUT /bcc/preferences/{portfolioId}
+```
+
+**Validation:** Les préférences doivent être plus strictes ou égales aux références BCC.
+
+#### Corps de la requête
+```json
+{
+  "maxNplRatio": 3,
+  "maxWriteOffRatio": 1,
+  "minRecoveryRate": 90,
+  "minRoa": 4,
+  "minPortfolioYield": 18,
+  "minCollectionEfficiency": 92,
+  "maxProcessingTime": 10,
+  "alertThresholds": {
+    "nplWarningRatio": 2,
+    "roaWarningLevel": 3.5,
+    "efficiencyWarningLevel": 88
+  }
+}
+```
+
+#### Réponse succès
+```json
+{
+  "success": true,
+  "message": "Préférences sauvegardées avec succès"
+}
+```
+
+#### Réponse erreur (validation)
+```json
+{
+  "success": false,
+  "message": "Validation échouée",
+  "errors": [
+    "NPL maximum (6%) ne peut pas dépasser la référence BCC (5%)",
+    "ROA minimum (2%) doit être supérieur ou égal à la référence BCC (3%)"
+  ]
+}
+```
+
+### 5. Réinitialiser les préférences
+
+```
+POST /bcc/preferences/reset
+POST /bcc/preferences/{portfolioId}/reset
+```
+
+#### Réponse
+```json
+{
+  "success": true,
+  "data": {
+    "maxNplRatio": 3,
+    "maxWriteOffRatio": 1,
+    "minRecoveryRate": 90,
+    "minRoa": 4,
+    "minPortfolioYield": 18,
+    "minCollectionEfficiency": 92,
+    "maxProcessingTime": 10,
+    "alertThresholds": {
+      "nplWarningRatio": 2,
+      "roaWarningLevel": 3.5,
+      "efficiencyWarningLevel": 88
+    }
+  }
+}
+```
+
+### Règles de validation BCC
+
+#### Seuils maximums (doivent être ≤ BCC)
+- `maxNplRatio` ≤ 5%
+- `maxWriteOffRatio` ≤ 2%
+- `maxProcessingTime` ≤ 14 jours
+
+#### Seuils minimums (doivent être ≥ BCC)
+- `minRecoveryRate` ≥ 85%
+- `minRoa` ≥ 3%
+- `minPortfolioYield` ≥ 15%
+- `minCollectionEfficiency` ≥ 90%
+
+### Statuts de conformité
+
+| Statut | Badge | Description |
+|--------|-------|-------------|
+| `success` | ✅ Conforme | Métrique conforme BCC et gestionnaire |
+| `warning` | ⚠️ Attention | Conforme BCC mais sous seuil gestionnaire |
+| `danger` | ❌ Non-conforme | Non-conforme à l'Instruction BCC 004 |
+
+### DTOs TypeScript
+
+```typescript
+// Interface des références officielles BCC (non modifiables)
+interface BCCOfficialReferences {
+  maxNplRatio: number;           // NPL < 5% (Article 2)
+  maxWriteOffRatio: number;      // Abandon < 2% (Article 2)
+  minRecoveryRate: number;       // Récupération > 85% (Article 2)
+  minRoa: number;                // ROA > 3% (Article 4)
+  minPortfolioYield: number;     // Rendement > 15% (Article 4)
+  minCollectionEfficiency: number; // Recouvrement > 90%
+  maxProcessingTime: number;        // Délai < 14 jours
+}
+
+// Interface des préférences du gestionnaire (modifiables)
+interface ManagerPreferences {
+  maxNplRatio: number;
+  maxWriteOffRatio: number;
+  minRecoveryRate: number;
+  minRoa: number;
+  minPortfolioYield: number;
+  minCollectionEfficiency: number;
+  maxProcessingTime: number;
+  alertThresholds: {
+    nplWarningRatio: number;
+    roaWarningLevel: number;
+    efficiencyWarningLevel: number;
+  };
+}
+
+// Métriques calculées pour surveillance
+interface BCCComplianceMetrics {
+  qualityMetrics: {
+    nplRatio: number;
+    writeOffRatio: number;
+    par30: number;
+    recoveryRate: number;
+  };
+  profitabilityMetrics: {
+    roa: number;
+    portfolioYield: number;
+    netInterestMargin: number;
+    costOfRisk: number;
+  };
+  operationalMetrics: {
+    collectionEfficiency: number;
+    avgProcessingTime: number;
+    portfolioTurnover: number;
+  };
+  calculatedAt: string;
+  portfolioId: string;
+}
+```
+
+---
+
+## Codes d'erreur
+
+| Code | Description |
+|------|-------------|
+| 400 | Requête invalide ou validation échouée |
+| 401 | Non authentifié |
+| 403 | Non autorisé (permissions insuffisantes) |
+| 404 | Portefeuille ou produit non trouvé |
+| 500 | Erreur serveur |
+
+---
+
+## Voir aussi
+
+- [Comptes Bancaires et Mobile Money](../comptes/README.md)
+- [Produits Financiers](../produits/README.md)
+- [Dashboard](../../dashboard/README.md)

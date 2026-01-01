@@ -429,11 +429,11 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
         </TabsContent>
 
         <TabsContent value="bcc-parameters" currentValue={activeTab}>
-          <BCCParametersPanel />
+          <BCCParametersPanel portfolioId={portfolio.id} />
         </TabsContent>
 
         <TabsContent value="bcc-surveillance" currentValue={activeTab}>
-          <BCCSurveillancePanel />
+          <BCCSurveillancePanel portfolioId={portfolio.id} />
         </TabsContent>
       </Tabs>
       <ConfirmModal

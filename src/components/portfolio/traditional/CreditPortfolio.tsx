@@ -12,6 +12,7 @@ import { mockCompanies } from '../../../data/mockCompanies';
 import { getMockCompanyByMemberId } from '../../../data/mockCompanyDetails';
 import { useNotification } from '../../../contexts/useNotification';
 import { Company } from '../../../types/company';
+import { CreditContract } from '../../../types/credit-contract';
 
 interface CreditPortfolioProps {
   portfolioId: string;
@@ -44,7 +45,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
     getCreditProductName,
     changeRequestStatus
   } = useCreditRequests();
-  const { resetToMockData: resetContracts } = useCreditContracts(portfolioId);
+  const { addContract, resetToMockData: resetContracts } = useCreditContracts(portfolioId);
   
   // PRéparer les mappings pour les noms
   const companyNames = Object.fromEntries(requests.map(req => [req.memberId, getMemberName(req.memberId)]));
@@ -107,6 +108,71 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
     }
   }, [showNotification, navigate]);
   
+  // Fonction pour créer un contrat depuis une demande approuvée
+  const handleCreateContract = useCallback(async (requestId: string) => {
+    // Trouver la demande correspondante
+    const request = requests.find(r => r.id === requestId);
+    if (!request) {
+      showNotification('Demande non trouvée', 'error');
+      return;
+    }
+    
+    // Vérifier que la demande est approuvée
+    if (request.status !== 'approved') {
+      showNotification('La demande doit être approuvée pour créer un contrat', 'warning');
+      return;
+    }
+    
+    try {
+      // Récupérer le nom du membre/entreprise
+      const memberName = getMemberName(request.memberId);
+      const productName = getCreditProductName(request.productId);
+      
+      // Créer le nouveau contrat
+      const contractData: Omit<CreditContract, 'id' | 'createdAt'> = {
+        portfolioId: portfolioId,
+        client_id: request.memberId,
+        company_name: memberName,
+        product_type: productName,
+        contract_number: `CTR-${Date.now().toString().slice(-8)}`,
+        amount: request.requestAmount,
+        interest_rate: request.interestRate,
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + (request.schedulesCount * 30 * 24 * 60 * 60 * 1000)).toISOString(), // Calcul approximatif basé sur le nombre d'échéances
+        status: 'active',
+        terms: `${request.schedulesCount} échéances - ${request.periodicity}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        // Lien avec la demande originale
+        creditRequestId: request.id,
+        memberId: request.memberId,
+        memberName: memberName,
+        productId: request.productId,
+        productName: productName,
+        disbursedAmount: 0,
+        remainingAmount: request.requestAmount,
+        duration: request.schedulesCount,
+        gracePeriod: request.gracePeriod,
+        amortization_method: request.scheduleType === 'constant' ? 'linear' : 'degressive',
+      };
+      
+      const newContract = await addContract(contractData);
+      
+      // Mettre à jour le statut de la demande à 'disbursed'
+      await changeRequestStatus(requestId, 'disbursed');
+      
+      showNotification(`Contrat ${newContract.contract_number} créé avec succès pour ${memberName}`, 'success');
+      
+      // Basculer vers l'onglet des contrats
+      setActiveTab('contracts');
+      setRefreshKey(prev => prev + 1);
+      
+    } catch (error) {
+      console.error('Erreur lors de la création du contrat:', error);
+      showNotification('Erreur lors de la création du contrat', 'error');
+    }
+  }, [requests, portfolioId, addContract, changeRequestStatus, getMemberName, getCreditProductName, showNotification]);
+
   const tabs: CustomTabProps[] = [
     { id: 'requests', label: 'Demandes', icon: 'FileText' },
     { id: 'contracts', label: 'Contrats', icon: 'File' },
@@ -148,9 +214,9 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
           onValidate={(id) => changeRequestStatus(id, 'approved')}
           onRefuse={(id) => changeRequestStatus(id, 'rejected')}
           onDisburse={(id) => changeRequestStatus(id, 'disbursed')}
-          onView={(id) => console.log('Voir dûtails de la demande', id)}
+          onView={(id) => navigate(`/app/traditional/portfolio/${portfolioId}/requests/${id}`)}
           onViewCompany={handleViewCompany}
-          onCreateContract={(id) => console.log('CRéer contrat', id)}
+          onCreateContract={handleCreateContract}
         />;
       case 'contracts':
         return <CreditContractsList key={`contracts-${refreshKey}`} portfolioId={portfolioId} onViewCompany={handleViewCompany} />;
