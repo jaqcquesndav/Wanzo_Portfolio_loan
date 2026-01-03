@@ -309,7 +309,7 @@ export const useChatStore = create<ChatStore>()(
                 name: attachment.name,
                 url: attachment.url,
                 size: 0,
-                createdAt: new Date().toISOString()
+                uploaded_at: new Date().toISOString()
               } : undefined
             });
             
