@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { ActionsDropdown } from '../../../ui/ActionsDropdown';
-import { Guarantee } from '../../traditional/GuaranteesTable';
+import { Guarantee } from '../../../../types/guarantee';
 
 interface ActionMenuProps {
   guarantee: Guarantee;

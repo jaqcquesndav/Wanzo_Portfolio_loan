@@ -27,7 +27,7 @@ interface Guarantee {
 ### Enums et Types
 
 ```typescript
-// Types de garanties (10 valeurs)
+// Types de garanties (17 valeurs - incluant legacy)
 type GuaranteeType = 
   | 'materiel'          // Garantie sur matériel/équipement
   | 'immobilier'        // Garantie immobilière (terrain, bâtiment)
@@ -38,15 +38,28 @@ type GuaranteeType =
   | 'gage'              // Gage (biens meubles)
   | 'hypotheque'        // Hypothèque
   | 'depot_especes'     // Dépôt d'espèces (DAT, compte bloqué)
-  | 'autre';            // Autre type de garantie
+  | 'autre'             // Autre type de garantie
+  // Legacy values
+  | 'real_estate'       // Alias de immobilier
+  | 'equipment'         // Alias de materiel
+  | 'vehicle'           // Véhicule
+  | 'inventory'         // Stock/Inventaire
+  | 'third_party'       // Caution tierce
+  | 'deposit'           // Alias de depot_especes
+  | 'other';            // Alias de autre
 
-// Statuts de la garantie (5 valeurs)
+// Statuts de la garantie (9 valeurs - incluant legacy)
 type GuaranteeStatus = 
-  | 'pending'   // En attente de validation
-  | 'active'    // Active (en cours de validité)
-  | 'libérée'   // Libérée (mainlevée effectuée)
-  | 'saisie'    // Saisie (réalisation en cours)
-  | 'expirée';  // Expirée (hors validité)
+  | 'pending'     // En attente de validation
+  | 'active'      // Active (en cours de validité)
+  | 'libérée'     // Libérée (mainlevée effectuée)
+  | 'saisie'      // Saisie (réalisation en cours)
+  | 'expirée'     // Expirée (hors validité)
+  // Legacy values
+  | 'proposed'    // Proposée
+  | 'validated'   // Validée
+  | 'registered'  // Enregistrée
+  | 'rejected';   // Rejetée
 ```
 
 ### Types imbriqués

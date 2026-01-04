@@ -79,7 +79,7 @@ interface TraditionalPortfolio extends Portfolio {
 ### Enums et Types
 
 ```typescript
-// Statuts du portefeuille (9 valeurs - conformes OHADA)
+// Statuts du portefeuille (10 valeurs - conformes OHADA + legacy)
 type PortfolioStatus = 
   | 'draft'      // Brouillon (en configuration)
   | 'pending'    // En attente d'approbation
@@ -89,10 +89,20 @@ type PortfolioStatus =
   | 'closing'    // En cours de clôture
   | 'for_sale'   // En vente (cession)
   | 'sold'       // Vendu/Cédé
-  | 'archived';  // Archivé (clôturé définitivement)
+  | 'archived'   // Archivé (clôturé définitivement)
+  | 'closed';    // Legacy: Alias de archived
 
-// Types de portefeuille
-type PortfolioType = 'traditional';
+// Types de portefeuille (9 valeurs)
+type PortfolioType = 
+  | 'traditional'   // Portefeuille de crédits traditionnels
+  | 'leasing'       // Portefeuille de leasing/crédit-bail
+  | 'investment'    // Portefeuille d'investissements
+  | 'mixed'         // Portefeuille mixte
+  | 'credit'        // Legacy: Alias de traditional
+  | 'savings'       // Épargne (legacy)
+  | 'microfinance'  // Microfinance (legacy)
+  | 'treasury'      // Trésorerie (legacy)
+  | 'other';        // Autre type
 
 // Devises supportées (RDC/OHADA)
 type PortfolioCurrency = 'CDF' | 'USD' | 'EUR';
@@ -342,6 +352,37 @@ interface SaleInfo {
 
 **Corps de la requête** : Champs partiels de `Portfolio`
 
+### Récupérer un portefeuille avec ses produits
+
+**Endpoint** : `GET /portfolios/traditional/{id}/products`
+
+**Description** : Récupère le portefeuille avec la liste complète de ses produits financiers associés.
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio": {
+      "id": "TP-00001",
+      "name": "Portefeuille PME 2025",
+      "status": "active"
+    },
+    "products": [
+      {
+        "id": "PROD-001",
+        "name": "Crédit PME Standard",
+        "type": "credit_professionnel",
+        "minAmount": 5000,
+        "maxAmount": 100000,
+        "status": "active"
+      }
+    ]
+  }
+}
+```
+
 ### Activer un portefeuille
 
 **Endpoint** : `POST /portfolios/traditional/{id}/activate`
@@ -350,6 +391,19 @@ interface SaleInfo {
 - Au moins un compte (bancaire ou Mobile Money) associé
 - Au moins un produit financier configuré
 - Gestionnaire assigné
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "TP-00001",
+    "status": "active",
+    "activated_at": "2025-01-15T10:00:00.000Z"
+  }
+}
+```
 
 ### Suspendre un portefeuille
 
@@ -364,6 +418,31 @@ interface SaleInfo {
 }
 ```
 
+### Changer le statut d'un portefeuille
+
+**Endpoint** : `POST /portfolios/traditional/{id}/status`
+
+**Corps de la requête** :
+
+```json
+{
+  "status": "active"
+}
+```
+
+**Valeurs autorisées** : `active`, `inactive`, `pending`, `archived`
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "id": "TP-00001",
+  "name": "Portefeuille PME 2025",
+  "status": "active",
+  "updated_at": "2025-01-15T10:30:00.000Z"
+}
+```
+
 ### Clôturer un portefeuille
 
 **Endpoint** : `POST /portfolios/traditional/{id}/close`
@@ -372,8 +451,8 @@ interface SaleInfo {
 
 ```json
 {
-  "closure_reason": "Fin de période",
-  "transfer_remaining_to": "TP-00002"
+  "closureReason": "Fin de période",
+  "closureNotes": "Transfert vers nouveau portefeuille"
 }
 ```
 

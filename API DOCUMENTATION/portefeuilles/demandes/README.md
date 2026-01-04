@@ -18,7 +18,7 @@ interface CreditRequest {
   periodicity: CreditPeriodicity;
   interestRate: number;                   // Taux d'intérêt en %
   reason: string;                         // Motif de la demande
-  scheduleType: 'constant' | 'degressive';
+  scheduleType: ScheduleType;             // Type d'amortissement
   schedulesCount: number;                 // Nombre d'échéances
   deferredPaymentsCount: number;          // Nombre d'échéances différées
   gracePeriod?: number;                   // Période de grâce en mois
@@ -66,6 +66,12 @@ type CreditPeriodicity =
   | 'quarterly'   // Trimestriel
   | 'semiannual'  // Semestriel
   | 'annual';     // Annuel
+
+// Type d'échéancier/amortissement (3 valeurs)
+type ScheduleType = 
+  | 'constant'     // Échéances constantes (amortissement linéaire)
+  | 'degressive'   // Échéances dégressives
+  | 'progressive'; // Échéances progressives
 
 // Types de documents acceptés (9 valeurs)
 type CreditDocumentType = 

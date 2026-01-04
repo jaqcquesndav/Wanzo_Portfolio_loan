@@ -3,6 +3,7 @@ import { CreditRequestsTable } from '../components/portfolio/traditional/CreditR
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
+import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
 
 // Fonction utilitaire pour vérifier la validité d'un type de portefeuille
@@ -26,6 +27,7 @@ export const portfolioTypeConfig = {
       { key: 'contracts', label: 'Contrats', component: CreditContractsList },
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
       { key: 'repayments', label: 'Remboursements', component: RepaymentsTable },
+      { key: 'guarantees', label: 'Garanties', component: GuaranteesList },
       { key: 'settings', label: 'Paramètres', component: PortfolioSettingsDisplay },
     ],
     mockData: {
@@ -33,6 +35,7 @@ export const portfolioTypeConfig = {
       requests: 'mockCreditRequests',
       disbursements: 'mockDisbursements',
       repayments: 'mockRepayments',
+      guarantees: 'mockGuarantees',
     },
     hook: 'useTraditionalPortfolio',
   }

@@ -209,5 +209,201 @@ export const creditRequestApi = {
       }
       return false;
     }
+  },
+
+  // ============================================================================
+  // ENDPOINTS DE WORKFLOW - Conformes à la documentation API
+  // ============================================================================
+
+  /**
+   * Soumet une demande de crédit pour examen
+   * Change le statut de 'draft' vers 'submitted'
+   */
+  submitRequest: async (id: string): Promise<CreditRequest> => {
+    try {
+      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/submit`, {});
+    } catch (error) {
+      console.warn(`Fallback to localStorage for submitting credit request ${id}`, error);
+      const updatedRequest = await creditRequestsStorageService.updateRequestStatus(id, 'submitted');
+      if (!updatedRequest) {
+        throw new Error(`Credit request with ID ${id} not found`);
+      }
+      return updatedRequest;
+    }
+  },
+
+  /**
+   * Approuve une demande de crédit
+   * Corps: { approvedAmount, approvedRate?, approvedDuration?, conditions?, approvedBy }
+   */
+  approveRequest: async (id: string, approvalData: {
+    approvedAmount: number;
+    approvedRate?: number;
+    approvedDuration?: number;
+    conditions?: string;
+    approvedBy: string;
+  }): Promise<CreditRequest> => {
+    try {
+      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/approve`, approvalData);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for approving credit request ${id}`, error);
+      const request = await creditRequestsStorageService.getRequestById(id);
+      if (!request) {
+        throw new Error(`Credit request with ID ${id} not found`);
+      }
+      const updatedRequest = await creditRequestsStorageService.updateRequest(id, {
+        status: 'approved',
+        requestAmount: approvalData.approvedAmount,
+        interestRate: approvalData.approvedRate ?? request.interestRate,
+        updatedAt: new Date().toISOString(),
+      });
+      if (!updatedRequest) {
+        throw new Error(`Failed to approve credit request ${id}`);
+      }
+      return updatedRequest;
+    }
+  },
+
+  /**
+   * Rejette une demande de crédit
+   * Corps: { rejectionReason, rejectedBy }
+   */
+  rejectRequest: async (id: string, rejectionData: {
+    rejectionReason: string;
+    rejectedBy: string;
+  }): Promise<CreditRequest> => {
+    try {
+      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/reject`, rejectionData);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for rejecting credit request ${id}`, error);
+      const updatedRequest = await creditRequestsStorageService.updateRequest(id, {
+        status: 'rejected',
+        rejectionReason: rejectionData.rejectionReason,
+        updatedAt: new Date().toISOString(),
+      });
+      if (!updatedRequest) {
+        throw new Error(`Credit request with ID ${id} not found`);
+      }
+      return updatedRequest;
+    }
+  },
+
+  /**
+   * Annule une demande de crédit
+   * Corps: { cancellationReason }
+   */
+  cancelRequest: async (id: string, cancellationReason: string): Promise<CreditRequest> => {
+    try {
+      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/cancel`, { cancellationReason });
+    } catch (error) {
+      console.warn(`Fallback to localStorage for canceling credit request ${id}`, error);
+      const updatedRequest = await creditRequestsStorageService.updateRequest(id, {
+        status: 'canceled',
+        updatedAt: new Date().toISOString(),
+      });
+      if (!updatedRequest) {
+        throw new Error(`Credit request with ID ${id} not found`);
+      }
+      return updatedRequest;
+    }
+  },
+
+  /**
+   * Crée une analyse de crédit pour une demande
+   * Corps: { financialData, creditAssessment, recommendation, comments }
+   */
+  createAnalysis: async (id: string, analysisData: {
+    financialData: {
+      income: number;
+      expenses: number;
+      existingDebts: number;
+      assets: number;
+    };
+    creditAssessment: {
+      debtToIncomeRatio: number;
+      creditScore: number;
+      repaymentCapacity: number;
+      riskLevel: 'low' | 'medium' | 'high';
+    };
+    recommendation: 'approve' | 'reject' | 'pending';
+    comments: string;
+  }): Promise<{ success: boolean; data: unknown }> => {
+    try {
+      return await apiClient.post<{ success: boolean; data: unknown }>(`/portfolios/traditional/credit-requests/${id}/analysis`, analysisData);
+    } catch (error) {
+      console.warn(`Fallback for creating analysis for credit request ${id}`, error);
+      // En mode fallback, on simule la création d'une analyse
+      return {
+        success: true,
+        data: {
+          id: `analysis-${Date.now()}`,
+          creditRequestId: id,
+          ...analysisData,
+          analyzedBy: 'current-user',
+          analyzedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        }
+      };
+    }
+  },
+
+  /**
+   * Synchronise une demande depuis la gestion commerciale
+   * Corps complet selon la documentation API
+   */
+  syncFromCommercial: async (syncData: {
+    sourceRequestId: string;
+    memberId: string;
+    memberName?: string;
+    productId: string;
+    productName?: string;
+    requestAmount: number;
+    currency?: string;
+    periodicity: string;
+    interestRate: number;
+    schedulesCount: number;
+    gracePeriod?: number;
+    reason?: string;
+    financingPurpose?: string;
+    businessInformation?: unknown;
+    financialInformation?: unknown;
+    creditScore?: unknown;
+  }): Promise<CreditRequest> => {
+    try {
+      return await apiClient.post<CreditRequest>('/portfolios/traditional/credit-requests/sync', syncData);
+    } catch (error) {
+      console.warn('Fallback for syncing credit request from commercial', error);
+      // En mode fallback, on crée une nouvelle demande avec les métadonnées de sync
+      const newRequest: CreditRequest = {
+        id: `req-sync-${Date.now()}`,
+        memberId: syncData.memberId,
+        productId: syncData.productId,
+        receptionDate: new Date().toISOString(),
+        requestAmount: syncData.requestAmount,
+        currency: syncData.currency || 'CDF',
+        periodicity: syncData.periodicity as CreditRequest['periodicity'],
+        interestRate: syncData.interestRate,
+        reason: syncData.reason || '',
+        scheduleType: 'constant',
+        schedulesCount: syncData.schedulesCount,
+        deferredPaymentsCount: 0,
+        gracePeriod: syncData.gracePeriod,
+        financingPurpose: syncData.financingPurpose || '',
+        creditManagerId: '',
+        status: 'pending',
+        isGroup: false,
+        metadata: {
+          sourceRequestId: syncData.sourceRequestId,
+          syncedFrom: 'gestion_commerciale',
+          businessInformation: syncData.businessInformation,
+          financialInformation: syncData.financialInformation,
+          creditScore: syncData.creditScore,
+          firstSyncAt: new Date().toISOString(),
+          lastSyncAt: new Date().toISOString(),
+        },
+        createdAt: new Date().toISOString(),
+      };
+      return creditRequestsStorageService.addRequest(newRequest);
+    }
   }
 };

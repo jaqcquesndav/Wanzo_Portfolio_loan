@@ -1,45 +1,37 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { CreditContract } from '../types/credit-contract';
+import { creditContractApi } from '../services/api/traditional/credit-contract.api';
 import { creditContractsStorageService } from '../services/storage/creditContractsStorage';
 
+/**
+ * Hook pour gérer les contrats de crédit
+ * Conforme à l'API documentation: /portfolios/traditional/credit-contracts
+ */
 export function useCreditContracts(portfolioId: string) {
   const [contracts, setContracts] = useState<CreditContract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchContracts = useCallback(async () => {
+  /**
+   * Récupérer les contrats avec filtres optionnels
+   * GET /portfolios/traditional/credit-contracts
+   */
+  const fetchContracts = useCallback(async (filters?: {
+    status?: 'active' | 'completed' | 'defaulted' | 'restructured';
+    clientId?: string;
+    productType?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Récupérer les données depuis le localStorage
-      const allContracts = await creditContractsStorageService.getAllContracts();
-      console.log(`[useCreditContracts] Loaded ${allContracts.length} contracts from storage`);
-      console.log(`[useCreditContracts] Using portfolioId: "${portfolioId}" for filtering`);
-      
-      // Vérifier si le portfolioId existe dans les contrats
-      const portfolioIds = [...new Set(allContracts.map(c => c.portfolioId))];
-      console.log(`[useCreditContracts] Available portfolioIds in contracts:`, portfolioIds);
-      
-      const hasContractsForPortfolio = allContracts.some(contract => contract.portfolioId === portfolioId);
-      
-      // Si le portfolioId spécifié n'existe pas dans les contrats, utiliser tous les contrats
-      // sinon, filtrer par portfolioId
-      let filtered: CreditContract[];
-      if (!hasContractsForPortfolio && portfolioId !== 'default') {
-        console.log(`[useCreditContracts] No contracts found for portfolioId: "${portfolioId}"`);
-        if (portfolioIds.length > 0) {
-          console.log(`[useCreditContracts] Consider using the 'Réinitialiser' button to generate data for this portfolio`);
-        }
-        filtered = [];
-      } else {
-        filtered = allContracts.filter(contract => contract.portfolioId === portfolioId);
-        console.log(`[useCreditContracts] Found ${filtered.length} contracts for portfolioId: "${portfolioId}"`);
-      }
-      
-      setContracts(filtered);
       setError(null);
+      
+      // Utiliser l'API avec fallback localStorage intégré
+      const data = await creditContractApi.getAllContracts(portfolioId, filters);
+      
+      console.log(`[useCreditContracts] Loaded ${data.length} contracts for portfolioId: "${portfolioId}"`);
+      setContracts(data);
     } catch (err) {
       setError('Erreur lors du chargement des contrats de crédit');
       console.error(err);
@@ -49,25 +41,38 @@ export function useCreditContracts(portfolioId: string) {
   }, [portfolioId]);
 
   useEffect(() => {
-    // Initialiser les données dans le localStorage lors du premier montage
+    // Initialiser les données dans le localStorage lors du premier montage (fallback)
     creditContractsStorageService.init();
     fetchContracts();
   }, [fetchContracts]);
 
-  const addContract = useCallback(async (contract: Omit<CreditContract, 'id' | 'createdAt'>) => {
+  /**
+   * Récupérer un contrat par ID
+   * GET /portfolios/traditional/credit-contracts/{id}
+   */
+  const getContractById = useCallback(async (id: string) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
+      return await creditContractApi.getContractById(id);
+    } catch (err) {
+      setError('Erreur lors de la récupération du contrat');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Créer un nouveau contrat depuis une demande approuvée
+   * POST /portfolios/traditional/credit-contracts/from-request
+   */
+  const addContract = useCallback(async (contract: Omit<CreditContract, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      const newContract: CreditContract = {
-        ...contract,
-        id: `contract-${Date.now()}`,
-        created_at: new Date().toISOString(),
-      };
-      
-      // Sauvegarder dans le localStorage
-      await creditContractsStorageService.addContract(newContract);
+      const newContract = await creditContractApi.createContract(contract);
       
       // Mettre à jour l'état local
       setContracts(prev => [...prev, newContract]);
@@ -81,19 +86,21 @@ export function useCreditContracts(portfolioId: string) {
     }
   }, []);
 
+  /**
+   * Mettre à jour un contrat
+   * PUT /portfolios/traditional/credit-contracts/{id}
+   */
   const updateContract = useCallback(async (id: string, updates: Partial<CreditContract>) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
+      setError(null);
       
-      // Mettre à jour dans le localStorage
-      const updatedContract = await creditContractsStorageService.updateContract(id, updates);
+      const updatedContract = await creditContractApi.updateContract(id, updates);
       
       // Mettre à jour l'état local
       setContracts(prev => 
         prev.map(contract => 
-          contract.id === id ? { ...contract, ...updates, updatedAt: new Date().toISOString() } : contract
+          contract.id === id ? updatedContract : contract
         )
       );
       
@@ -107,21 +114,30 @@ export function useCreditContracts(portfolioId: string) {
     }
   }, []);
 
-  const deleteContract = useCallback(async (id: string) => {
+  /**
+   * Activer un contrat (DRAFT → ACTIVE)
+   * POST /portfolios/traditional/credit-contracts/{id}/activate
+   */
+  const activateContract = useCallback(async (id: string, activationDetails?: {
+    activation_date?: string;
+    notes?: string;
+  }) => {
     try {
       setLoading(true);
-      // Simuler un appel API avec un délai
-      await new Promise(resolve => setTimeout(resolve, 500));
+      setError(null);
       
-      // Supprimer du localStorage
-      await creditContractsStorageService.deleteContract(id);
+      const updatedContract = await creditContractApi.activateContract(id, activationDetails);
       
       // Mettre à jour l'état local
-      setContracts(prev => prev.filter(contract => contract.id !== id));
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
       
-      return true;
+      return updatedContract;
     } catch (err) {
-      setError('Erreur lors de la suppression du contrat de crédit');
+      setError('Erreur lors de l\'activation du contrat');
       console.error(err);
       throw err;
     } finally {
@@ -129,25 +145,266 @@ export function useCreditContracts(portfolioId: string) {
     }
   }, []);
 
+  /**
+   * Suspendre un contrat (ACTIVE → SUSPENDED)
+   * POST /portfolios/traditional/credit-contracts/{id}/suspend
+   */
+  const suspendContract = useCallback(async (id: string, suspensionDetails: {
+    reason: string;
+    suspension_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const updatedContract = await creditContractApi.suspendContract(id, suspensionDetails);
+      
+      // Mettre à jour l'état local
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
+      
+      return updatedContract;
+    } catch (err) {
+      setError('Erreur lors de la suspension du contrat');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Annuler un contrat (DRAFT/ACTIVE → CANCELLED)
+   * POST /portfolios/traditional/credit-contracts/{id}/cancel
+   */
+  const cancelContract = useCallback(async (id: string, cancellationDetails: {
+    reason: string;
+    cancellation_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const updatedContract = await creditContractApi.cancelContract(id, cancellationDetails);
+      
+      // Mettre à jour l'état local
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
+      
+      return updatedContract;
+    } catch (err) {
+      setError('Erreur lors de l\'annulation du contrat');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Marquer un contrat comme défaillant
+   * POST /portfolios/traditional/credit-contracts/{id}/default
+   */
+  const markAsDefaulted = useCallback(async (id: string, reason: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const updatedContract = await creditContractApi.markAsDefaulted(id, reason);
+      
+      // Mettre à jour l'état local
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
+      
+      return updatedContract;
+    } catch (err) {
+      setError('Erreur lors du marquage du contrat comme défaillant');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Restructurer un contrat
+   * POST /portfolios/traditional/credit-contracts/{id}/restructure
+   */
+  const restructureContract = useCallback(async (id: string, restructuringDetails: {
+    new_terms: string;
+    new_rate?: number;
+    new_end_date: string;
+    reason: string;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const updatedContract = await creditContractApi.restructureContract(id, restructuringDetails);
+      
+      // Mettre à jour l'état local
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
+      
+      return updatedContract;
+    } catch (err) {
+      setError('Erreur lors de la restructuration du contrat');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Clôturer un contrat (remboursement complet)
+   * POST /portfolios/traditional/credit-contracts/{id}/complete
+   */
+  const completeContract = useCallback(async (id: string, completionDetails: {
+    completion_date: string;
+    notes?: string;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const updatedContract = await creditContractApi.completeContract(id, completionDetails);
+      
+      // Mettre à jour l'état local
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
+      
+      return updatedContract;
+    } catch (err) {
+      setError('Erreur lors de la clôture du contrat');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Mettre un contrat en contentieux
+   * POST /contracts/{id}/litigation
+   */
+  const putInLitigation = useCallback(async (id: string, litigationDetails: {
+    reason: string;
+    litigation_date?: string;
+    notes?: string;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const updatedContract = await creditContractApi.putInLitigation(id, litigationDetails);
+      
+      // Mettre à jour l'état local
+      setContracts(prev => 
+        prev.map(contract => 
+          contract.id === id ? updatedContract : contract
+        )
+      );
+      
+      return updatedContract;
+    } catch (err) {
+      setError('Erreur lors de la mise en contentieux du contrat');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Récupérer l'échéancier de paiement d'un contrat
+   * GET /contracts/{contractId}/schedule
+   */
+  const getPaymentSchedule = useCallback(async (contractId: string) => {
+    try {
+      setLoading(true);
+      return await creditContractApi.getPaymentSchedule(contractId);
+    } catch (err) {
+      setError('Erreur lors de la récupération de l\'échéancier');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Générer le document du contrat
+   * POST /portfolios/traditional/credit-contracts/{id}/generate-document
+   */
+  const generateDocument = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      return await creditContractApi.generateContractDocument(id);
+    } catch (err) {
+      setError('Erreur lors de la génération du document');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Réinitialiser les données mock (pour développement)
+   */
+  const resetToMockData = useCallback(async () => {
+    try {
+      console.log('Resetting credit contracts to mock data...');
+      await creditContractsStorageService.resetToMockData();
+      console.log('Reset completed, fetching contracts again...');
+      await fetchContracts();
+      return true;
+    } catch (err) {
+      console.error('Erreur lors de la réinitialisation des données', err);
+      return false;
+    }
+  }, [fetchContracts]);
+
   return {
     contracts,
     loading,
     error,
+    // CRUD Operations
     fetchContracts,
+    getContractById,
     addContract,
     updateContract,
-    deleteContract,
-    resetToMockData: async () => {
-      try {
-        console.log('Resetting credit contracts to mock data...');
-        await creditContractsStorageService.resetToMockData();
-        console.log('Reset completed, fetching contracts again...');
-        fetchContracts();
-        return true;
-      } catch (err) {
-        console.error('Erreur lors de la réinitialisation des données', err);
-        return false;
-      }
-    }
+    // Workflow Operations
+    activateContract,
+    suspendContract,
+    cancelContract,
+    markAsDefaulted,
+    restructureContract,
+    completeContract,
+    putInLitigation,
+    // Schedule & Documents
+    getPaymentSchedule,
+    generateDocument,
+    // Utilities
+    resetToMockData,
+    refresh: fetchContracts
   };
 }

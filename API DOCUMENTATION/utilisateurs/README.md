@@ -61,8 +61,16 @@ interface User {
 // Types d'utilisateur (2 valeurs)
 type UserType = 'sme' | 'financial_institution';
 
-// Rôles utilisateur (4 valeurs)
-type UserRole = 'Admin' | 'Portfolio_Manager' | 'Auditor' | 'User';
+// Rôles utilisateur (7 valeurs - incluant legacy)
+type UserRole = 
+  | 'Admin'              // Administrateur
+  | 'Portfolio_Manager'  // Gestionnaire de portefeuille
+  | 'Auditor'            // Auditeur
+  | 'User'               // Utilisateur standard
+  // Legacy values
+  | 'manager'            // Alias de Portfolio_Manager
+  | 'analyst'            // Analyste (legacy)
+  | 'viewer';            // Lecteur seul (legacy)
 
 // Types de pièce d'identité (4 valeurs)
 type IdType = 'passport' | 'national_id' | 'driver_license' | 'other';
@@ -70,8 +78,12 @@ type IdType = 'passport' | 'national_id' | 'driver_license' | 'other';
 // Statuts de vérification d'identité (3 valeurs)
 type IdStatus = 'pending' | 'verified' | 'rejected';
 
-// Statuts utilisateur (3 valeurs)
-type UserStatus = 'active' | 'inactive' | 'suspended';
+// Statuts utilisateur (4 valeurs - incluant legacy)
+type UserStatus = 
+  | 'active'     // Actif
+  | 'inactive'   // Inactif
+  | 'suspended'  // Suspendu
+  | 'pending';   // En attente d'activation (legacy)
 
 // Langues supportées (2 valeurs)
 type Language = 'fr' | 'en';

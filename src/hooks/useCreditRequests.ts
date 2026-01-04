@@ -12,11 +12,18 @@ export function useCreditRequests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = useCallback(async (portfolioId?: string, filters?: {
+    status?: CreditRequestStatus;
+    clientId?: string;
+    productType?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    search?: string;
+  }) => {
     try {
       setLoading(true);
-      // Appel au service API
-      const data = await creditRequestApi.getAllRequests();
+      // Appel au service API avec filtres optionnels
+      const data = await creditRequestApi.getAllRequests(portfolioId, filters);
       setRequests(data);
       setError(null);
     } catch (err) {
@@ -88,6 +95,178 @@ export function useCreditRequests() {
     }
   }, []);
 
+  // ============================================================================
+  // NOUVELLES MÉTHODES CONFORMES À LA DOCUMENTATION API
+  // ============================================================================
+
+  /**
+   * Soumettre une demande pour examen
+   * POST /portfolios/traditional/credit-requests/{id}/submit
+   */
+  const submitRequest = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      
+      const updatedRequest = await creditRequestApi.submitRequest(id);
+      
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
+      return updatedRequest;
+    } catch (err) {
+      setError(`Erreur lors de la soumission de la demande ${id}`);
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Approuver une demande
+   * POST /portfolios/traditional/credit-requests/{id}/approve
+   */
+  const approveRequest = useCallback(async (id: string, approvalData: {
+    approvedAmount: number;
+    approvedRate?: number;
+    approvedDuration?: number;
+    conditions?: string;
+    approvedBy: string;
+  }) => {
+    try {
+      setLoading(true);
+      
+      const updatedRequest = await creditRequestApi.approveRequest(id, approvalData);
+      
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
+      return updatedRequest;
+    } catch (err) {
+      setError(`Erreur lors de l'approbation de la demande ${id}`);
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Rejeter une demande
+   * POST /portfolios/traditional/credit-requests/{id}/reject
+   */
+  const rejectRequest = useCallback(async (id: string, rejectionData: {
+    rejectionReason: string;
+    rejectedBy: string;
+  }) => {
+    try {
+      setLoading(true);
+      
+      const updatedRequest = await creditRequestApi.rejectRequest(id, rejectionData);
+      
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
+      return updatedRequest;
+    } catch (err) {
+      setError(`Erreur lors du rejet de la demande ${id}`);
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Annuler une demande
+   * POST /portfolios/traditional/credit-requests/{id}/cancel
+   */
+  const cancelRequest = useCallback(async (id: string, reason: string) => {
+    try {
+      setLoading(true);
+      
+      const updatedRequest = await creditRequestApi.cancelRequest(id, reason);
+      
+      setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
+      return updatedRequest;
+    } catch (err) {
+      setError(`Erreur lors de l'annulation de la demande ${id}`);
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Créer une analyse de crédit
+   * POST /portfolios/traditional/credit-requests/{id}/analysis
+   */
+  const analyzeRequest = useCallback(async (id: string, analysisData: {
+    financialData: {
+      income: number;
+      expenses: number;
+      existingDebts: number;
+      assets: number;
+    };
+    creditAssessment: {
+      debtToIncomeRatio: number;
+      creditScore: number;
+      repaymentCapacity: number;
+      riskLevel: 'low' | 'medium' | 'high';
+    };
+    recommendation: 'approve' | 'reject' | 'pending';
+    comments: string;
+  }) => {
+    try {
+      setLoading(true);
+      
+      const result = await creditRequestApi.createAnalysis(id, analysisData);
+      
+      // Rafraîchir la demande après analyse
+      await fetchRequests();
+      return result;
+    } catch (err) {
+      setError(`Erreur lors de l'analyse de la demande ${id}`);
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchRequests]);
+
+  /**
+   * Synchroniser depuis la gestion commerciale
+   * POST /portfolios/traditional/credit-requests/sync
+   */
+  const syncFromCommercial = useCallback(async (syncData: {
+    sourceRequestId: string;
+    memberId: string;
+    memberName?: string;
+    productId: string;
+    productName?: string;
+    requestAmount: number;
+    currency?: string;
+    periodicity: string;
+    interestRate: number;
+    schedulesCount: number;
+    gracePeriod?: number;
+    reason?: string;
+    financingPurpose?: string;
+    businessInformation?: unknown;
+    financialInformation?: unknown;
+    creditScore?: unknown;
+  }) => {
+    try {
+      setLoading(true);
+      
+      const newRequest = await creditRequestApi.syncFromCommercial(syncData);
+      
+      setRequests(prev => [...prev, newRequest]);
+      return newRequest;
+    } catch (err) {
+      setError('Erreur lors de la synchronisation depuis la gestion commerciale');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const deleteRequest = useCallback(async (id: string) => {
     try {
       setLoading(true);
@@ -143,6 +322,14 @@ export function useCreditRequests() {
     addRequest,
     updateRequest,
     changeRequestStatus,
+    // Nouvelles méthodes workflow
+    submitRequest,
+    approveRequest,
+    rejectRequest,
+    cancelRequest,
+    analyzeRequest,
+    syncFromCommercial,
+    // Autres méthodes
     deleteRequest,
     resetToMockData,
     getMemberName,

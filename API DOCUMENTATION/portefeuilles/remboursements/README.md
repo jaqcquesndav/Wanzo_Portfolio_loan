@@ -48,22 +48,35 @@ interface CreditPayment {
 ### Enums et Types
 
 ```typescript
-// Statuts du paiement (4 valeurs)
+// Statuts du paiement (6 valeurs - incluant legacy)
 type PaymentStatus = 
   | 'pending'     // En attente de validation/traitement
   | 'completed'   // Paiement effectué et validé
   | 'failed'      // Paiement échoué
-  | 'cancelled';  // Paiement annulé
+  | 'cancelled'   // Paiement annulé
+  // Legacy values
+  | 'processing'  // En cours de traitement
+  | 'partial';    // Partiellement payé
 
-// Types de paiement (4 valeurs)
+// Types de paiement (8 valeurs - incluant legacy)
 type PaymentType = 
-  | 'principal'  // Remboursement du capital uniquement
-  | 'interest'   // Paiement des intérêts uniquement
-  | 'penalty'    // Paiement des pénalités uniquement
-  | 'mixed';     // Paiement combiné (capital + intérêts + pénalités)
+  | 'principal'    // Remboursement du capital uniquement
+  | 'interest'     // Paiement des intérêts uniquement
+  | 'penalty'      // Paiement des pénalités uniquement
+  | 'mixed'        // Paiement combiné (capital + intérêts + pénalités)
+  // Legacy values
+  | 'standard'     // Paiement standard
+  | 'partial'      // Paiement partiel
+  | 'advance'      // Paiement anticipé
+  | 'early_payoff';// Remboursement anticipé total
 
-// Méthodes de paiement acceptées
-type PaymentMethod = 'bank_transfer' | 'mobile_money' | 'cash' | 'check';
+// Méthodes de paiement acceptées (5 valeurs)
+type PaymentMethod = 
+  | 'bank_transfer'  // Virement bancaire
+  | 'mobile_money'   // Mobile Money
+  | 'cash'           // Espèces
+  | 'check'          // Chèque
+  | 'other';         // Autre méthode
 ```
 
 ### Types imbriqués

@@ -15,6 +15,7 @@ import { CreditRequestsTable } from '../components/portfolio/traditional/CreditR
 import { DisbursementsTable } from '../components/portfolio/traditional/DisbursementsTable';
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
+import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockCompanies } from '../data/mockCompanies';
@@ -540,6 +541,17 @@ export default function TraditionalPortfolioDetails() {
                     handleViewCompany(companyName);
                   }}
                 />
+              </TabsContent>
+            );
+          }
+          if (tabConfig.key === 'guarantees') {
+            return (
+              <TabsContent
+                key={tabConfig.key}
+                value={tabConfig.key}
+                currentValue={tab}
+              >
+                <GuaranteesList portfolioId={id || 'default'} />
               </TabsContent>
             );
           }

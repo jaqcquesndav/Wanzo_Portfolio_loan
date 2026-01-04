@@ -137,10 +137,14 @@ export const creditContractApi = {
 
   /**
    * Marque un contrat comme défaillant
+   * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/default
    */
-  markAsDefaulted: async (id: string, reason: string) => {
+  markAsDefaulted: async (id: string, reason: string, default_date?: string) => {
     try {
-      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${id}/default`, { reason });
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${id}/default`, { 
+        reason,
+        default_date: default_date || new Date().toISOString()
+      });
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for marking contract ${id} as defaulted`, error);
@@ -207,7 +211,7 @@ export const creditContractApi = {
 
   /**
    * Récupère l'échéancier de paiement d'un contrat
-   * Conforme à la documentation: GET /contracts/${contractId}/schedule
+   * Conforme à la documentation: GET /portfolios/traditional/credit-contracts/{id}/schedule
    */
   getPaymentSchedule: async (contractId: string) => {
     try {
@@ -219,7 +223,7 @@ export const creditContractApi = {
           principal_amount: number;
           interest_amount: number;
           total_amount: number;
-          status: 'pending' | 'paid' | 'overdue';
+          status: 'pending' | 'paid' | 'partial' | 'late' | 'defaulted';
           payment_date?: string;
           remaining_balance: number;
         }>;
@@ -227,7 +231,7 @@ export const creditContractApi = {
         total_amount: number;
         total_paid: number;
         remaining_amount: number;
-      }>(`/contracts/${contractId}/schedule`);
+      }>(`/portfolios/traditional/credit-contracts/${contractId}/schedule`);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for payment schedule of contract ${contractId}`, error);
@@ -264,13 +268,14 @@ export const creditContractApi = {
 
   /**
    * Marque un contrat comme terminé/clôturé
+   * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/complete
    */
-  completeContract: async (portfolioId: string, contractId: string, completionDetails: {
+  completeContract: async (contractId: string, completionDetails: {
     completion_date: string;
     notes?: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/portfolios/traditional/${portfolioId}/credit-contracts/${contractId}/complete`, completionDetails);
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/complete`, completionDetails);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for completing contract ${contractId}`, error);
@@ -287,22 +292,13 @@ export const creditContractApi = {
       };
       
       traditionalDataService.updateCreditContract(updatedContract);
-      return {
-        success: true,
-        data: {
-          id: contractId,
-          portfolio_id: portfolioId,
-          contract_number: contract.contract_number,
-          status: 'completed' as const,
-          completion_date: completionDetails.completion_date,
-          updated_at: new Date().toISOString()
-        }
-      };
+      return updatedContract;
     }
   },
 
   /**
    * Met un contrat en contentieux
+   * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/litigation
    */
   putInLitigation: async (contractId: string, litigationDetails: {
     reason: string;
@@ -310,7 +306,7 @@ export const creditContractApi = {
     notes?: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/contracts/${contractId}/litigation`, litigationDetails);
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/litigation`, litigationDetails);
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for putting contract ${contractId} in litigation`, error);
@@ -334,14 +330,14 @@ export const creditContractApi = {
 
   /**
    * Active un contrat (DRAFT → ACTIVE)
-   * Conforme à la documentation: POST /contracts/${id}/activate
+   * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/activate
    */
   activateContract: async (contractId: string, activationDetails?: {
     activation_date?: string;
     notes?: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/contracts/${contractId}/activate`, activationDetails || {});
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/activate`, activationDetails || {});
     } catch (error) {
       console.warn(`Fallback to localStorage for activating contract ${contractId}`, error);
       const contract = traditionalDataService.getCreditContractById(contractId);
@@ -363,7 +359,7 @@ export const creditContractApi = {
 
   /**
    * Suspend un contrat (ACTIVE → SUSPENDED)
-   * Conforme à la documentation: POST /contracts/${id}/suspend
+   * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/suspend
    */
   suspendContract: async (contractId: string, suspensionDetails: {
     reason: string;
@@ -371,7 +367,7 @@ export const creditContractApi = {
     notes?: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/contracts/${contractId}/suspend`, suspensionDetails);
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/suspend`, suspensionDetails);
     } catch (error) {
       console.warn(`Fallback to localStorage for suspending contract ${contractId}`, error);
       const contract = traditionalDataService.getCreditContractById(contractId);
@@ -394,7 +390,7 @@ export const creditContractApi = {
 
   /**
    * Annule un contrat (DRAFT/ACTIVE → CANCELLED)
-   * Conforme à la documentation: POST /contracts/${id}/cancel
+   * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/cancel
    */
   cancelContract: async (contractId: string, cancellationDetails: {
     reason: string;
@@ -402,7 +398,7 @@ export const creditContractApi = {
     notes?: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/contracts/${contractId}/cancel`, cancellationDetails);
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/cancel`, cancellationDetails);
     } catch (error) {
       console.warn(`Fallback to localStorage for cancelling contract ${contractId}`, error);
       const contract = traditionalDataService.getCreditContractById(contractId);

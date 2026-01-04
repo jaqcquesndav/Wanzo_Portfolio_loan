@@ -84,7 +84,7 @@ Frontend → Hook → API Service → Backend API (http://localhost:8000/portfol
 - ✅ `POST /portfolios/traditional/${portfolioId}/contracts/${contractId}/guarantees/${id}/revaluate`
 - ✅ `POST /portfolios/traditional/${portfolioId}/contracts/${contractId}/guarantees/${id}/documents`
 
-**Hooks:** `useGuarantees`, `useGuaranteesUnified`  
+**Hooks:** `useGuarantees`, `useGuaranteeActions`  
 **Service:** `guarantee.api.ts` (8 méthodes principales)  
 **Fallback:** Complet via `guaranteeStorageService`
 

@@ -118,17 +118,23 @@ export type CreditRequestMetadata = {
   lastSyncAt?: string;                 // Date de dernière synchronisation (ISO 8601)
 };
 
+// Type d'échéancier/amortissement (3 valeurs - conformes documentation)
+export type ScheduleType = 
+  | 'constant'     // Échéances constantes (amortissement linéaire)
+  | 'degressive'   // Échéances dégressives
+  | 'progressive'; // Échéances progressives
+
 export type CreditRequest = {
   id: string;
   memberId: string;
   productId: string;
   receptionDate: string;
   requestAmount: number;
-  currency: string; // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF) - AJOUTÉ pour conformité
+  currency: string; // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF)
   periodicity: CreditPeriodicity;
   interestRate: number;
   reason: string;
-  scheduleType: 'constant' | 'degressive';
+  scheduleType: ScheduleType;
   schedulesCount: number;
   deferredPaymentsCount: number;
   gracePeriod?: number;

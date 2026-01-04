@@ -68,21 +68,29 @@ interface CreditContract {
 ### Enums et Types
 
 ```typescript
-// Statuts du contrat (6 valeurs)
+// Statuts du contrat (9 valeurs - incluant legacy)
 type ContractStatus = 
   | 'active'        // Contrat actif en cours
   | 'completed'     // Contrat terminé normalement
   | 'defaulted'     // Contrat en défaut de paiement
   | 'restructured'  // Contrat restructuré
-  | 'in_litigation' // Contrat en contentieux
-  | 'suspended';    // Contrat suspendu temporairement
+  | 'suspended'     // Contrat suspendu temporairement
+  | 'written_off'   // Contrat passé en perte
+  // Legacy values
+  | 'draft'         // Brouillon (avant activation)
+  | 'litigation'    // Alias de in_litigation
+  | 'canceled';     // Annulé avant activation
 
-// Méthode d'amortissement (4 valeurs)
+// Méthode d'amortissement (7 valeurs - incluant legacy)
 type AmortizationMethod = 
   | 'linear'       // Amortissement linéaire (échéances constantes)
   | 'degressive'   // Amortissement dégressif
-  | 'progressive'  // Amortissement progressif
-  | 'balloon';     // Remboursement in fine (balloon)
+  | 'in_fine'      // Remboursement in fine (capital à l'échéance)
+  | 'annuity'      // Annuité constante
+  // Legacy values
+  | 'constant'     // Alias de linear
+  | 'bullet'       // Alias de in_fine
+  | 'custom';      // Personnalisé
 
 // Classification du risque (5 valeurs - normes OHADA/BCC)
 type RiskClass = 
