@@ -32,8 +32,22 @@ export const API_ENDPOINTS = {
     update: (id: string) => `/users/${id}`,
     delete: (id: string) => `/users/${id}`,
     me: '/users/me',
+    profile: '/users/profile',
     preferences: '/users/me/preferences',
     resetPassword: (id: string) => `/users/${id}/reset-password`,
+    status: (id: string) => `/users/${id}/status`,
+    activities: (id: string) => `/users/${id}/activities`,
+    userPreferences: {
+      getAll: (id: string) => `/users/${id}/preferences`,
+      getByCategory: (id: string, category: string) => `/users/${id}/preferences/${category}`,
+      set: (id: string) => `/users/${id}/preferences`,
+      delete: (id: string, preferenceId: string) => `/users/${id}/preferences/${preferenceId}`
+    },
+    sessions: {
+      getAll: (id: string) => `/users/${id}/sessions`,
+      terminate: (id: string, sessionId: string) => `/users/${id}/sessions/${sessionId}`,
+      terminateAll: (id: string) => `/users/${id}/sessions`
+    },
     portfolios: {
       assign: (userId: string) => `/users/${userId}/portfolios`,
       remove: (userId: string, portfolioId: string) => `/users/${userId}/portfolios/${portfolioId}`
@@ -130,12 +144,35 @@ export const API_ENDPOINTS = {
     base: '/messages',
     getAll: '/messages',
     getById: (id: string) => `/messages/${id}`,
-    send: '/messages',
-    
-    // Chat endpoints
-    getConversations: '/chat/conversations',
-    getMessages: '/chat/messages',
-    sendMessage: '/chat/messages'
+    send: '/messages'
+  },
+
+  // Chat ADHA - Endpoints alignés avec la documentation API
+  chat: {
+    base: '/chat',
+    // Contextes de conversation
+    contexts: {
+      base: '/chat/contexts',
+      getAll: '/chat/contexts',
+      getById: (id: string) => `/chat/contexts/${id}`,
+      create: '/chat/contexts',
+      update: (id: string) => `/chat/contexts/${id}`,
+      delete: (id: string) => `/chat/contexts/${id}`,
+      getMessages: (contextId: string) => `/chat/contexts/${contextId}/messages`
+    },
+    // Messages
+    messages: {
+      base: '/chat/messages',
+      send: '/chat/messages',
+      getById: (id: string) => `/chat/messages/${id}`,
+      update: (id: string) => `/chat/messages/${id}`,
+      rate: (messageId: string) => `/chat/messages/${messageId}/rating`,
+      addAttachment: (messageId: string) => `/chat/messages/${messageId}/attachments`
+    },
+    // Fonctionnalités avancées
+    suggestions: '/chat/suggestions',
+    reports: '/chat/reports',
+    predefinedResponses: '/chat/predefined-responses'
   },
 
   // Settings

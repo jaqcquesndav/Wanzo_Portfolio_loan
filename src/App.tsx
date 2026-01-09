@@ -1,6 +1,7 @@
 import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { optimizedRouter } from './routes/optimizedRouter';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { useInitMockData } from './hooks/useInitMockData';
@@ -107,13 +108,14 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ConnectivityProvider>
-        <ErrorBoundaryProvider>
-          <PortfolioProvider>
-            <NotificationProvider>
-              <CurrencyProvider>
-                <PaymentOrderProvider>
-                {hasValidationIssues && (
+      <AuthProvider>
+        <ConnectivityProvider>
+          <ErrorBoundaryProvider>
+            <PortfolioProvider>
+              <NotificationProvider>
+                <CurrencyProvider>
+                  <PaymentOrderProvider>
+                  {hasValidationIssues && (
                   <div className="fixed top-0 left-0 right-0 bg-amber-50 border-b border-amber-200 p-2 z-50">
                     <div className="container mx-auto flex items-center justify-between">
                       <div className="flex items-center">
@@ -131,16 +133,17 @@ export default function App() {
                     </div>
                   </div>
                 )}
-                <RouterProvider router={optimizedRouter} />
-                {/* Modal d'ordre de paiement pour les portefeuilles */}
-                <GlobalPaymentOrderModal />
-                <Toaster position="top-right" />
-              </PaymentOrderProvider>
-            </CurrencyProvider>
-          </NotificationProvider>
-        </PortfolioProvider>
-      </ErrorBoundaryProvider>
-      </ConnectivityProvider>
+                  <RouterProvider router={optimizedRouter} />
+                  {/* Modal d'ordre de paiement pour les portefeuilles */}
+                  <GlobalPaymentOrderModal />
+                  <Toaster position="top-right" />
+                </PaymentOrderProvider>
+              </CurrencyProvider>
+            </NotificationProvider>
+          </PortfolioProvider>
+        </ErrorBoundaryProvider>
+        </ConnectivityProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -2,9 +2,20 @@
 // Hook pour accéder à la centrale de risque via l'API backend conformément à la documentation
 
 import { useState, useEffect, useCallback } from 'react';
-import { centraleRisqueApi } from '../services/api/shared/centrale-risque.api';
+import { centraleRisqueApi, centraleRisqueApiV2 } from '../services/api/shared/centrale-risque.api';
 import { apiClient } from '../services/api/base.api';
-import type { CentralRiskEntry } from '../types/centrale-risque';
+import type { 
+  RiskEntry, 
+  Incident, 
+  Alert, 
+  CentraleRisqueStats, 
+  EntityRiskSummary,
+  RiskType,
+  RiskEntryStatus,
+  IncidentType,
+  IncidentStatus,
+  Severity
+} from '../types/centrale-risque';
 
 // Types basés sur la documentation officielle
 interface CreditRiskResponse {
@@ -348,5 +359,389 @@ export function useCentraleRisqueComplete() {
       console.log('Acknowledging alert:', alertId);
     },
     refetch: fetchAllData
+  };
+}
+// ============================================================================
+// NOUVEAUX HOOKS CONFORMES À L'API V2 (/centrale-risque/*)
+// ============================================================================
+
+/**
+ * Hook pour gérer les entrées de risque (Risk Entries)
+ * Conforme à l'API: /centrale-risque/risk-entries
+ */
+export function useRiskEntries(filters?: {
+  companyId?: string;
+  institutionId?: string;
+  riskType?: RiskType;
+  status?: RiskEntryStatus;
+  minCreditScore?: number;
+  maxCreditScore?: number;
+}) {
+  const [entries, setEntries] = useState<RiskEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 0 });
+
+  const fetchEntries = useCallback(async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await centraleRisqueApiV2.getRiskEntries({
+        ...filters,
+        page,
+        limit
+      });
+      
+      setEntries(response.data);
+      setPagination(response.meta);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des entrées de risque');
+      console.error('Erreur risk entries:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  const createEntry = useCallback(async (data: Omit<RiskEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      setLoading(true);
+      const newEntry = await centraleRisqueApiV2.createRiskEntry(data);
+      setEntries(prev => [...prev, newEntry]);
+      return newEntry;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateEntry = useCallback(async (id: string, data: Partial<RiskEntry>) => {
+    try {
+      setLoading(true);
+      const updated = await centraleRisqueApiV2.updateRiskEntry(id, data);
+      setEntries(prev => prev.map(e => e.id === id ? updated : e));
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteEntry = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      await centraleRisqueApiV2.deleteRiskEntry(id);
+      setEntries(prev => prev.filter(e => e.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
+
+  return {
+    entries,
+    loading,
+    error,
+    pagination,
+    fetchEntries,
+    createEntry,
+    updateEntry,
+    deleteEntry,
+    refetch: () => fetchEntries()
+  };
+}
+
+/**
+ * Hook pour gérer les incidents de paiement
+ * Conforme à l'API: /centrale-risque/incidents
+ */
+export function useIncidents(filters?: {
+  companyId?: string;
+  type?: IncidentType;
+  status?: IncidentStatus;
+  severity?: Severity;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 0 });
+
+  const fetchIncidents = useCallback(async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await centraleRisqueApiV2.getIncidents({
+        ...filters,
+        page,
+        limit
+      });
+      
+      setIncidents(response.data);
+      setPagination(response.meta);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des incidents');
+      console.error('Erreur incidents:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  const createIncident = useCallback(async (data: Omit<Incident, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      setLoading(true);
+      const newIncident = await centraleRisqueApiV2.createIncident(data);
+      setIncidents(prev => [...prev, newIncident]);
+      return newIncident;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateIncident = useCallback(async (id: string, data: Partial<Incident>) => {
+    try {
+      setLoading(true);
+      const updated = await centraleRisqueApiV2.updateIncident(id, data);
+      setIncidents(prev => prev.map(i => i.id === id ? updated : i));
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteIncident = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      await centraleRisqueApiV2.deleteIncident(id);
+      setIncidents(prev => prev.filter(i => i.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchIncidents();
+  }, [fetchIncidents]);
+
+  return {
+    incidents,
+    loading,
+    error,
+    pagination,
+    fetchIncidents,
+    createIncident,
+    updateIncident,
+    deleteIncident,
+    refetch: () => fetchIncidents()
+  };
+}
+
+/**
+ * Hook pour gérer les alertes de risque
+ * Conforme à l'API: /centrale-risque/alerts
+ */
+export function useAlerts(filters?: {
+  companyId?: string;
+  type?: string;
+  severity?: Severity;
+  isAcknowledged?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 0 });
+
+  const fetchAlerts = useCallback(async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await centraleRisqueApiV2.getAlerts({
+        ...filters,
+        page,
+        limit
+      });
+      
+      setAlerts(response.data);
+      setPagination(response.meta);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des alertes');
+      console.error('Erreur alerts:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  const acknowledgeAlert = useCallback(async (id: string, notes?: string) => {
+    try {
+      setLoading(true);
+      const updated = await centraleRisqueApiV2.acknowledgeAlert(id, notes);
+      setAlerts(prev => prev.map(a => a.id === id ? updated : a));
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'acquittement');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const dismissAlert = useCallback(async (id: string, reason?: string) => {
+    try {
+      setLoading(true);
+      const updated = await centraleRisqueApiV2.dismissAlert(id, reason);
+      setAlerts(prev => prev.map(a => a.id === id ? updated : a));
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du rejet');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [fetchAlerts]);
+
+  return {
+    alerts,
+    loading,
+    error,
+    pagination,
+    fetchAlerts,
+    acknowledgeAlert,
+    dismissAlert,
+    refetch: () => fetchAlerts()
+  };
+}
+
+/**
+ * Hook pour les statistiques de la centrale de risque
+ * Conforme à l'API: /centrale-risque/stats
+ */
+export function useCentraleRisqueStats() {
+  const [stats, setStats] = useState<CentraleRisqueStats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await centraleRisqueApiV2.getStats();
+      setStats(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques');
+      console.error('Erreur stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  return { stats, loading, error, refetch: fetchStats };
+}
+
+/**
+ * Hook pour le résumé de risque d'une entité (company ou portfolio)
+ * Conforme à l'API: /centrale-risque/entity/:entityId/summary
+ */
+export function useEntityRiskSummary(entityId: string | null, entityType: 'company' | 'portfolio' = 'company') {
+  const [summary, setSummary] = useState<EntityRiskSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSummary = useCallback(async () => {
+    if (!entityId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await centraleRisqueApiV2.getEntitySummary(entityId, entityType);
+      setSummary(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement du résumé');
+      console.error('Erreur entity summary:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [entityId, entityType]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
+
+  return { summary, loading, error, refetch: fetchSummary };
+}
+
+/**
+ * Hook principal combiné pour la page Centrale de Risque V2
+ * Utilise les nouveaux endpoints conformes à la documentation
+ */
+export function useCentraleRisqueV2Page() {
+  const { entries, loading: entriesLoading, error: entriesError, createEntry, updateEntry, deleteEntry, refetch: refetchEntries } = useRiskEntries();
+  const { incidents, loading: incidentsLoading, error: incidentsError, createIncident, updateIncident, deleteIncident, refetch: refetchIncidents } = useIncidents();
+  const { alerts, loading: alertsLoading, error: alertsError, acknowledgeAlert, dismissAlert, refetch: refetchAlerts } = useAlerts();
+  const { stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useCentraleRisqueStats();
+
+  const loading = entriesLoading || incidentsLoading || alertsLoading || statsLoading;
+  const error = entriesError || incidentsError || alertsError || statsError;
+
+  const refetchAll = useCallback(() => {
+    refetchEntries();
+    refetchIncidents();
+    refetchAlerts();
+    refetchStats();
+  }, [refetchEntries, refetchIncidents, refetchAlerts, refetchStats]);
+
+  return {
+    // Données
+    entries,
+    incidents,
+    alerts,
+    stats,
+    // États
+    loading,
+    error,
+    // Actions sur les entrées de risque
+    createEntry,
+    updateEntry,
+    deleteEntry,
+    // Actions sur les incidents
+    createIncident,
+    updateIncident,
+    deleteIncident,
+    // Actions sur les alertes
+    acknowledgeAlert,
+    dismissAlert,
+    // Rafraîchissement
+    refetch: refetchAll
   };
 }

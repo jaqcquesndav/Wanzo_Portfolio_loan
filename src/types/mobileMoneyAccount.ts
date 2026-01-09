@@ -1,12 +1,14 @@
 /**
- * Types for Mobile Money accounts
+ * Types for Mobile Money accounts - RDC
  */
+
+export type MobileMoneyProvider = 'Orange Money' | 'M-Pesa' | 'Airtel Money' | 'Africell Money' | 'Vodacom M-Pesa';
 
 export interface MobileMoneyAccount {
   id: string;
   account_name: string; // Nom du détenteur du compte
   phone_number: string; // Numéro de téléphone
-  provider: 'Orange Money' | 'M-Pesa' | 'Airtel Money'; // Fournisseur
+  provider: MobileMoneyProvider; // Fournisseur
   pin_code?: string; // Code PIN (chiffré en production)
   account_holder_id?: string; // Numéro d'identification du titulaire
   currency: string;
@@ -24,3 +26,13 @@ export interface MobileMoneyAccount {
   daily_limit?: number;
   monthly_limit?: number;
 }
+
+/**
+ * Liste des opérateurs Mobile Money disponibles en RDC
+ */
+export const MOBILE_MONEY_PROVIDERS = [
+  { code: 'Orange Money', name: 'Orange Money', prefix: '85', ussd: '*150#' },
+  { code: 'M-Pesa', name: 'M-Pesa (Vodacom)', prefix: '81', ussd: '*151#' },
+  { code: 'Airtel Money', name: 'Airtel Money', prefix: '99', ussd: '*501#' },
+  { code: 'Africell Money', name: 'Africell Money', prefix: '90', ussd: '*140#' },
+] as const;

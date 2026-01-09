@@ -1,67 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
-import { AlertTriangle, CheckCircle, XCircle, TrendingUp, Shield, Clock, RefreshCw } from 'lucide-react';
-import { bccThresholdsService } from '../../../services/bccThresholds';
-import { BCCConfiguration } from '../../../types/bcc-thresholds';
+import { AlertTriangle, CheckCircle, XCircle, TrendingUp, Shield, Clock, RefreshCw, Activity } from 'lucide-react';
+import { useBCCCompliance } from '../../../hooks/useBCCCompliance';
 
-interface BCCMetrics {
-  qualityMetrics: {
-    nplRatio: number;
-    writeOffRatio: number;
-    par30: number;
-    recoveryRate: number;
-  };
-  profitabilityMetrics: {
-    roa: number;
-    portfolioYield: number;
-    netInterestMargin: number;
-    costOfRisk: number;
-  };
-  operationalMetrics: {
-    collectionEfficiency: number;
-    avgProcessingTime: number;
-    portfolioTurnover: number;
-  };
+interface BCCSurveillancePanelProps {
+  portfolioId?: string;
 }
 
-const generateMockMetrics = (): BCCMetrics => ({
-  qualityMetrics: {
-    nplRatio: 2 + Math.random() * 6,
-    writeOffRatio: Math.random() * 3,
-    par30: 1 + Math.random() * 4,
-    recoveryRate: 70 + Math.random() * 25,
-  },
-  profitabilityMetrics: {
-    roa: 2 + Math.random() * 5,
-    portfolioYield: 8 + Math.random() * 12,
-    netInterestMargin: 8 + Math.random() * 6,
-    costOfRisk: 1 + Math.random() * 4,
-  },
-  operationalMetrics: {
-    collectionEfficiency: 75 + Math.random() * 20,
-    avgProcessingTime: 1 + Math.random() * 4,
-    portfolioTurnover: 15 + Math.random() * 25,
-  },
-});
-
-export const BCCSurveillancePanel: React.FC = () => {
-  const [metrics, setMetrics] = useState<BCCMetrics>(generateMockMetrics());
-  const [loading, setLoading] = useState(false);
-  const [configuration, setConfiguration] = useState<BCCConfiguration | null>(null);
-
-  useEffect(() => {
-    const config = bccThresholdsService.getConfiguration();
-    setConfiguration(config);
-  }, []);
-
-  const refreshMetrics = async () => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setMetrics(generateMockMetrics());
-    setLoading(false);
-  };
+export const BCCSurveillancePanel: React.FC<BCCSurveillancePanelProps> = ({ portfolioId }) => {
+  const {
+    references,
+    preferences,
+    metrics,
+    complianceStatus,
+    loading,
+    refreshMetrics,
+  } = useBCCCompliance({ portfolioId, autoRefresh: true });
 
   const getComplianceStatus = (value: number, bccThreshold: number, managerThreshold: number, isMinThreshold: boolean = false) => {
     // Vérifier d'abord la conformité BCC (critique)
@@ -76,25 +32,23 @@ export const BCCSurveillancePanel: React.FC = () => {
   };
 
   const getThresholds = (metricKey: string) => {
-    if (!configuration) return { bcc: 0, manager: 0 };
-    
-    const { bccReferences, managerPreferences } = configuration;
+    if (!references || !preferences) return { bcc: 0, manager: 0 };
     
     switch (metricKey) {
       case 'nplRatio':
-        return { bcc: bccReferences.maxNplRatio, manager: managerPreferences.maxNplRatio };
+        return { bcc: references.maxNplRatio, manager: preferences.maxNplRatio };
       case 'writeOffRatio':
-        return { bcc: bccReferences.maxWriteOffRatio, manager: managerPreferences.maxWriteOffRatio };
+        return { bcc: references.maxWriteOffRatio, manager: preferences.maxWriteOffRatio };
       case 'recoveryRate':
-        return { bcc: bccReferences.minRecoveryRate, manager: managerPreferences.minRecoveryRate };
+        return { bcc: references.minRecoveryRate, manager: preferences.minRecoveryRate };
       case 'roa':
-        return { bcc: bccReferences.minRoa, manager: managerPreferences.minRoa };
+        return { bcc: references.minRoa, manager: preferences.minRoa };
       case 'portfolioYield':
-        return { bcc: bccReferences.minPortfolioYield, manager: managerPreferences.minPortfolioYield };
+        return { bcc: references.minPortfolioYield, manager: preferences.minPortfolioYield };
       case 'collectionEfficiency':
-        return { bcc: bccReferences.minCollectionEfficiency, manager: managerPreferences.minCollectionEfficiency };
+        return { bcc: references.minCollectionEfficiency, manager: preferences.minCollectionEfficiency };
       case 'avgProcessingTime':
-        return { bcc: bccReferences.maxProcessingTime, manager: managerPreferences.maxProcessingTime };
+        return { bcc: references.maxProcessingTime, manager: preferences.maxProcessingTime };
       default:
         return { bcc: 0, manager: 0 };
     }
@@ -167,24 +121,34 @@ export const BCCSurveillancePanel: React.FC = () => {
     </Card>
   );
 
-  if (!configuration) {
-    return <div>Chargement de la configuration...</div>;
+  if (loading || !references || !preferences || !metrics) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow space-y-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Surveillance BCC</h3>
-        <Button onClick={refreshMetrics} disabled={loading} variant="secondary" size="sm">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Activity className="h-5 w-5 text-primary" />
+          Surveillance BCC
+        </h3>
+        <Button onClick={() => refreshMetrics()} disabled={loading} variant="secondary" size="sm">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Actualiser
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {/* Qualité du Portefeuille */}
         {renderMetricCard(
-          "Qualité du Portefeuille",
+          "Qualité Portefeuille",
           <Shield className="h-4 w-4 text-green-600" />,
           [
             { 
@@ -228,12 +192,6 @@ export const BCCSurveillancePanel: React.FC = () => {
               isMinThreshold: true, 
               unit: "%" 
             },
-            { 
-              label: "Coût du Risque", 
-              value: metrics.profitabilityMetrics.costOfRisk, 
-              metricKey: "costOfRisk",
-              unit: "%" 
-            },
           ]
         )}
 
@@ -255,43 +213,76 @@ export const BCCSurveillancePanel: React.FC = () => {
               metricKey: "avgProcessingTime",
               unit: " jours" 
             },
-            { 
-              label: "Rotation Portefeuille", 
-              value: metrics.operationalMetrics.portfolioTurnover, 
-              metricKey: "portfolioTurnover",
-              unit: "%" 
-            },
           ]
         )}
       </div>
 
-      {/* Résumé de Conformité */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardHeader>
-          <CardTitle className="text-blue-800">Résumé de Conformité BCC</CardTitle>
+      {/* Indicateurs Complémentaires (informatifs - sans seuil BCC) */}
+      <Card className="border-gray-200 dark:border-gray-700">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Indicateurs Complémentaires
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-lg font-mono font-semibold">{metrics.qualityMetrics.par30.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">PAR 30 jours</p>
+            </div>
+            <div>
+              <p className="text-lg font-mono font-semibold">{metrics.profitabilityMetrics.costOfRisk.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">Coût du Risque</p>
+            </div>
+            <div>
+              <p className="text-lg font-mono font-semibold">{metrics.profitabilityMetrics.netInterestMargin.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">Marge Nette</p>
+            </div>
+            <div>
+              <p className="text-lg font-mono font-semibold">{metrics.operationalMetrics.portfolioTurnover.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">Rotation</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Résumé de Conformité dynamique */}
+      <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-blue-800 dark:text-blue-300 text-base flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Résumé Conformité BCC (RDC)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="text-center">
               <Badge variant="success" className="text-sm">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                8/9 Conformes
+                {complianceStatus?.compliantCount || 0}/{(complianceStatus?.compliantCount || 0) + (complianceStatus?.warningCount || 0) + (complianceStatus?.nonCompliantCount || 0)} Conformes
               </Badge>
-              <p className="text-xs text-blue-600 mt-1">Métriques conformes BCC</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Métriques conformes BCC</p>
             </div>
             <div className="text-center">
-              <Badge variant="warning" className="text-sm">
-                <AlertTriangle className="h-4 w-4 mr-1" />
-                1 Surveillance
+              <Badge variant={complianceStatus?.nonCompliantCount ? 'danger' : 'warning'} className="text-sm">
+                {complianceStatus?.nonCompliantCount ? (
+                  <XCircle className="h-4 w-4 mr-1" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                )}
+                {complianceStatus?.nonCompliantCount || complianceStatus?.warningCount || 0} {complianceStatus?.nonCompliantCount ? 'Critiques' : 'Surveillance'}
               </Badge>
-              <p className="text-xs text-blue-600 mt-1">Sous seuil gestionnaire</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                {complianceStatus?.nonCompliantCount ? 'Non-conformes BCC' : 'Sous seuil gestionnaire'}
+              </p>
             </div>
             <div className="text-center">
               <Badge variant="secondary" className="text-sm">
                 <RefreshCw className="h-4 w-4 mr-1" />
-                Dernière MAJ: {new Date().toLocaleTimeString()}
+                Score: {complianceStatus?.overallScore?.toFixed(0) || 0}%
               </Badge>
-              <p className="text-xs text-blue-600 mt-1">Mise à jour temps réel</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Score global conformité</p>
             </div>
           </div>
         </CardContent>

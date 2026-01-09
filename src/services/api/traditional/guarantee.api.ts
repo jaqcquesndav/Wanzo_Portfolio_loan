@@ -378,3 +378,181 @@ function mapLocalGuaranteeToApiResponse(guarantee: Guarantee): GuaranteeResponse
     ] : []
   };
 }
+
+// ============================================================================
+// API CONFORME À LA DOCUMENTATION - /portfolios/traditional/guarantees
+// ============================================================================
+
+/**
+ * API pour les garanties conforme à la documentation officielle
+ * Base URL: /portfolios/traditional/guarantees
+ */
+export const guaranteeApiV2 = {
+  /**
+   * Liste des garanties d'un portefeuille
+   * GET /portfolios/traditional/guarantees?portfolioId=xxx
+   */
+  getAllGuarantees: async (portfolioId: string, filters?: {
+    contractId?: string;
+    type?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ success: boolean; data: Guarantee[]; meta?: { total: number; page: number; limit: number; totalPages: number } }> => {
+    try {
+      const params = new URLSearchParams();
+      params.append('portfolioId', portfolioId);
+      if (filters?.contractId) params.append('contractId', filters.contractId);
+      if (filters?.type) params.append('type', filters.type);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.limit) params.append('limit', filters.limit.toString());
+
+      return await apiClient.get<{ success: boolean; data: Guarantee[]; meta?: { total: number; page: number; limit: number; totalPages: number } }>(
+        `/portfolios/traditional/guarantees?${params.toString()}`
+      );
+    } catch (error) {
+      console.warn('Fallback to localStorage for guarantees', error);
+      const allGuarantees = traditionalDataService.getAllGuarantees?.() || [];
+      let filteredGuarantees = allGuarantees.filter((g: Guarantee) => g.portfolioId === portfolioId);
+      
+      if (filters?.contractId) {
+        filteredGuarantees = filteredGuarantees.filter((g: Guarantee) => g.contractId === filters.contractId);
+      }
+      if (filters?.type) {
+        filteredGuarantees = filteredGuarantees.filter((g: Guarantee) => g.type === filters.type);
+      }
+      if (filters?.status) {
+        filteredGuarantees = filteredGuarantees.filter((g: Guarantee) => g.status === filters.status);
+      }
+
+      return { success: true, data: filteredGuarantees };
+    }
+  },
+
+  /**
+   * Détails d'une garantie
+   * GET /portfolios/traditional/guarantees/{id}
+   */
+  getGuaranteeById: async (id: string): Promise<Guarantee> => {
+    try {
+      return await apiClient.get<Guarantee>(`/portfolios/traditional/guarantees/${id}`);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for guarantee ${id}`, error);
+      const allGuarantees = traditionalDataService.getAllGuarantees?.() || [];
+      const guarantee = allGuarantees.find((g: Guarantee) => g.id === id);
+      if (!guarantee) {
+        throw new Error(`Guarantee with ID ${id} not found`);
+      }
+      return guarantee;
+    }
+  },
+
+  /**
+   * Créer une garantie
+   * POST /portfolios/traditional/guarantees
+   */
+  createGuarantee: async (guaranteeData: Omit<Guarantee, 'id' | 'created_at'>): Promise<Guarantee> => {
+    try {
+      return await apiClient.post<Guarantee>('/portfolios/traditional/guarantees', guaranteeData);
+    } catch (error) {
+      console.warn('Fallback to localStorage for creating guarantee', error);
+      const newGuarantee: Guarantee = {
+        ...guaranteeData,
+        id: `guarantee-${Date.now()}`,
+        created_at: new Date().toISOString(),
+      };
+      traditionalDataService.addGuarantee?.(newGuarantee);
+      return newGuarantee;
+    }
+  },
+
+  /**
+   * Mettre à jour une garantie
+   * PUT /portfolios/traditional/guarantees/{id}
+   */
+  updateGuarantee: async (id: string, updates: Partial<Guarantee>): Promise<Guarantee> => {
+    try {
+      return await apiClient.put<Guarantee>(`/portfolios/traditional/guarantees/${id}`, updates);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for updating guarantee ${id}`, error);
+      const allGuarantees = traditionalDataService.getAllGuarantees?.() || [];
+      const guaranteeIndex = allGuarantees.findIndex((g: Guarantee) => g.id === id);
+      if (guaranteeIndex === -1) {
+        throw new Error(`Guarantee with ID ${id} not found`);
+      }
+      const updatedGuarantee = { ...allGuarantees[guaranteeIndex], ...updates };
+      traditionalDataService.updateGuarantee?.(updatedGuarantee);
+      return updatedGuarantee;
+    }
+  },
+
+  /**
+   * Libérer une garantie (mainlevée)
+   * POST /portfolios/traditional/guarantees/{id}/release
+   */
+  releaseGuarantee: async (id: string, releaseData: {
+    release_date: string;
+    reason: string;
+  }): Promise<Guarantee> => {
+    try {
+      return await apiClient.post<Guarantee>(`/portfolios/traditional/guarantees/${id}/release`, releaseData);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for releasing guarantee ${id}`, error);
+      const allGuarantees = traditionalDataService.getAllGuarantees?.() || [];
+      const guaranteeIndex = allGuarantees.findIndex((g: Guarantee) => g.id === id);
+      if (guaranteeIndex === -1) {
+        throw new Error(`Guarantee with ID ${id} not found`);
+      }
+      const updatedGuarantee: Guarantee = { 
+        ...allGuarantees[guaranteeIndex], 
+        status: 'libérée'
+      };
+      traditionalDataService.updateGuarantee?.(updatedGuarantee);
+      return updatedGuarantee;
+    }
+  },
+
+  /**
+   * Saisir une garantie
+   * POST /portfolios/traditional/guarantees/{id}/seize
+   */
+  seizeGuarantee: async (id: string, seizureData: {
+    seizure_date: string;
+    reason: string;
+    legal_reference?: string;
+  }): Promise<Guarantee> => {
+    try {
+      return await apiClient.post<Guarantee>(`/portfolios/traditional/guarantees/${id}/seize`, seizureData);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for seizing guarantee ${id}`, error);
+      const allGuarantees = traditionalDataService.getAllGuarantees?.() || [];
+      const guaranteeIndex = allGuarantees.findIndex((g: Guarantee) => g.id === id);
+      if (guaranteeIndex === -1) {
+        throw new Error(`Guarantee with ID ${id} not found`);
+      }
+      const updatedGuarantee: Guarantee = { 
+        ...allGuarantees[guaranteeIndex], 
+        status: 'saisie'
+      };
+      traditionalDataService.updateGuarantee?.(updatedGuarantee);
+      return updatedGuarantee;
+    }
+  },
+
+  /**
+   * Supprimer une garantie
+   * DELETE /portfolios/traditional/guarantees/{id}
+   * Seules les garanties avec statut 'pending' peuvent être supprimées
+   */
+  deleteGuarantee: async (id: string): Promise<boolean> => {
+    try {
+      await apiClient.delete(`/portfolios/traditional/guarantees/${id}`);
+      return true;
+    } catch (error) {
+      console.warn(`Fallback to localStorage for deleting guarantee ${id}`, error);
+      traditionalDataService.deleteGuarantee?.(id);
+      return true;
+    }
+  }
+};

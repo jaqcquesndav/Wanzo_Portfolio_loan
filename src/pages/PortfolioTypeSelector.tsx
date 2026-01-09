@@ -2,6 +2,7 @@ import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { Spinner } from '../components/ui/Spinner';
 import { useState } from 'react';
+import { resetTokenExchangeFlag } from './AuthCallback';
 
 export default function PortfolioTypeSelector() {
   const { setPortfolioType } = usePortfolioContext();
@@ -25,12 +26,22 @@ export default function PortfolioTypeSelector() {
     setIsLoading(true);
     
     try {
+      // Réinitialiser le flag d'échange de token avant une nouvelle tentative de connexion
+      resetTokenExchangeFlag();
+      
+      // Nettoyer les anciennes données d'authentification avant de commencer
+      auth0Service.clearAuthTemp();
+      localStorage.removeItem('wanzo_no_institution');
+      localStorage.removeItem('wanzo_backend_unavailable');
+      
       setPortfolioType('traditional');
       localStorage.setItem('portfolioType', 'traditional');
 
-      // PKCE
+      // PKCE - Génération du code verifier et du challenge
       const codeVerifier = base64URLEncode(window.crypto.getRandomValues(new Uint8Array(32)).buffer);
       const codeChallenge = base64URLEncode(await sha256(codeVerifier));
+      
+      // Sauvegarder le code verifier AVANT la redirection
       auth0Service.saveCodeVerifier(codeVerifier);
 
       const domain = import.meta.env.VITE_AUTH0_DOMAIN;
@@ -38,7 +49,17 @@ export default function PortfolioTypeSelector() {
       const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
       const redirectUri = `${window.location.origin}/auth/callback`;
       const state = Math.random().toString(36).substring(2);
+      
+      // Sauvegarder le state AVANT la redirection
       auth0Service.saveState(state);
+
+      // Vérifier que les données sont bien stockées
+      console.log('🔐 Auth0 Login - Données stockées:', {
+        codeVerifierStored: !!auth0Service.getCodeVerifier(),
+        stateStored: !!auth0Service.getState(),
+        domain,
+        redirectUri
+      });
 
       const params = new URLSearchParams({
         client_id: clientId,
@@ -52,6 +73,7 @@ export default function PortfolioTypeSelector() {
       });
       
       // Redirection vers Auth0
+      console.log('🚀 Redirection vers Auth0...');
       window.location.href = `https://${domain}/authorize?${params.toString()}`;
     } catch (error) {
       console.error('Erreur lors de la connexion Auth0:', error);

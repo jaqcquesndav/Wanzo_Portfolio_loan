@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
 import { useNotification } from '../../contexts/useNotification';
+import { useAppContextStore } from '../../stores/appContextStore';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -9,6 +10,7 @@ import { Textarea } from '../ui/Textarea';
 export const WelcomeNewUser: React.FC = () => {
   const { createPortfolio } = useTraditionalPortfolios();
   const { showNotification } = useNotification();
+  const { institutionId, user } = useAppContextStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -18,8 +20,8 @@ export const WelcomeNewUser: React.FC = () => {
     risk_profile: 'moderate' as 'conservative' | 'moderate' | 'aggressive',
     target_sectors: ['Finance'] as string[],
     duration_months: 36,
-    manager_id: 'default-manager', // ID du gestionnaire par défaut
-    institution_id: 'default-institution', // ID de l'institution par défaut
+    manager_id: user?.id || 'default-manager', // ID du gestionnaire depuis le contexte
+    institution_id: institutionId || 'default-institution', // ID de l'institution depuis le contexte
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

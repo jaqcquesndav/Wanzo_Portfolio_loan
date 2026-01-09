@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../contexts/useNotification';
 import { useTraditionalPortfolios } from '../hooks/useTraditionalPortfolios';
-import type { DefaultPortfolioFormData } from '../components/portfolio/DefaultPortfolioForm';
-import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioModal';
+import { CreatePortfolioModal, type PortfolioModalData } from '../components/portfolio/CreatePortfolioModal';
 
 export default function WelcomeNewUser() {
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ export default function WelcomeNewUser() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { createPortfolio } = useTraditionalPortfolios();
 
-  const handleCreatePortfolio = async (data: DefaultPortfolioFormData) => {
+  const handleCreatePortfolio = async (data: PortfolioModalData) => {
     try {
       // Ajoute les champs requis manquants pour TraditionalPortfolio
       const newPortfolio = await createPortfolio({

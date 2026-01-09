@@ -120,17 +120,51 @@ export interface Location {
   };
 }
 
+/** Type de détenteur pour l'actionnariat */
+export type HolderType = 'physique' | 'morale';
+
 /**
- * Personne de contact dans l'entreprise
+ * Personne de contact dans l'entreprise (dirigeant, actionnaire, employé)
+ * Interface enrichie pour supporter tous les cas du formulaire
  */
 export interface ContactPerson {
   id?: string;
+  
+  // Type de détenteur (personne physique ou morale)
+  typeDetenteur?: HolderType;
+  
+  // Champs personne physique
   nom?: string;
   prenoms?: string;
   fonction?: string;
-  email?: string;
+  nationalite?: string;
   telephone?: string;
-  pourcentageActions?: number;
+  email?: string;
+  adresse?: string;
+  linkedin?: string;
+  cv?: string; // URL du CV uploadé
+  cvFileName?: string; // Nom du fichier CV
+  
+  // Champs personne morale (actionnaire)
+  raisonSociale?: string;
+  formeJuridique?: string;
+  rccm?: string; // Numéro RCCM
+  idnat?: string; // ID National
+  siegeSocial?: string;
+  representantLegal?: string; // Nom du représentant légal
+  representantFonction?: string; // Fonction du représentant
+  
+  // Champs actionnariat
+  nombreActions?: number; // Nombre d'actions ou de parts sociales
+  pourcentageActions?: number; // Pourcentage du capital
+  
+  // Champs employé
+  dateNomination?: string;
+  typeContrat?: string;
+  salaire?: number;
+  diplomes?: string[];
+  
+  // Compatibilité legacy
   role?: string;
 }
 
@@ -159,9 +193,10 @@ export interface LegalInfo {
 }
 
 /**
- * Compte bancaire pour paiement
+ * Compte bancaire pour paiement - Interface enrichie
  */
 export interface BankAccount {
+  id?: string;
   accountNumber: string;
   accountName: string;
   bankName: string;
@@ -169,6 +204,8 @@ export interface BankAccount {
   isPrimary: boolean;
   swiftCode?: string;
   iban?: string;
+  typeCompte?: 'courant' | 'epargne' | 'professionnel' | 'devise';
+  agence?: string;
 }
 
 /**
@@ -182,39 +219,127 @@ export interface MobileMoneyAccount {
   isPrimary: boolean;
 }
 
+/** Type d'assurance */
+export type InsuranceType = 'responsabilite_civile' | 'incendie' | 'vol' | 'accidents_travail' | 'marchandises' | 'vehicules' | 'multirisque' | 'autre';
+
 /**
- * Informations de paiement
+ * Assurance de l'entreprise
+ */
+export interface Insurance {
+  id?: string;
+  compagnie: string;
+  typeAssurance: InsuranceType;
+  numeroPolice: string;
+  montantCouverture?: number;
+  devise?: Currency;
+  dateDebut?: string;
+  dateExpiration?: string;
+  prime?: number;
+  frequencePaiement?: 'mensuel' | 'trimestriel' | 'annuel';
+  observations?: string;
+}
+
+/**
+ * Informations de paiement - enrichi avec assurances
  */
 export interface PaymentInfo {
   preferredMethod?: 'bank' | 'mobile_money';
   bankAccounts?: BankAccount[];
   mobileMoneyAccounts?: MobileMoneyAccount[];
+  assurances?: Insurance[];
 }
 
 // ============================================================================
 // INTERFACES ACTIFS (PATRIMOINE)
 // ============================================================================
 
+/** Type d'actif */
+export type AssetType = 'immobilier' | 'vehicule' | 'equipement' | 'stock' | 'autre';
+
+/** État d'un actif */
+export type AssetCondition = 'neuf' | 'excellent' | 'bon' | 'moyen' | 'mauvais' | 'deteriore';
+
+/** Type de propriété */
+export type OwnershipType = 'propre' | 'location' | 'leasing' | 'emprunt';
+
 /**
- * Asset (immobilisation ou bien patrimonial)
+ * Asset (immobilisation ou bien patrimonial) - Interface enrichie
  */
 export interface Asset {
+  id?: string;
   designation?: string;
-  type?: string;
+  type?: AssetType;
+  description?: string;
+  
+  // Valeurs financières détaillées
+  prixAchat?: number;
   valeurActuelle?: number;
-  etatActuel?: string;
+  devise?: Currency;
+  
+  // Informations temporelles
+  dateAcquisition?: string;
+  
+  // État et localisation
+  etatActuel?: AssetCondition;
+  localisation?: string;
+  
+  // Informations techniques
+  numeroSerie?: string;
+  marque?: string;
+  modele?: string;
+  quantite?: number;
+  unite?: string;
+  
+  // Statut de propriété
+  proprietaire?: OwnershipType;
+  
+  // Observations
   observations?: string;
 }
 
+/** Catégorie de stock */
+export type StockCategory = 'matiere_premiere' | 'produit_semi_fini' | 'produit_fini' | 'fourniture' | 'emballage' | 'autre';
+
+/** État du stock */
+export type StockCondition = 'excellent' | 'bon' | 'moyen' | 'deteriore' | 'perime';
+
 /**
- * Stock/Inventaire
+ * Stock/Inventaire - Interface enrichie
  */
 export interface Stock {
+  id?: string;
   designation?: string;
-  categorie?: string;
+  categorie?: StockCategory;
+  description?: string;
+  
+  // Quantités et unités
   quantiteStock?: number;
+  unite?: string;
+  seuilMinimum?: number;
+  seuilMaximum?: number;
+  
+  // Valeurs financières
+  coutUnitaire?: number;
   valeurTotaleStock?: number;
-  etatStock?: string;
+  devise?: Currency;
+  
+  // Informations temporelles
+  dateDernierInventaire?: string;
+  dureeRotationMoyenne?: number;
+  datePeremption?: string;
+  
+  // Localisation et stockage
+  emplacement?: string;
+  conditionsStockage?: string;
+  
+  // Suivi et gestion
+  fournisseurPrincipal?: string;
+  numeroLot?: string;
+  codeArticle?: string;
+  
+  // État
+  etatStock?: StockCondition;
+  observations?: string;
 }
 
 // ============================================================================
@@ -365,6 +490,7 @@ export interface Company {
   sector: string;
   size: CompanySize;
   status: CompanyStatus;
+  logo_url?: string; // URL du logo de l'entreprise
   
   // DONNÉES OPÉRATIONNELLES
   employee_count: number;
@@ -386,12 +512,18 @@ export interface Company {
   legal_info?: LegalInfo;
   payment_info?: PaymentInfo;
   
-  // PERSONNES
+  // PERSONNES - Enrichi avec dirigeants, actionnaires, employés
   owner?: Owner;
   contactPersons?: ContactPerson[];
+  dirigeants?: ContactPerson[];
+  actionnaires?: ContactPerson[];
+  employes?: ContactPerson[];
   
-  // PATRIMOINES ET ACTIFS
+  // PATRIMOINES ET ACTIFS - Séparé par catégorie
   assets?: Asset[];
+  immobilisations?: Asset[];
+  equipements?: Asset[];
+  vehicules?: Asset[];
   stocks?: Stock[];
   
   // MÉTRIQUES ESG
@@ -463,6 +595,11 @@ export interface Company {
 // ============================================================================
 // INTERFACES SECONDAIRES ET CONTEXTE
 // ============================================================================
+
+/**
+ * Réunion planifiée avec une entreprise
+ */
+export interface Meeting {
   id: string;
   company_id: string;
   portfolio_manager_id: string;

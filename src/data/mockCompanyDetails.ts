@@ -25,7 +25,9 @@ import type {
   ESGRating,
   LegalForm,
   PaymentInfo,
-  Currency
+  Currency,
+  ContactPerson,
+  Insurance
 } from '../types/company';
 
 interface LegacyContacts {
@@ -157,8 +159,22 @@ interface LegacyCompanyShape {
   documents?: CompanyDocuments | unknown[];
   securities?: unknown[];
   documentLibrary?: unknown;
-  payment_info?: { preferredMethod?: 'bank' | 'mobile_money' | string; bankAccounts?: unknown[]; mobileMoneyAccounts?: unknown[] };
+  payment_info?: { 
+    preferredMethod?: 'bank' | 'mobile_money' | string; 
+    bankAccounts?: unknown[]; 
+    mobileMoneyAccounts?: unknown[];
+    assurances?: Insurance[];
+  };
   esg_metrics?: LegacyESG;
+  // Personnel categories
+  logo_url?: string;
+  dirigeants?: ContactPerson[];
+  actionnaires?: ContactPerson[];
+  employes?: ContactPerson[];
+  // Patrimoine categories
+  immobilisations?: Asset[];
+  equipements?: Asset[];
+  vehicules?: Asset[];
   esgScore?: number;
   esg_rating?: ESGRating | string;
   incubation?: IncubationData;
@@ -383,6 +399,7 @@ function adaptLegacyCompanyToType(legacy: LegacyCompany): Company {
     sector: legacy.sector || legacy.industry || 'Non spécifié',
     size: normalizeCompanySize(legacy.size, employeeCount),
     status: normalizeCompanyStatus(legacy.status),
+    logo_url: legacy.logo_url || legacy.logo || undefined,
 
     // Opérationnel
     employee_count: employeeCount,
@@ -429,13 +446,20 @@ function adaptLegacyCompanyToType(legacy: LegacyCompany): Company {
       taxId: legacy.taxId || undefined,
       yearFounded: legacy.founded || undefined,
     },
-    payment_info: (legacy.payment_info || (legacy.preferredMethod || legacy.bankAccounts || legacy.mobileMoneyAccounts
+    payment_info: ((legacy.payment_info || (legacy.preferredMethod || legacy.bankAccounts || legacy.mobileMoneyAccounts))
       ? {
-          preferredMethod: legacy.preferredMethod,
-          bankAccounts: Array.isArray(legacy.bankAccounts) ? legacy.bankAccounts : undefined,
-          mobileMoneyAccounts: Array.isArray(legacy.mobileMoneyAccounts) ? legacy.mobileMoneyAccounts : undefined,
+          preferredMethod: legacy.payment_info?.preferredMethod || legacy.preferredMethod,
+          bankAccounts: Array.isArray(legacy.payment_info?.bankAccounts) 
+            ? legacy.payment_info.bankAccounts as BankAccount[]
+            : Array.isArray(legacy.bankAccounts) ? legacy.bankAccounts : undefined,
+          mobileMoneyAccounts: Array.isArray(legacy.payment_info?.mobileMoneyAccounts) 
+            ? legacy.payment_info.mobileMoneyAccounts as MobileMoneyAccount[]
+            : Array.isArray(legacy.mobileMoneyAccounts) ? legacy.mobileMoneyAccounts : undefined,
+          assurances: Array.isArray(legacy.payment_info?.assurances) 
+            ? legacy.payment_info.assurances 
+            : undefined,
         }
-      : undefined)) as PaymentInfo | undefined,
+      : undefined) as PaymentInfo | undefined,
 
     // Personnes
     owner: legacy.ceo ? {
@@ -459,6 +483,16 @@ function adaptLegacyCompanyToType(legacy: LegacyCompany): Company {
     // Patrimoines et actifs
     assets: Array.isArray(legacy.assets) ? legacy.assets : undefined,
     stocks: Array.isArray(legacy.stocks) ? legacy.stocks : undefined,
+    
+    // Personnes par catégorie
+    dirigeants: Array.isArray(legacy.dirigeants) ? legacy.dirigeants : undefined,
+    actionnaires: Array.isArray(legacy.actionnaires) ? legacy.actionnaires : undefined,
+    employes: Array.isArray(legacy.employes) ? legacy.employes : undefined,
+    
+    // Actifs par catégorie
+    immobilisations: Array.isArray(legacy.immobilisations) ? legacy.immobilisations : undefined,
+    equipements: Array.isArray(legacy.equipements) ? legacy.equipements : undefined,
+    vehicules: Array.isArray(legacy.vehicules) ? legacy.vehicules : undefined,
 
     // ESG
     esg_metrics: {

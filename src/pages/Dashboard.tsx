@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950 flex flex-col py-6">
-      <div className="container mx-auto px-4">        
+      <div className="container mx-auto px-4">
         <ProfessionalCreditDashboard />
       </div>
     </div>

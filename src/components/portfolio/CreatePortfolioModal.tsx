@@ -1,13 +1,25 @@
 // src/components/portfolio/CreatePortfolioModal.tsx
-// import React from 'react';
+/**
+ * Modal de création de portefeuille - Conforme OHADA/RDC
+ * Utilise le PortfolioStepperForm (2 étapes)
+ */
 import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { PortfolioStepperForm } from './PortfolioStepperForm';
+import { PortfolioStepperForm, type PortfolioStepperFormData } from './PortfolioStepperForm';
+import type { Portfolio, PortfolioCurrency, AccountType } from '../../types/portfolio';
+import type { BankAccount } from '../../types/bankAccount';
+import type { MobileMoneyAccount } from '../../types/mobileMoneyAccount';
+import { v4 as uuidv4 } from 'uuid';
 
-import type { DefaultPortfolioFormData } from './DefaultPortfolioForm';
-
-export type PortfolioModalData = DefaultPortfolioFormData;
+// Type de données renvoyé par le modal
+export type PortfolioModalData = Partial<Portfolio> & {
+  bank_account?: Partial<BankAccount>;
+  mobile_money_account?: Partial<MobileMoneyAccount>;
+  // Arrays pour compatibilité avec le type Portfolio
+  bank_accounts?: Partial<BankAccount>[];
+  mobile_money_accounts?: Partial<MobileMoneyAccount>[];
+};
 
 interface CreatePortfolioModalProps {
   onClose: () => void;
@@ -15,48 +27,128 @@ interface CreatePortfolioModalProps {
 }
 
 export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModalProps) {
-  // Transforme explicitement PortfolioStepperFormData en DefaultPortfolioFormData pour onSubmit
-  const handleDefaultSubmit = async (data: Record<string, unknown>) => {
-    // Correction de typage stricte pour TypeScript
-    if (
-      !data ||
-      typeof data !== 'object' ||
-      typeof data.name !== 'string' ||
-      typeof data.description !== 'string' ||
-      typeof data.target_amount !== 'number' ||
-      typeof data.target_return !== 'number' ||
-      (data.risk_profile !== 'conservative' && data.risk_profile !== 'moderate' && data.risk_profile !== 'aggressive') ||
-      !Array.isArray(data.target_sectors) ||
-      !data.target_sectors.every((s) => typeof s === 'string')
-    ) {
-      throw new Error('Les données du formulaire sont invalides.');
-    }
-    const defaultData: DefaultPortfolioFormData = {
-      name: data.name,
-      description: data.description,
-      target_amount: data.target_amount,
-      target_return: data.target_return,
-      risk_profile: data.risk_profile,
-      target_sectors: data.target_sectors
+  /**
+   * Transforme les données du formulaire en structure Portfolio
+   */
+  const handleFormSubmit = async (formData: PortfolioStepperFormData) => {
+    // Créer l'objet Portfolio
+    const portfolioData: PortfolioModalData = {
+      id: uuidv4(),
+      name: formData.name,
+      type: 'traditional',
+      status: 'draft', // Nouveau portefeuille commence en brouillon
+      
+      // Devise et capital
+      currency: formData.currency as PortfolioCurrency,
+      initial_capital: formData.initial_capital,
+      
+      // Période de validité
+      start_date: formData.start_date,
+      end_date: formData.is_permanent ? undefined : formData.end_date || undefined,
+      is_permanent: formData.is_permanent,
+      
+      // Type de compte principal
+      primary_account_type: formData.primary_account_type as AccountType,
+      
+      // Description optionnelle
+      description: formData.description || undefined,
+      
+      // Valeurs par défaut pour les champs optionnels
+      products: [],
+      metrics: {
+        net_value: formData.initial_capital,
+        average_return: 0,
+        risk_portfolio: 0,
+        sharpe_ratio: 0,
+        volatility: 0,
+        alpha: 0,
+        beta: 0,
+        asset_allocation: []
+      },
+      
+      // Timestamps
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    return onSubmit(defaultData);
+    
+    // Ajouter le compte bancaire si sélectionné
+    if (formData.primary_account_type === 'bank' && formData.bankName) {
+      const bankAccountId = uuidv4();
+      const now = new Date().toISOString();
+      portfolioData.primary_bank_account_id = bankAccountId;
+      
+      // Compte bancaire avec tous les champs requis par BankAccount
+      const bankAccount = {
+        id: bankAccountId,
+        bank_name: formData.bankName,
+        account_number: formData.accountNumber || '',
+        account_name: formData.accountHolder || '', // Mapping accountHolder -> account_name
+        swift_code: formData.bic || undefined,
+        iban: formData.iban || undefined,
+        is_primary: true,
+        is_active: true,
+        currency: formData.currency,
+        purpose: 'general' as const,
+        balance: formData.initial_capital, // Solde initial = capital du portefeuille
+        created_at: now,
+        updated_at: now,
+      };
+      
+      // Ajouter aux deux propriétés pour compatibilité
+      portfolioData.bank_account = bankAccount;
+      portfolioData.bank_accounts = [bankAccount];
+    }
+    
+    // Ajouter le compte Mobile Money si sélectionné
+    if (formData.primary_account_type === 'mobile_money' && formData.momo_provider) {
+      const momoAccountId = uuidv4();
+      const now = new Date().toISOString();
+      portfolioData.primary_mobile_money_account_id = momoAccountId;
+      
+      // Compte Mobile Money avec tous les champs requis par MobileMoneyAccount
+      const mobileMoneyAccount = {
+        id: momoAccountId,
+        provider: formData.momo_provider as 'Orange Money' | 'M-Pesa' | 'Airtel Money' | 'Africell Money' | 'Vodacom M-Pesa',
+        phone_number: formData.momo_phone || '',
+        account_name: formData.momo_name || '',
+        is_primary: true,
+        is_active: true,
+        currency: formData.currency,
+        purpose: 'general' as const,
+        balance: formData.initial_capital, // Solde initial = capital du portefeuille
+        account_status: 'verified' as const,
+        created_at: now,
+        updated_at: now,
+      };
+      
+      // Ajouter aux deux propriétés pour compatibilité
+      portfolioData.mobile_money_account = mobileMoneyAccount;
+      portfolioData.mobile_money_accounts = [mobileMoneyAccount];
+    }
+    
+    return onSubmit(portfolioData);
   };
-  // Supprimé handleLeasingSubmit car il n'est plus nécessaire
 
   // Portal target: document.body
   return ReactDOM.createPortal(
     <>
       <div className="fixed inset-0 z-[9999999999] bg-black bg-opacity-80 flex items-center justify-center pointer-events-auto">
         <div
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl mx-2 sm:mx-4 max-h-[95vh] flex flex-col border border-primary-dark relative"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl mx-2 sm:mx-4 max-h-[95vh] flex flex-col border border-primary-dark relative"
           style={{
             boxShadow: '0 8px 40px 0 rgba(0,0,0,0.35)',
           }}
         >
+          {/* Header */}
           <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Nouveau portefeuille
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Nouveau portefeuille
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Créez un nouveau portefeuille de crédit traditionnel
+              </p>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -65,9 +157,10 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
               aria-label="Fermer"
             />
           </div>
+          
+          {/* Body - Formulaire */}
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-primary-light scrollbar-track-transparent p-6">
-            {/* Utiliser le même formulaire pour tous les types de portefeuille */}
-            <PortfolioStepperForm onSubmit={handleDefaultSubmit} onCancel={onClose} />
+            <PortfolioStepperForm onSubmit={handleFormSubmit} onCancel={onClose} />
           </div>
         </div>
       </div>

@@ -6,8 +6,10 @@ import {
   UserSettings, 
   UserRole as UserRoleEnum, 
   UserType, 
-  Permission 
+  Permission,
+  UserWithInstitutionResponse
 } from '../../../types/user';
+import type { InstitutionLite } from '../../../types/institution';
 
 /**
  * Interface pour les détails utilisateur complets
@@ -156,10 +158,20 @@ export const userApi = {
   },
 
   /**
-   * Récupère le profil de l'utilisateur courant
+   * Récupère l'utilisateur courant avec son institution (version lite)
+   * Endpoint optimisé pour le login/dashboard (~5KB vs ~100KB+)
+   * Retourne: { user, institution (lite), auth0Id, role, permissions }
    */
-  getCurrentUser: () => {
-    return apiClient.get<User>('/users/me');
+  getCurrentUserWithInstitution: () => {
+    return apiClient.get<UserWithInstitutionResponse>('/users/me');
+  },
+
+  /**
+   * Récupère le profil simple de l'utilisateur courant (sans institution)
+   * Pour les cas où seules les données utilisateur sont nécessaires (~2KB)
+   */
+  getUserProfile: () => {
+    return apiClient.get<User>('/users/profile');
   },
 
   /**
@@ -207,5 +219,111 @@ export const userApi = {
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
     return apiClient.get<FlexiblePaginatedResponse<UserActivity>>(`/users/activity?${params.toString()}`);
+  },
+
+  // ===== NOUVEAUX ENDPOINTS - Intégrité des données =====
+
+  /**
+   * Change le statut d'un utilisateur (active, inactive, suspended)
+   */
+  changeUserStatus: (id: string, status: 'active' | 'inactive' | 'suspended', reason?: string) => {
+    return apiClient.patch<{
+      id: string;
+      name: string;
+      status: 'active' | 'inactive' | 'suspended';
+      statusReason?: string;
+      updatedAt: string;
+    }>(`/users/${id}/status`, { status, reason });
+  },
+
+  /**
+   * Récupère l'historique des activités d'un utilisateur spécifique
+   */
+  getUserActivities: (userId: string) => {
+    return apiClient.get<UserActivity[]>(`/users/${userId}/activities`);
+  },
+
+  /**
+   * Récupère les préférences d'un utilisateur
+   * @param userId - ID de l'utilisateur
+   * @param category - Catégorie optionnelle (GENERAL, NOTIFICATIONS, DASHBOARD, SECURITY)
+   */
+  getUserPreferences: (userId: string, category?: 'GENERAL' | 'NOTIFICATIONS' | 'DASHBOARD' | 'SECURITY') => {
+    const url = category 
+      ? `/users/${userId}/preferences/${category}`
+      : `/users/${userId}/preferences`;
+    return apiClient.get<UserPreference[]>(url);
+  },
+
+  /**
+   * Définit ou met à jour une préférence utilisateur
+   */
+  setUserPreference: (userId: string, preference: {
+    category: 'GENERAL' | 'NOTIFICATIONS' | 'DASHBOARD' | 'SECURITY';
+    key: string;
+    value: string;
+  }) => {
+    return apiClient.post<UserPreference>(`/users/${userId}/preferences`, preference);
+  },
+
+  /**
+   * Supprime une préférence utilisateur
+   */
+  deleteUserPreference: (userId: string, preferenceId: string) => {
+    return apiClient.delete(`/users/${userId}/preferences/${preferenceId}`);
+  },
+
+  /**
+   * Récupère toutes les sessions actives d'un utilisateur
+   */
+  getUserSessions: (userId: string) => {
+    return apiClient.get<UserSession[]>(`/users/${userId}/sessions`);
+  },
+
+  /**
+   * Termine une session spécifique
+   */
+  terminateSession: (userId: string, sessionId: string) => {
+    return apiClient.delete<SuccessResponse>(`/users/${userId}/sessions/${sessionId}`);
+  },
+
+  /**
+   * Termine toutes les sessions d'un utilisateur
+   * @param exceptCurrent - Si true, conserve la session courante
+   */
+  terminateAllSessions: (userId: string, exceptCurrent: boolean = false) => {
+    const params = exceptCurrent ? '?exceptCurrent=true' : '';
+    return apiClient.delete<SuccessResponse>(`/users/${userId}/sessions${params}`);
   }
 };
+
+/**
+ * Interface pour les préférences utilisateur
+ */
+export interface UserPreference {
+  id: string;
+  userId: string;
+  category: 'GENERAL' | 'NOTIFICATIONS' | 'DASHBOARD' | 'SECURITY';
+  key: string;
+  value: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Interface pour les sessions utilisateur
+ */
+export interface UserSession {
+  id: string;
+  userId: string;
+  token: string;
+  deviceType: string;
+  deviceName: string;
+  ipAddress: string;
+  userAgent: string;
+  location?: string;
+  isActive: boolean;
+  lastActivity: string;
+  createdAt: string;
+  expiresAt: string;
+}

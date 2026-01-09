@@ -77,6 +77,82 @@ export interface User {
   plan?: string;
   tokenBalance?: number;
   tokenTotal?: number;
+  // Champ optionnel pour l'ID de l'institution associée
+  institutionId?: string;
+  // Champ optionnel pour le statut de l'utilisateur
+  status?: 'active' | 'inactive' | 'suspended';
+  // Département de l'utilisateur (optionnel)
+  department?: string;
+}
+
+/**
+ * Réponse de l'endpoint GET /users/me
+ * Retourne l'utilisateur courant avec son institution (version lite)
+ * Optimisé pour le login, dashboard, header (~5KB vs ~100KB+)
+ * 
+ * NOTE: institution peut être null si l'utilisateur n'a pas encore d'institution
+ * Dans ce cas, user.institutionId contient l'ID de l'institution à charger séparément
+ */
+export interface UserWithInstitutionResponse {
+  user: User & {
+    institutionId?: string;  // ID de l'institution même si institution est null
+    auth0Id?: string;        // Auth0 ID peut être présent directement dans user
+    firstName?: string;      // API peut renvoyer firstName au lieu de givenName
+    lastName?: string;       // API peut renvoyer lastName au lieu de familyName
+  };
+  institution: {
+    id: string;
+    name: string;
+    type: string;
+    status: string;
+    country?: string;
+    city?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    website?: string;
+    logo?: string;
+    documents?: Array<{
+      id: string;
+      type: string;
+      name: string;
+      status?: string;
+    }>;
+    settings?: {
+      currency?: string;
+      timezone?: string;
+    };
+    // Champs supplémentaires de l'API réelle
+    license_number?: string | null;
+    license_type?: string | null;
+    legal_representative?: string | null;
+    tax_id?: string | null;
+    regulatory_status?: string;
+    kiotaId?: string;
+    active?: boolean;
+    createdBy?: string | null;
+    subscriptionPlan?: string | null;
+    subscriptionStatus?: string | null;
+    subscriptionEndDate?: string | null;
+    lastSubscriptionChangeAt?: string | null;
+    subscriptionExpiresAt?: string | null;
+    tokenBalance?: number;
+    tokensUsed?: number;
+    tokenUsageHistory?: unknown[];
+    metadata?: {
+      sigle?: string;
+      typeInstitution?: string;
+      denominationSociale?: string;
+      [key: string]: unknown;
+    };
+    createdAt?: string;
+    updatedAt?: string;
+    created_at?: string;  // API peut utiliser snake_case
+    updated_at?: string;  // API peut utiliser snake_case
+  } | null;  // IMPORTANT: peut être null, utiliser user.institutionId comme fallback
+  auth0Id: string;
+  role: UserRole;
+  permissions: string[];
 }
 
 // Schémas Zod pour la validation

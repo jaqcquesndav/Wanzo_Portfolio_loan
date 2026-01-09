@@ -1,77 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Input } from '../../ui/Input';
 import { Label } from '../../ui/Label';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
-import { Shield, AlertTriangle, TrendingUp, Info } from 'lucide-react';
-import { bccThresholdsService } from '../../../services/bccThresholds';
-import { ManagerPreferences, BCCOfficialReferences } from '../../../types/bcc-thresholds';
+import { Shield, AlertTriangle, TrendingUp, Info, Save, RotateCcw } from 'lucide-react';
+import { useBCCCompliance } from '../../../hooks/useBCCCompliance';
 
-export const BCCParametersPanel: React.FC = () => {
-  const [bccReferences, setBccReferences] = useState<BCCOfficialReferences | null>(null);
-  const [managerPreferences, setManagerPreferences] = useState<ManagerPreferences | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
+interface BCCParametersPanelProps {
+  portfolioId?: string;
+}
 
-  useEffect(() => {
-    const config = bccThresholdsService.getConfiguration();
-    setBccReferences(config.bccReferences);
-    setManagerPreferences(config.managerPreferences);
-  }, []);
+export const BCCParametersPanel: React.FC<BCCParametersPanelProps> = ({ portfolioId }) => {
+  const {
+    references,
+    preferences,
+    loading,
+    saving,
+    validationErrors,
+    updatePreference,
+    updateAlertThreshold,
+    savePreferences,
+    resetPreferences,
+  } = useBCCCompliance({ portfolioId });
 
   const handleSave = async () => {
-    if (!managerPreferences) return;
-    
-    setSaving(true);
-    setErrors([]);
-    
-    try {
-      await bccThresholdsService.saveManagerPreferences(managerPreferences, 'Gestionnaire Portfolio');
-      console.log('Préférences sauvegardées avec succès');
-    } catch (error) {
-      setErrors([error instanceof Error ? error.message : 'Erreur de sauvegarde']);
-    }
-    
-    setSaving(false);
-  };
-
-  const handleReset = async () => {
-    try {
-      const defaultPreferences = await bccThresholdsService.resetManagerPreferences();
-      setManagerPreferences(defaultPreferences);
-      setErrors([]);
-    } catch (error) {
-      setErrors([error instanceof Error ? error.message : 'Erreur de remise à zéro']);
+    const success = await savePreferences();
+    if (success) {
+      console.log('Préférences BCC sauvegardées');
     }
   };
 
-  const updatePreference = (field: keyof ManagerPreferences, value: number | object) => {
-    if (!managerPreferences) return;
-    
-    setManagerPreferences(prev => prev ? {
-      ...prev,
-      [field]: value
-    } : null);
-    
-    // Validation en temps réel
-    const tempPreferences = { ...managerPreferences, [field]: value };
-    const validationErrors = bccThresholdsService.validateManagerPreferences(tempPreferences);
-    setErrors(validationErrors);
+  const handleReset = () => {
+    resetPreferences();
   };
 
-  const updateAlertThreshold = (field: keyof ManagerPreferences['alertThresholds'], value: number) => {
-    if (!managerPreferences) return;
-    
-    const newAlertThresholds = {
-      ...managerPreferences.alertThresholds,
-      [field]: value
-    };
-    updatePreference('alertThresholds', newAlertThresholds);
-  };
-
-  if (!bccReferences || !managerPreferences) {
-    return <div>Chargement...</div>;
+  if (loading || !references || !preferences) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -80,23 +52,25 @@ export const BCCParametersPanel: React.FC = () => {
         <h3 className="text-lg font-semibold">Paramètres BCC</h3>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4 mr-1" />
             Valeurs par défaut
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleSave} disabled={saving || errors.length > 0}>
+          <Button variant="secondary" size="sm" onClick={handleSave} disabled={saving || validationErrors.length > 0}>
+            <Save className="h-4 w-4 mr-1" />
             {saving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
       </div>
 
-      {errors.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
+      {validationErrors.length > 0 && (
+        <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30">
           <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-red-800">
+            <div className="flex items-center gap-2 text-red-800 dark:text-red-300">
               <AlertTriangle className="h-4 w-4" />
               <span className="font-medium">Erreurs de validation :</span>
             </div>
-            <ul className="mt-2 text-sm text-red-700">
-              {errors.map((error, index) => (
+            <ul className="mt-2 text-sm text-red-700 dark:text-red-400">
+              {validationErrors.map((error, index) => (
                 <li key={index}>• {error}</li>
               ))}
             </ul>
@@ -104,82 +78,75 @@ export const BCCParametersPanel: React.FC = () => {
         </Card>
       )}
 
-      {/* Section Info BCC */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-800">
-            <Info className="h-5 w-5" />
-            Références Officielles BCC
+      {/* Section Info BCC - Compacte */}
+      <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-300 text-sm">
+            <Info className="h-4 w-4" />
+            Références BCC Instruction 004 (RDC)
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <Badge variant="primary">NPL ≤ {bccReferences.maxNplRatio}%</Badge>
-            <p className="text-xs text-blue-600 mt-1">Ratio NPL Maximum</p>
-          </div>
-          <div className="text-center">
-            <Badge variant="primary">ROA ≥ {bccReferences.minRoa}%</Badge>
-            <p className="text-xs text-blue-600 mt-1">ROA Minimum</p>
-          </div>
-          <div className="text-center">
-            <Badge variant="primary">Rendement ≥ {bccReferences.minPortfolioYield}%</Badge>
-            <p className="text-xs text-blue-600 mt-1">Rendement Minimum</p>
-          </div>
+        <CardContent className="flex flex-wrap gap-2 pt-0">
+          <Badge variant="primary" className="text-xs">NPL ≤ {references.maxNplRatio}%</Badge>
+          <Badge variant="primary" className="text-xs">ROA ≥ {references.minRoa}%</Badge>
+          <Badge variant="primary" className="text-xs">Rendement ≥ {references.minPortfolioYield}%</Badge>
+          <Badge variant="primary" className="text-xs">Recouvrement ≥ {references.minCollectionEfficiency}%</Badge>
+          <Badge variant="primary" className="text-xs">Délai ≤ {references.maxProcessingTime}j</Badge>
         </CardContent>
       </Card>
 
       {/* Qualité du Portefeuille */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-green-600" />
-            Préférences - Qualité du Portefeuille
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Shield className="h-4 w-4 text-green-600" />
+            Qualité du Portefeuille
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="npl">NPL Ratio Maximum (%)</Label>
+            <Label htmlFor="npl">NPL Max (%)</Label>
             <Input
               id="npl"
               type="number"
               min="0"
-              max={bccReferences.maxNplRatio}
+              max={references.maxNplRatio}
               step="0.1"
-              value={managerPreferences.maxNplRatio}
+              value={preferences.maxNplRatio}
               onChange={(e) => updatePreference('maxNplRatio', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≤ {bccReferences.maxNplRatio}% (BCC)
+              Votre seuil ≤ {references.maxNplRatio}% (BCC)
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="writeoff">Abandon Créances Maximum (%)</Label>
+            <Label htmlFor="writeoff">Abandon Max (%)</Label>
             <Input
               id="writeoff"
               type="number"
               min="0"
-              max={bccReferences.maxWriteOffRatio}
+              max={references.maxWriteOffRatio}
               step="0.1"
-              value={managerPreferences.maxWriteOffRatio}
+              value={preferences.maxWriteOffRatio}
               onChange={(e) => updatePreference('maxWriteOffRatio', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≤ {bccReferences.maxWriteOffRatio}% (BCC)
+              Votre seuil ≤ {references.maxWriteOffRatio}% (BCC)
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="recovery">Taux Récupération Minimum (%)</Label>
+            <Label htmlFor="recovery">Récupération Min (%)</Label>
             <Input
               id="recovery"
               type="number"
-              min={bccReferences.minRecoveryRate}
+              min={references.minRecoveryRate}
               max="100"
               step="1"
-              value={managerPreferences.minRecoveryRate}
+              value={preferences.minRecoveryRate}
               onChange={(e) => updatePreference('minRecoveryRate', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≥ {bccReferences.minRecoveryRate}% (BCC)
+              Votre seuil ≥ {references.minRecoveryRate}% (BCC)
             </p>
           </div>
         </CardContent>
@@ -187,41 +154,41 @@ export const BCCParametersPanel: React.FC = () => {
 
       {/* Rentabilité */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-            Préférences - Rentabilité
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+            Rentabilité
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="roa">ROA Minimum (%)</Label>
+            <Label htmlFor="roa">ROA Min (%)</Label>
             <Input
               id="roa"
               type="number"
-              min={bccReferences.minRoa}
+              min={references.minRoa}
               max="20"
               step="0.1"
-              value={managerPreferences.minRoa}
+              value={preferences.minRoa}
               onChange={(e) => updatePreference('minRoa', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≥ {bccReferences.minRoa}% (BCC)
+              Votre seuil ≥ {references.minRoa}% (BCC)
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="yield">Rendement Portefeuille Minimum (%)</Label>
+            <Label htmlFor="yield">Rendement Min (%)</Label>
             <Input
               id="yield"
               type="number"
-              min={bccReferences.minPortfolioYield}
+              min={references.minPortfolioYield}
               max="50"
               step="0.1"
-              value={managerPreferences.minPortfolioYield}
+              value={preferences.minPortfolioYield}
               onChange={(e) => updatePreference('minPortfolioYield', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≥ {bccReferences.minPortfolioYield}% (BCC)
+              Votre seuil ≥ {references.minPortfolioYield}% (BCC)
             </p>
           </div>
         </CardContent>
@@ -229,41 +196,41 @@ export const BCCParametersPanel: React.FC = () => {
 
       {/* Efficacité Opérationnelle */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
-            Préférences - Efficacité Opérationnelle
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            Efficacité Opérationnelle
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="collection">Efficacité Recouvrement Minimum (%)</Label>
+            <Label htmlFor="collection">Recouvrement Min (%)</Label>
             <Input
               id="collection"
               type="number"
-              min={bccReferences.minCollectionEfficiency}
+              min={references.minCollectionEfficiency}
               max="100"
               step="1"
-              value={managerPreferences.minCollectionEfficiency}
+              value={preferences.minCollectionEfficiency}
               onChange={(e) => updatePreference('minCollectionEfficiency', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≥ {bccReferences.minCollectionEfficiency}% (BCC)
+              Votre seuil ≥ {references.minCollectionEfficiency}% (BCC)
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="processing">Temps Traitement Maximum (jours)</Label>
+            <Label htmlFor="processing">Délai Max (jours)</Label>
             <Input
               id="processing"
               type="number"
               min="1"
-              max={bccReferences.maxProcessingTime}
+              max={references.maxProcessingTime}
               step="1"
-              value={managerPreferences.maxProcessingTime}
+              value={preferences.maxProcessingTime}
               onChange={(e) => updatePreference('maxProcessingTime', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Votre seuil ≤ {bccReferences.maxProcessingTime} jours (BCC)
+              Votre seuil ≤ {references.maxProcessingTime} jours (BCC)
             </p>
           </div>
         </CardContent>
@@ -271,22 +238,22 @@ export const BCCParametersPanel: React.FC = () => {
 
       {/* Seuils d'Alerte */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            Seuils d'Alerte Personnalisés
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            Alertes Personnalisées
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="npl-warning">Alerte NPL (%)</Label>
             <Input
               id="npl-warning"
               type="number"
               min="0"
-              max={managerPreferences.maxNplRatio}
+              max={preferences.maxNplRatio}
               step="0.1"
-              value={managerPreferences.alertThresholds.nplWarningRatio}
+              value={preferences.alertThresholds.nplWarningRatio}
               onChange={(e) => updateAlertThreshold('nplWarningRatio', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">Alerte avant seuil critique</p>
@@ -296,10 +263,10 @@ export const BCCParametersPanel: React.FC = () => {
             <Input
               id="roa-warning"
               type="number"
-              min={bccReferences.minRoa}
-              max={managerPreferences.minRoa}
+              min={references.minRoa}
+              max={preferences.minRoa}
               step="0.1"
-              value={managerPreferences.alertThresholds.roaWarningLevel}
+              value={preferences.alertThresholds.roaWarningLevel}
               onChange={(e) => updateAlertThreshold('roaWarningLevel', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">Alerte si ROA descend</p>
@@ -310,9 +277,9 @@ export const BCCParametersPanel: React.FC = () => {
               id="efficiency-warning"
               type="number"
               min="0"
-              max={managerPreferences.minCollectionEfficiency}
+              max={preferences.minCollectionEfficiency}
               step="1"
-              value={managerPreferences.alertThresholds.efficiencyWarningLevel}
+              value={preferences.alertThresholds.efficiencyWarningLevel}
               onChange={(e) => updateAlertThreshold('efficiencyWarningLevel', Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">Alerte si efficacité descend</p>

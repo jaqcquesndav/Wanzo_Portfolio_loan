@@ -27,8 +27,13 @@ export interface Disbursement {
   valueDate?: string;  // Date de valeur
   executionDate?: string;  // Date d'exécution
   
+  // Type de compte utilisé pour le déboursement
+  accountType: 'bank' | 'mobile_money';
+  accountId?: string; // ID du compte (BankAccount ou MobileMoneyAccount)
+  
   // Informations du compte débité (compte de l'institution)
-  debitAccount: {
+  // Pour compte bancaire
+  debitAccount?: {
     accountNumber: string;
     accountName: string;
     bankName: string;
@@ -36,20 +41,34 @@ export interface Disbursement {
     branchCode?: string;
   };
   
+  // Pour Mobile Money (compte source institution)
+  mobileMoneySource?: {
+    provider: 'orange_money' | 'mpesa' | 'airtel_money' | 'africell_money';
+    phoneNumber: string;
+    accountName: string;
+    transactionId?: string;
+  };
+  
   // Informations du compte crédité (compte du bénéficiaire)
   beneficiary: {
-    accountNumber: string;
+    accountType: 'bank' | 'mobile_money';
+    // Pour compte bancaire
+    accountNumber?: string;
     accountName: string;  // Nom du titulaire du compte
-    bankName: string;
+    bankName?: string;
     bankCode?: string;
     branchCode?: string;
     swiftCode?: string;
+    // Pour Mobile Money
+    provider?: 'orange_money' | 'mpesa' | 'airtel_money' | 'africell_money';
+    phoneNumber?: string;
+    // Infos communes
     companyName: string;
     address?: string;
   };
   
   // Informations de paiement
-  paymentMethod?: 'virement' | 'transfert' | 'chèque' | 'espèces';
+  paymentMethod: 'bank_transfer' | 'mobile_money' | 'check' | 'cash';
   paymentReference?: string;
   description?: string;  // Description ou motif du paiement
   

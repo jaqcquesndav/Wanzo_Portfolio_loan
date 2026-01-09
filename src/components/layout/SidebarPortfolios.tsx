@@ -7,6 +7,7 @@ import { PortfolioActionsDropdown } from '../portfolio/PortfolioActionsDropdown'
 import { CreatePortfolioModal } from '../portfolio/CreatePortfolioModal';
 import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
+import { useAppContextStore } from '../../stores/appContextStore';
 import type { TraditionalPortfolio } from '../../types/traditional-portfolio';
 import type { DefaultPortfolioFormData } from '../portfolio/DefaultPortfolioForm';
 
@@ -16,6 +17,7 @@ export function SidebarPortfolios() {
   const navigate = useNavigate();
   const { portfolioType } = useParams();
   const { currentPortfolioId } = usePortfolioContext();
+  const { institutionId, user } = useAppContextStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -49,8 +51,8 @@ export function SidebarPortfolios() {
       try {
         const toCreate = {
           ...data,
-          manager_id: 'default-manager', // à remplacer par la vraie valeur
-          institution_id: 'default-institution', // à remplacer par la vraie valeur
+          manager_id: user?.id || 'default-manager',
+          institution_id: institutionId || 'default-institution',
         };
         const newPortfolio = await traditional.createPortfolio(toCreate);
         setShowCreateModal(false);

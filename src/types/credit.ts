@@ -118,17 +118,23 @@ export type CreditRequestMetadata = {
   lastSyncAt?: string;                 // Date de dernière synchronisation (ISO 8601)
 };
 
+// Type d'échéancier/amortissement (3 valeurs - conformes documentation)
+export type ScheduleType = 
+  | 'constant'     // Échéances constantes (amortissement linéaire)
+  | 'degressive'   // Échéances dégressives
+  | 'progressive'; // Échéances progressives
+
 export type CreditRequest = {
   id: string;
   memberId: string;
   productId: string;
   receptionDate: string;
   requestAmount: number;
-  currency: string; // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF) - AJOUTÉ pour conformité
+  currency: string; // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF)
   periodicity: CreditPeriodicity;
   interestRate: number;
   reason: string;
-  scheduleType: 'constant' | 'degressive';
+  scheduleType: ScheduleType;
   schedulesCount: number;
   deferredPaymentsCount: number;
   gracePeriod?: number;
@@ -189,15 +195,51 @@ export type CreditAnalysis = {
 export type CreditDisbursement = {
   id: string;
   creditRequestId: string;
-  accountNumber: string;
+  portfolioId?: string;
   amount: number;
+  currency?: string;
   disbursementDate: string;
   disbursedBy: string;
   isBatchDisbursement: boolean;
   batchId?: string;
   isDrawdown: boolean;
   drawdownAmount?: number;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  
+  // Méthode de paiement
+  paymentMethod: 'bank_transfer' | 'mobile_money' | 'check' | 'cash';
+  
+  // Compte source (compte du portefeuille)
+  sourceAccount: {
+    accountType: 'bank' | 'mobile_money';
+    accountId: string;
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    provider?: string;
+    phoneNumber?: string;
+    balanceBefore?: number;
+    balanceAfter?: number;
+  };
+  
+  // Compte destination (bénéficiaire)
+  destinationAccount: {
+    accountType: 'bank' | 'mobile_money';
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    provider?: string;
+    phoneNumber?: string;
+    companyName?: string;
+  };
+  
+  // Références
+  externalReference?: string;
+  transactionId?: string;
+  
+  // Ancien champ pour compatibilité
+  accountNumber?: string;
+  
   createdAt: string;
   updatedAt?: string;
 };
@@ -239,14 +281,33 @@ export type AmortizationScheduleItem = {
 export type CreditFee = {
   id: string;
   creditRequestId: string;
+  portfolioId?: string;
   feeType: 'application' | 'processing' | 'disbursement' | 'insurance' | 'administration' | 'custom';
   customName?: string;
   amount: number;
-  paymentMethod: 'cash' | 'transfer' | 'deduction';
+  currency?: string;
+  paymentMethod: 'cash' | 'bank_transfer' | 'mobile_money' | 'deduction';
+  
+  // Traçabilité du compte
+  accountType?: 'bank' | 'mobile_money';
+  accountId?: string;
   accountNumber?: string;
+  
+  // Détails du compte de paiement
+  paymentAccount?: {
+    accountType: 'bank' | 'mobile_money';
+    accountId?: string;
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    provider?: string;
+    phoneNumber?: string;
+  };
+  
   isPaid: boolean;
   paidAmount?: number;
   paidDate?: string;
+  externalReference?: string;
   createdAt: string;
   updatedAt?: string;
 };
@@ -254,14 +315,49 @@ export type CreditFee = {
 export type CreditRepayment = {
   id: string;
   creditId: string;
+  portfolioId?: string;
   amount: number;
+  currency?: string;
   principalAmount: number;
   interestAmount: number;
   penaltyAmount: number;
   savingsAmount: number;
   commissionAmount: number;
   paymentDate: string;
-  paymentMethod: 'cash' | 'transfer' | 'guarantee';
+  paymentMethod: 'cash' | 'bank_transfer' | 'mobile_money' | 'check' | 'guarantee';
+  
+  // Traçabilité du compte
+  accountType?: 'bank' | 'mobile_money';
+  accountId?: string; // ID du BankAccount ou MobileMoneyAccount
+  
+  // Détails du compte source (payeur)
+  sourceAccount?: {
+    accountType: 'bank' | 'mobile_money';
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    provider?: string;
+    phoneNumber?: string;
+    companyName?: string;
+  };
+  
+  // Détails du compte destination (portefeuille)
+  destinationAccount?: {
+    accountType: 'bank' | 'mobile_money';
+    accountId: string;
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    provider?: string;
+    phoneNumber?: string;
+    balanceBefore?: number;
+    balanceAfter?: number;
+  };
+  
+  // Références
+  externalReference?: string;
+  transactionId?: string;
+  
   isEarlyRepayment: boolean;
   isBatchRepayment: boolean;
   batchId?: string;

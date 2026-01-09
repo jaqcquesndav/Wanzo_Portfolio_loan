@@ -5,7 +5,15 @@ import { initializeAllStorageData, isStorageInitialized } from '../services/stor
 import { dataValidationService } from '../services/validation/dataValidationService';
 
 /**
+ * Vérifie si l'application est en mode développement
+ */
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
+/**
  * Hook optimisé pour initialiser et gérer les données mock
+ * 
+ * IMPORTANT: Les données mock/fallback ne sont créées QU'EN MODE DÉVELOPPEMENT.
+ * En production, seules les données du backend sont utilisées.
  * 
  * Ce hook utilise le service mockDataInitializerService pour gérer l'initialisation
  * et la réinitialisation des données mock. Il fournit des états pour suivre le statut
@@ -24,25 +32,43 @@ export function useInitMockData() {
 
   // Initialisation au chargement du composant
   useEffect(() => {
+    // En production, ne pas initialiser de données mock
+    if (!isDevelopment) {
+      console.log('[PROD] Mode production - pas de données mock, utilisation du backend uniquement');
+      setIsInitialized(true);
+      setLoading(false);
+      return;
+    }
+    
+    // =====================================================
+    // MODE DÉVELOPPEMENT UNIQUEMENT CI-DESSOUS
+    // =====================================================
+    console.log('[DEV] Mode développement - initialisation des données mock');
+    
     // Forcer le nettoyage du localStorage pour supprimer les données obsolètes
     localStorage.removeItem('portfolios');
     localStorage.removeItem('mockDataVersion');
     localStorage.removeItem('app_initialized');
     sessionStorage.removeItem('app_initialized');
     
-    // Créer directement un portefeuille traditionnel par défaut
+    // Créer directement un portefeuille traditionnel par défaut (DEV ONLY)
     const defaultPortfolio = {
-      id: 'trad-default',
-      name: 'Portefeuille PME par défaut',
+      id: 'trad-default-dev',
+      name: '[DEV] Portefeuille PME de test',
       type: 'traditional',
       status: 'active',
-      target_amount: 500000000,
+      currency: 'USD',
+      initial_capital: 50000,
+      start_date: new Date().toISOString().split('T')[0],
+      is_permanent: true,
+      primary_account_type: 'bank',
+      target_amount: 500000,
       target_return: 12,
       target_sectors: ['Commerce', 'Services', 'Agriculture'],
       risk_profile: 'moderate',
       products: [],
       metrics: {
-        net_value: 450000000,
+        net_value: 50000,
         average_return: 10.5,
         risk_portfolio: 8,
         sharpe_ratio: 1.8,
@@ -57,7 +83,7 @@ export function useInitMockData() {
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      description: 'Portefeuille PME créé automatiquement',
+      description: '[DEV] Portefeuille de test - visible uniquement en développement',
       manager_id: 'default-manager',
       institution_id: 'default-institution'
     };
@@ -66,7 +92,7 @@ export function useInitMockData() {
     // Vérifier si on a déjà initialisé dans cette session
     const sessionInitialized = sessionStorage.getItem('app_initialized');
     if (sessionInitialized === 'true') {
-      console.log('Application déjà initialisée dans cette session, chargement accéléré');
+      console.log('[DEV] Application déjà initialisée dans cette session, chargement accéléré');
       setIsInitialized(true);
       setLoading(false);
       return;

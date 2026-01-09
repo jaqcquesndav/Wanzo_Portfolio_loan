@@ -4,59 +4,77 @@ import type { Institution, InstitutionManager } from '../../../types/institution
 
 /**
  * API pour les opérations liées aux institutions financières
+ * 
+ * IMPORTANT: L'institutionId doit être passé explicitement car le token JWT
+ * ne contient pas cette information. L'institutionId est obtenu via /users/me
+ * lors de l'authentification initiale.
  */
 export const institutionApi = {
   /**
-   * Récupère les informations de l'institution actuelle
+   * Récupère les informations d'une institution par son ID
+   * @param institutionId - L'ID de l'institution (obtenu via /users/me)
    */
-  getCurrentInstitution: () => {
-    return apiClient.get<Institution>('/institution');
+  getInstitution: (institutionId: string) => {
+    return apiClient.get<Institution>(`/institutions/${institutionId}`);
   },
 
   /**
-   * Met à jour les informations de l'institution
+   * Met à jour les informations d'une institution
+   * @param institutionId - L'ID de l'institution
+   * @param updates - Les champs à mettre à jour
    */
-  updateInstitution: (updates: Partial<Institution>) => {
-    return apiClient.put<Institution>('/institution', updates);
+  updateInstitution: (institutionId: string, updates: Partial<Institution>) => {
+    return apiClient.put<Institution>(`/institutions/${institutionId}`, updates);
   },
 
   /**
-   * Récupère tous les gestionnaires de l'institution
+   * Récupère tous les gestionnaires d'une institution
+   * @param institutionId - L'ID de l'institution
    */
-  getInstitutionManagers: () => {
-    return apiClient.get<InstitutionManager[]>('/institution/managers');
+  getInstitutionManagers: (institutionId: string) => {
+    return apiClient.get<InstitutionManager[]>(`/institutions/${institutionId}/managers`);
   },
 
   /**
-   * Ajoute un nouveau gestionnaire à l'institution
+   * Ajoute un nouveau gestionnaire à une institution
+   * @param institutionId - L'ID de l'institution
+   * @param manager - Les données du gestionnaire
    */
-  addInstitutionManager: (manager: { 
+  addInstitutionManager: (institutionId: string, manager: { 
     user_id: string; 
     role: 'admin' | 'manager';
   }) => {
-    return apiClient.post<InstitutionManager>('/institution/managers', manager);
+    return apiClient.post<InstitutionManager>(`/institutions/${institutionId}/managers`, manager);
   },
 
   /**
-   * Met à jour un gestionnaire de l'institution
+   * Met à jour un gestionnaire d'une institution
+   * @param institutionId - L'ID de l'institution
+   * @param managerId - L'ID du gestionnaire
+   * @param updates - Les champs à mettre à jour
    */
-  updateInstitutionManager: (id: string, updates: {
+  updateInstitutionManager: (institutionId: string, managerId: string, updates: {
     role?: 'admin' | 'manager';
   }) => {
-    return apiClient.put<InstitutionManager>(`/institution/managers/${id}`, updates);
+    return apiClient.put<InstitutionManager>(`/institutions/${institutionId}/managers/${managerId}`, updates);
   },
 
   /**
-   * Supprime un gestionnaire de l'institution
+   * Supprime un gestionnaire d'une institution
+   * @param institutionId - L'ID de l'institution
+   * @param managerId - L'ID du gestionnaire
    */
-  removeInstitutionManager: (id: string) => {
-    return apiClient.delete(`/institution/managers/${id}`);
+  removeInstitutionManager: (institutionId: string, managerId: string) => {
+    return apiClient.delete(`/institutions/${institutionId}/managers/${managerId}`);
   },
 
   /**
    * Téléverse un document institutionnel
+   * @param institutionId - L'ID de l'institution
+   * @param file - Le fichier à téléverser
+   * @param metadata - Métadonnées du document
    */
-  uploadInstitutionDocument: (file: File, metadata: { 
+  uploadInstitutionDocument: (institutionId: string, file: File, metadata: { 
     type: 'license' | 'agreement' | 'certificate' | 'other';
     name: string;
     description?: string;
@@ -69,13 +87,14 @@ export const institutionApi = {
       formData.append('description', metadata.description);
     }
 
-    return apiClient.upload<{ id: string; url: string }>('/institution/documents', formData);
+    return apiClient.upload<{ id: string; url: string }>(`/institutions/${institutionId}/documents`, formData);
   },
 
   /**
-   * Récupère tous les documents de l'institution
+   * Récupère tous les documents d'une institution
+   * @param institutionId - L'ID de l'institution
    */
-  getInstitutionDocuments: () => {
+  getInstitutionDocuments: (institutionId: string) => {
     return apiClient.get<Array<{
       id: string;
       name: string;
@@ -84,18 +103,20 @@ export const institutionApi = {
       size: number;
       uploadDate: string;
       description?: string;
-    }>>('/institution/documents');
+    }>>(`/institutions/${institutionId}/documents`);
   },
 
   /**
    * Valide une institution (pour l'activation initiale)
+   * @param institutionId - L'ID de l'institution
+   * @param validationData - Données de validation
    */
-  validateInstitution: (validationData: {
+  validateInstitution: (institutionId: string, validationData: {
     license_number: string;
     tax_id: string;
     regulatory_status: string;
     legal_representative: string;
   }) => {
-    return apiClient.post<{ status: string; message: string }>('/institution/validate', validationData);
+    return apiClient.post<{ status: string; message: string }>(`/institutions/${institutionId}/validate`, validationData);
   },
 };

@@ -3,6 +3,7 @@ import { auth0Service } from './auth/auth0Service';
 import { apiCache, CacheOptions } from './cache';
 import { interceptorManager, RequestConfig } from './interceptors';
 import { apiCoordinator } from './apiCoordinator';
+import { getInstitutionId, isAppContextReady } from '../../stores/appContextStore';
 
 // Gestionnaire global de rate limiting
 class RateLimitManager {
@@ -71,6 +72,34 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Interface pour les réponses API avec enveloppe standard
+ * Le backend renvoie toujours: { success: boolean, data: T, message?: string }
+ */
+interface ApiResponseWrapper<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  meta?: {
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  };
+}
+
+/**
+ * Vérifie si la réponse est une enveloppe API standard
+ */
+function isApiWrapper<T>(response: unknown): response is ApiResponseWrapper<T> {
+  return (
+    typeof response === 'object' &&
+    response !== null &&
+    'success' in response &&
+    typeof (response as ApiResponseWrapper<T>).success === 'boolean'
+  );
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('Content-Type') || '';
   
@@ -93,13 +122,28 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
   // Gestion des réponses JSON
   if (contentType.includes('application/json')) {
-    const data = await response.json();
+    const rawData = await response.json();
     
     if (!response.ok) {
-      throw new ApiError(response.status, data.message || 'Une erreur est survenue', data);
+      throw new ApiError(response.status, rawData.message || 'Une erreur est survenue', rawData);
     }
     
-    return data;
+    // Extraire les données de l'enveloppe si présente
+    // Le backend renvoie: { success: true, data: {...} }
+    // On veut retourner directement le contenu de "data"
+    if (isApiWrapper<T>(rawData)) {
+      if (!rawData.success) {
+        throw new ApiError(response.status, rawData.message || 'Erreur API', rawData);
+      }
+      // Si c'est une réponse paginée, on garde la structure avec meta
+      if (rawData.meta) {
+        return { data: rawData.data, meta: rawData.meta } as T;
+      }
+      return rawData.data;
+    }
+    
+    // Si pas d'enveloppe standard, retourner tel quel
+    return rawData as T;
   }
   
   // Gestion des réponses non-JSON
@@ -119,6 +163,15 @@ export const apiClient = {
     // Récupération du token d'authentification via auth0Service
     const token = auth0Service.getAccessToken() || localStorage.getItem('token');
     
+    // Récupération de l'institutionId depuis le store global
+    // NOTE: Le header X-Institution-Id est désactivé temporairement car le backend
+    // doit configurer CORS pour l'autoriser (Access-Control-Allow-Headers)
+    // L'institutionId devrait être extrait du token JWT côté backend
+    const institutionId = getInstitutionId();
+    if (institutionId) {
+      console.debug('📍 Institution ID disponible:', institutionId);
+    }
+    
     const requestConfig: RequestConfig = {
       ...options,
       url: endpoint,
@@ -126,6 +179,9 @@ export const apiClient = {
       headers: new Headers({
         ...API_CONFIG.headers,
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        // NOTE: Header X-Institution-Id désactivé - CORS non configuré sur le backend
+        // Réactiver quand le backend aura ajouté 'X-Institution-Id' dans Access-Control-Allow-Headers
+        // ...(institutionId ? { 'X-Institution-Id': institutionId } : {}),
         ...(options.headers || {})
       })
     };
@@ -156,10 +212,18 @@ export const apiClient = {
         
         // Gestion des erreurs 401 (non autorisé)
         if (error.status === 401) {
-          console.warn('Session expirée, redirection vers la page de connexion');
-          // Redirection vers la page de connexion ou déconnexion
-          auth0Service.clearAuth();
-          window.location.href = '/';
+          // Ne pas rediriger si on est dans le processus d'auth callback
+          // Le composant AuthCallback gère son propre fallback
+          const isAuthCallbackInProgress = sessionStorage.getItem('auth_callback_in_progress') === 'true';
+          
+          if (isAuthCallbackInProgress) {
+            console.warn('401 pendant auth callback - le fallback sera géré par AuthCallback');
+          } else {
+            console.warn('Session expirée, redirection vers la page de connexion');
+            // Redirection vers la page de connexion ou déconnexion
+            auth0Service.clearAuth();
+            window.location.href = '/';
+          }
         }
         throw error;
       }

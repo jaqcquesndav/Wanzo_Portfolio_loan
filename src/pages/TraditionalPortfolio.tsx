@@ -5,7 +5,7 @@ import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { PortfolioCard } from '../components/portfolio/PortfolioCard';
-import { CreatePortfolioModal } from '../components/portfolio/CreatePortfolioModal';
+import { CreatePortfolioModal, type PortfolioModalData } from '../components/portfolio/CreatePortfolioModal';
 import { PortfolioFilters } from '../components/portfolio/traditional/PortfolioFilters';
 import { Pagination } from '../components/ui/Pagination';
 import { useNotification } from '../contexts/useNotification';
@@ -13,7 +13,7 @@ import { useTraditionalPortfolios } from '../hooks/useTraditionalPortfolios';
 import { ConnectionError } from '../components/common/ConnectionError';
 import { WelcomeNewUser } from '../components/common/WelcomeNewUser';
 import { PortfoliosSkeleton } from '../components/ui/PortfoliosSkeleton';
-import type { DefaultPortfolioFormData } from '../components/portfolio/DefaultPortfolioForm';
+import { useAppContextStore } from '../stores/appContextStore';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -24,6 +24,9 @@ export default function TraditionalPortfolio() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Récupérer les informations du contexte utilisateur
+  const { institutionId, user } = useAppContextStore();
 
   const {
     portfolios,
@@ -36,13 +39,17 @@ export default function TraditionalPortfolio() {
     backendFailed,
     refresh
   } = useTraditionalPortfolios();
-  const handleCreatePortfolio = async (data: DefaultPortfolioFormData) => {
+  
+  /**
+   * Handler pour la création de portefeuille avec le nouveau format
+   */
+  const handleCreatePortfolio = async (data: PortfolioModalData) => {
     try {
-      // Ajoute les champs requis manquants pour TraditionalPortfolio
+      // Utiliser les vraies valeurs du contexte
       const newPortfolio = await createPortfolio({
         ...data,
-        manager_id: 'default-manager', // Remplace par la vraie valeur si besoin
-        institution_id: 'default-institution', // Remplace par la vraie valeur si besoin
+        manager_id: user?.id || 'default-manager',
+        institution_id: institutionId || 'default-institution',
       });
       showNotification('Portefeuille créé avec succès', 'success');
       setShowCreateModal(false);
@@ -63,7 +70,7 @@ export default function TraditionalPortfolio() {
 
   const searchedPortfolios = filteredPortfolios.filter(portfolio =>
     portfolio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    portfolio.target_sectors.some(sector => 
+    (portfolio.target_sectors || []).some(sector => 
       sector.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );

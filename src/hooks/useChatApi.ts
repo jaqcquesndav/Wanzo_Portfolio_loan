@@ -2,8 +2,8 @@
 // Hook pour accéder au chat via l'API backend
 
 import { useState, useEffect, useCallback } from 'react';
-import { chatApi } from '../services/api/shared/chat.api';
-import type { Message } from '../types/chat';
+import { chatApi } from '../services/api/chat.api';
+import type { Message, ChatMetadata, ChatSuggestion, PredefinedResponse } from '../types/chat';
 import { useNotification } from '../contexts/useNotification';
 
 /**
@@ -46,8 +46,16 @@ export function useChatApi(contextId?: string) {
     try {
       setLoading(true);
       setError(null);
-      const history = await chatApi.getMessageHistory(targetContextId, params);
-      setMessages(history.messages);
+      const history = await chatApi.getMessages(targetContextId, params);
+      setMessages(history.messages.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        sender: msg.sender === 'bot' ? 'assistant' : msg.sender,
+        contextId: msg.contextId || targetContextId,
+        metadata: msg.metadata,
+        attachments: msg.attachments
+      })));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement de l\'historique';
       setError(errorMessage);
@@ -58,26 +66,18 @@ export function useChatApi(contextId?: string) {
   }, [currentContextId]);
 
   // Envoyer un message
-  const sendMessage = useCallback(async (content: string, metadata?: {
-    portfolioId?: string;
-    portfolioType?: 'traditional';
-    companyId?: string;
-    entityType?: string;
-    entityId?: string;
-  }) => {
+  const sendMessage = useCallback(async (content: string, metadata?: ChatMetadata) => {
     if (!content.trim()) return;
 
     try {
       setIsTyping(true);
       setError(null);
 
-      const messageData = {
+      const response = await chatApi.sendMessage({
         content,
         contextId: currentContextId || undefined,
         metadata
-      };
-
-      const response = await chatApi.sendMessage(messageData);
+      });
       
       // Ajouter le message utilisateur
       const userMessage: ChatMessage = {
@@ -139,13 +139,7 @@ export function useChatApi(contextId?: string) {
   // Créer un nouveau contexte
   const createNewContext = useCallback(async (data?: {
     title?: string;
-    metadata?: {
-      portfolioId?: string;
-      portfolioType?: 'traditional';
-      companyId?: string;
-      entityType?: string;
-      entityId?: string;
-    };
+    metadata?: ChatMetadata;
   }) => {
     try {
       const context = await chatApi.createContext(data);
@@ -209,16 +203,11 @@ export function useChatApi(contextId?: string) {
  */
 export function useChatSuggestions(contextId?: string, filters?: {
   portfolioId?: string;
-  portfolioType?: 'traditional';
+  portfolioType?: 'traditional' | 'investment' | 'leasing';
   companyId?: string;
   currentScreenPath?: string;
 }) {
-  const [suggestions, setSuggestions] = useState<Array<{
-    id: string;
-    text: string;
-    category: string;
-    relevance: number;
-  }>>([]);
+  const [suggestions, setSuggestions] = useState<ChatSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -226,8 +215,11 @@ export function useChatSuggestions(contextId?: string, filters?: {
     try {
       setLoading(true);
       setError(null);
-      const data = await chatApi.getChatSuggestions(contextId, filters);
-      setSuggestions(data.suggestions);
+      const data = await chatApi.getSuggestions({
+        contextId,
+        ...filters
+      });
+      setSuggestions(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des suggestions';
       setError(errorMessage);
@@ -253,13 +245,7 @@ export function useChatSuggestions(contextId?: string, filters?: {
  * Hook pour les réponses prédéfinies
  */
 export function usePredefinedResponses(category?: string) {
-  const [responses, setResponses] = useState<Array<{
-    id: string;
-    title: string;
-    content: string;
-    category: string;
-    tags: string[];
-  }>>([]);
+  const [responses, setResponses] = useState<PredefinedResponse[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -310,7 +296,7 @@ export function useChatReports() {
     try {
       setLoading(true);
       setError(null);
-      const report = await chatApi.generateChatReport(params);
+      const report = await chatApi.generateReport(params);
       showNotification('Rapport généré avec succès', 'success');
       return report;
     } catch (err) {
@@ -362,8 +348,16 @@ export function useChatContexts() {
     try {
       setLoading(true);
       setError(null);
-      const data = await chatApi.getAllContexts(params);
-      setContexts(data.contexts);
+      const data = await chatApi.getContexts(params);
+      setContexts(data.contexts.map(ctx => ({
+        id: ctx.id,
+        title: ctx.title,
+        created_at: ctx.timestamp,
+        updated_at: ctx.timestamp,
+        metadata: ctx.metadata,
+        messageCount: ctx.messageCount || 0,
+        lastMessage: ctx.lastMessage
+      })));
       setTotal(data.total);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des contextes';

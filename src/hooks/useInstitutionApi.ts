@@ -1,275 +1,162 @@
 // src/hooks/useInstitutionApi.ts
-// Hook pour accéder aux institutions via l'API backend
+// Hook pour accéder à l'institution depuis le store global
 
-import { useState, useEffect, useCallback } from 'react';
-import { institutionApi } from '../services/api/shared/institution.api';
-import type { Institution, InstitutionManager } from '../types/institution';
+import { useCallback, useEffect, useState } from 'react';
+import type { Institution } from '../types/institution';
 import { useNotification } from '../contexts/useNotification';
+import { useAppContextStore } from '../stores/appContextStore';
+import { userApi } from '../services/api/shared/user.api';
+import { auth0Service } from '../services/api/auth/auth0Service';
 
 /**
  * Hook principal pour la gestion de l'institution courante
+ * 
+ * Ce hook gère intelligemment le chargement des données d'institution:
+ * 1. D'abord, il vérifie si les données sont dans le store Zustand
+ * 2. Si non (après rechargement de page), il les charge depuis /users/me
+ * 3. Les données sont ensuite disponibles pour l'affichage
  */
 export function useInstitutionApi() {
-  const [institution, setInstitution] = useState<Institution | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { showNotification } = useNotification();
+  
+  // Lire depuis le store Zustand EN PREMIER pour vérifier si données présentes
+  const { 
+    institution, 
+    institutionId, 
+    isContextLoaded,
+    setContext
+  } = useAppContextStore();
 
-  // Charger les informations de l'institution courante
-  const loadInstitution = useCallback(async () => {
+  // Initialiser isLoading à true si pas de données
+  const [isLoading, setIsLoading] = useState(!institution);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // DEBUG: Log pour vérifier ce que retourne le store
+  console.log('🔍 useInstitutionApi - données du store Zustand:', {
+    hasInstitution: !!institution,
+    institutionId,
+    isContextLoaded,
+    isLoading,
+    institutionName: institution?.name,
+    institutionType: institution?.type
+  });
+
+  // Charger les données depuis /users/me si nécessaire
+  const loadData = useCallback(async () => {
+    // Ne pas charger si pas de token
+    const token = auth0Service.getAccessToken();
+    if (!token) {
+      console.log('⚠️ useInstitutionApi: Pas de token, skip du chargement');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
+    
     try {
-      setLoading(true);
-      setError(null);
-      const data = await institutionApi.getCurrentInstitution();
-      setInstitution(data);
+      console.log('🔄 useInstitutionApi: Chargement des données depuis /users/me...');
+      const response = await userApi.getCurrentUserWithInstitution();
+      
+      // Gérer les deux formats possibles de réponse
+      const responseData = (response as { data?: unknown }).data || response;
+      const { user: userData, institution: institutionData, auth0Id, permissions } = responseData as {
+        user: { id?: string; firstName?: string; institutionId?: string; [key: string]: unknown };
+        institution: { id?: string; name?: string; [key: string]: unknown } | null;
+        auth0Id: string;
+        permissions: string[];
+      };
+      
+      console.log('✅ useInstitutionApi: Données chargées:', {
+        userName: userData?.firstName,
+        institutionName: institutionData?.name,
+        institutionId: institutionData?.id || userData?.institutionId
+      });
+      
+      // Mettre à jour le store avec les données
+      if (userData) {
+        setContext({
+          user: userData as Parameters<typeof setContext>[0]['user'],
+          institution: institutionData as Parameters<typeof setContext>[0]['institution'],
+          institutionId: institutionData?.id || userData?.institutionId,
+          auth0Id: auth0Id || '',
+          permissions: permissions || []
+        });
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement de l\'institution';
-      setError(errorMessage);
-      console.error('Erreur institution:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
+      setLoadError(errorMessage);
+      console.error('❌ useInstitutionApi: Erreur chargement:', err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, []);
+  }, [setContext]);
 
-  // Mettre à jour l'institution
-  const updateInstitution = useCallback(async (updates: Partial<Institution>) => {
-    try {
-      setError(null);
-      const updatedInstitution = await institutionApi.updateInstitution(updates);
-      setInstitution(updatedInstitution);
-      showNotification('Institution mise à jour avec succès', 'success');
-      return updatedInstitution;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour de l\'institution';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur mise à jour institution:', err);
-      throw err;
+  // Flag pour éviter les appels multiples
+  const [hasTriedLoading, setHasTriedLoading] = useState(false);
+
+  // Effet pour charger les données si elles ne sont pas dans le store
+  useEffect(() => {
+    // Si on a déjà l'institution dans le store, pas besoin de charger
+    if (institution) {
+      console.log('✅ useInstitutionApi: Institution déjà dans le store:', institution.name);
+      setIsLoading(false);
+      return;
     }
+    
+    // Ne pas charger si déjà essayé
+    if (hasTriedLoading) {
+      return;
+    }
+    
+    // Ne pas charger si pas de token (utilisateur non connecté)
+    const token = auth0Service.getAccessToken();
+    if (!token) {
+      console.log('⚠️ useInstitutionApi: Pas de token, skip du chargement');
+      setIsLoading(false);
+      return;
+    }
+    
+    // Charger les données depuis l'API
+    console.log('🔄 useInstitutionApi: Chargement des données...');
+    setHasTriedLoading(true);
+    loadData();
+  }, [institution, hasTriedLoading, loadData]);
+
+  // Fonction de rafraîchissement manuel
+  const refetch = useCallback(async () => {
+    await loadData();
+    if (!loadError) {
+      showNotification('Données de l\'institution actualisées', 'success');
+    }
+  }, [loadData, loadError, showNotification]);
+
+  // NOTE: updateInstitution et validateInstitution nécessiteraient des endpoints backend
+  // Pour l'instant, ces fonctions ne sont pas implémentées côté backend
+  const updateInstitution = useCallback(async (_updates: Partial<Institution>) => {
+    showNotification('La mise à jour de l\'institution n\'est pas encore disponible', 'warning');
+    throw new Error('Endpoint non disponible');
   }, [showNotification]);
 
-  // Valider l'institution
-  const validateInstitution = useCallback(async (validationData: {
+  const validateInstitution = useCallback(async (_validationData: {
     license_number: string;
     tax_id: string;
     regulatory_status: string;
     legal_representative: string;
   }) => {
-    try {
-      setError(null);
-      const result = await institutionApi.validateInstitution(validationData);
-      showNotification('Institution validée avec succès', 'success');
-      // Recharger les données de l'institution après validation
-      await loadInstitution();
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la validation de l\'institution';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur validation institution:', err);
-      throw err;
-    }
-  }, [showNotification, loadInstitution]);
-
-  // Charger l'institution au montage du composant
-  useEffect(() => {
-    loadInstitution();
-  }, [loadInstitution]);
+    showNotification('La validation de l\'institution n\'est pas encore disponible', 'warning');
+    throw new Error('Endpoint non disponible');
+  }, [showNotification]);
 
   return {
-    institution,
-    loading,
-    error,
+    // Données de l'institution depuis le store Zustand
+    institution: institution as Institution | null,
+    institutionId,
+    // États
+    loading: isLoading || (!institution && !loadError),
+    error: loadError,
+    // Actions
     updateInstitution,
     validateInstitution,
-    refetch: loadInstitution
-  };
-}
-
-/**
- * Hook pour la gestion des gestionnaires de l'institution
- */
-export function useInstitutionManagers() {
-  const [managers, setManagers] = useState<InstitutionManager[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { showNotification } = useNotification();
-
-  // Charger les gestionnaires
-  const loadManagers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await institutionApi.getInstitutionManagers();
-      setManagers(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des gestionnaires';
-      setError(errorMessage);
-      console.error('Erreur gestionnaires:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Ajouter un gestionnaire
-  const addManager = useCallback(async (manager: { 
-    user_id: string; 
-    role: 'admin' | 'manager';
-  }) => {
-    try {
-      setError(null);
-      const newManager = await institutionApi.addInstitutionManager(manager);
-      setManagers(prev => [...prev, newManager]);
-      showNotification('Gestionnaire ajouté avec succès', 'success');
-      return newManager;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'ajout du gestionnaire';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur ajout gestionnaire:', err);
-      throw err;
-    }
-  }, [showNotification]);
-
-  // Mettre à jour un gestionnaire
-  const updateManager = useCallback(async (id: string, updates: {
-    role?: 'admin' | 'manager';
-  }) => {
-    try {
-      setError(null);
-      const updatedManager = await institutionApi.updateInstitutionManager(id, updates);
-      setManagers(prev => prev.map(m => m.id === id ? updatedManager : m));
-      showNotification('Gestionnaire mis à jour avec succès', 'success');
-      return updatedManager;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour du gestionnaire';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur mise à jour gestionnaire:', err);
-      throw err;
-    }
-  }, [showNotification]);
-
-  // Supprimer un gestionnaire
-  const removeManager = useCallback(async (id: string) => {
-    try {
-      setError(null);
-      await institutionApi.removeInstitutionManager(id);
-      setManagers(prev => prev.filter(m => m.id !== id));
-      showNotification('Gestionnaire supprimé avec succès', 'success');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression du gestionnaire';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur suppression gestionnaire:', err);
-      throw err;
-    }
-  }, [showNotification]);
-
-  // Charger les gestionnaires au montage du composant
-  useEffect(() => {
-    loadManagers();
-  }, [loadManagers]);
-
-  return {
-    managers,
-    loading,
-    error,
-    addManager,
-    updateManager,
-    removeManager,
-    refetch: loadManagers
-  };
-}
-
-/**
- * Hook pour la gestion des documents de l'institution
- */
-export function useInstitutionDocuments() {
-  const [documents, setDocuments] = useState<Array<{
-    id: string;
-    name: string;
-    type: string;
-    url: string;
-    size: number;
-    uploadDate: string;
-    description?: string;
-  }>>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { showNotification } = useNotification();
-
-  // Charger les documents
-  const loadDocuments = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await institutionApi.getInstitutionDocuments();
-      setDocuments(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des documents';
-      setError(errorMessage);
-      console.error('Erreur documents:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Téléverser un document
-  const uploadDocument = useCallback(async (file: File, metadata: { 
-    type: 'license' | 'agreement' | 'certificate' | 'other';
-    name: string;
-    description?: string;
-  }) => {
-    try {
-      setError(null);
-      const result = await institutionApi.uploadInstitutionDocument(file, metadata);
-      showNotification('Document téléversé avec succès', 'success');
-      // Recharger la liste des documents
-      await loadDocuments();
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du téléversement du document';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur téléversement document:', err);
-      throw err;
-    }
-  }, [showNotification, loadDocuments]);
-
-  // Charger les documents au montage du composant
-  useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
-
-  return {
-    documents,
-    loading,
-    error,
-    uploadDocument,
-    refetch: loadDocuments
-  };
-}
-
-/**
- * Hook compatible avec l'ancien useOrganization (localStorage)
- * Fournit une interface de migration progressive
- */
-export function useInstitutionApiCompat() {
-  const {
-    institution,
-    loading,
-    error,
-    updateInstitution
-  } = useInstitutionApi();
-
-  return {
-    organization: institution, // Alias pour compatibilité
-    institution,
-    loading,
-    error,
-    updateOrganization: updateInstitution, // Alias pour compatibilité
-    updateInstitution,
-    refetch: () => {} // Placeholder pour compatibilité
+    refetch
   };
 }
