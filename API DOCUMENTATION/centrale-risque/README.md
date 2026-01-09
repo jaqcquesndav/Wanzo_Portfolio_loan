@@ -1,764 +1,746 @@
 ﻿# Centrale des Risques
 
-Ce document décrit les endpoints pour la gestion des données de la Centrale des Risques dans l'API Wanzo Portfolio Institution.
+> **Synchronisée avec le code source** - Janvier 2026
+
+Cette API permet de gérer les données de la Centrale des Risques, incluant les profils de risque, les incidents de paiement, les engagements, les alertes et les statistiques globales.
+
+## 🔗 Base URL
+
+**Développement :** `http://localhost:8000/portfolio/api/v1`  
+**Production :** `https://api.wanzo.com/portfolio/api/v1`
 
 **Route UI**: `/app/:portfolioType/central-risque`  
-**Page**: `src/pages/CentralRisque.tsx`  
-**Label Navigation**: "Centrale des Risques"
+**Fichiers sources**: 
+- `services/api/shared/centrale-risque.api.ts`
+- `services/api/shared/risk.api.ts`
 
-## API de Risque
+---
 
-### Récupérer les données de risque crédit pour une entreprise
+## 📡 Endpoints
 
-Récupère les informations de risque crédit pour une entreprise spécifique.
+### 1. Profil de Risque Entreprise
 
-**Endpoint** : `GET /risk/credit/:companyId`
+#### 1.1 Récupérer le profil de risque d'une entreprise
 
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
+```http
+GET /risk/central/company/{companyId}
+```
 
-**Réponse réussie** (200 OK) :
+**Description**: Recherche les informations complètes de risque pour une entreprise.
+
+**Paramètres de chemin :**
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `companyId` | string | Oui | Identifiant unique de l'entreprise |
+
+**Réponse (200 OK) :**
 
 ```json
 {
-  "id": "cr-123456",
-  "companyId": "123456",
+  "companyId": "company-uuid",
   "companyName": "Entreprise ABC",
-  "sector": "Technologies",
-  "institution": "Banque Commerciale",
-  "encours": 250000000,
-  "statut": "Actif",
-  "coteCredit": "B",
-  "incidents": 0,
-  "creditScore": 78,
-  "debtRatio": 0.45,
-  "lastUpdated": "2025-07-20T10:30:45.000Z"
-}
-```
-
-### Récupérer les données de risque leasing pour une entreprise
-
-Récupère les informations de risque leasing pour une entreprise spécifique.
-
-**Endpoint** : `GET /risk/leasing/:companyId`
-
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "lr-123456",
-  "companyId": "123456",
-  "companyName": "Entreprise ABC",
-  "sector": "Technologies",
-  "institution": "Leasing Pro",
-  "equipmentType": "Équipement informatique",
-  "valeurFinancement": 150000000,
-  "statut": "Actif",
-  "coteCredit": "B",
-  "incidents": 0,
-  "lastUpdated": "2025-07-20T10:30:45.000Z"
-}
-```
-
-### Récupérer les données de risque investissement pour une entreprise
-
-Récupère les informations de risque investissement pour une entreprise spécifique.
-
-**Endpoint** : `GET /risk/investment/:companyId`
-
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "ir-123456",
-  "companyId": "123456",
-  "companyName": "Entreprise ABC",
-  "sector": "Technologies",
-  "institution": "Fonds d'Investissement Capital",
-  "investmentType": "Action",
-  "montantInvesti": 100000000,
-  "valorisation": 120000000,
-  "statut": "Performant",
-  "coteCredit": "B",
-  "rendementActuel": 0.12,
-  "lastUpdated": "2025-07-20T10:30:45.000Z"
-}
-```
-
-### Soumettre une nouvelle entrée de risque
-
-Soumet une nouvelle entrée de risque pour une entreprise.
-
-**Endpoint** : `POST /risk/:type`
-
-**Paramètres de chemin** :
-- `type` : Type de risque (credit, leasing, investment)
-
-**Corps de la requête** :
-Le corps de la requête dépend du type de risque soumis.
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "entry-123456",
-  "status": "created"
-}
-```
-
-### Mettre à jour une entrée de risque
-
-Met à jour une entrée de risque existante.
-
-**Endpoint** : `PUT /risk/:type/:id`
-
-**Paramètres de chemin** :
-- `type` : Type de risque (credit, leasing, investment)
-- `id` : Identifiant unique de l'entrée de risque
-
-**Corps de la requête** :
-Le corps de la requête contient les champs à mettre à jour.
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "status": "updated"
-}
-```
-
-### Récupérer un rapport de synthèse des risques
-
-Récupère un rapport de synthèse des risques.
-
-**Endpoint** : `GET /risk/summary`
-
-**Paramètres de requête** :
-- `portfolioId` (optionnel) : Identifiant du portefeuille
-- `fromDate` (optionnel) : Date de début (format ISO)
-- `toDate` (optionnel) : Date de fin (format ISO)
-- `riskLevel` (optionnel) : Niveau de risque (low, medium, high, critical)
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "totalEntries": 150,
-  "riskDistribution": {
-    "low": 45,
-    "medium": 65,
-    "high": 30,
-    "critical": 10
-  },
-  "topRiskyCompanies": [
-    {
-      "companyId": "789012",
-      "companyName": "Entreprise XYZ",
-      "riskScore": 92,
-      "riskLevel": "critical"
-    },
-    {
-      "companyId": "456789",
-      "companyName": "Entreprise DEF",
-      "riskScore": 86,
-      "riskLevel": "high"
-    },
-    {
-      "companyId": "123456",
-      "companyName": "Entreprise ABC",
-      "riskScore": 78,
-      "riskLevel": "medium"
-    }
-  ]
-}
-```
-
-## API de Centrale de Risque
-
-### Récupérer le profil de risque d'une entreprise
-
-Récupère les informations détaillées du profil de risque d'une entreprise.
-
-**Endpoint** : `GET /risk/central/company/:companyId`
-
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "companyId": "123456",
-  "companyName": "Entreprise ABC",
-  "creditScore": 78,
+  "creditScore": 72,
   "riskCategory": "medium",
   "financialHealth": {
-    "solvabilite": 0.70,
-    "liquidite": 0.65,
-    "rentabilite": 0.80,
+    "solvabilite": 0.65,
+    "liquidite": 1.2,
+    "rentabilite": 0.08,
     "endettement": 0.45,
-    "scoreGlobal": 0.68
+    "scoreGlobal": 68
   },
   "creditHistory": {
-    "encoursTotalActuel": 285000000,
-    "encoursTotalHistorique": 450000000,
+    "encoursTotalActuel": 150000000,
+    "encoursTotalHistorique": 350000000,
     "repartitionParType": {
-      "creditsBancaires": 250000000,
-      "creditsBail": 35000000,
-      "lignesDeCredit": 0,
+      "creditsBancaires": 100000000,
+      "creditsBail": 30000000,
+      "lignesDeCredit": 20000000,
       "autres": 0
     },
     "incidents": {
-      "total": 1,
+      "total": 2,
       "cheques": 0,
-      "effets": 0,
+      "effets": 1,
       "retards": 1
     }
   },
   "defaultProbability": 0.12,
   "recommendedActions": [
-    "Surveiller les ratios d'endettement",
-    "Vérifier trimestriellement les comptes"
+    "Surveiller les flux de trésorerie",
+    "Demander garantie supplémentaire",
+    "Révision trimestrielle"
   ],
-  "lastUpdate": "2025-07-20T10:30:45.000Z"
+  "lastUpdate": "2026-01-09T10:30:00.000Z"
 }
 ```
 
-### Récupérer les incidents de paiement d'une entreprise
+#### 1.2 Rapport de risque complet
 
-Récupère les incidents de paiement pour une entreprise.
+```http
+GET /risk/central/company/{companyId}/full-report
+```
 
-**Endpoint** : `GET /risk/central/company/:companyId/incidents`
+**Description**: Génère un rapport de risque détaillé avec analyse financière complète.
 
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-- `period` (optionnel) : Période pour les incidents (ex: 2025-Q1, 2025-Q2)
-
-**Réponse réussie** (200 OK) :
+**Réponse (200 OK) :**
 
 ```json
 {
-  "companyId": "123456",
+  "companyId": "company-uuid",
   "companyName": "Entreprise ABC",
-  "incidents": [
-    {
-      "id": "inc-123",
-      "type": "retard",
-      "date": "2025-03-15T00:00:00.000Z",
-      "amount": 5000000,
-      "days": 12,
-      "institution": "Banque Commerciale",
-      "description": "Retard de paiement sur échéance de crédit",
-      "status": "régularisé",
-      "regularisationDate": "2025-03-27T00:00:00.000Z"
-    }
-  ],
-  "summary": {
-    "totalIncidents": 1,
-    "totalAmount": 5000000,
-    "byType": {
-      "retard": 1
-    },
-    "byStatus": {
-      "régularisé": 1
-    },
-    "averageDaysLate": 12
-  }
-}
-```
-
-### Récupérer les engagements d'une entreprise
-
-Récupère les engagements financiers d'une entreprise.
-
-**Endpoint** : `GET /risk/central/company/:companyId/engagements`
-
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "companyId": "123456",
-  "companyName": "Entreprise ABC",
-  "totalEngagement": 285000000,
-  "engagements": [
-    {
-      "id": "eng-123",
-      "institution": "Banque Commerciale",
-      "type": "credit",
-      "startDate": "2024-10-15T00:00:00.000Z",
-      "endDate": "2026-10-14T23:59:59.999Z",
-      "initialAmount": 250000000,
-      "currentAmount": 250000000,
-      "currency": "XOF",
-      "status": "actif",
-      "paymentStatus": "normal"
-    },
-    {
-      "id": "eng-456",
-      "institution": "Leasing Pro",
-      "type": "leasing",
-      "startDate": "2025-01-15T00:00:00.000Z",
-      "endDate": "2027-01-14T23:59:59.999Z",
-      "initialAmount": 35000000,
-      "currentAmount": 35000000,
-      "currency": "XOF",
-      "status": "actif",
-      "paymentStatus": "normal"
-    }
-  ],
-  "summary": {
-    "byType": {
-      "credit": 250000000,
-      "leasing": 35000000
-    },
-    "byStatus": {
-      "actif": 285000000
-    },
-    "byPaymentStatus": {
-      "normal": 285000000
-    }
-  }
-}
-```
-
-### Ajouter une entrée de risque
-
-Ajoute une nouvelle entrée de risque pour une entreprise.
-
-**Endpoint** : `POST /risk/central/entries`
-
-**Corps de la requête** :
-
-```json
-{
-  "companyId": "123456",
-  "type": "incident_paiement",
-  "date": "2025-07-15T00:00:00.000Z",
-  "amount": 5000000,
-  "description": "Retard de paiement sur échéance de crédit",
-  "severity": "medium",
-  "source": "Banque Commerciale"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "entry-789",
-  "companyId": "123456",
-  "type": "incident_paiement",
-  "date": "2025-07-15T00:00:00.000Z",
-  "amount": 5000000,
-  "description": "Retard de paiement sur échéance de crédit",
-  "severity": "medium",
-  "source": "Banque Commerciale",
-  "created_at": "2025-07-15T10:30:45.000Z"
-}
-```
-
-### Mettre à jour une entrée de risque
-
-Met à jour une entrée de risque existante.
-
-**Endpoint** : `PUT /risk/central/entries/:id`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'entrée de risque
-
-**Corps de la requête** :
-
-```json
-{
-  "status": "resolved",
-  "resolution": "Paiement effectué et régularisé",
-  "severity": "low"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "entry-789",
-  "companyId": "123456",
-  "type": "incident_paiement",
-  "date": "2025-07-15T00:00:00.000Z",
-  "amount": 5000000,
-  "description": "Retard de paiement sur échéance de crédit",
-  "severity": "low",
-  "status": "resolved",
-  "resolution": "Paiement effectué et régularisé",
-  "source": "Banque Commerciale",
-  "created_at": "2025-07-15T10:30:45.000Z",
-  "updated_at": "2025-07-20T11:45:30.000Z"
-}
-```
-
-### Récupérer les alertes de risque actives
-
-Récupère les alertes de risque actives.
-
-**Endpoint** : `GET /risk/central/alerts`
-
-**Paramètres de requête** :
-- `severity` (optionnel) : Niveau de sévérité (low, medium, high)
-- `type` (optionnel) : Type d'alerte (market, credit, operational, compliance, liquidity)
-- `page` (optionnel) : Numéro de page pour la pagination
-- `limit` (optionnel) : Nombre d'éléments par page
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "data": [
-    {
-      "id": "alert-123",
-      "type": "credit",
-      "severity": "medium",
-      "title": "Augmentation des retards de paiement dans le secteur textile",
-      "description": "Une hausse de 15% des incidents de paiement a été observée dans le secteur textile au cours du dernier trimestre.",
-      "affectedEntities": [
-        {
-          "id": "sector-textile",
-          "type": "sector",
-          "name": "Textile"
-        }
-      ],
-      "createdAt": "2025-07-10T08:15:30.000Z",
-      "status": "new"
-    }
-  ],
-  "meta": {
-    "total": 24,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 3
-  }
-}
-```
-
-### Récupérer les statistiques de risque
-
-Récupère les statistiques générales de risque.
-
-**Endpoint** : `GET /risk/central/statistics`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "totalCompanies": 1250,
-  "riskDistribution": {
-    "low": 450,
-    "medium": 520,
-    "high": 200,
-    "very_high": 80
-  },
-  "sectorRiskHeatmap": [
-    {
-      "sector": "Technologies",
-      "riskScore": 45,
-      "exposure": 3500000000,
-      "companies": 120
-    },
-    {
-      "sector": "Textile",
-      "riskScore": 68,
-      "exposure": 2100000000,
-      "companies": 85
-    }
-  ],
-  "defaultRates": {
-    "overall": 0.08,
-    "byCompanySize": {
-      "small": 0.12,
-      "medium": 0.08,
-      "large": 0.04
-    },
-    "bySector": {
-      "Technologies": 0.05,
-      "Textile": 0.10
-    }
-  },
-  "trends": {
-    "period": "last-12-months",
-    "defaultRate": [
-      {"date": "2024-08", "value": 0.075},
-      {"date": "2024-09", "value": 0.080}
-    ],
-    "riskDistribution": [
-      {
-        "date": "2024-08",
-        "low": 460,
-        "medium": 510,
-        "high": 195,
-        "very_high": 75
-      },
-      {
-        "date": "2024-09",
-        "low": 455,
-        "medium": 515,
-        "high": 198,
-        "very_high": 77
-      }
-    ]
-  }
-}
-```
-
-### Récupérer le rapport de risque complet d'une entreprise
-
-Récupère le rapport de risque complet pour une entreprise.
-
-**Endpoint** : `GET /risk/central/company/:companyId/full-report`
-
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "companyId": "123456",
-  "companyName": "Entreprise ABC",
-  "generateDate": "2025-07-25T12:00:00.000Z",
-  "creditScore": 78,
+  "generateDate": "2026-01-09T12:00:00.000Z",
+  "creditScore": 72,
   "riskCategory": "medium",
   "financialAnalysis": {
     "balanceSheet": {
-      "totalAssets": 5000000000,
-      "currentAssets": 2000000000,
-      "fixedAssets": 3000000000,
-      "totalLiabilities": 3000000000,
-      "currentLiabilities": 1000000000,
-      "longTermLiabilities": 2000000000,
-      "equity": 2000000000
+      "totalAssets": 500000000,
+      "totalLiabilities": 300000000,
+      "equity": 200000000
     },
     "incomeStatement": {
-      "revenue": 3500000000,
-      "operatingExpenses": 3000000000,
-      "operatingProfit": 500000000,
-      "netProfit": 350000000
+      "revenue": 120000000,
+      "netIncome": 15000000
     },
     "cashFlow": {
-      "operatingCashFlow": 450000000,
-      "investingCashFlow": -200000000,
-      "financingCashFlow": -100000000,
-      "netCashFlow": 150000000
+      "operatingCashFlow": 20000000,
+      "investingCashFlow": -5000000,
+      "financingCashFlow": -8000000
     },
     "keyRatios": {
-      "currentRatio": 2.0,
-      "quickRatio": 1.5,
+      "currentRatio": 1.5,
       "debtToEquity": 1.5,
-      "returnOnAssets": 0.07,
-      "returnOnEquity": 0.175
+      "returnOnEquity": 0.075,
+      "interestCoverage": 3.2
     },
     "trends": {
       "revenue": [
-        {"year": "2023", "value": 3000000000},
-        {"year": "2024", "value": 3200000000},
-        {"year": "2025", "value": 3500000000}
-      ],
-      "netProfit": [
-        {"year": "2023", "value": 280000000},
-        {"year": "2024", "value": 310000000},
-        {"year": "2025", "value": 350000000}
+        {"year": "2023", "value": 100000000},
+        {"year": "2024", "value": 110000000},
+        {"year": "2025", "value": 120000000}
       ]
     }
   },
   "creditHistory": {
     "engagements": [
       {
-        "institution": "Banque Commerciale",
+        "institution": "Rawbank",
         "type": "credit",
-        "amount": 250000000,
-        "startDate": "2024-10-15",
-        "status": "actif"
-      },
-      {
-        "institution": "Leasing Pro",
-        "type": "leasing",
-        "amount": 35000000,
-        "startDate": "2025-01-15",
+        "amount": 100000000,
+        "startDate": "2024-01-15",
         "status": "actif"
       }
     ],
     "incidents": [
       {
         "type": "retard",
-        "date": "2025-03-15",
+        "date": "2025-06-15",
         "amount": 5000000,
         "status": "régularisé"
       }
     ]
   },
   "marketAnalysis": {
-    "sectorRisk": 0.55,
+    "sectorRisk": 0.35,
     "sectorTrend": "stable",
-    "competitivePosition": "strong",
-    "marketShareTrend": "growing"
+    "competitivePosition": "leader_regional",
+    "marketShareTrend": "croissant"
   },
   "managementAssessment": {
-    "experienceScore": 0.8,
-    "stabilityScore": 0.75,
-    "complianceScore": 0.9,
+    "experienceScore": 85,
+    "stabilityScore": 78,
+    "complianceScore": 92,
     "observations": [
-      "Équipe de direction stable depuis 5 ans",
-      "Bonne gouvernance d'entreprise"
+      "Direction expérimentée avec 15+ ans",
+      "Succession bien planifiée"
     ]
   },
   "recommendation": {
-    "maxExposure": 500000000,
-    "suggestedCollateral": ["Garanties immobilières", "Nantissement d'équipement"],
-    "monitoringFrequency": "trimestrielle",
+    "maxExposure": 200000000,
+    "suggestedCollateral": ["hypothèque", "nantissement fonds commerce"],
+    "monitoringFrequency": "trimestriel",
     "additionalConditions": [
-      "Reporting financier trimestriel",
-      "Notification de tout changement majeur de direction"
+      "Ratio d'endettement < 60%",
+      "Reporting financier mensuel"
     ]
   }
 }
 ```
 
-### Récupérer l'historique des risques d'une entreprise
+#### 1.3 Historique des risques
 
-Récupère l'historique des risques pour une entreprise.
+```http
+GET /risk/central/company/{companyId}/history
+```
 
-**Endpoint** : `GET /risk/central/company/:companyId/history`
+**Paramètres de requête :**
 
-**Paramètres de requête** :
-- `companyId` : Identifiant unique de l'entreprise
-- `startDate` (optionnel) : Date de début (format ISO)
-- `endDate` (optionnel) : Date de fin (format ISO)
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `startDate` | string | Non | Date de début (ISO 8601) |
+| `endDate` | string | Non | Date de fin (ISO 8601) |
 
-**Réponse réussie** (200 OK) :
+**Réponse (200 OK) :**
 
 ```json
 {
-  "companyId": "123456",
+  "companyId": "company-uuid",
   "companyName": "Entreprise ABC",
   "history": [
     {
-      "date": "2025-01-15",
-      "creditScore": 82,
-      "riskCategory": "low"
-    },
-    {
-      "date": "2025-04-15",
-      "creditScore": 78,
+      "date": "2026-01-01",
+      "creditScore": 72,
       "riskCategory": "medium",
       "significantChanges": [
         {
-          "type": "incident_paiement",
-          "description": "Retard de paiement sur échéance de crédit",
-          "impact": "negative"
+          "type": "score_update",
+          "description": "Amélioration du ratio de liquidité",
+          "impact": "positive"
         }
       ]
     },
     {
-      "date": "2025-07-15",
-      "creditScore": 78,
+      "date": "2025-10-01",
+      "creditScore": 68,
       "riskCategory": "medium"
     }
   ],
-  "trend": "stable",
-  "volatility": 0.05
+  "trend": "improving",
+  "volatility": 0.15
 }
 ```
 
-## Implémentation technique
+---
 
-Les endpoints ci-dessus sont implémentés dans deux modules distincts :
+### 2. Incidents de Paiement
 
-1. Le module `risk.api.ts` qui fournit les fonctions suivantes :
-   - `getCreditRisk(companyId)` : Récupère les données de risque crédit
-   - `getLeasingRisk(companyId)` : Récupère les données de risque leasing
-   - `getInvestmentRisk(companyId)` : Récupère les données de risque investissement
-   - `submitRiskEntry(type, entry)` : Soumet une nouvelle entrée de risque
-   - `updateRiskEntry(type, id, updates)` : Met à jour une entrée de risque
-   - `getRiskSummary(filters)` : Récupère un rapport de synthèse
+#### 2.1 Liste des incidents d'une entreprise
 
-2. Le module `centrale-risque.api.ts` qui fournit des fonctions plus détaillées :
-   - `getCompanyRiskProfile(companyId)` : Récupère le profil de risque complet
-   - `getCompanyPaymentIncidents(companyId, period)` : Récupère les incidents de paiement
-   - `getCompanyEngagements(companyId)` : Récupère les engagements financiers
-   - `addRiskEntry(entry)` : Ajoute une entrée de risque
-   - `updateRiskEntry(id, updates)` : Met à jour une entrée de risque
-   - `getActiveRiskAlerts(filters)` : Récupère les alertes de risque actives
-   - `getRiskStatistics()` : Récupère les statistiques de risque
-   - `getFullRiskReport(companyId)` : Récupère le rapport de risque complet
-   - `getRiskHistory(companyId, startDate, endDate)` : Récupère l'historique des risques
+```http
+GET /risk/central/company/{companyId}/incidents
+```
 
-En mode développement ou hors ligne, ces fonctions utilisent un mécanisme de stockage local (localStorage) pour persister les données via le service `centraleRisqueStorageService`.
+**Paramètres de requête :**
 
-## Codes d'erreur
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `period` | string | Non | Période de filtrage (ex: `12m`, `6m`, `3m`) |
+
+**Réponse (200 OK) :**
+
+```json
+{
+  "companyId": "company-uuid",
+  "companyName": "Entreprise ABC",
+  "incidents": [
+    {
+      "id": "incident-uuid-1",
+      "type": "retard",
+      "date": "2025-12-15T00:00:00.000Z",
+      "amount": 5000000,
+      "days": 15,
+      "institution": "Rawbank",
+      "description": "Retard de paiement échéance décembre",
+      "status": "régularisé",
+      "regularisationDate": "2025-12-30T00:00:00.000Z"
+    },
+    {
+      "id": "incident-uuid-2",
+      "type": "effet",
+      "date": "2025-06-01T00:00:00.000Z",
+      "amount": 2500000,
+      "institution": "TMB",
+      "description": "Effet impayé",
+      "status": "ouvert"
+    }
+  ],
+  "summary": {
+    "totalIncidents": 2,
+    "totalAmount": 7500000,
+    "byType": {
+      "retard": 1,
+      "effet": 1
+    },
+    "byStatus": {
+      "régularisé": 1,
+      "ouvert": 1
+    },
+    "averageDaysLate": 15
+  }
+}
+```
+
+---
+
+### 3. Engagements d'une Entreprise
+
+#### 3.1 Liste des engagements
+
+```http
+GET /risk/central/company/{companyId}/engagements
+```
+
+**Réponse (200 OK) :**
+
+```json
+{
+  "companyId": "company-uuid",
+  "companyName": "Entreprise ABC",
+  "totalEngagement": 150000000,
+  "engagements": [
+    {
+      "id": "engagement-uuid-1",
+      "institution": "Rawbank",
+      "type": "credit",
+      "startDate": "2024-01-15",
+      "endDate": "2027-01-15",
+      "initialAmount": 100000000,
+      "currentAmount": 75000000,
+      "currency": "CDF",
+      "status": "actif",
+      "paymentStatus": "normal"
+    },
+    {
+      "id": "engagement-uuid-2",
+      "institution": "TMB",
+      "type": "leasing",
+      "startDate": "2024-06-01",
+      "endDate": "2028-06-01",
+      "initialAmount": 50000000,
+      "currentAmount": 45000000,
+      "currency": "CDF",
+      "status": "actif",
+      "paymentStatus": "retard",
+      "daysLate": 8
+    }
+  ],
+  "summary": {
+    "byType": {
+      "credit": 75000000,
+      "leasing": 45000000,
+      "ligne_credit": 30000000
+    },
+    "byStatus": {
+      "actif": 150000000,
+      "cloture": 0
+    },
+    "byPaymentStatus": {
+      "normal": 105000000,
+      "retard": 45000000
+    }
+  }
+}
+```
+
+---
+
+### 4. Entrées de Risque
+
+#### 4.1 Créer une entrée de risque
+
+```http
+POST /risk/central/entries
+```
+
+**Corps de la requête :**
+
+```json
+{
+  "companyId": "company-uuid",
+  "type": "incident_paiement",
+  "date": "2026-01-09",
+  "amount": 5000000,
+  "description": "Retard de paiement sur échéance janvier",
+  "severity": "medium",
+  "source": "Rawbank",
+  "attachmentUrls": [
+    "https://storage.wanzo.com/docs/preuve-incident.pdf"
+  ]
+}
+```
+
+**Types disponibles**: `incident_paiement`, `credit`, `defaut`, `alerte`, `autre`
+
+**Réponse (201 Created) :**
+
+```json
+{
+  "id": "entry-uuid",
+  "companyId": "company-uuid",
+  "type": "incident_paiement",
+  "date": "2026-01-09",
+  "amount": 5000000,
+  "description": "Retard de paiement sur échéance janvier",
+  "severity": "medium",
+  "source": "Rawbank",
+  "attachmentUrls": ["https://storage.wanzo.com/docs/preuve-incident.pdf"],
+  "created_at": "2026-01-09T10:30:00.000Z"
+}
+```
+
+#### 4.2 Mettre à jour une entrée de risque
+
+```http
+PUT /risk/central/entries/{id}
+```
+
+**Corps de la requête :**
+
+```json
+{
+  "status": "resolved",
+  "resolution": "Paiement régularisé le 15 janvier 2026",
+  "severity": "low"
+}
+```
+
+**Réponse (200 OK) :**
+
+```json
+{
+  "id": "entry-uuid",
+  "companyId": "company-uuid",
+  "type": "incident_paiement",
+  "date": "2026-01-09",
+  "amount": 5000000,
+  "description": "Retard de paiement sur échéance janvier",
+  "severity": "low",
+  "status": "resolved",
+  "resolution": "Paiement régularisé le 15 janvier 2026",
+  "source": "Rawbank",
+  "attachmentUrls": ["https://storage.wanzo.com/docs/preuve-incident.pdf"],
+  "created_at": "2026-01-09T10:30:00.000Z",
+  "updated_at": "2026-01-15T14:00:00.000Z"
+}
+```
+
+---
+
+### 5. Alertes de Risque
+
+#### 5.1 Liste des alertes actives
+
+```http
+GET /risk/central/alerts
+```
+
+**Paramètres de requête :**
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `severity` | string | Non | Filtrer par sévérité (`low`, `medium`, `high`) |
+| `type` | string | Non | Type d'alerte (`market`, `credit`, `operational`, `compliance`, `liquidity`) |
+| `page` | number | Non | Page (défaut: 1) |
+| `limit` | number | Non | Limite par page (défaut: 20) |
+
+**Réponse (200 OK) :**
+
+```json
+{
+  "data": [
+    {
+      "id": "alert-uuid-1",
+      "type": "credit",
+      "severity": "high",
+      "title": "Risque de défaut détecté",
+      "description": "Le score de crédit de l'entreprise XYZ est passé sous le seuil critique",
+      "affectedEntities": [
+        {
+          "id": "company-xyz",
+          "type": "company",
+          "name": "Entreprise XYZ"
+        }
+      ],
+      "createdAt": "2026-01-08T14:30:00.000Z",
+      "status": "new"
+    },
+    {
+      "id": "alert-uuid-2",
+      "type": "market",
+      "severity": "medium",
+      "title": "Volatilité sectorielle",
+      "description": "Le secteur agriculture présente une volatilité accrue",
+      "affectedEntities": [
+        {
+          "id": "sector-agri",
+          "type": "sector",
+          "name": "Agriculture"
+        }
+      ],
+      "createdAt": "2026-01-07T09:15:00.000Z",
+      "status": "acknowledged"
+    }
+  ],
+  "meta": {
+    "total": 45,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 3
+  }
+}
+```
+
+---
+
+### 6. Statistiques Globales
+
+#### 6.1 Statistiques de risque
+
+```http
+GET /risk/central/statistics
+```
+
+**Réponse (200 OK) :**
+
+```json
+{
+  "totalCompanies": 1250,
+  "riskDistribution": {
+    "low": 520,
+    "medium": 480,
+    "high": 200,
+    "very_high": 50
+  },
+  "sectorRiskHeatmap": [
+    {
+      "sector": "Commerce",
+      "riskScore": 45,
+      "exposure": 5000000000,
+      "companies": 350
+    },
+    {
+      "sector": "Agriculture",
+      "riskScore": 62,
+      "exposure": 3500000000,
+      "companies": 280
+    },
+    {
+      "sector": "Services",
+      "riskScore": 38,
+      "exposure": 4200000000,
+      "companies": 320
+    }
+  ],
+  "defaultRates": {
+    "overall": 0.036,
+    "byCompanySize": {
+      "micro": 0.058,
+      "small": 0.042,
+      "medium": 0.028,
+      "large": 0.015
+    },
+    "bySector": {
+      "Commerce": 0.032,
+      "Agriculture": 0.055,
+      "Services": 0.028,
+      "Industrie": 0.038
+    }
+  },
+  "trends": {
+    "period": "12_months",
+    "defaultRate": [
+      {"date": "2025-01", "value": 0.040},
+      {"date": "2025-06", "value": 0.038},
+      {"date": "2025-12", "value": 0.036}
+    ],
+    "riskDistribution": [
+      {
+        "date": "2025-01",
+        "low": 480,
+        "medium": 500,
+        "high": 220,
+        "very_high": 50
+      },
+      {
+        "date": "2026-01",
+        "low": 520,
+        "medium": 480,
+        "high": 200,
+        "very_high": 50
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 7. API Risque par Type (risk.api.ts)
+
+#### 7.1 Risque Crédit
+
+```http
+GET /risk/credit/{companyId}
+```
+
+**Réponse**: Données de risque crédit spécifiques (CreditRiskEntry)
+
+#### 7.2 Risque Leasing
+
+```http
+GET /risk/leasing/{companyId}
+```
+
+**Réponse**: Données de risque leasing spécifiques (LeasingRiskEntry)
+
+#### 7.3 Risque Investissement
+
+```http
+GET /risk/investment/{companyId}
+```
+
+**Réponse**: Données de risque investissement spécifiques (InvestmentRiskEntry)
+
+#### 7.4 Soumettre une entrée de risque
+
+```http
+POST /risk/{type}
+```
+
+**Paramètres de chemin :**
+- `type`: `credit`, `leasing`, ou `investment`
+
+**Corps**: Données de l'entrée selon le type
+
+#### 7.5 Mettre à jour une entrée de risque
+
+```http
+PUT /risk/{type}/{id}
+```
+
+#### 7.6 Résumé des risques
+
+```http
+GET /risk/summary
+```
+
+**Paramètres de requête :**
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `portfolioId` | string | Non | Filtrer par portefeuille |
+| `fromDate` | string | Non | Date de début |
+| `toDate` | string | Non | Date de fin |
+| `riskLevel` | string | Non | Niveau de risque (`low`, `medium`, `high`, `critical`) |
+
+**Réponse (200 OK) :**
+
+```json
+{
+  "totalEntries": 450,
+  "riskDistribution": {
+    "low": 180,
+    "medium": 150,
+    "high": 90,
+    "critical": 30
+  },
+  "topRiskyCompanies": [
+    {
+      "companyId": "company-xyz",
+      "companyName": "Entreprise XYZ",
+      "riskScore": 28,
+      "riskLevel": "critical"
+    },
+    {
+      "companyId": "company-abc",
+      "companyName": "Entreprise ABC",
+      "riskScore": 42,
+      "riskLevel": "high"
+    }
+  ]
+}
+```
+
+---
+
+## 📊 Modèles de Données
+
+### Enums
+
+```typescript
+// Catégories de risque
+type RiskCategory = 'low' | 'medium' | 'high' | 'very_high';
+
+// Types d'entrée de risque
+type RiskEntryType = 'incident_paiement' | 'credit' | 'defaut' | 'alerte' | 'autre';
+
+// Sévérités
+type Severity = 'low' | 'medium' | 'high';
+
+// Types d'incident
+type IncidentType = 'cheque' | 'effet' | 'retard' | 'defaut';
+
+// Statuts d'incident
+type IncidentStatus = 'ouvert' | 'régularisé';
+
+// Types d'engagement
+type EngagementType = 'credit' | 'leasing' | 'ligne_credit' | 'garantie' | 'autre';
+
+// Statuts d'engagement
+type EngagementStatus = 'actif' | 'cloture' | 'en_defaut';
+
+// Statuts de paiement
+type PaymentStatus = 'normal' | 'retard' | 'defaut';
+
+// Types d'alerte
+type AlertType = 'market' | 'credit' | 'operational' | 'compliance' | 'liquidity';
+
+// Statuts d'alerte
+type AlertStatus = 'new' | 'acknowledged' | 'in_progress' | 'resolved';
+
+// Statuts d'entrée de risque
+type RiskEntryStatus = 'active' | 'resolved' | 'false_positive';
+
+// Niveaux de risque (risk.api.ts)
+type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+// Impact des changements
+type ChangeImpact = 'positive' | 'negative' | 'neutral';
+
+// Tendances
+type RiskTrend = 'improving' | 'stable' | 'deteriorating';
+```
+
+### Règles Métier
+
+**Score de crédit :**
+- 70-100 : Risque faible (`low`)
+- 50-69 : Risque moyen (`medium`)
+- 30-49 : Risque élevé (`high`)
+- 0-29 : Risque très élevé (`very_high`)
+
+**Incidents :**
+- Non résolu après 90 jours → escalade automatique
+- Historique conservé 5 ans
+
+**Alertes :**
+- Critiques → notification immédiate
+- Non acquittées après 48h → escalade
+
+---
+
+## ❌ Codes d'Erreur
 
 | Code | Description |
 |------|-------------|
-| 400  | Requête invalide ou paramètres manquants |
-| 401  | Non autorisé - Authentification requise |
-| 403  | Accès interdit - Droits insuffisants |
-| 404  | Ressource non trouvée |
-| 422  | Entité non traitable - Validation échouée |
-| 500  | Erreur serveur interne |
+| 400 | Données invalides |
+| 401 | Non authentifié |
+| 403 | Accès non autorisé |
+| 404 | Ressource non trouvée |
+| 409 | Conflit (doublon) |
+| 422 | Entité non traitable |
+| 500 | Erreur serveur |
 
-## Modèles de données
+---
 
-### CreditRiskEntry
+## 🔄 Correspondance Ancienne API
 
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de l'entrée |
-| companyId | string | Identifiant de l'entreprise |
-| companyName | string | Nom de l'entreprise |
-| sector | string | Secteur d'activité |
-| institution | string | Institution financière |
-| encours | number | Montant de l'encours |
-| statut | string | Statut (Actif, En défaut, Clôturé) |
-| coteCredit | string | Note de crédit (A, B, C, D) |
-| incidents | number | Nombre d'incidents |
-| creditScore | number | Score de crédit (0-100) |
-| debtRatio | number | Ratio d'endettement |
-| lastUpdated | string | Date de dernière mise à jour |
+Pour la migration depuis l'ancienne API `/centrale-risque/*` :
 
-### LeasingRiskEntry
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de l'entrée |
-| companyId | string | Identifiant de l'entreprise |
-| companyName | string | Nom de l'entreprise |
-| sector | string | Secteur d'activité |
-| institution | string | Institution financière |
-| equipmentType | string | Type d'équipement |
-| valeurFinancement | number | Valeur du financement |
-| statut | string | Statut (Actif, En défaut, Clôturé) |
-| coteCredit | string | Note de crédit (A, B, C, D) |
-| incidents | number | Nombre d'incidents |
-| lastUpdated | string | Date de dernière mise à jour |
-
-### InvestmentRiskEntry
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de l'entrée |
-| companyId | string | Identifiant de l'entreprise |
-| companyName | string | Nom de l'entreprise |
-| sector | string | Secteur d'activité |
-| institution | string | Institution financière |
-| investmentType | string | Type d'investissement (Action, Obligation) |
-| montantInvesti | number | Montant investi |
-| valorisation | number | Valorisation actuelle |
-| statut | string | Statut (Performant, En difficulté, Clôturé) |
-| coteCredit | string | Note de crédit (A, B, C, D) |
-| rendementActuel | number | Rendement actuel |
-| lastUpdated | string | Date de dernière mise à jour |
+| Ancien Endpoint | Nouvel Endpoint |
+|-----------------|-----------------|
+| `GET /centrale-risque/risk-entries` | `GET /risk/central/company/{id}` |
+| `GET /centrale-risque/incidents` | `GET /risk/central/company/{id}/incidents` |
+| `POST /centrale-risque/risk-entries` | `POST /risk/central/entries` |
+| `GET /centrale-risque/stats` | `GET /risk/central/statistics` |
+| `GET /centrale-risque/alerts` | `GET /risk/central/alerts` |

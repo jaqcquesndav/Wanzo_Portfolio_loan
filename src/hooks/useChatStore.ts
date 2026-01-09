@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Message, Conversation, AIModel } from '../types/chat';
+import type { Message, Conversation, AIModel, StreamingState, PortfolioStreamChunkEvent } from '../types/chat';
 import { AI_MODELS } from '../types/chat';
 import { generateResponse } from '../data/mockChatResponses';
 import { chatApi } from '../services/api/chat.api';
+import { getChatStreamService, ChatStreamService } from '../services/streaming';
 
 // Définition du type Task
 export interface Task {
@@ -23,6 +24,11 @@ interface ChatStore {
   isRecording: boolean;
   isApiMode: boolean; // Indique si on utilise l'API ou les mocks
   
+  // État du streaming
+  streamingState: StreamingState;
+  isStreamingEnabled: boolean;
+  isWebSocketConnected: boolean;
+  
   // Conversations et messages
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -32,6 +38,7 @@ interface ChatStore {
   currentPortfolioType: 'traditional' | 'leasing' | 'investment';
   selectedTask: Task | null;
   currentPortfolioId: string | null;
+  currentInstitutionId: string | null;
   
   // Actions UI
   setFloating: (floating: boolean) => void;
@@ -41,10 +48,17 @@ interface ChatStore {
   setSelectedModel: (model: AIModel) => void;
   setApiMode: (enabled: boolean) => void;
   
+  // Actions streaming
+  setStreamingEnabled: (enabled: boolean) => void;
+  connectWebSocket: (institutionId: string) => Promise<void>;
+  disconnectWebSocket: () => void;
+  updateStreamingContent: (messageId: string, content: string, isComplete?: boolean) => void;
+  
   // Actions contexte
   setPortfolioType: (type: 'traditional' | 'leasing' | 'investment') => void;
   setSelectedTask: (task: Task) => void;
   setCurrentPortfolioId: (id: string | null) => void;
+  setCurrentInstitutionId: (id: string | null) => void;
   
   // Actions conversations
   createNewConversation: () => void;
@@ -55,6 +69,7 @@ interface ChatStore {
   
   // Actions messages
   addMessage: (content: string, type: 'user' | 'bot', attachment?: Message['attachment'], mode?: 'chat' | 'analyse') => void;
+  addStreamingMessage: (messageId: string) => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
   toggleLike: (messageId: string) => void;
   toggleDislike: (messageId: string) => void;
@@ -62,6 +77,9 @@ interface ChatStore {
   // Simulation réponse bot
   simulateBotResponse: () => Promise<void>;
 }
+
+// Référence au service de streaming
+let streamService: ChatStreamService | null = null;
 
 export const useChatStore = create<ChatStore>()(
   persist(
@@ -75,6 +93,18 @@ export const useChatStore = create<ChatStore>()(
       selectedModel: AI_MODELS[0],
       currentPortfolioType: 'traditional',
       currentPortfolioId: null,
+      currentInstitutionId: null,
+      
+      // État streaming
+      streamingState: {
+        messageId: null,
+        accumulatedContent: '',
+        lastChunkId: -1,
+        isActive: false
+      },
+      isStreamingEnabled: true, // Streaming activé par défaut
+      isWebSocketConnected: false,
+      
       selectedTask: {
         id: 'general',
         name: 'Assistant général',
@@ -107,10 +137,65 @@ export const useChatStore = create<ChatStore>()(
       setSelectedModel: (model) => set({ selectedModel: model }),
       setApiMode: (enabled) => set({ isApiMode: enabled }),
       
+      // Actions streaming
+      setStreamingEnabled: (enabled) => set({ isStreamingEnabled: enabled }),
+      
+      connectWebSocket: async (institutionId: string) => {
+        try {
+          streamService = getChatStreamService();
+          
+          // S'abonner aux changements de connexion
+          streamService.onConnectionChange((connected) => {
+            set({ isWebSocketConnected: connected });
+          });
+          
+          await streamService.connect(institutionId);
+          set({ currentInstitutionId: institutionId, isWebSocketConnected: true });
+          console.log('[ChatStore] WebSocket connecté pour institution:', institutionId);
+        } catch (error) {
+          console.error('[ChatStore] Erreur de connexion WebSocket:', error);
+          set({ isWebSocketConnected: false });
+        }
+      },
+      
+      disconnectWebSocket: () => {
+        if (streamService) {
+          streamService.disconnect();
+          streamService = null;
+        }
+        set({ isWebSocketConnected: false });
+      },
+      
+      updateStreamingContent: (messageId: string, content: string, isComplete = false) => {
+        set(state => ({
+          conversations: state.conversations.map(conv => 
+            conv.id === state.activeConversationId
+              ? {
+                  ...conv,
+                  messages: conv.messages.map(msg =>
+                    msg.id === messageId 
+                      ? { 
+                          ...msg, 
+                          content, 
+                          isStreaming: !isComplete,
+                          pending: false
+                        } 
+                      : msg
+                  )
+                }
+              : conv
+          ),
+          streamingState: isComplete 
+            ? { messageId: null, accumulatedContent: '', lastChunkId: -1, isActive: false }
+            : { ...state.streamingState, accumulatedContent: content }
+        }));
+      },
+      
       // Actions contexte
       setPortfolioType: (type) => set({ currentPortfolioType: type }),
       setSelectedTask: (task) => set({ selectedTask: task }),
       setCurrentPortfolioId: (id) => set({ currentPortfolioId: id }),
+      setCurrentInstitutionId: (id) => set({ currentInstitutionId: id }),
 
       // Actions conversations
       createNewConversation: async () => {
@@ -245,7 +330,148 @@ export const useChatStore = create<ChatStore>()(
 
         let newMessage: Message;
         
-        if (store.isApiMode && type === 'user') {
+        // Mode API avec streaming activé
+        if (store.isApiMode && store.isStreamingEnabled && store.isWebSocketConnected && type === 'user' && streamService) {
+          // Ajouter un message "pending" en attendant la réponse de l'API
+          const pendingMessage: Message = {
+            id: `pending-${Date.now()}`,
+            sender: type,
+            content,
+            timestamp: new Date().toISOString(),
+            likes: 0,
+            dislikes: 0,
+            attachment,
+            pending: true
+          };
+          
+          // Mise à jour du state avec le message en attente
+          set(state => ({
+            conversations: state.conversations.map(conv => 
+              conv.id === state.activeConversationId
+                ? {
+                    ...conv,
+                    messages: [...conv.messages, pendingMessage],
+                    context
+                  }
+                : conv
+            )
+          }));
+          
+          try {
+            // Envoyer le message via WebSocket avec streaming
+            const messageId = streamService.sendMessage(
+              activeConversation.id,
+              content,
+              {
+                portfolioId: store.currentPortfolioId || undefined,
+                portfolioType: store.currentPortfolioType,
+                institutionId: store.currentInstitutionId || undefined
+              }
+            );
+            
+            // Remplacer le message en attente par le message réel
+            set(state => ({
+              conversations: state.conversations.map(conv => 
+                conv.id === state.activeConversationId
+                  ? {
+                      ...conv,
+                      messages: conv.messages.map(msg => 
+                        msg.id === pendingMessage.id 
+                          ? { ...msg, id: messageId, pending: false } 
+                          : msg
+                      )
+                    }
+                  : conv
+              )
+            }));
+            
+            // Ajouter un message bot en attente de streaming
+            get().addStreamingMessage(messageId);
+            
+            // S'abonner aux événements de streaming
+            let accumulatedContent = '';
+            
+            streamService.onChunk(messageId, (chunk: PortfolioStreamChunkEvent) => {
+              if (chunk.type === 'chunk') {
+                accumulatedContent += chunk.content;
+                get().updateStreamingContent(`bot-${messageId}`, accumulatedContent, false);
+              }
+              // Garder l'indicateur de typing actif pendant le streaming
+              set({ isTyping: true });
+            });
+            
+            streamService.onComplete(messageId, (finalContent: string, suggestedActions?: string[]) => {
+              get().updateStreamingContent(`bot-${messageId}`, finalContent, true);
+              
+              // Mettre à jour avec les actions suggérées si présentes
+              if (suggestedActions && suggestedActions.length > 0) {
+                set(state => ({
+                  conversations: state.conversations.map(conv => 
+                    conv.id === state.activeConversationId
+                      ? {
+                          ...conv,
+                          messages: conv.messages.map(msg =>
+                            msg.id === `bot-${messageId}` 
+                              ? { ...msg, suggestedActions } 
+                              : msg
+                          )
+                        }
+                      : conv
+                  )
+                }));
+              }
+              
+              set({ isTyping: false });
+            });
+            
+            streamService.onError(messageId, (error: Error) => {
+              console.error('[ChatStore] Erreur de streaming:', error);
+              
+              // Marquer le message comme erreur
+              set(state => ({
+                conversations: state.conversations.map(conv => 
+                  conv.id === state.activeConversationId
+                    ? {
+                        ...conv,
+                        messages: conv.messages.map(msg =>
+                          msg.id === `bot-${messageId}` 
+                            ? { 
+                                ...msg, 
+                                content: 'Erreur lors de la réception de la réponse. Veuillez réessayer.',
+                                error: true,
+                                isStreaming: false
+                              } 
+                            : msg
+                        )
+                      }
+                    : conv
+                ),
+                isTyping: false
+              }));
+            });
+            
+            set({ isTyping: true });
+            
+          } catch (error) {
+            console.error('Erreur lors de l\'envoi du message avec streaming:', error);
+            
+            // Marquer le message comme ayant échoué
+            set(state => ({
+              conversations: state.conversations.map(conv => 
+                conv.id === state.activeConversationId
+                  ? {
+                      ...conv,
+                      messages: conv.messages.map(msg => 
+                        msg.id === pendingMessage.id ? { ...msg, pending: false, error: true } : msg
+                      )
+                    }
+                  : conv
+              )
+            }));
+            
+            return;
+          }
+        } else if (store.isApiMode && type === 'user') {
           // Ajouter un message "pending" en attendant la réponse de l'API
           const pendingMessage: Message = {
             id: `pending-${Date.now()}`,
@@ -345,6 +571,37 @@ export const useChatStore = create<ChatStore>()(
         if (type === 'user') {
           await get().simulateBotResponse();
         }
+      },
+      
+      // Ajouter un message bot en mode streaming
+      addStreamingMessage: (requestMessageId: string) => {
+        const botMessage: Message = {
+          id: `bot-${requestMessageId}`,
+          sender: 'bot',
+          content: '',
+          timestamp: new Date().toISOString(),
+          likes: 0,
+          dislikes: 0,
+          isStreaming: true,
+          pending: true
+        };
+        
+        set(state => ({
+          conversations: state.conversations.map(conv => 
+            conv.id === state.activeConversationId
+              ? {
+                  ...conv,
+                  messages: [...conv.messages, botMessage]
+                }
+              : conv
+          ),
+          streamingState: {
+            messageId: `bot-${requestMessageId}`,
+            accumulatedContent: '',
+            lastChunkId: -1,
+            isActive: true
+          }
+        }));
       },
 
       updateMessage: async (messageId, updates) => {

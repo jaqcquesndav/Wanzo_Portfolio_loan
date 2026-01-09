@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Maximize2, Minimize2, X, Send, Smile, Paperclip, Mic, Copy, ThumbsUp, ThumbsDown, Sparkles, AlignJustify, AlertCircle, Repeat } from 'lucide-react';
+import { MessageSquare, Maximize2, Minimize2, X, Send, Smile, Paperclip, Mic, Copy, ThumbsUp, ThumbsDown, Sparkles, AlignJustify, AlertCircle, Repeat, Loader2, Zap } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
 import { EmojiPicker } from './EmojiPicker';
@@ -20,6 +20,9 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     isTyping,
     isRecording,
     isApiMode,
+    isStreamingEnabled,
+    isWebSocketConnected,
+    streamingState,
     setRecording,
     // setApiMode, // Commenté car non utilisé, était inclus dans la demande de suppression
     addMessage,
@@ -28,6 +31,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     toggleDislike,
     currentPortfolioType,
     currentPortfolioId,
+    currentInstitutionId,
     selectedTask,
     setPortfolioType,
     setSelectedTask,
@@ -35,7 +39,9 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     createNewConversation,
     deleteConversation,
     setActiveConversation,
-    fetchConversations
+    fetchConversations,
+    connectWebSocket,
+    disconnectWebSocket
   } = useChatStore();
   
   const adhaWriteMode = useAdhaWriteMode();
@@ -59,6 +65,20 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
       });
     }
   }, [isApiMode, isInitialized, fetchConversations]);
+
+  // Connexion WebSocket pour le streaming quand l'institution est connue
+  useEffect(() => {
+    if (isApiMode && isStreamingEnabled && currentInstitutionId && !isWebSocketConnected) {
+      connectWebSocket(currentInstitutionId);
+    }
+    
+    // Cleanup à la déconnexion
+    return () => {
+      if (isWebSocketConnected) {
+        disconnectWebSocket();
+      }
+    };
+  }, [isApiMode, isStreamingEnabled, currentInstitutionId, isWebSocketConnected, connectWebSocket, disconnectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
@@ -192,6 +212,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                       }
                       ${message.error ? 'border border-red-500' : ''}
                       ${message.pending ? 'opacity-70' : ''}
+                      ${message.isStreaming ? 'border-l-2 border-l-primary animate-pulse' : ''}
                     `}>
                       {message.error && (
                         <div className="flex items-center text-red-500 dark:text-red-400 mb-2 text-xs">
@@ -207,12 +228,31 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                         </div>
                       )}
 
-                      <MessageContent 
-                        content={message.content}
-                        onEdit={message.sender === 'bot' ? (newContent) => 
-                          updateMessage(message.id, { content: newContent })
-                        : undefined}
-                      />
+                      {/* Indicateur de streaming */}
+                      {message.isStreaming && !message.content && (
+                        <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Adha réfléchit...</span>
+                        </div>
+                      )}
+
+                      {/* Contenu du message (avec support streaming) */}
+                      {message.content && (
+                        <MessageContent 
+                          content={message.content}
+                          onEdit={message.sender === 'bot' && !message.isStreaming ? (newContent) => 
+                            updateMessage(message.id, { content: newContent })
+                          : undefined}
+                        />
+                      )}
+                      
+                      {/* Indicateur de streaming en cours pour les messages avec contenu */}
+                      {message.isStreaming && message.content && (
+                        <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>En cours...</span>
+                        </div>
+                      )}
                       
                       {message.attachment && (
                         <div className="mt-2 p-2 bg-white/10 rounded">
@@ -220,7 +260,28 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                         </div>
                       )}
                       
-                      {message.sender === 'bot' && (
+                      {/* Actions suggérées (affichées après le streaming) */}
+                      {message.sender === 'bot' && message.suggestedActions && message.suggestedActions.length > 0 && !message.isStreaming && (
+                        <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 flex items-center">
+                            <Zap className="h-3 w-3 mr-1" />
+                            Actions suggérées:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {message.suggestedActions.map((action, index) => (
+                              <button
+                                key={index}
+                                onClick={() => addMessage(action, 'user')}
+                                className="text-xs px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors"
+                              >
+                                {action}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {message.sender === 'bot' && !message.isStreaming && (
                         <div className="flex items-center justify-end space-x-2 text-xs opacity-75">
                           <button onClick={() => navigator.clipboard.writeText(message.content)}>
                             <Copy className="h-4 w-4" />
@@ -242,7 +303,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                   </div>
                 ))}
                 
-                {isTyping && (
+                {isTyping && !streamingState.isActive && (
                   <div className="flex items-center space-x-2 text-gray-500">
                     <div className="animate-bounce">.</div>
                     <div className="animate-bounce delay-100">.</div>

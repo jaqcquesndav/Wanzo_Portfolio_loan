@@ -2,6 +2,59 @@
 
 Ce document décrit tous les endpoints pour la gestion des utilisateurs dans l'API Wanzo Portfolio Institution basés sur le UserController réellement implémenté.
 
+## Architecture d'authentification - Auth0 M2M
+
+### Création d'utilisateurs secondaires avec Auth0
+
+Lorsqu'un administrateur d'institution crée un nouvel utilisateur via l'API, le système effectue automatiquement les actions suivantes :
+
+1. **Création dans Auth0** (via Machine-to-Machine) :
+   - Utilise les credentials M2M (`AUTH0_M2M_CLIENT_ID`, `AUTH0_M2M_CLIENT_SECRET`)
+   - Crée l'utilisateur dans Auth0 avec un mot de passe temporaire
+   - Stocke les métadonnées (institutionId, role, userType) dans `app_metadata`
+
+2. **Création locale** :
+   - Sauvegarde l'utilisateur dans la base de données locale
+   - Lie le `auth0Id` à l'enregistrement local
+
+3. **Email d'activation** :
+   - Envoie automatiquement un email de réinitialisation de mot de passe
+   - L'utilisateur peut ainsi définir son propre mot de passe
+
+4. **Événement Kafka** :
+   - Publie un événement `USER_CREATED` pour synchroniser avec les autres microservices
+
+### Variables d'environnement requises
+
+```env
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_M2M_CLIENT_ID=your-m2m-client-id
+AUTH0_M2M_CLIENT_SECRET=your-m2m-secret
+```
+
+### Flux d'authentification des utilisateurs secondaires
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Admin créé     │────▶│  API Portfolio  │────▶│     Auth0       │
+│  utilisateur    │     │  Institution    │     │   (via M2M)     │
+└─────────────────┘     └────────┬────────┘     └────────┬────────┘
+                                 │                       │
+                                 │                       │
+                        ┌────────▼────────┐     ┌────────▼────────┐
+                        │  Base locale    │     │ Email reset pwd │
+                        │  (PostgreSQL)   │     │ envoyé à user   │
+                        └────────┬────────┘     └─────────────────┘
+                                 │
+                        ┌────────▼────────┐
+                        │  Kafka Event    │
+                        │ USER_CREATED    │
+                        └─────────────────┘
+```
+
+---
+
 ## Endpoints de gestion des utilisateurs
 
 ### Liste des utilisateurs
@@ -74,6 +127,78 @@ Récupère le profil de l'utilisateur actuellement authentifié.
 }
 ```
 
+### Utilisateur courant avec Institution (Me)
+
+Récupère les informations complètes de l'utilisateur authentifié **avec les données de son institution**. Cet endpoint est optimisé pour les besoins du dashboard/login - il charge l'institution sans tous ses utilisateurs (version "lite").
+
+**Endpoint** : `GET /users/me`
+
+**Différence avec `/users/profile`** :
+- `/users/profile` : Retourne uniquement les données de l'utilisateur
+- `/users/me` : Retourne l'utilisateur + l'institution (version optimisée ~5KB vs ~100KB+ pour `/institutions`)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-123",
+      "name": "Jean Dupont",
+      "email": "jean.dupont@exemple.com",
+      "role": "portfolio_manager",
+      "status": "active",
+      "institutionId": "inst-456",
+      "permissions": ["read:portfolios", "write:portfolios"],
+      "createdAt": "2025-01-15T08:00:00.000Z",
+      "updatedAt": "2025-11-10T10:30:00.000Z"
+    },
+    "institution": {
+      "id": "inst-456",
+      "name": "Banque Commerciale du Congo",
+      "type": "bank",
+      "status": "active",
+      "country": "RDC",
+      "city": "Kinshasa",
+      "address": "123 Boulevard du 30 Juin",
+      "phone": "+243810000000",
+      "email": "contact@bcc.cd",
+      "website": "https://www.bcc.cd",
+      "logo": "https://storage.wanzo.com/logos/bcc.png",
+      "documents": [
+        {
+          "id": "doc-001",
+          "type": "license",
+          "name": "Licence bancaire",
+          "status": "verified"
+        }
+      ],
+      "settings": {
+        "currency": "CDF",
+        "timezone": "Africa/Kinshasa"
+      },
+      "createdAt": "2024-06-01T00:00:00.000Z",
+      "updatedAt": "2025-11-10T10:00:00.000Z"
+    },
+    "auth0Id": "auth0|abc123xyz",
+    "role": "portfolio_manager",
+    "permissions": ["read:portfolios", "write:portfolios"]
+  }
+}
+```
+
+**Notes d'implémentation** :
+- Utilise `InstitutionService.findByIdLite()` qui charge uniquement les `documents` (pas tous les `users`)
+- Optimisé pour le frontend (login, dashboard, header) qui a besoin du contexte institution sans la liste complète des employés
+- Pour la gestion des utilisateurs de l'institution, utiliser `GET /institutions` qui charge toutes les relations
+
+**Cas d'utilisation** :
+- Affichage du header/sidebar avec nom de l'institution et logo
+- Dashboard utilisateur avec contexte institutionnel
+- Vérification des permissions basées sur l'institution
+- Initialisation de l'état global de l'application après login
+
 ### Détails d'un utilisateur
 
 Récupère les détails complets d'un utilisateur spécifique.
@@ -108,22 +233,29 @@ Récupère les détails complets d'un utilisateur spécifique.
 
 ### Création d'un utilisateur
 
-Crée un nouvel utilisateur dans l'institution.
+Crée un nouvel utilisateur dans l'institution. **L'utilisateur est automatiquement créé dans Auth0 via M2M** et reçoit un email pour définir son mot de passe.
 
 **Endpoint** : `POST /users`
 
 **Permissions requises** : `admin`
 
+**Processus interne** :
+1. Vérification que l'email n'existe pas déjà
+2. Création de l'utilisateur dans **Auth0** (via M2M credentials)
+3. Génération d'un `kiotaId` unique
+4. Sauvegarde dans la base locale avec le `auth0Id`
+5. Envoi d'un email de réinitialisation de mot de passe
+6. Publication d'un événement Kafka `USER_CREATED`
+
 **Corps de la requête** :
 
 ```json
 {
-  "name": "Marie Martin",
   "email": "marie.martin@exemple.com",
+  "firstName": "Marie",
+  "lastName": "Martin",
   "phone": "+243810987654",
-  "role": "analyst",
-  "department": "Risk Management",
-  "permissions": ["read:portfolios", "read:reports"]
+  "role": "analyst"
 }
 ```
 
@@ -134,14 +266,15 @@ Crée un nouvel utilisateur dans l'institution.
   "success": true,
   "data": {
     "id": "user-789",
-    "name": "Marie Martin",
     "email": "marie.martin@exemple.com",
+    "firstName": "Marie",
+    "lastName": "Martin",
     "phone": "+243810987654",
     "role": "analyst",
-    "status": "active",
-    "department": "Risk Management",
+    "status": "pending",
     "institutionId": "inst-456",
-    "permissions": ["read:portfolios", "read:reports"],
+    "kiotaId": "KIOTA-USR-ABCD1234-XY",
+    "auth0Id": "auth0|xyz789abc",
     "createdAt": "2025-11-10T15:30:00.000Z",
     "updatedAt": "2025-11-10T15:30:00.000Z"
   }
@@ -529,6 +662,50 @@ enum PreferenceCategory {
 }
 ```
 
+## Endpoints Admin (/admin/users)
+
+Ces endpoints sont accessibles uniquement aux administrateurs et offrent des fonctionnalités avancées de gestion.
+
+### Liste des utilisateurs (Admin)
+
+**Endpoint** : `GET /admin/users`
+
+**Permissions requises** : `admin`
+
+### Création d'utilisateur (Admin)
+
+**Endpoint** : `POST /admin/users`
+
+**Permissions requises** : `admin`
+
+**Note** : Identique à `POST /users` - crée l'utilisateur dans Auth0 via M2M.
+
+### Changement de statut (Admin)
+
+**Endpoint** : `PATCH /admin/users/{id}/status`
+
+**Permissions requises** : `admin`
+
+**Note** : Synchronise le statut avec Auth0 (block/unblock).
+
+### Suppression d'utilisateur (Admin)
+
+**Endpoint** : `DELETE /admin/users/{id}`
+
+**Permissions requises** : `admin`
+
+**Note** : Supprime l'utilisateur de Auth0 ET de la base locale.
+
+### Activités de l'institution (Admin)
+
+**Endpoint** : `GET /admin/users/activities`
+
+**Permissions requises** : `admin`
+
+Récupère toutes les activités de tous les utilisateurs de l'institution.
+
+---
+
 ## Codes d'erreur spécifiques
 
 | Code HTTP | Code d'erreur | Description |
@@ -537,8 +714,9 @@ enum PreferenceCategory {
 | 401 | UNAUTHORIZED | Token d'authentification manquant ou invalide |
 | 403 | INSUFFICIENT_PERMISSIONS | Permissions insuffisantes pour cette action |
 | 404 | USER_NOT_FOUND | Utilisateur non trouvé |
-| 409 | EMAIL_ALREADY_EXISTS | Email déjà utilisé par un autre utilisateur |
+| 409 | EMAIL_ALREADY_EXISTS | Email déjà utilisé dans Auth0 ou localement |
 | 409 | USER_ALREADY_EXISTS | Utilisateur déjà existant |
+| 500 | AUTH0_ERROR | Erreur lors de la communication avec Auth0 |
 
 ## Permissions requises
 
@@ -555,6 +733,7 @@ enum PreferenceCategory {
 |----------|-------|---------|---------|------|
 | GET /users | ✅ | ✅ | ❌ | ❌ |
 | GET /users/profile | ✅ | ✅ | ✅ | ✅ |
+| GET /users/me | ✅ | ✅ | ✅ | ✅ |
 | GET /users/{id} | ✅ | ✅ | ❌ | ❌* |
 | POST /users | ✅ | ❌ | ❌ | ❌ |
 | PUT /users/{id} | ✅ | ❌ | ❌ | ❌* |
@@ -564,9 +743,22 @@ enum PreferenceCategory {
 | POST /users/{id}/preferences | ✅ | ✅ | ❌ | ✅* |
 | GET /users/{id}/sessions | ✅ | ❌ | ❌ | ✅* |
 | DELETE /users/{id}/sessions/{sessionId} | ✅ | ❌ | ❌ | ✅* |
+| GET /admin/users | ✅ | ❌ | ❌ | ❌ |
+| POST /admin/users | ✅ | ❌ | ❌ | ❌ |
+| PATCH /admin/users/{id}/status | ✅ | ❌ | ❌ | ❌ |
+| DELETE /admin/users/{id} | ✅ | ❌ | ❌ | ❌ |
+| GET /admin/users/activities | ✅ | ❌ | ❌ | ❌ |
 
 *\* Uniquement pour ses propres données*
 
+### Différences entre endpoints similaires
+
+| Endpoint | Données retournées | Taille typique | Cas d'utilisation |
+|----------|-------------------|----------------|-------------------|
+| `GET /users/me` | User + Institution (lite) | ~5 KB | Login, Dashboard, Header |
+| `GET /users/profile` | User uniquement | ~2 KB | Profil simple |
+| `GET /institutions` | Institution + tous les users | ~100 KB+ | Admin, gestion utilisateurs |
+
 ---
 
-*Documentation mise à jour le 10 novembre 2025 basée sur le UserController réellement implémenté dans le portfolio-institution-service.*
+*Documentation mise à jour le 4 janvier 2026 - Ajout de la section Auth0 M2M et endpoints Admin.*

@@ -1,19 +1,22 @@
 # Documentation API Prospection v2.0
 
-Documentation complète du module de prospection, synchronisée avec l'implémentation réelle du code source (Novembre 2025).
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
+Documentation complète du module de prospection, synchronisée avec l'implémentation réelle du code source.
 
 ## 🏗️ Architecture
 
-Le module de prospection repose sur une **architecture hybride** de synchronisation des données :
+Le module de prospection repose sur une **architecture événementielle Kafka** de synchronisation des données :
 
 ```
 ┌─────────────────────────┐         ┌──────────────────────────┐         ┌─────────────────────────┐
-│  Accounting Service     │  HTTP   │  Portfolio Institution   │  Kafka  │  Customer Service       │
-│  (Source Primaire)      │────────►│  CompanyProfile Cache    │◄────────│  (Source Secondaire)    │
+│  Accounting Service     │  Kafka  │  Portfolio Institution   │  Kafka  │  Customer Service       │
+│  (Source Financière)    │────────►│  CompanyProfile Cache    │◄────────│  (Source Légale)        │
 │                         │         │                          │         │                         │
 │  • Données financières  │         │  • Cache unifié          │         │  • Données légales      │
-│  • Métriques            │         │  • 40+ champs            │         │  • Contacts             │
+│  • Métriques/Ratios     │         │  • 70+ champs            │         │  • Contacts             │
 │  • Scores crédit        │         │  • Coordonnées GPS       │         │  • Emplacements         │
+│  • Trésorerie SYSCOHADA │         │  • Treasury data         │         │  • Structure capital    │
 └─────────────────────────┘         └──────────────────────────┘         └─────────────────────────┘
                                               │
                                               ▼
@@ -27,14 +30,17 @@ Le module de prospection repose sur une **architecture hybride** de synchronisat
 
 ### Stratégie de Synchronisation
 
-**Source Primaire (HTTP) :** `accounting-service`
+**Source Financière (Kafka) :** `accounting-service`
+- Topic: `company.financial.data.shared` (StandardKafkaTopics.COMPANY_FINANCIAL_DATA_SHARED)
 - Données financières opérationnelles (20+ métriques)
 - Scores de crédit (0-100) et ratings (AAA à E)
 - Métriques de performance (CA, profit, EBITDA, cash flow)
 - Ratios financiers (endettement, marge, croissance)
-- Synchronisation manuelle ou automatique (> 24h = stale)
+- **Données de trésorerie SYSCOHADA** (comptes 52x, 53x, 54x, 57x)
+- Séries temporelles multi-échelles (weekly, monthly, quarterly, annual)
+- Synchronisation temps réel via événements Kafka
 
-**Source Secondaire (Kafka) :** `customer-service`
+**Source Légale/Administrative (Kafka) :** `customer-service`
 - Enrichissement avec données administratives/légales
 - Informations de contact (owner, contactPersons, email, phone)
 - Emplacements multiples avec coordonnées géographiques (lat/lng)
@@ -241,6 +247,15 @@ GET /companies?sector=Technologies&minCreditScore=70&page=1&limit=10
           "phone": "+243 888 777 666"
         }
       ],
+      "dataAvailability": {
+        "profileDataAvailable": true,
+        "financialDataAuthorized": true,
+        "financialDataFresh": true,
+        "profileDataFresh": true,
+        "consentGrantedTo": ["banks", "microfinance", "analysts"],
+        "lastFinancialDataSync": "2025-11-18T10:30:00.000Z",
+        "lastProfileDataSync": "2025-11-18T08:15:00.000Z"
+      },
       "profileCompleteness": 85,
       "lastSyncFromAccounting": "2025-11-18T10:30:00.000Z",
       "lastSyncFromCustomer": "2025-11-18T08:15:00.000Z",
@@ -577,6 +592,9 @@ interface ProspectDto {
     phone: string;
   }>;
   
+  // Disponibilité des données (CRUCIAL pour le frontend)
+  dataAvailability: DataAvailabilityDto;     // @IsObject() - Indique quelles données sont disponibles/autorisées
+  
   // Métadonnées
   profileCompleteness: number;               // @IsNumber() @Min(0) @Max(100) - Complétude (0-100%)
   lastSyncFromAccounting?: string;           // @IsOptional() @IsString() - Date ISO 8601
@@ -586,6 +604,28 @@ interface ProspectDto {
 }
 
 // --- Sous-DTOs ---
+
+/**
+ * DTO indiquant la disponibilité des données pour un prospect
+ * 
+ * IMPORTANT : Le frontend DOIT vérifier ce champ avant d'afficher les données financières.
+ * - profileDataAvailable : Données profil (customer-service) - toujours disponibles, pas d'autorisation requise
+ * - financialDataAuthorized : Données financières (accounting-service) - UNIQUEMENT si le user a autorisé le partage
+ */
+interface DataAvailabilityDto {
+  profileDataAvailable: boolean;             // @IsBoolean() - Profil dispo (toujours true car pas d'auth requise)
+  financialDataAuthorized: boolean;          // @IsBoolean() - Données financières autorisées par le user
+  financialDataFresh: boolean;               // @IsBoolean() - Données financières fraîches (< 24h)
+  profileDataFresh: boolean;                 // @IsBoolean() - Données profil fraîches (< 7 jours)
+  consentGrantedTo?: string[];               // @IsOptional() - Liste des services autorisés ['banks', 'microfinance', etc.]
+  lastFinancialDataSync?: string;            // @IsOptional() @IsString() - Dernière sync accounting (ISO 8601)
+  lastProfileDataSync?: string;              // @IsOptional() @IsString() - Dernière sync customer (ISO 8601)
+  financialDataUnavailableReason?:           // @IsOptional() - Raison si données financières non disponibles
+    'not_authorized' |                       // User n'a jamais autorisé le partage
+    'consent_revoked' |                      // User a révoqué l'autorisation
+    'never_synced' |                         // Jamais synchronisé
+    'stale';                                 // Données obsolètes (> 24h)
+}
 
 interface ProspectFinancialMetricsDto {
   annual_revenue: number;                    // @IsNumber() - CA annuel (CDF)
@@ -868,6 +908,80 @@ Les données de trésorerie sont stockées dans le champ JSONB `metadata` de l'e
 ```
 
 ### Utilisation Frontend
+
+#### ⚠️ IMPORTANT : Vérifier dataAvailability AVANT d'afficher les données financières
+
+Le champ `dataAvailability` est **CRUCIAL** pour le frontend. Il indique quelles données sont disponibles et pourquoi.
+
+**Règles de base :**
+- **Profil entreprise** (nom, secteur, contacts, adresse...) : Toujours disponible, pas d'autorisation requise
+- **Données financières** (CA, profit, trésorerie, score crédit...) : Requiert autorisation explicite du user
+
+```typescript
+import { ProspectDto } from '@/types';
+
+// Hook pour vérifier la disponibilité des données
+function useDataAvailability(prospect: ProspectDto) {
+  const { dataAvailability } = prospect;
+  
+  return {
+    // Profil toujours disponible
+    canShowProfile: dataAvailability.profileDataAvailable, // toujours true
+    
+    // Données financières uniquement si autorisées
+    canShowFinancials: dataAvailability.financialDataAuthorized,
+    
+    // Message à afficher si données financières non disponibles
+    getFinancialDataMessage: () => {
+      if (dataAvailability.financialDataAuthorized) return null;
+      
+      switch (dataAvailability.financialDataUnavailableReason) {
+        case 'not_authorized':
+          return 'Cette entreprise n\'a pas encore autorisé le partage de ses données financières.';
+        case 'consent_revoked':
+          return 'Cette entreprise a révoqué l\'autorisation de partage de données financières.';
+        case 'never_synced':
+          return 'Aucune donnée financière n\'a encore été reçue pour cette entreprise.';
+        case 'stale':
+          return 'Les données financières sont obsolètes (dernière sync > 24h).';
+        default:
+          return 'Données financières non disponibles.';
+      }
+    },
+    
+    // Indicateurs de fraîcheur
+    isFinancialDataFresh: dataAvailability.financialDataFresh,
+    isProfileDataFresh: dataAvailability.profileDataFresh,
+  };
+}
+
+// Composant d'affichage conditionnel
+function ProspectFinancials({ prospect }: { prospect: ProspectDto }) {
+  const { canShowFinancials, getFinancialDataMessage } = useDataAvailability(prospect);
+  
+  if (!canShowFinancials) {
+    return (
+      <div className="alert alert-info">
+        <i className="icon-lock" />
+        <p>{getFinancialDataMessage()}</p>
+        <small>
+          Le prospect doit autoriser le partage depuis son espace comptable.
+        </small>
+      </div>
+    );
+  }
+  
+  // Afficher les données financières
+  return (
+    <div>
+      <h4>Métriques Financières</h4>
+      <p>CA Annuel: {prospect.financial_metrics.annual_revenue.toLocaleString()} CDF</p>
+      <p>Score Crédit: {prospect.financial_metrics.credit_score}/100</p>
+      <p>Rating: {prospect.financial_metrics.financial_rating}</p>
+    </div>
+  );
+}
+```
 
 #### Exemple 1 : Afficher le Solde Actuel
 

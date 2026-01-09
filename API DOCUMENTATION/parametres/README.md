@@ -1,5 +1,7 @@
 # Documentation de l'API Paramètres
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Cette section détaille les endpoints de l'API liés aux paramètres (settings) de la plateforme Wanzo Portfolio Institution. Ces endpoints permettent de configurer et personnaliser l'application, gérer les paramètres de sécurité, les notifications, les intégrations et les fonctionnalités système.
 
 ## Paramètres d'application

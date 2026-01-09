@@ -1,5 +1,7 @@
 # Paiements - Documentation API
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document décrit les endpoints pour la gestion des ordres de paiement généraux dans l'API Wanzo Portfolio Institution basés sur le PaymentOrderController réellement implémenté.
 
 > **Scope** : Ordres de paiement génériques pour tous types de financement (crédit, leasing, investissement).  

@@ -1,523 +1,72 @@
 # Portefeuilles Traditionnels
 
-Ce document décrit les endpoints principaux pour la gestion des portefeuilles traditionnels dans l'API Wanzo Portfolio Institution.
+Cette API permet de gérer les portefeuilles traditionnels de crédit dans Wanzo Portfolio Institution. Les portefeuilles regroupent les produits financiers, les comptes bancaires/Mobile Money, et les métriques de performance.
 
 ## Modules des Portefeuilles Traditionnels
 
-Les portefeuilles traditionnels sont organisés en plusieurs modules :
-
-1. **[Demandes de Financement](./demandes/README.md)** - Gestion des demandes de financement
+1. **[Demandes de Crédit](./demandes/README.md)** - Gestion des demandes de financement
 2. **[Contrats de Crédit](./contrats/README.md)** - Gestion des contrats de crédit
-3. **[Déboursements](./virements/README.md)** - Gestion des déboursements/virements spécifiques aux crédits
-4. **[Remboursements](./remboursements/README.md)** - Gestion des remboursements des clients
+3. **[Déboursements](./debloquements/README.md)** - Gestion des déboursements/déblocages
+4. **[Remboursements](./remboursements/README.md)** - Gestion des remboursements
 5. **[Garanties](./garanties/README.md)** - Gestion des garanties
-6. **[Paramètres](./parametres/README.md)** - Configuration des paramètres du portefeuille
-7. **[Comptes](./comptes/README.md)** - Gestion des comptes bancaires et Mobile Money
+6. **[Comptes](./comptes/README.md)** - Comptes bancaires et Mobile Money
+7. **[Produits](./produits/README.md)** - Configuration des produits financiers
+8. **[Paramètres](./parametres/README.md)** - Paramètres du portefeuille
+9. **[Virements](./virements/README.md)** - Virements entre comptes
 
-> **Note importante**: Les comptes bancaires et Mobile Money sont synchronisés automatiquement entre le stockage dédié et l'entité Portfolio. Toute modification via les endpoints `/accounts` est immédiatement reflétée dans les champs `bank_accounts` et `mobile_money_accounts` du portfolio.
+## Entités et DTOs
 
-## Liste des portefeuilles traditionnels
+### Portfolio (Entité principale)
 
-Récupère la liste des portefeuilles traditionnels avec pagination et filtrage.
-
-**Endpoint** : `GET /portfolios/traditional`
-
-**Paramètres de requête** :
-- `page` (optionnel, défaut: 1) : Numéro de page
-- `limit` (optionnel, défaut: 10) : Nombre d'éléments par page
-- `status` (optionnel) : Filtre par statut (active, closed, suspended)
-- `manager` (optionnel) : Filtre par gestionnaire
-- `client` (optionnel) : Filtre par client
-- `dateFrom` (optionnel) : Date de début (format: YYYY-MM-DD)
-- `dateTo` (optionnel) : Date de fin (format: YYYY-MM-DD)
-- `search` (optionnel) : Recherche textuelle
-- `sortBy` (optionnel) : Tri par champ (createdAt, name, totalAmount)
-- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
-
-**Réponse réussie** (200 OK) :
-
-```json
-[
-  {
-    "id": "trad-1",
-    "name": "Portefeuille PME Nord-Kivu",
-    "type": "traditional",
-    "status": "active",
-    "target_amount": 500000000,
-    "target_return": 12,
-    "target_sectors": ["Commerce", "Services", "Agriculture"],
-    "risk_profile": "moderate",
-    "description": "Portefeuille de crédits pour PME",
-    "manager_id": "mgr-123",
-    "institution_id": "inst-456",
-    "products": [
-      {
-        "id": "prod-1",
-        "name": "Crédit PME Standard",
-        "type": "credit_professionnel",
-        "description": "Crédit pour petites et moyennes entreprises",
-        "minAmount": 1000000,
-        "maxAmount": 50000000,
-        "duration": {
-          "min": 12,
-          "max": 60
-        },
-        "interestRate": {
-          "type": "fixed",
-          "value": 12.5
-        },
-        "requirements": ["Garantie bancaire", "Business plan"],
-        "acceptedGuarantees": ["Hypothèque", "Nantissement"],
-        "isPublic": true,
-        "status": "active",
-        "created_at": "2024-01-01T00:00:00.000Z",
-        "updated_at": "2024-03-15T00:00:00.000Z"
-      }
-    ],
-    "bank_accounts": [
-      {
-        "id": "bank-1",
-        "name": "Compte Principal PME",
-        "bank_name": "Banque Centrale",
-        "account_number": "12345678901",
-        "currency": "CDF",
-        "balance": 45000000,
-        "is_default": true,
-        "status": "active"
-      }
-    ],
-    "mobile_money_accounts": [
-      {
-        "id": "mm-1",
-        "account_name": "M-Pesa Principal",
-        "phone_number": "+243900000001",
-        "provider": "M-Pesa",
-        "account_holder_id": "holder-1",
-        "currency": "CDF",
-        "is_primary": true,
-        "is_active": true,
-        "purpose": "collection",
-        "balance": 5000000,
-        "service_number": "*555#",
-        "account_status": "verified",
-        "daily_limit": 10000000,
-        "monthly_limit": 100000000,
-        "created_at": "2025-01-01T10:00:00Z",
-        "updated_at": "2025-01-10T14:30:00Z"
-      }
-    ],
-    "manager": {
-      "id": "mgr-123",
-      "name": "Jean Dupont",
-      "email": "jean.dupont@exemple.com",
-      "phone": "+243810123456",
-      "role": "Gestionnaire de Portefeuille",
-      "department": "Crédit Traditionnel"
-    },
-    "management_fees": {
-      "setup_fee": 250000,
-      "annual_fee": 500000,
-      "performance_fee": 2.5
-    },
-    "metrics": {
-      "net_value": 450000000,
-      "average_return": 10.5,
-      "risk_portfolio": 8,
-      "sharpe_ratio": 1.8,
-      "volatility": 12,
-      "alpha": 2.5,
-      "beta": 0.85,
-      "asset_allocation": [
-        { "type": "Crédit PME", "percentage": 45 },
-        { "type": "Microfinance", "percentage": 30 },
-        { "type": "Trésorerie", "percentage": 25 }
-      ],
-      "performance_curve": [100, 110, 120, 115, 130, 128, 140],
-      "returns": [100, 110, 120, 115, 130, 128, 140],
-      "benchmark": [100, 108, 115, 112, 125, 122, 135],
-      "balance_AGE": {
-        "total": 120000000,
-        "echeance_0_30": 70000000,
-        "echeance_31_60": 30000000,
-        "echeance_61_90": 15000000,
-        "echeance_91_plus": 5000000
-      },
-      "taux_impayes": 2.1,
-      "taux_couverture": 98.5,
-      "nb_credits": 45,
-      "total_credits": 450000000,
-      "avg_credit": 10000000,
-      "nb_clients": 35,
-      "taux_rotation": 15.5,
-      "taux_provision": 2.5,
-      "taux_recouvrement": 97.8
-    },
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-03-15T00:00:00.000Z"
-  }
-]
-```
-
-## Création d'un portefeuille traditionnel
-
-Crée un nouveau portefeuille traditionnel.
-
-**Endpoint** : `POST /portfolios/traditional`
-
-**Corps de la requête** :
-
-```json
-{
-  "name": "Nouveau Portefeuille PME",
-  "description": "Portefeuille de crédits pour PME",
-  "type": "traditional",
-  "reference": "PTF-2025-001",
-  "manager_id": "123e4567-e89b-12d3-a456-426614174000",
-  "institution_id": "987e6543-e21b-34c5-b678-542698765432",
-  "target_amount": 200000000,
-  "target_return": 15,
-  "target_sectors": ["Commerce", "Artisanat", "Agriculture"],
-  "risk_profile": "moderate",
-  "currency": "XOF"
+```typescript
+interface Portfolio {
+  id: string;
+  name: string;
+  type: PortfolioType;                   // 'traditional'
+  status: PortfolioStatus;
+  
+  // Devise et montants
+  currency: PortfolioCurrency;           // CDF, USD, EUR
+  initial_capital: number;               // Capital initial
+  target_amount?: number;                // Objectif de collecte
+  
+  // Période de validité
+  start_date: string;                    // ISO 8601
+  end_date?: string;                     // ISO 8601 (optionnel)
+  is_permanent?: boolean;                // Sans date de fin
+  
+  // Compte principal
+  primary_account_type: AccountType;     // 'bank' | 'mobile_money'
+  primary_bank_account_id?: string;
+  primary_mobile_money_account_id?: string;
+  
+  // Configuration
+  description?: string;
+  target_return?: number;                // Rendement cible en %
+  target_sectors?: string[];             // Secteurs cibles
+  risk_profile?: RiskProfile;
+  
+  // Relations
+  products: FinancialProduct[];
+  bank_accounts?: BankAccount[];
+  mobile_money_accounts?: MobileMoneyAccount[];
+  manager?: PortfolioManager;
+  management_fees?: ManagementFees;
+  
+  // Métriques
+  metrics: PortfolioMetrics;
+  
+  // Métadonnées
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  
+  // Cession
+  sale_info?: SaleInfo;
 }
 ```
 
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "123e4567-e89b-12d3-a456-426614174003",
-    "reference": "PTF-2025-001",
-    "name": "Nouveau Portefeuille PME",
-    "description": "Portefeuille de crédits pour PME",
-    "type": "traditional",
-    "status": "active",
-    "manager_id": "123e4567-e89b-12d3-a456-426614174000",
-    "institution_id": "987e6543-e21b-34c5-b678-542698765432",
-    "target_amount": 200000000,
-    "total_amount": 0,
-    "target_return": 15,
-    "target_sectors": ["Commerce", "Artisanat", "Agriculture"],
-    "risk_profile": "moderate",
-    "currency": "XOF",
-    "clientCount": 0,
-    "riskScore": null,
-    "products": [],
-    "bank_accounts": [],
-  "mobile_money_accounts": [],
-    "financial_products": [],
-    "manager": {
-      "id": "123e4567-e89b-12d3-a456-426614174000",
-      "name": "Jean Dupont",
-      "email": "jean.dupont@exemple.com"
-    },
-    "managerBankAccounts": [],
-    "managerMobileMoneyAccounts": [],
-    "managerPaymentPreferences": null,
-    "metrics": {
-      "net_value": 0,
-      "average_return": 0,
-      "risk_portfolio": 0,
-      "sharpe_ratio": 0,
-      "volatility": 0,
-      "alpha": 0,
-      "beta": 0,
-      "asset_allocation": [],
-      "performance_curve": [],
-      "returns": [],
-      "benchmark": []
-    },
-    "created_at": "2025-08-03T15:30:00.000Z",
-    "updated_at": "2025-08-03T15:30:00.000Z"
-  }
-}
-```
-
-## Détails d'un portefeuille traditionnel
-
-Récupère les détails complets d'un portefeuille traditionnel spécifique.
-
-**Endpoint** : `GET /portfolios/traditional/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-## Récupérer un portefeuille avec ses produits financiers
-
-Récupère un portefeuille traditionnel incluant tous ses produits financiers associés.
-
-**Endpoint** : `GET /portfolios/traditional/{id}/products`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "portfolio": {
-      "id": "trad-1",
-      "name": "Portefeuille PME Nord-Kivu",
-      "status": "active",
-      "target_amount": 500000000
-    },
-    "products": [
-      {
-        "id": "prod-1",
-        "name": "Crédit PME Standard",
-        "type": "credit_professionnel",
-        "minAmount": 1000000,
-        "maxAmount": 50000000,
-        "interestRate": 12.5,
-        "status": "active"
-      }
-    ]
-  }
-}
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "trad-1",
-  "name": "Portefeuille PME Nord-Kivu",
-  "description": "Portefeuille de crédits pour PME",
-  "type": "traditional",
-  "status": "active",
-  "target_amount": 500000000,
-  "target_return": 12,
-  "target_sectors": ["Commerce", "Services", "Agriculture"],
-  "risk_profile": "moderate",
-  "products": [],
-  "metrics": {
-    "net_value": 450000000,
-    "average_return": 10.5,
-    "risk_portfolio": 8,
-    "sharpe_ratio": 1.8,
-    "volatility": 12,
-    "alpha": 2.5,
-    "beta": 0.85,
-    "asset_allocation": [
-      { "type": "Crédit PME", "percentage": 45 },
-      { "type": "Microfinance", "percentage": 30 },
-      { "type": "Trésorerie", "percentage": 25 }
-    ],
-    "performance_curve": [100, 110, 120, 115, 130, 128, 140],
-    "returns": [100, 110, 120, 115, 130, 128, 140],
-    "benchmark": [100, 108, 115, 112, 125, 122, 135],
-    "balance_AGE": {
-      "total": 120000000,
-      "echeance_0_30": 70000000,
-      "echeance_31_60": 30000000,
-      "echeance_61_90": 15000000,
-      "echeance_91_plus": 5000000
-    },
-    "taux_impayes": 2.1,
-    "taux_couverture": 98.5,
-    "nb_credits": 45,
-    "total_credits": 450000000,
-    "avg_credit": 10000000,
-    "nb_clients": 35,
-    "taux_rotation": 15.5,
-    "taux_provision": 2.5,
-    "taux_recouvrement": 97.8
-  },
-  "manager": {
-    "id": "mgr-123",
-    "name": "Jean Dupont",
-    "email": "jean.dupont@exemple.com",
-    "phone": "+243810123456",
-    "role": "Gestionnaire de Portefeuille",
-    "department": "Crédit Traditionnel"
-  },
-  "management_fees": {
-    "setup_fee": 250000,
-    "annual_fee": 500000,
-    "performance_fee": 2.5
-  },
-  "created_at": "2024-01-01T00:00:00.000Z",
-  "updated_at": "2024-03-15T00:00:00.000Z"
-}
-```
-
-## Mise à jour d'un portefeuille traditionnel
-
-Met à jour les informations d'un portefeuille traditionnel existant.
-
-**Endpoint** : `PUT /portfolios/traditional/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Corps de la requête** :
-
-```json
-{
-  "name": "Portefeuille PME 2025 - Révisé",
-  "description": "Portefeuille de crédits pour PME - Révisé",
-  "status": "active",
-  "total_amount": 600000000,
-  "clientCount": 25,
-  "riskScore": 75,
-  "manager_id": "123e4567-e89b-12d3-a456-426614174789",
-  "target_return": 18,
-  "settings": {
-    "maxLoanAmount": 600000000,
-    "interestRateRange": {
-      "min": 6.0,
-      "max": 16.0
-    },
-    "loanTermRange": {
-      "min": 6,
-      "max": 48
-    },
-    "riskToleranceLevel": "high"
-  }
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "portfolio123",
-    "reference": "TRP-2025-001",
-    "name": "Portefeuille PME 2025 - Révisé",
-    "description": "Portefeuille de crédits pour PME - Révisé",
-    "status": "active",
-    "manager": {
-      "id": "user789",
-      "name": "Pierre Durand"
-    },
-    "settings": {
-      "maxLoanAmount": 600000.00,
-      "interestRateRange": {
-        "min": 6.0,
-        "max": 16.0
-      },
-      "loanTermRange": {
-        "min": 6,
-        "max": 48
-      },
-      "riskToleranceLevel": "high"
-    },
-    "updatedAt": "2025-07-24T15:00:00.000Z"
-  }
-}
-```
-
-## Suppression d'un portefeuille traditionnel
-
-Supprime un portefeuille traditionnel du système.
-
-**Endpoint** : `DELETE /portfolios/traditional/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "message": "Portefeuille supprimé avec succès"
-}
-```
-
-## Changement de statut d'un portefeuille traditionnel
-
-Change le statut d'un portefeuille traditionnel.
-
-**Endpoint** : `POST /portfolios/traditional/{id}/status`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Corps de la requête** :
-
-```json
-{
-  "status": "inactive"
-}
-```
-
-**Statuts valides** :
-- `active` : Actif
-- `inactive` : Inactif 
-- `pending` : En attente
-- `archived` : Archivé
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "trad-1",
-  "name": "Portefeuille PME Nord-Kivu",
-  "status": "inactive",
-  "updated_at": "2025-08-03T16:00:00.000Z"
-}
-```
-
-## Fermeture d'un portefeuille traditionnel
-
-Ferme définitivement un portefeuille traditionnel avec possibilité d'ajouter une raison.
-
-**Endpoint** : `POST /portfolios/traditional/{id}/close`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du portefeuille
-
-**Corps de la requête** :
-
-```json
-{
-  "closureReason": "Fin de mandat",
-  "closureNotes": "Tous les crédits ont été soldés, fermeture programmée"
-}
-```
-
-**Paramètres optionnels** :
-- `closureReason` (optionnel) : Raison de la fermeture
-- `closureNotes` (optionnel) : Notes complémentaires
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "trad-1",
-    "name": "Portefeuille PME Nord-Kivu",
-    "status": "closed",
-    "closureReason": "Fin de mandat",
-    "closureNotes": "Tous les crédits ont été soldés, fermeture programmée",
-    "closedAt": "2025-11-10T16:00:00.000Z",
-    "updated_at": "2025-11-10T16:00:00.000Z"
-  }
-}
-```
-
-## Erreurs spécifiques
-
-| Code HTTP | Code d'erreur                   | Description                                        |
-|-----------|---------------------------------|----------------------------------------------------|
-| 400       | INVALID_PORTFOLIO_DATA          | Données de portefeuille invalides                   |
-| 404       | PORTFOLIO_NOT_FOUND             | Portefeuille non trouvé                             |
-| 403       | INSUFFICIENT_PERMISSIONS        | Permissions insuffisantes                           |
-| 409       | PORTFOLIO_REFERENCE_EXISTS      | Référence de portefeuille déjà existante            |
-| 400       | INVALID_PORTFOLIO_STATUS_CHANGE | Changement de statut de portefeuille invalide       |
-
----
-
-## 📝 Structure de Données TypeScript
-
-### Interface TraditionalPortfolio
+### TraditionalPortfolio (Extension)
 
 ```typescript
 interface TraditionalPortfolio extends Portfolio {
@@ -525,130 +74,58 @@ interface TraditionalPortfolio extends Portfolio {
   manager_id: string;
   institution_id: string;
 }
-
-interface Portfolio {
-  id: string;
-  name: string;
-  reference: string;                      // Référence unique du portefeuille (obligatoire)
-  type: 'traditional' | 'credit' | 'savings' | 'microfinance' | 'treasury';
-  status: 'active' | 'inactive' | 'pending' | 'archived' | 'closed' | 'suspended';
-  manager_id: string;                     // UUID du gestionnaire (obligatoire)
-  institution_id: string;                 // UUID de l'institution (obligatoire)
-  target_amount: number;
-  total_amount: number;                   // Montant total actualisé (default: 0)
-  clientCount?: number;                   // Nombre de clients (calculé)
-  riskScore?: number;                     // Score de risque (0-100, calculé)
-  target_return?: number;
-  target_sectors?: string[];
-  risk_profile: 'conservative' | 'moderate' | 'aggressive';
-  currency: string;                       // Code ISO 4217 (default: XOF)
-  products: string[];                     // IDs des produits
-  bank_accounts?: BankAccount[];          // Synchronisé automatiquement depuis /accounts/bank
-  mobile_money_accounts?: MobileMoneyAccount[];  // Synchronisé automatiquement depuis /accounts/mobile-money
-  financial_products?: FinancialProduct[];
-  manager?: {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    role?: string;
-    department?: string;
-  };
-  management_fees?: {
-    setup_fee?: number;
-    annual_fee?: number;
-    performance_fee?: number;
-  };
-  metrics?: PortfolioMetrics;
-  settings?: {
-    maxLoanAmount: number;
-    interestRateRange: { min: number; max: number; };
-    loanTermRange: { min: number; max: number; };
-    riskToleranceLevel: 'low' | 'medium' | 'high';
-  };
-  managerBankAccounts?: ManagerBankAccount[];
-  managerMobileMoneyAccounts?: ManagerMobileMoneyAccount[];
-  managerPaymentPreferences?: ManagerPaymentPreferences;
-  clientId?: string;
-  createdBy?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ManagerBankAccount {
-  id: string;
-  bankName: string;
-  accountNumber: string;
-  accountHolderName: string;
-  swiftCode?: string;
-  iban?: string;
-  branchCode?: string;
-  branchAddress?: string;
-  isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface MobileMoneyAccount {
-  id: string;
-  account_name: string;
-  phone_number: string;
-  provider: 'Orange Money' | 'M-Pesa' | 'Airtel Money';
-  pin_code?: string;  // Encrypted
-  account_holder_id?: string;
-  currency: string;
-  is_primary: boolean;
-  is_active: boolean;
-  portfolio_id?: string;
-  purpose?: 'disbursement' | 'collection' | 'general' | 'investment' | 'escrow' | 'reserve';
-  balance?: number;
-  service_number?: string;
-  account_status?: 'verified' | 'pending' | 'suspended';
-  daily_limit?: number;
-  monthly_limit?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ManagerMobileMoneyAccount {
-  id: string;
-  operator: 'AM' | 'OM' | 'WAVE' | 'MP' | 'AF';
-  phoneNumber: string;
-  accountHolderName: string;
-  isDefault: boolean;
-  verificationStatus: 'pending' | 'verified' | 'failed';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface ManagerPaymentPreferences {
-  preferredMethod: 'bank' | 'mobile_money';
-  defaultBankAccount?: string;
-  defaultMobileMoneyAccount?: string;
-  allowAutomaticPayments: boolean;
-  minimumPaymentThreshold?: number;
-  notificationPreferences?: {
-    sms?: boolean;
-    email?: boolean;
-    push?: boolean;
-  };
-}
 ```
 
-### Interface FinancialProduct
+### Enums et Types
 
 ```typescript
+// Statuts du portefeuille (10 valeurs - conformes OHADA + legacy)
+type PortfolioStatus = 
+  | 'draft'      // Brouillon (en configuration)
+  | 'pending'    // En attente d'approbation
+  | 'active'     // Actif (opérationnel)
+  | 'suspended'  // Suspendu temporairement
+  | 'inactive'   // Inactif (arrêté)
+  | 'closing'    // En cours de clôture
+  | 'for_sale'   // En vente (cession)
+  | 'sold'       // Vendu/Cédé
+  | 'archived'   // Archivé (clôturé définitivement)
+  | 'closed';    // Legacy: Alias de archived
+
+// Types de portefeuille (9 valeurs)
+type PortfolioType = 
+  | 'traditional'   // Portefeuille de crédits traditionnels
+  | 'leasing'       // Portefeuille de leasing/crédit-bail
+  | 'investment'    // Portefeuille d'investissements
+  | 'mixed'         // Portefeuille mixte
+  | 'credit'        // Legacy: Alias de traditional
+  | 'savings'       // Épargne (legacy)
+  | 'microfinance'  // Microfinance (legacy)
+  | 'treasury'      // Trésorerie (legacy)
+  | 'other';        // Autre type
+
+// Devises supportées (RDC/OHADA)
+type PortfolioCurrency = 'CDF' | 'USD' | 'EUR';
+
+// Types de compte
+type AccountType = 'bank' | 'mobile_money';
+
+// Profils de risque
+type RiskProfile = 'conservative' | 'moderate' | 'aggressive';
+```
+
+### Types imbriqués
+
+```typescript
+// Produit financier
 interface FinancialProduct {
   id: string;
   name: string;
-  type: 'credit_personnel' | 'credit_immobilier' | 'credit_auto' | 'credit_professionnel' | 'microcredit' | 'credit_consommation';
+  type: ProductType;
   description: string;
   minAmount: number;
   maxAmount: number;
-  duration: {
-    min: number;
-    max: number;
-  };
+  duration: { min: number; max: number };
   interestRate: {
     type: 'fixed' | 'variable';
     value?: number;
@@ -662,132 +139,425 @@ interface FinancialProduct {
   created_at: string;
   updated_at: string;
 }
-```
 
-### Interface BankAccount
+// Types de produits (6 valeurs)
+type ProductType = 
+  | 'credit_personnel'
+  | 'credit_immobilier'
+  | 'credit_auto'
+  | 'credit_professionnel'
+  | 'microcredit'
+  | 'credit_consommation';
 
-```typescript
-interface BankAccount {
+// Gestionnaire de portefeuille
+interface PortfolioManager {
   id: string;
   name: string;
-  bank_name: string;
-  account_number: string;
-  currency: string;
-  balance: number;
-  is_default: boolean;
-  status: 'active' | 'inactive' | 'suspended';
-  created_at: string;
-  updated_at: string;
+  email: string;
+  phone?: string;
+  role?: string;
+  department?: string;
 }
-```
 
-### Interface PortfolioMetrics
+// Frais de gestion
+interface ManagementFees {
+  setup_fee?: number;        // Frais de mise en place
+  annual_fee?: number;       // Frais annuels
+  performance_fee?: number;  // Commission sur performance
+}
 
-```typescript
+// Métriques du portefeuille
 interface PortfolioMetrics {
-  net_value: number;
-  average_return: number;
-  risk_portfolio: number;
-  sharpe_ratio: number;
-  volatility: number;
+  net_value: number;              // Valeur nette
+  average_return: number;         // Rendement moyen
+  risk_portfolio: number;         // Risque du portefeuille
+  sharpe_ratio: number;           // Ratio de Sharpe
+  volatility: number;             // Volatilité
   alpha: number;
   beta: number;
-  asset_allocation: Array<{
-    type: string;
-    percentage: number;
-  }>;
+  asset_allocation: AssetAllocation[];
   performance_curve?: number[];
   returns?: number[];
   benchmark?: number[];
-  // Indicateurs spécifiques crédit
-  balance_AGE?: {
+  
+  // Métriques crédit spécifiques
+  balance_AGE?: {                 // Balance âgée
     total: number;
     echeance_0_30: number;
     echeance_31_60: number;
     echeance_61_90: number;
     echeance_91_plus: number;
   };
-  taux_impayes?: number;
-  taux_couverture?: number;
-  // Métriques métier crédit/traditionnel
-  nb_credits?: number;
-  total_credits?: number;
-  avg_credit?: number;
-  nb_clients?: number;
-  taux_rotation?: number;
-  taux_provision?: number;
-  taux_recouvrement?: number;
+  taux_impayes?: number;          // Taux d'impayés
+  taux_couverture?: number;       // Taux de couverture
+  nb_credits?: number;            // Nombre de crédits
+  total_credits?: number;         // Total des crédits
+  avg_credit?: number;            // Crédit moyen
+  nb_clients?: number;            // Nombre de clients
+  taux_rotation?: number;         // Taux de rotation
+  taux_provision?: number;        // Taux de provision
+  taux_recouvrement?: number;     // Taux de recouvrement
+}
+
+// Information de cession
+interface SaleInfo {
+  listed_at?: string;             // Date de mise en vente
+  asking_price?: number;          // Prix demandé
+  sold_at?: string;               // Date de vente
+  sold_price?: number;            // Prix de vente
+  buyer_institution_id?: string;  // ID de l'acheteur
 }
 ```
 
----
+## Points d'accès
 
-## 📊 Champs Calculés et Dynamiques
+### Liste des portefeuilles traditionnels
 
-Les champs suivants sont calculés automatiquement par le système et ne peuvent pas être modifiés directement:
+**Endpoint** : `GET /portfolios/traditional`
 
-| Champ | Type | Calcul | Description |
-|-------|------|--------|-------------|
-| `total_amount` | number | Somme des montants de tous les contrats actifs | Montant total actualisé du portefeuille |
-| `clientCount` | number | COUNT(DISTINCT client_id) des contrats | Nombre de clients uniques |
-| `riskScore` | number | Algorithme de scoring basé sur taux_impayes, taux_couverture, balance_AGE | Score de risque global (0-100) |
-| `metrics.nb_credits` | number | COUNT(contracts WHERE status='active') | Nombre de crédits actifs |
-| `metrics.total_credits` | number | SUM(contracts.amount) | Montant total des crédits |
-| `metrics.avg_credit` | number | total_credits / nb_credits | Montant moyen par crédit |
-| `metrics.nb_clients` | number | COUNT(DISTINCT clients) | Nombre de clients (identique à clientCount) |
-| `metrics.taux_impayes` | number | Calculé depuis repayments en retard | Taux d'impayés en % |
-| `metrics.taux_recouvrement` | number | Calculé depuis repayments reçus vs dus | Taux de recouvrement en % |
+**Paramètres de requête** :
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `page` | number | Non | Numéro de page (défaut: 1) |
+| `limit` | number | Non | Éléments par page (défaut: 10) |
+| `status` | PortfolioStatus | Non | Filtrer par statut |
+| `manager` | string | Non | Filtrer par gestionnaire |
+| `currency` | PortfolioCurrency | Non | Filtrer par devise |
+| `search` | string | Non | Recherche textuelle |
+| `dateFrom` | string | Non | Date de début (ISO 8601) |
+| `dateTo` | string | Non | Date de fin (ISO 8601) |
+| `sortBy` | string | Non | Champ de tri |
+| `sortOrder` | string | Non | Ordre (asc, desc) |
 
-> **Note**: Ces champs sont en lecture seule et sont recalculés lors de chaque événement affectant le portefeuille (création de contrat, remboursement, etc.).
+**Réponse réussie** (200 OK) :
 
----
-
-## 🔄 Synchronisation des Comptes
-
-Les comptes bancaires et Mobile Money d'un portefeuille sont stockés dans deux emplacements :
-
-1. **Stockage dédié** : Utilisé par les endpoints `/portfolios/{id}/accounts/*` pour les opérations CRUD
-   - Clés localStorage : `portfolio_{id}_bank_accounts` et `portfolio_{id}_mobile_money_accounts`
-   - Avantage : Performance et isolation des données
-
-2. **Entité Portfolio** : Champs `bank_accounts` et `mobile_money_accounts` du portfolio
-   - Utilisé pour les requêtes complètes de portfolio
-   - Avantage : Cohérence et requêtes unifiées
-
-### Mécanisme de Synchronisation Automatique
-
-**Toutes les modifications de comptes déclenchent une synchronisation automatique :**
-
-- ✅ Ajout d'un compte (bancaire ou Mobile Money)
-- ✅ Modification d'un compte
-- ✅ Suppression d'un compte
-- ✅ Changement du compte principal
-
-La synchronisation est gérée par le hook `usePortfolioAccounts` qui appelle `syncAccountsToPortfolio()` après chaque opération CRUD.
-
-### Architecture du Workflow
-
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "TP-00001",
+      "name": "Portefeuille PME 2025",
+      "type": "traditional",
+      "status": "active",
+      "currency": "USD",
+      "initial_capital": 500000.00,
+      "target_amount": 1000000.00,
+      "start_date": "2025-01-01T00:00:00.000Z",
+      "is_permanent": false,
+      "end_date": "2025-12-31T23:59:59.000Z",
+      "primary_account_type": "bank",
+      "primary_bank_account_id": "BA-00001",
+      "description": "Portefeuille de crédits aux PME",
+      "target_return": 12.5,
+      "target_sectors": ["Commerce", "Services", "Agriculture"],
+      "risk_profile": "moderate",
+      "products": [
+        {
+          "id": "PROD-001",
+          "name": "Crédit PME Standard",
+          "type": "credit_professionnel",
+          "minAmount": 5000,
+          "maxAmount": 100000,
+          "duration": { "min": 6, "max": 36 },
+          "interestRate": { "type": "fixed", "value": 15 },
+          "status": "active"
+        }
+      ],
+      "bank_accounts": [
+        {
+          "id": "BA-00001",
+          "account_name": "Compte Principal",
+          "bank_name": "Rawbank",
+          "account_number": "0010023456789",
+          "currency": "USD",
+          "is_primary": true,
+          "balance": 450000.00
+        }
+      ],
+      "mobile_money_accounts": [
+        {
+          "id": "MM-00001",
+          "account_name": "Orange Money Portefeuille",
+          "phone_number": "+243850000001",
+          "provider": "Orange Money",
+          "currency": "CDF",
+          "is_primary": true,
+          "balance": 50000000.00
+        }
+      ],
+      "manager": {
+        "id": "USER-001",
+        "name": "Jean Dupont",
+        "email": "jean.dupont@example.com"
+      },
+      "metrics": {
+        "net_value": 485000.00,
+        "average_return": 11.2,
+        "nb_credits": 45,
+        "total_credits": 425000.00,
+        "nb_clients": 42,
+        "taux_impayes": 0.035,
+        "taux_recouvrement": 0.92
+      },
+      "created_at": "2025-01-01T08:00:00.000Z",
+      "updated_at": "2025-02-01T10:30:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 5,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
 ```
-UI (AccountsPanel)
-  ↓
-Hook (usePortfolioAccounts)
-  ↓ CRUD Operation
-API Service (portfolioAccountsApi)
-  ↓ Update Dedicated Storage
-LocalStorage (portfolio_{id}_*_accounts)
-  ↓ Auto-Sync
-Portfolio Entity (portfolio.bank_accounts / mobile_money_accounts)
+
+### Détails d'un portefeuille
+
+**Endpoint** : `GET /portfolios/traditional/{id}`
+
+**Réponse réussie** (200 OK) : Retourne l'objet `Portfolio` complet avec toutes ses relations.
+
+### Créer un portefeuille
+
+**Endpoint** : `POST /portfolios/traditional`
+
+**Corps de la requête** :
+
+```json
+{
+  "name": "Portefeuille PME 2025",
+  "currency": "USD",
+  "initial_capital": 500000.00,
+  "target_amount": 1000000.00,
+  "start_date": "2025-01-01T00:00:00.000Z",
+  "end_date": "2025-12-31T23:59:59.000Z",
+  "primary_account_type": "bank",
+  "primary_bank_account_id": "BA-00001",
+  "description": "Portefeuille de crédits aux PME",
+  "target_return": 12.5,
+  "target_sectors": ["Commerce", "Services", "Agriculture"],
+  "risk_profile": "moderate",
+  "manager_id": "USER-001",
+  "institution_id": "INST-001"
+}
 ```
 
-### Points Importants
+**Réponse réussie** (201 Created) : Retourne l'objet `Portfolio` créé avec statut `draft`.
 
-1. **Pas d'intervention manuelle requise** : La synchronisation est entièrement automatique
-2. **Cohérence garantie** : Les deux sources de données sont toujours à jour
-3. **Gestion d'erreurs** : Les erreurs de sync sont loggées en console sans bloquer l'UI
-4. **Performance** : La synchronisation est asynchrone et n'impacte pas l'expérience utilisateur
+### Mettre à jour un portefeuille
 
-Pour plus de détails sur l'architecture de synchronisation, consultez [accounts-synchronization.md](../../docs/accounts-synchronization.md).
+**Endpoint** : `PUT /portfolios/traditional/{id}`
 
----
+**Corps de la requête** : Champs partiels de `Portfolio`
 
-*Documentation mise à jour le 19 novembre 2025 - Conformité 100% avec le code source*
+### Récupérer un portefeuille avec ses produits
+
+**Endpoint** : `GET /portfolios/traditional/{id}/products`
+
+**Description** : Récupère le portefeuille avec la liste complète de ses produits financiers associés.
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "portfolio": {
+      "id": "TP-00001",
+      "name": "Portefeuille PME 2025",
+      "status": "active"
+    },
+    "products": [
+      {
+        "id": "PROD-001",
+        "name": "Crédit PME Standard",
+        "type": "credit_professionnel",
+        "minAmount": 5000,
+        "maxAmount": 100000,
+        "status": "active"
+      }
+    ]
+  }
+}
+```
+
+### Activer un portefeuille
+
+**Endpoint** : `POST /portfolios/traditional/{id}/activate`
+
+**Prérequis** :
+- Au moins un compte (bancaire ou Mobile Money) associé
+- Au moins un produit financier configuré
+- Gestionnaire assigné
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "TP-00001",
+    "status": "active",
+    "activated_at": "2025-01-15T10:00:00.000Z"
+  }
+}
+```
+
+### Suspendre un portefeuille
+
+**Endpoint** : `POST /portfolios/traditional/{id}/suspend`
+
+**Corps de la requête** :
+
+```json
+{
+  "reason": "Audit en cours",
+  "expected_resume_date": "2025-03-01T00:00:00.000Z"
+}
+```
+
+### Changer le statut d'un portefeuille
+
+**Endpoint** : `POST /portfolios/traditional/{id}/status`
+
+**Corps de la requête** :
+
+```json
+{
+  "status": "active"
+}
+```
+
+**Valeurs autorisées** : `active`, `inactive`, `pending`, `archived`
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "id": "TP-00001",
+  "name": "Portefeuille PME 2025",
+  "status": "active",
+  "updated_at": "2025-01-15T10:30:00.000Z"
+}
+```
+
+### Clôturer un portefeuille
+
+**Endpoint** : `POST /portfolios/traditional/{id}/close`
+
+**Corps de la requête** :
+
+```json
+{
+  "closureReason": "Fin de période",
+  "closureNotes": "Transfert vers nouveau portefeuille"
+}
+```
+
+### Mettre en vente
+
+**Endpoint** : `POST /portfolios/traditional/{id}/list-for-sale`
+
+**Corps de la requête** :
+
+```json
+{
+  "asking_price": 520000.00,
+  "description": "Portefeuille performant avec bon historique"
+}
+```
+
+### Archiver
+
+**Endpoint** : `POST /portfolios/traditional/{id}/archive`
+
+### Supprimer
+
+**Endpoint** : `DELETE /portfolios/traditional/{id}`
+
+**Conditions** : Seuls les portefeuilles avec statut `draft` peuvent être supprimés.
+
+### Métriques détaillées
+
+**Endpoint** : `GET /portfolios/traditional/{id}/metrics`
+
+**Paramètres de requête** :
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `period` | string | Non | Période (month, quarter, year) |
+| `dateFrom` | string | Non | Date de début |
+| `dateTo` | string | Non | Date de fin |
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "net_value": 485000.00,
+      "average_return": 11.2,
+      "sharpe_ratio": 1.45,
+      "volatility": 0.08
+    },
+    "credit_metrics": {
+      "nb_credits": 45,
+      "total_credits": 425000.00,
+      "avg_credit": 9444.44,
+      "nb_clients": 42,
+      "taux_impayes": 0.035,
+      "taux_recouvrement": 0.92,
+      "taux_provision": 0.05
+    },
+    "balance_age": {
+      "total": 425000.00,
+      "echeance_0_30": 380000.00,
+      "echeance_31_60": 25000.00,
+      "echeance_61_90": 12000.00,
+      "echeance_91_plus": 8000.00
+    },
+    "performance_curve": [100, 102, 105, 103, 108, 111],
+    "asset_allocation": [
+      { "type": "credit_professionnel", "percentage": 60 },
+      { "type": "microcredit", "percentage": 30 },
+      { "type": "credit_personnel", "percentage": 10 }
+    ]
+  }
+}
+```
+
+## Codes d'erreur
+
+| Code | Description |
+|------|-------------|
+| 400 | Données invalides |
+| 404 | Portefeuille non trouvé |
+| 409 | Conflit (transition de statut non autorisée) |
+| 422 | Opération non autorisée selon le statut |
+
+## Règles métier
+
+1. **Transitions de statut** :
+   - `draft` → `active` (avec prérequis)
+   - `active` → `suspended`, `closing`, `for_sale`
+   - `suspended` → `active`, `closing`
+   - `for_sale` → `sold`, `active` (retrait de la vente)
+   - `closing` → `archived`
+
+2. **Compte principal obligatoire** :
+   - Un portefeuille actif doit avoir un compte principal configuré
+   - Le compte doit être vérifié et actif
+
+3. **Clôture** :
+   - Tous les crédits doivent être soldés ou transférés
+   - Les soldes résiduels doivent être transférés
+
+4. **Synchronisation des comptes** :
+   - Les modifications via `/accounts` sont synchronisées automatiquement
+   - Les champs `bank_accounts` et `mobile_money_accounts` sont mis à jour
+
+5. **Cession** :
+   - Un portefeuille en vente reste opérationnel
+   - La vente transfert toutes les relations (crédits, comptes, etc.)

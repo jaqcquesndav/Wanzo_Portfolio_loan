@@ -1,17 +1,103 @@
-# Gestion des utilisateurs
+# Gestion des Utilisateurs
 
-Ce document décrit les endpoints pour la gestion des utilisateurs dans l'API Wanzo Portfolio Institution.
+Cette API permet de gérer les utilisateurs de la plateforme Wanzo Portfolio Institution, incluant l'authentification, les profils, les rôles et permissions, ainsi que la vérification d'identité.
 
-## Types de données
+## Entités et DTOs
 
-Les types principaux utilisés dans les API d'utilisateurs sont les suivants:
+### User (Entité principale)
 
 ```typescript
-export interface UserSettings {
+interface User {
+  id: string;
+  email: string;
+  emailVerified?: boolean;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;                      // URL de la photo de profil
+  phone?: string;
+  phoneVerified?: boolean;
+  address?: string;
+  
+  // Vérification d'identité
+  idNumber?: string;                     // Numéro de pièce d'identité
+  idType?: IdType;
+  idStatus?: IdStatus;
+  
+  // Rôle et type
+  role?: UserRole;
+  userType?: UserType;
+  status?: UserStatus;
+  
+  // Relations avec entités
+  companyId?: string;                    // Pour type 'sme'
+  financialInstitutionId?: string;       // Pour type 'financial_institution'
+  institutionId?: string;                // ID de l'institution associée
+  isCompanyOwner?: boolean;
+  
+  // Informations personnelles
+  birthdate?: string;                    // ISO 8601
+  bio?: string;
+  department?: string;
+  
+  // Paramètres
+  settings?: UserSettings;
+  language?: Language;
+  permissions?: string[];
+  
+  // Abonnement
+  plan?: string;
+  tokenBalance?: number;
+  tokenTotal?: number;
+  
+  createdAt: string;
+  updatedAt?: string;
+}
+```
+
+### Enums et Types
+
+```typescript
+// Types d'utilisateur (2 valeurs)
+type UserType = 'sme' | 'financial_institution';
+
+// Rôles utilisateur (7 valeurs - incluant legacy)
+type UserRole = 
+  | 'Admin'              // Administrateur
+  | 'Portfolio_Manager'  // Gestionnaire de portefeuille
+  | 'Auditor'            // Auditeur
+  | 'User'               // Utilisateur standard
+  // Legacy values
+  | 'manager'            // Alias de Portfolio_Manager
+  | 'analyst'            // Analyste (legacy)
+  | 'viewer';            // Lecteur seul (legacy)
+
+// Types de pièce d'identité (4 valeurs)
+type IdType = 'passport' | 'national_id' | 'driver_license' | 'other';
+
+// Statuts de vérification d'identité (3 valeurs)
+type IdStatus = 'pending' | 'verified' | 'rejected';
+
+// Statuts utilisateur (4 valeurs - incluant legacy)
+type UserStatus = 
+  | 'active'     // Actif
+  | 'inactive'   // Inactif
+  | 'suspended'  // Suspendu
+  | 'pending';   // En attente d'activation (legacy)
+
+// Langues supportées (2 valeurs)
+type Language = 'fr' | 'en';
+```
+
+### Types imbriqués
+
+```typescript
+// Paramètres utilisateur
+interface UserSettings {
   notifications?: {
-    email?: boolean;
-    sms?: boolean;
-    app?: boolean;
+    email?: boolean;          // Notifications par email
+    sms?: boolean;            // Notifications par SMS
+    app?: boolean;            // Notifications in-app
   };
   theme?: 'light' | 'dark' | 'system';
   dashboard?: {
@@ -20,70 +106,34 @@ export interface UserSettings {
   };
 }
 
-export type UserType = 'sme' | 'financial_institution';
-export type UserRole = 'Admin' | 'Portfolio_Manager' | 'Auditor' | 'User';
-export type IdType = 'passport' | 'national_id' | 'driver_license' | 'other';
-export type IdStatus = 'pending' | 'verified' | 'rejected';
-export type Language = 'fr' | 'en';
-
-// Utilisateur de base
-export interface User {
-  id: string;
-  email: string;
-  emailVerified?: boolean;
-  name?: string;
-  givenName?: string;
-  familyName?: string;
-  picture?: string;
-  phone?: string;
-  phoneVerified?: boolean;
-  address?: string;
-  idNumber?: string;
-  idType?: IdType;
-  idStatus?: IdStatus;
-  role?: UserRole;
-  birthdate?: string;
-  bio?: string;
-  userType?: UserType;
-  companyId?: string; 
-  financialInstitutionId?: string;
-  isCompanyOwner?: boolean;
-  createdAt: string;
-  updatedAt?: string;
-  settings?: UserSettings;
-  language?: Language;
-  permissions?: string[];
-  plan?: string;
-  tokenBalance?: number;
-  tokenTotal?: number;
+// Adresse
+interface Address {
+  street: string;
+  city: string;
+  state?: string;
+  postalCode?: string;
+  country: string;
 }
 
-// Détails complets d'un utilisateur
-export interface UserDetails extends User {
-  manager?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  directReports: Array<{
-    id: string;
-    name: string;
-    position: string;
-  }>;
-  portfolioAssignments: Array<{
-    id: string;
-    name: string;
-    type: 'traditional' | 'investment' | 'leasing';
-  }>;
-  activityLog: Array<{
-    action: string;
-    timestamp: string;
-    details?: string;
-  }>;
+// Personne de contact
+interface ContactPerson {
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  department?: string;
+}
+
+// Permission
+interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
 }
 
 // Activité utilisateur
-export interface UserActivity {
+interface UserActivity {
   id: string;
   userId: string;
   userName: string;
@@ -96,129 +146,183 @@ export interface UserActivity {
   timestamp: string;
 }
 
-// Rôle utilisateur
-export interface UserRole {
-  id: string;
-  name: string;
-  description: string;
+// Réponse utilisateur avec institution (pour /users/me)
+interface UserWithInstitutionResponse {
+  user: User & {
+    institutionId?: string;
+    auth0Id?: string;
+    firstName?: string;        // Alias de givenName
+    lastName?: string;         // Alias de familyName
+  };
+  institution: InstitutionLite | null;
+  auth0Id: string;
+  role: UserRole;
   permissions: string[];
-  isSystem: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-// Permission
-export interface Permission {
+// Institution (version allégée)
+interface InstitutionLite {
   id: string;
   name: string;
-  description: string;
-  category: string;
+  type: string;
+  status: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo?: string;
+  license_number?: string;
+  license_type?: string;
+  legal_representative?: string;
+  tax_id?: string;
+  regulatory_status?: string;
+  kiotaId?: string;
+  active?: boolean;
+  subscriptionPlan?: string;
+  subscriptionStatus?: string;
+  subscriptionEndDate?: string;
+  tokenBalance?: number;
+  tokensUsed?: number;
+  settings?: {
+    currency?: string;
+    timezone?: string;
+  };
+  documents?: DocumentLite[];
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 ```
 
-## Liste des utilisateurs
+## Points d'accès
 
-Récupère la liste des utilisateurs avec pagination et filtrage.
+### Utilisateur courant
 
-**Endpoint** : `GET /portfolio/api/v1/users`
+**Endpoint** : `GET /portfolio/api/v1/users/me`
 
-**Paramètres de requête** :
-- `page` (optionnel) : Numéro de la page
-- `limit` (optionnel) : Nombre d'utilisateurs par page
-- `role` (optionnel) : Filtre par rôle (ex: Admin, Portfolio_Manager)
-- `status` (optionnel) : Filtre par statut (active, inactive, pending)
-- `department` (optionnel) : Filtre par département
-- `search` (optionnel) : Recherche textuelle (nom, prénom, email)
+**Description** : Retourne l'utilisateur courant avec son institution associée. Optimisé pour le login et le dashboard (~5KB vs ~100KB+).
 
-**Réponse** :
+**Réponse réussie** (200 OK) :
 
 ```json
 {
-  "data": [
-    {
-      "id": "user123",
+  "success": true,
+  "data": {
+    "user": {
+      "id": "USER-001",
       "email": "jean.dupont@exemple.com",
+      "emailVerified": true,
       "name": "Jean Dupont",
       "givenName": "Jean",
       "familyName": "Dupont",
-      "picture": "https://example.com/profiles/jean.jpg",
+      "picture": "https://storage.example.com/profiles/user-001.jpg",
       "phone": "+243810123456",
+      "phoneVerified": true,
       "role": "Portfolio_Manager",
+      "userType": "financial_institution",
       "status": "active",
+      "institutionId": "INST-001",
+      "idNumber": "P123456789",
+      "idType": "passport",
+      "idStatus": "verified",
+      "language": "fr",
+      "permissions": ["portfolios.read", "portfolios.write", "credits.manage"],
+      "settings": {
+        "notifications": {
+          "email": true,
+          "sms": false,
+          "app": true
+        },
+        "theme": "light"
+      },
       "createdAt": "2025-01-15T08:00:00.000Z",
-      "updatedAt": "2025-07-20T10:30:00.000Z"
+      "updatedAt": "2025-02-01T10:30:00.000Z"
     },
-    // ... autres utilisateurs
-  ],
-  "meta": {
-    "total": 45,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 5
+    "institution": {
+      "id": "INST-001",
+      "name": "Rawbank",
+      "type": "bank",
+      "status": "active",
+      "country": "RDC",
+      "city": "Kinshasa",
+      "phone": "+243810000001",
+      "email": "contact@rawbank.cd",
+      "website": "https://www.rawbank.cd",
+      "logo": "https://storage.example.com/logos/rawbank.png",
+      "license_number": "LIC-BCC-2020-001",
+      "license_type": "commercial_bank",
+      "regulatory_status": "compliant",
+      "subscriptionPlan": "enterprise",
+      "subscriptionStatus": "active",
+      "tokenBalance": 5000,
+      "settings": {
+        "currency": "USD",
+        "timezone": "Africa/Kinshasa"
+      }
+    },
+    "auth0Id": "auth0|abc123def456",
+    "role": "Portfolio_Manager",
+    "permissions": ["portfolios.read", "portfolios.write", "credits.manage"]
   }
 }
 ```
 
-## Détails d'un utilisateur
+### Liste des utilisateurs
 
-Récupère les détails complets d'un utilisateur spécifique.
+**Endpoint** : `GET /portfolio/api/v1/users`
 
-**Endpoint** : `GET /portfolio/api/v1/users/{id}`
+**Paramètres de requête** :
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `page` | number | Non | Numéro de page (défaut: 1) |
+| `limit` | number | Non | Éléments par page (défaut: 10) |
+| `role` | UserRole | Non | Filtrer par rôle |
+| `status` | UserStatus | Non | Filtrer par statut |
+| `userType` | UserType | Non | Filtrer par type |
+| `department` | string | Non | Filtrer par département |
+| `search` | string | Non | Recherche textuelle |
+| `sortBy` | string | Non | Champ de tri |
+| `sortOrder` | string | Non | Ordre (asc, desc) |
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
-
-**Réponse** :
+**Réponse réussie** (200 OK) :
 
 ```json
 {
-  "id": "user123",
-  "email": "jean.dupont@exemple.com",
-  "name": "Jean Dupont",
-  "givenName": "Jean",
-  "familyName": "Dupont",
-  "picture": "https://example.com/profiles/jean.jpg",
-  "phone": "+243810123456",
-  "phoneVerified": true,
-  "address": "123 Rue de la Paix, Kinshasa",
-  "role": "Portfolio_Manager",
-  "permissions": ["read:users", "write:portfolios", "read:reports"],
-  "language": "fr",
-  "userType": "financial_institution",
-  "manager": {
-    "id": "user456",
-    "name": "Marie Martin",
-    "email": "marie.martin@exemple.com"
-  },
-  "directReports": [
+  "success": true,
+  "data": [
     {
-      "id": "user789",
-      "name": "Paul Petit",
-      "position": "Analyste crédit"
+      "id": "USER-001",
+      "email": "jean.dupont@exemple.com",
+      "name": "Jean Dupont",
+      "givenName": "Jean",
+      "familyName": "Dupont",
+      "picture": "https://storage.example.com/profiles/user-001.jpg",
+      "phone": "+243810123456",
+      "role": "Portfolio_Manager",
+      "userType": "financial_institution",
+      "status": "active",
+      "department": "Crédit",
+      "createdAt": "2025-01-15T08:00:00.000Z"
     }
   ],
-  "portfolioAssignments": [
-    {
-      "id": "portfolio123",
-      "name": "Portefeuille PME",
-      "type": "traditional"
-    }
-  ],
-  "activityLog": [
-    {
-      "action": "login",
-      "timestamp": "2025-07-23T09:15:00.000Z",
-      "details": "Connexion depuis 192.168.1.100"
-    }
-  ],
-  "createdAt": "2025-01-15T08:00:00.000Z",
-  "updatedAt": "2025-07-20T10:30:00.000Z"
+  "meta": {
+    "total": 25,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 3
+  }
 }
 ```
 
-## Création d'un utilisateur
+### Détails d'un utilisateur
 
-Crée un nouvel utilisateur dans le système.
+**Endpoint** : `GET /portfolio/api/v1/users/{id}`
+
+**Réponse réussie** (200 OK) : Retourne l'objet `User` complet avec ses relations.
+
+### Créer un utilisateur
 
 **Endpoint** : `POST /portfolio/api/v1/users`
 
@@ -226,320 +330,172 @@ Crée un nouvel utilisateur dans le système.
 
 ```json
 {
-  "email": "thomas.dubois@exemple.com",
-  "name": "Thomas Dubois",
-  "givenName": "Thomas",
-  "familyName": "Dubois",
-  "phone": "+243810789012",
-  "role": "Auditor",
+  "email": "nouveau.utilisateur@exemple.com",
+  "givenName": "Nouveau",
+  "familyName": "Utilisateur",
+  "phone": "+243810123456",
+  "role": "User",
   "userType": "financial_institution",
-  "permissions": ["read:portfolios", "read:reports", "write:risk"],
-  "sendInvitation": true
+  "institutionId": "INST-001",
+  "department": "Crédit",
+  "language": "fr"
 }
 ```
 
-**Réponse** :
+**Réponse réussie** (201 Created) : Retourne l'objet `User` créé.
 
-```json
-{
-  "id": "user456",
-  "email": "thomas.dubois@exemple.com",
-  "name": "Thomas Dubois",
-  "givenName": "Thomas",
-  "familyName": "Dubois",
-  "phone": "+243810789012",
-  "role": "Auditor",
-  "userType": "financial_institution",
-  "invitationSent": true,
-  "createdAt": "2025-07-24T15:30:00.000Z",
-  "updatedAt": "2025-07-24T15:30:00.000Z"
-}
-```
-
-## Mise à jour d'un utilisateur
-
-Met à jour les informations d'un utilisateur existant.
+### Mettre à jour un utilisateur
 
 **Endpoint** : `PUT /portfolio/api/v1/users/{id}`
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
+**Corps de la requête** : Champs partiels de `User`
+
+### Mettre à jour le profil
+
+**Endpoint** : `PUT /portfolio/api/v1/users/me`
 
 **Corps de la requête** :
 
 ```json
 {
-  "name": "Thomas Dubois-Martin",
-  "role": "Portfolio_Manager",
-  "permissions": ["read:portfolios", "write:portfolios", "read:reports"]
-}
-```
-
-**Réponse** :
-
-```json
-{
-  "id": "user456",
-  "email": "thomas.dubois@exemple.com",
-  "name": "Thomas Dubois-Martin",
-  "givenName": "Thomas",
-  "familyName": "Dubois-Martin",
-  "phone": "+243810789012",
-  "role": "Portfolio_Manager",
-  "userType": "financial_institution",
-  "createdAt": "2025-07-24T15:30:00.000Z",
-  "updatedAt": "2025-07-24T16:45:00.000Z"
-}
-```
-
-## Suppression d'un utilisateur
-
-Supprime un utilisateur du système.
-
-**Endpoint** : `DELETE /portfolio/api/v1/users/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
-
-**Réponse** : 204 No Content
-
-## Réinitialisation du mot de passe
-
-Réinitialise le mot de passe d'un utilisateur et envoie un email avec les instructions.
-
-**Endpoint** : `POST /portfolio/api/v1/users/{id}/reset-password`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de l'utilisateur
-
-**Réponse** :
-
-```json
-{
-  "success": true,
-  "message": "Instructions de réinitialisation envoyées par email"
-}
-```
-
-## Assignation de portefeuille
-
-Assigne un portefeuille à un utilisateur avec un rôle spécifique.
-
-**Endpoint** : `POST /portfolio/api/v1/users/{userId}/portfolios`
-
-**Paramètres de chemin** :
-- `userId` : Identifiant unique de l'utilisateur
-
-**Corps de la requête** :
-
-```json
-{
-  "portfolioId": "portfolio123",
-  "role": "manager"
-}
-```
-
-**Réponse** :
-
-```json
-{
-  "userId": "user456",
-  "portfolioId": "portfolio123",
-  "role": "manager",
-  "assignedAt": "2025-07-24T17:00:00.000Z"
-}
-```
-
-## Suppression d'assignation de portefeuille
-
-Supprime l'assignation d'un portefeuille à un utilisateur.
-
-**Endpoint** : `DELETE /portfolio/api/v1/users/{userId}/portfolios/{portfolioId}`
-
-**Paramètres de chemin** :
-- `userId` : Identifiant unique de l'utilisateur
-- `portfolioId` : Identifiant unique du portefeuille
-
-**Réponse** : 204 No Content
-
-## Utilisateur courant
-
-Récupère les informations sur l'utilisateur actuellement authentifié.
-
-**Endpoint** : `GET /portfolio/api/v1/users/me`
-
-**Réponse** :
-
-```json
-{
-  "id": "user123",
-  "email": "jean.dupont@exemple.com",
-  "name": "Jean Dupont",
-  "givenName": "Jean",
-  "familyName": "Dupont",
-  "picture": "https://example.com/profiles/jean.jpg",
-  "phone": "+243810123456",
-  "role": "Portfolio_Manager",
-  "permissions": ["read:users", "write:portfolios", "read:reports"],
-  "settings": {
-    "notifications": {
-      "email": true,
-      "sms": true,
-      "app": false
-    },
-    "theme": "dark",
-    "dashboard": {
-      "widgets": ["performance", "risk", "payments"]
-    }
-  },
-  "language": "fr",
-  "createdAt": "2025-01-15T08:00:00.000Z",
-  "updatedAt": "2025-07-24T09:00:00.000Z"
-}
-```
-
-## Mise à jour des préférences utilisateur
-
-Met à jour les préférences de l'utilisateur actuellement authentifié.
-
-**Endpoint** : `PUT /portfolio/api/v1/users/me/preferences`
-
-**Corps de la requête** :
-
-```json
-{
-  "theme": "light",
-  "notifications": {
-    "sms": true,
-    "app": true
-  },
-  "dashboard": {
-    "widgets": ["performance", "risk", "payments", "alerts"]
-  }
-}
-```
-
-**Réponse** :
-
-```json
-{
-  "id": "user123",
+  "givenName": "Jean-Pierre",
+  "phone": "+243810999999",
+  "bio": "Gestionnaire de portefeuille expérimenté",
+  "language": "en",
   "settings": {
     "notifications": {
       "email": true,
       "sms": true,
       "app": true
     },
-    "theme": "light",
-    "dashboard": {
-      "widgets": ["performance", "risk", "payments", "alerts"]
-    }
-  },
-  "updatedAt": "2025-07-24T10:15:00.000Z"
+    "theme": "dark"
+  }
 }
 ```
 
-## Rôles utilisateur
+### Vérification d'identité
 
-Récupère la liste des rôles disponibles dans le système.
+**Endpoint** : `POST /portfolio/api/v1/users/{id}/verify-identity`
 
-**Endpoint** : `GET /portfolio/api/v1/users/roles`
-
-**Réponse** :
-
-```json
-[
-  {
-    "id": "role1",
-    "name": "Admin",
-    "description": "Administrateur système avec tous les droits",
-    "permissions": ["*"],
-    "isSystem": true,
-    "created_at": "2025-01-01T00:00:00.000Z",
-    "updated_at": "2025-01-01T00:00:00.000Z"
-  },
-  {
-    "id": "role2",
-    "name": "Portfolio_Manager",
-    "description": "Gestionnaire de portefeuilles",
-    "permissions": ["read:users", "write:portfolios", "read:reports", "write:reports"],
-    "isSystem": true,
-    "created_at": "2025-01-01T00:00:00.000Z",
-    "updated_at": "2025-01-01T00:00:00.000Z"
-  }
-]
-```
-
-## Permissions
-
-Récupère la liste des permissions disponibles dans le système.
-
-**Endpoint** : `GET /portfolio/api/v1/users/permissions`
-
-**Réponse** :
-
-```json
-[
-  {
-    "id": "perm1",
-    "name": "read:users",
-    "description": "Voir les utilisateurs",
-    "category": "users"
-  },
-  {
-    "id": "perm2",
-    "name": "write:portfolios",
-    "description": "Créer et modifier des portefeuilles",
-    "category": "portfolios"
-  }
-]
-```
-
-## Activité utilisateur
-
-Récupère les logs d'activité des utilisateurs avec filtrage.
-
-**Endpoint** : `GET /portfolio/api/v1/users/activity`
-
-**Paramètres de requête** :
-- `userId` (optionnel) : Filtre par utilisateur
-- `action` (optionnel) : Filtre par type d'action
-- `startDate` (optionnel) : Date de début (format ISO)
-- `endDate` (optionnel) : Date de fin (format ISO)
-- `page` (optionnel) : Numéro de la page
-- `limit` (optionnel) : Nombre d'entrées par page
-
-**Réponse** :
+**Corps de la requête** :
 
 ```json
 {
+  "idType": "passport",
+  "idNumber": "P123456789",
+  "idDocument": "https://storage.example.com/docs/passport-front.jpg",
+  "idDocumentBack": "https://storage.example.com/docs/passport-back.jpg"
+}
+```
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "USER-001",
+    "idType": "passport",
+    "idNumber": "P123456789",
+    "idStatus": "pending",
+    "verificationSubmittedAt": "2025-02-01T10:00:00.000Z"
+  }
+}
+```
+
+### Approuver/Rejeter la vérification
+
+**Endpoint** : `PUT /portfolio/api/v1/users/{id}/verify-identity`
+
+**Corps de la requête (Approbation)** :
+
+```json
+{
+  "action": "approve",
+  "verifiedBy": "USER-ADMIN"
+}
+```
+
+**Corps de la requête (Rejet)** :
+
+```json
+{
+  "action": "reject",
+  "rejectionReason": "Document illisible ou expiré",
+  "verifiedBy": "USER-ADMIN"
+}
+```
+
+### Changer le rôle
+
+**Endpoint** : `PUT /portfolio/api/v1/users/{id}/role`
+
+**Corps de la requête** :
+
+```json
+{
+  "role": "Portfolio_Manager",
+  "permissions": ["portfolios.read", "portfolios.write", "credits.manage"]
+}
+```
+
+### Suspendre un utilisateur
+
+**Endpoint** : `POST /portfolio/api/v1/users/{id}/suspend`
+
+**Corps de la requête** :
+
+```json
+{
+  "reason": "Violation des conditions d'utilisation",
+  "suspendedBy": "USER-ADMIN"
+}
+```
+
+### Réactiver un utilisateur
+
+**Endpoint** : `POST /portfolio/api/v1/users/{id}/reactivate`
+
+### Supprimer un utilisateur
+
+**Endpoint** : `DELETE /portfolio/api/v1/users/{id}`
+
+**Note** : Suppression logique, les données sont conservées pour audit.
+
+### Historique d'activité
+
+**Endpoint** : `GET /portfolio/api/v1/users/{id}/activity`
+
+**Paramètres de requête** :
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `dateFrom` | string | Non | Date de début (ISO 8601) |
+| `dateTo` | string | Non | Date de fin (ISO 8601) |
+| `action` | string | Non | Filtrer par action |
+| `page` | number | Non | Numéro de page |
+| `limit` | number | Non | Éléments par page |
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
   "data": [
     {
-      "id": "act1",
-      "userId": "user123",
+      "id": "ACT-001",
+      "userId": "USER-001",
       "userName": "Jean Dupont",
-      "action": "login",
-      "entity": "auth",
-      "details": "Connexion réussie",
+      "action": "portfolio.credit.approve",
+      "entity": "CreditRequest",
+      "entityId": "CR-00001",
+      "details": "Approbation du crédit pour Entreprise ABC",
       "ip": "192.168.1.100",
-      "userAgent": "Mozilla/5.0...",
-      "timestamp": "2025-07-24T09:00:00.000Z"
-    },
-    {
-      "id": "act2",
-      "userId": "user123",
-      "userName": "Jean Dupont",
-      "action": "view",
-      "entity": "portfolio",
-      "entityId": "portfolio123",
-      "details": "Consultation du portefeuille PME",
-      "ip": "192.168.1.100",
-      "userAgent": "Mozilla/5.0...",
-      "timestamp": "2025-07-24T09:05:00.000Z"
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      "timestamp": "2025-02-01T10:30:00.000Z"
     }
   ],
   "meta": {
-    "total": 145,
+    "total": 150,
     "page": 1,
     "limit": 10,
     "totalPages": 15
@@ -547,31 +503,68 @@ Récupère les logs d'activité des utilisateurs avec filtrage.
 }
 ```
 
-## Erreurs spécifiques
+### Permissions disponibles
 
-| Code HTTP | Code d'erreur         | Description                                  |
-|-----------|------------------------|----------------------------------------------|
-| 400       | INVALID_USER_DATA      | Données utilisateur invalides                |
-| 404       | USER_NOT_FOUND         | Utilisateur non trouvé                       |
-| 409       | EMAIL_ALREADY_EXISTS   | Email déjà utilisé par un autre utilisateur  |
-| 403       | INSUFFICIENT_PERMISSIONS | Permissions insuffisantes                    |
-  }
+**Endpoint** : `GET /portfolio/api/v1/permissions`
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "PERM-001",
+      "name": "portfolios.read",
+      "description": "Consulter les portefeuilles",
+      "category": "Portefeuilles"
+    },
+    {
+      "id": "PERM-002",
+      "name": "portfolios.write",
+      "description": "Créer et modifier les portefeuilles",
+      "category": "Portefeuilles"
+    },
+    {
+      "id": "PERM-003",
+      "name": "credits.manage",
+      "description": "Gérer les demandes de crédit",
+      "category": "Crédits"
+    }
+  ]
 }
 ```
 
+## Codes d'erreur
 
+| Code | Description |
+|------|-------------|
+| 400 | Données invalides |
+| 401 | Non authentifié |
+| 403 | Permission refusée |
+| 404 | Utilisateur non trouvé |
+| 409 | Email déjà utilisé |
+| 422 | Opération non autorisée |
 
+## Règles métier
 
-
-
-
-
-
-## Erreurs spécifiques
-
-| Code HTTP | Code d'erreur         | Description                                  |
-|-----------|------------------------|----------------------------------------------|
-| 400       | INVALID_USER_DATA      | Données utilisateur invalides                |
-| 404       | USER_NOT_FOUND         | Utilisateur non trouvé                       |
-| 409       | EMAIL_ALREADY_EXISTS   | Email déjà utilisé par un autre utilisateur  |
-| 403       | INSUFFICIENT_PERMISSIONS | Permissions insuffisantes                    |
+1. **Email unique** : Un email ne peut être associé qu'à un seul compte
+2. **Authentification et 2FA** :
+   - L'authentification est gérée par **Auth0**
+   - Le 2FA est configuré directement dans Auth0 (pas d'endpoint local)
+   - Le changement de mot de passe passe par Auth0
+3. **Vérification d'identité** :
+   - Obligatoire pour les rôles Admin et Portfolio_Manager
+   - Le document doit être valide et lisible
+   - Expiration automatique après 5 ans
+4. **Rôles et permissions** :
+   - Admin : Tous les droits
+   - Portfolio_Manager : Gestion des portefeuilles et crédits
+   - Auditor : Consultation uniquement
+   - User : Accès limité selon permissions assignées
+5. **Suspension** :
+   - Un utilisateur suspendu ne peut plus se connecter
+   - Les données restent accessibles en lecture seule
+6. **Endpoint /users/me** :
+   - Retourne l'utilisateur courant avec son institution associée
+   - Optimisé pour le login (~5KB vs ~100KB+)

@@ -2,6 +2,122 @@
 
 Cette API permet de gérer les remboursements associés aux contrats de crédit dans le cadre des portefeuilles traditionnels, incluant l'enregistrement des paiements, le suivi des échéances, les pénalités et la gestion des retards.
 
+## Entités et DTOs
+
+### CreditPayment (Entité principale)
+
+```typescript
+interface CreditPayment {
+  id: string;
+  contract_id: string;
+  portfolio_id: string;
+  client_id: string;
+  payment_date: string;                      // ISO 8601
+  amount: number;
+  payment_method: string;                    // bank_transfer, mobile_money, cash, check
+  payment_reference: string;
+  transaction_reference?: string;            // Référence de la transaction
+  status: PaymentStatus;
+  payment_type: PaymentType;
+  payment_details?: PaymentDetails;
+  scheduled_payment_id?: string;
+  notes?: string;
+  receipt_url?: string;                      // URL du justificatif de paiement
+  supporting_document_url?: string;          // URL de la pièce justificative
+  has_supporting_document?: boolean;         // Indique si une pièce justificative est disponible
+  description?: string;                      // Description du paiement
+  created_at: string;
+  updated_at: string;
+  cancellation_reason?: string;
+  cancellation_date?: string;
+  
+  // Comptes source et destination
+  source_account?: PaymentAccountSource;     // Compte de l'entreprise emprunteuse
+  destination_account?: PaymentAccountDest;  // Compte de l'institution/portefeuille
+  
+  // Champs de suivi des échéances
+  due_date?: string;                         // Date d'échéance prévue
+  remaining_amount?: number;                 // Montant restant à payer
+  remaining_percentage?: number;             // Pourcentage du montant restant
+  slippage?: number;                         // Glissement en jours (+retard, -avance)
+  installment_number?: number;               // Numéro de l'échéance
+  total_installments?: number;               // Nombre total d'échéances
+}
+```
+
+### Enums et Types
+
+```typescript
+// Statuts du paiement (6 valeurs - incluant legacy)
+type PaymentStatus = 
+  | 'pending'     // En attente de validation/traitement
+  | 'completed'   // Paiement effectué et validé
+  | 'failed'      // Paiement échoué
+  | 'cancelled'   // Paiement annulé
+  // Legacy values
+  | 'processing'  // En cours de traitement
+  | 'partial';    // Partiellement payé
+
+// Types de paiement (8 valeurs - incluant legacy)
+type PaymentType = 
+  | 'principal'    // Remboursement du capital uniquement
+  | 'interest'     // Paiement des intérêts uniquement
+  | 'penalty'      // Paiement des pénalités uniquement
+  | 'mixed'        // Paiement combiné (capital + intérêts + pénalités)
+  // Legacy values
+  | 'standard'     // Paiement standard
+  | 'partial'      // Paiement partiel
+  | 'advance'      // Paiement anticipé
+  | 'early_payoff';// Remboursement anticipé total
+
+// Méthodes de paiement acceptées (5 valeurs)
+type PaymentMethod = 
+  | 'bank_transfer'  // Virement bancaire
+  | 'mobile_money'   // Mobile Money
+  | 'cash'           // Espèces
+  | 'check'          // Chèque
+  | 'other';         // Autre méthode
+```
+
+### Types imbriqués
+
+```typescript
+// Détails de la répartition du paiement
+interface PaymentDetails {
+  principal_amount: number;   // Montant du capital
+  interest_amount: number;    // Montant des intérêts
+  penalty_amount: number;     // Montant des pénalités
+}
+
+// Compte source (entreprise emprunteuse) - Bank ou Mobile Money
+interface PaymentAccountSource {
+  account_type: 'bank' | 'mobile_money';
+  accountNumber: string;
+  accountName: string;
+  companyName: string;
+  // Pour compte bancaire
+  bankName?: string;
+  bankCode?: string;
+  // Pour Mobile Money
+  provider?: string;          // Orange Money, M-Pesa, Airtel Money, etc.
+}
+
+// Compte destination (institution/portefeuille) - Bank ou Mobile Money
+interface PaymentAccountDest {
+  account_type: 'bank' | 'mobile_money';
+  accountId: string;          // ID du compte dans le portefeuille
+  accountNumber: string;
+  accountName: string;
+  portfolioId?: string;
+  portfolioName?: string;
+  // Pour compte bancaire
+  bankName?: string;
+  bankCode?: string;
+  // Pour Mobile Money
+  provider?: string;          // Orange Money, M-Pesa, Airtel Money, etc.
+}
+```
+
 ## Points d'accès
 
 ### Liste des remboursements d'un contrat
@@ -11,15 +127,18 @@ Récupère la liste des remboursements effectués pour un contrat de crédit sp�
 **Endpoint** : `GET /portfolios/traditional/repayments`
 
 **Paramètres de requête** :
-- `portfolioId` (optionnel) : Identifiant unique du portefeuille traditionnel
-- `contractId` (optionnel) : Identifiant unique du contrat de crédit
-- `page` (optionnel) : Numéro de la page (défaut : 1)
-- `limit` (optionnel) : Nombre d'éléments par page (défaut : 10, max : 100)
-- `status` (optionnel) : Filtre par statut (paid, partial, late, pending)
-- `dateFrom` (optionnel) : Filtre par date de paiement (début)
-- `dateTo` (optionnel) : Filtre par date de paiement (fin)
-- `sortBy` (optionnel) : Trier par (transaction_date, due_date, amount, created_at)
-- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `portfolioId` | string | Non | Identifiant du portefeuille |
+| `contractId` | string | Non | Identifiant du contrat |
+| `status` | PaymentStatus | Non | Filtrer par statut |
+| `payment_type` | PaymentType | Non | Filtrer par type de paiement |
+| `dateFrom` | string | Non | Date de début (ISO 8601) |
+| `dateTo` | string | Non | Date de fin (ISO 8601) |
+| `page` | number | Non | Numéro de page (défaut: 1) |
+| `limit` | number | Non | Éléments par page (défaut: 10, max: 100) |
+| `sortBy` | string | Non | Champ de tri (payment_date, due_date, amount) |
+| `sortOrder` | string | Non | Ordre de tri (asc, desc) |
 
 **Réponse réussie** (200 OK) :
 
@@ -29,33 +148,45 @@ Récupère la liste des remboursements effectués pour un contrat de crédit sp�
   "data": [
     {
       "id": "123e4567-e89b-12d3-a456-426614174123",
-      "reference": "PMT-2025-0001",
-      "contract_id": "123e4567-e89b-12d3-a456-426614174001",
-      "portfolio_id": "123e4567-e89b-12d3-a456-426614174456",
-      "client_id": "123e4567-e89b-12d3-a456-426614174789",
-      "transaction_date": "2025-02-14T10:30:00.000Z",
+      "contract_id": "CC-00001",
+      "portfolio_id": "TP-00001",
+      "client_id": "CLIENT-001",
+      "payment_date": "2025-02-14T10:30:00.000Z",
       "amount": 4583.33,
-      "currency": "XOF",
       "payment_method": "bank_transfer",
-      "payment_method_type": "BANK_TRANSFER",
-      "transaction_id": "BOA20250214103022",
+      "payment_reference": "PMT-2025-0001",
+      "transaction_reference": "BOA20250214103022",
       "status": "completed",
-      "payment_type": "standard",
-      "principal_amount": 3750.00,
-      "interest_amount": 833.33,
-      "penalty_amount": 0.00,
-      "allocation": [
-        {
-          "schedule_id": "123e4567-e89b-12d3-a456-426614174999",
-          "principal_amount": 3750.00,
-          "interest_amount": 833.33,
-          "penalties_amount": 0.00,
-          "fees_amount": 0.00
-        }
-      ],
+      "payment_type": "mixed",
+      "payment_details": {
+        "principal_amount": 3750.00,
+        "interest_amount": 833.33,
+        "penalty_amount": 0.00
+      },
+      "source_account": {
+        "account_type": "bank",
+        "accountNumber": "00010023456789",
+        "accountName": "ENTREPRISE ABC SARL",
+        "bankName": "Rawbank",
+        "bankCode": "RBK",
+        "companyName": "Entreprise ABC"
+      },
+      "destination_account": {
+        "account_type": "bank",
+        "accountId": "BA-00001",
+        "accountNumber": "00010098765432",
+        "accountName": "PORTEFEUILLE PRINCIPAL",
+        "bankName": "Rawbank",
+        "bankCode": "RBK",
+        "portfolioId": "TP-00001",
+        "portfolioName": "Portefeuille PME 2025"
+      },
       "due_date": "2025-02-15T00:00:00.000Z",
-      "daysLate": -1,
-      "receipt_number": "REC-2025-001-01",
+      "slippage": -1,
+      "remaining_amount": 41250.00,
+      "remaining_percentage": 82.5,
+      "installment_number": 1,
+      "total_installments": 12,
       "notes": "Paiement reçu en avance d'un jour",
       "created_at": "2025-02-14T10:30:00.000Z",
       "updated_at": "2025-02-14T10:30:00.000Z"
@@ -70,59 +201,65 @@ Récupère la liste des remboursements effectués pour un contrat de crédit sp�
 }
 ```
 
-### Détails d'un remboursement
+### Exemple avec Mobile Money
 
-Récupère les détails complets d'un remboursement spécifique.
-
-**Endpoint** : `GET /portfolios/traditional/repayments/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique du remboursement
-
-**Réponse réussie** (200 OK) :
-
+**Réponse** :
 ```json
 {
   "success": true,
-  "data": {
-    "id": "123e4567-e89b-12d3-a456-426614174123",
-    "reference": "PMT-2025-0001",
-    "contract_id": "123e4567-e89b-12d3-a456-426614174001",
-    "portfolio_id": "123e4567-e89b-12d3-a456-426614174456",
-    "client_id": "123e4567-e89b-12d3-a456-426614174789",
-    "transaction_date": "2025-02-14T10:30:00.000Z",
-    "amount": 4583.33,
-    "currency": "XOF",
-    "payment_method": "bank_transfer",
-    "payment_method_type": "BANK_TRANSFER",
-    "transaction_id": "BOA20250214103022",
-    "status": "completed",
-    "payment_type": "standard",
-    "principal_amount": 3750.00,
-    "interest_amount": 833.33,
-    "penalty_amount": 0.00,
-    "allocation": [
-      {
-        "schedule_id": "123e4567-e89b-12d3-a456-426614174999",
-        "principal_amount": 3750.00,
-        "interest_amount": 833.33,
-        "penalties_amount": 0.00,
-        "fees_amount": 0.00
-      }
-    ],
-    "due_date": "2025-02-15T00:00:00.000Z",
-    "daysLate": -1,
-    "receipt_number": "REC-2025-001-01",
-    "notes": "Paiement reçu en avance d'un jour",
-    "created_at": "2025-02-14T10:30:00.000Z",
-    "updated_at": "2025-02-14T10:30:00.000Z"
-  }
+  "data": [
+    {
+      "id": "PMT-00002",
+      "contract_id": "CC-00002",
+      "portfolio_id": "TP-00001",
+      "client_id": "CLIENT-002",
+      "payment_date": "2025-02-10T14:00:00.000Z",
+      "amount": 2500.00,
+      "payment_method": "mobile_money",
+      "payment_reference": "PMT-MM-2025-0001",
+      "transaction_reference": "OM202502101400123456",
+      "status": "completed",
+      "payment_type": "mixed",
+      "payment_details": {
+        "principal_amount": 2000.00,
+        "interest_amount": 500.00,
+        "penalty_amount": 0.00
+      },
+      "source_account": {
+        "account_type": "mobile_money",
+        "accountNumber": "+243999123456",
+        "accountName": "JEAN MUKENDI",
+        "provider": "Orange Money",
+        "companyName": "Mukendi Trading"
+      },
+      "destination_account": {
+        "account_type": "mobile_money",
+        "accountId": "MM-00001",
+        "accountNumber": "+243811000001",
+        "accountName": "PORTEFEUILLE MOBILE",
+        "provider": "Orange Money",
+        "portfolioId": "TP-00001",
+        "portfolioName": "Portefeuille PME 2025"
+      },
+      "due_date": "2025-02-10T00:00:00.000Z",
+      "slippage": 0,
+      "remaining_amount": 22500.00,
+      "remaining_percentage": 90,
+      "installment_number": 1,
+      "total_installments": 10,
+      "created_at": "2025-02-10T14:00:00.000Z"
+    }
+  ]
 }
 ```
 
-### Enregistrement d'un paiement
+### Détails d'un remboursement
 
-Enregistre un nouveau paiement pour une échéance d'un contrat de crédit.
+**Endpoint** : `GET /portfolios/traditional/repayments/{id}`
+
+**Réponse réussie** (200 OK) : Retourne l'objet `CreditPayment` complet.
+
+### Enregistrement d'un paiement (Virement bancaire)
 
 **Endpoint** : `POST /portfolios/traditional/repayments`
 
@@ -130,180 +267,227 @@ Enregistre un nouveau paiement pour une échéance d'un contrat de crédit.
 
 ```json
 {
-  "contractId": "123e4567-e89b-12d3-a456-426614174001",
+  "contract_id": "CC-00001",
   "amount": 4583.33,
-  "paymentDate": "2025-02-14T10:30:00.000Z",
-  "paymentMethod": "bank_transfer",
-  "paymentType": "standard",
-  "transactionId": "BOA20250214103022",
-  "transactionDate": "2025-02-14T10:30:00.000Z",
-  "scheduleIds": ["123e4567-e89b-12d3-a456-426614174999"],
-  "notes": "Paiement régulier de l'échéance mensuelle"
+  "payment_date": "2025-02-14T10:30:00.000Z",
+  "payment_method": "bank_transfer",
+  "payment_type": "mixed",
+  "transaction_reference": "BOA20250214103022",
+  "source_account": {
+    "account_type": "bank",
+    "accountNumber": "00010023456789",
+    "accountName": "ENTREPRISE ABC SARL",
+    "bankName": "Rawbank",
+    "bankCode": "RBK",
+    "companyName": "Entreprise ABC"
+  },
+  "destination_account": {
+    "account_type": "bank",
+    "accountId": "BA-00001"
+  },
+  "scheduled_payment_id": "SP-00001",
+  "notes": "Paiement de l'échéance de février 2025"
 }
 ```
 
-**Champs obligatoires:**
-- `contractId` (UUID): Identifiant du contrat de crédit
-- `amount` (number > 0.01): Montant du paiement
-- `paymentDate` (ISO 8601): Date du paiement
-- `paymentMethod` (string): Méthode de paiement (bank_transfer, mobile_money, cash, check)
-- `paymentType` (enum): Type de remboursement
+### Enregistrement d'un paiement (Mobile Money)
 
-**Champs optionnels:**
-- `transactionId` (string): ID transaction externe (unique pour idempotence)
-- `transactionDate` (ISO 8601): Date de la transaction
-- `scheduleIds` (UUID[]): IDs des échéances à payer spécifiquement
-- `notes` (string): Notes additionnelles
+**Corps de la requête** :
 
-**Types de remboursement (paymentType):**
-- **standard**: Paiement normal d'échéances dans l'ordre chronologique
-- **partial**: Paiement partiel d'une échéance spécifique (nécessite scheduleIds)
-- **advance**: Paiement anticipé de plusieurs échéances futures
-- **early_payoff**: Remboursement anticipé total du crédit
+```json
+{
+  "contract_id": "CC-00002",
+  "amount": 2500.00,
+  "payment_date": "2025-02-10T14:00:00.000Z",
+  "payment_method": "mobile_money",
+  "payment_type": "mixed",
+  "transaction_reference": "OM202502101400123456",
+  "source_account": {
+    "account_type": "mobile_money",
+    "accountNumber": "+243999123456",
+    "accountName": "JEAN MUKENDI",
+    "provider": "Orange Money",
+    "companyName": "Mukendi Trading"
+  },
+  "destination_account": {
+    "account_type": "mobile_money",
+    "accountId": "MM-00001"
+  },
+  "scheduled_payment_id": "SP-00002",
+  "notes": "Paiement via Orange Money"
+}
 ```
 
-**Réponse réussie** (201 Created) :
+### Annuler un paiement
+
+**Endpoint** : `POST /portfolios/traditional/repayments/{id}/cancel`
+
+**Corps de la requête** :
+
+```json
+{
+  "cancellation_reason": "Transaction rejetée par la banque"
+}
+```
+
+**Réponse réussie** (200 OK) :
 
 ```json
 {
   "success": true,
   "data": {
-    "id": "123e4567-e89b-12d3-a456-426614174555",
-    "reference": "PMT-2025-0042",
-    "contract_id": "123e4567-e89b-12d3-a456-426614174001",
-    "portfolio_id": "123e4567-e89b-12d3-a456-426614174456",
-    "client_id": "123e4567-e89b-12d3-a456-426614174789",
-    "amount": 4583.33,
-    "currency": "XOF",
-    "status": "completed",
-    "payment_type": "standard",
-    "transaction_id": "BOA20250214103022",
-    "transaction_date": "2025-02-14T10:30:00.000Z",
-    "principal_amount": 3750.00,
-    "interest_amount": 833.33,
-    "penalty_amount": 0.00,
-    "allocation": [
-      {
-        "schedule_id": "123e4567-e89b-12d3-a456-426614174999",
-        "principal_amount": 3750.00,
-        "interest_amount": 833.33,
-        "penalties_amount": 0.00,
-        "fees_amount": 0.00
-      }
-    ],
-    "receipt_number": "REC-2025-001-04",
-    "created_at": "2025-07-25T18:30:00.000Z",
-    "updated_at": "2025-07-25T18:30:00.000Z"
+    "id": "PMT-00001",
+    "status": "cancelled",
+    "cancellation_reason": "Transaction rejetée par la banque",
+    "cancellation_date": "2025-02-15T09:00:00.000Z"
   }
 }
 ```
 
-> **Note sur l'idempotence**: Si un `transactionId` est fourni et existe déjà, le système retournera le remboursement existant au lieu de créer un doublon.
+### Mettre à jour un paiement
 
-> **Champ allocation**: Tableau détaillant comment le paiement a été alloué sur chaque échéance, incluant la répartition entre principal, intérêts, pénalités et frais.
+**Endpoint** : `PUT /portfolios/traditional/repayments/{id}`
+
+**Corps de la requête** : Champs partiels de `CreditPayment`
+
+**Note** : Seuls les paiements avec statut `pending` peuvent être modifiés.
+
+### Supprimer un paiement
+
+**Endpoint** : `DELETE /portfolios/traditional/repayments/{id}`
+
+**Conditions** : Seuls les paiements avec statut `pending` peuvent être supprimés.
+
+### Gestion des reçus et justificatifs
+
+#### Obtenir l'URL du reçu
+
+**Endpoint** : `GET /portfolios/traditional/repayments/{id}/receipt`
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "receipt_url": "https://storage.wanzo.com/receipts/PMT-00001.pdf"
+}
 ```
 
-La documentation des remboursements a été mise à jour pour refléter les endpoints réels du code source. 
+#### Télécharger le reçu
 
-**Note importante** : Plusieurs endpoints complexes documentés ici (comme les paiements partiels, anticipés, etc.) correspondent à des fonctionnalités avancées qui peuvent ne pas être entièrement implémentées dans le code source actuel. 
+**Endpoint** : `GET /portfolios/traditional/repayments/{id}/receipt/download`
 
-Les endpoints de base confirmés dans le code source sont :
-- `GET /portfolios/traditional/repayments` - Liste des remboursements avec filtres
-- `GET /portfolios/traditional/repayments/{id}` - Détails d'un remboursement  
-- `POST /portfolios/traditional/repayments` - Enregistrement d'un nouveau paiement
+**Réponse** : `Blob` (application/pdf)
 
-## Erreurs spécifiques
+#### Vérifier si un reçu existe
 
-| Code HTTP | Code d'erreur           | Description                                        |
-|-----------|------------------------|----------------------------------------------------|
-| 400       | INVALID_PAYMENT_DATA   | Données de paiement invalides                     |
-| 404       | PAYMENT_NOT_FOUND      | Remboursement non trouvé                          |
-| 403       | INSUFFICIENT_PERMISSIONS| Permissions insuffisantes                         |
-| 409       | PAYMENT_ALREADY_EXISTS | Paiement déjà enregistré pour cette échéance     |
+**Endpoint** : `GET /portfolios/traditional/repayments/{id}/has-receipt`
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "has_receipt": true
+}
 ```
 
-## Modèles de données
+#### Téléverser un reçu
 
-### Remboursement
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string (UUID) | Identifiant unique du remboursement |
-| reference | string | Référence unique du paiement (ex: PMT-2025-0001) |
-| contract_id | string (UUID) | Identifiant du contrat de crédit |
-| portfolio_id | string (UUID) | Identifiant du portefeuille |
-| client_id | string (UUID) | Identifiant du client |
-| schedule_id | string (UUID, optionnel) | Identifiant de l'échéance dans le calendrier |
-| amount | number | Montant total du paiement |
-| currency | string | Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF) |
-| principal_amount | number (optionnel) | Part de capital remboursée |
-| interest_amount | number (optionnel) | Part d'intérêts payée |
-| penalty_amount | number (optionnel) | Part de pénalités payée |
-| status | enum | Statut: pending, processing, completed, failed, partial |
-| payment_method | string (optionnel) | Méthode de paiement utilisée |
-| payment_method_type | enum (optionnel) | Type: BANK_TRANSFER, CASH, CHECK, MOBILE_MONEY, OTHER |
-| payment_type | enum | Type: standard, partial, advance, early_payoff |
-| transaction_id | string (optionnel, unique) | ID transaction externe pour idempotence |
-| transaction_date | timestamp (optionnel) | Date de la transaction |
-| due_date | timestamp (optionnel) | Date d'échéance prévue |
-| receipt_number | string (optionnel) | Numéro du reçu de paiement |
-| daysLate | integer (optionnel) | Nombre de jours de retard (négatif si en avance) |
-| notes | string (optionnel) | Notes additionnelles |
-| processed_by | string (optionnel) | Identifiant de l'utilisateur ayant traité |
-| is_external | boolean | Paiement provenant d'un système externe (défaut: false) |
-| allocation | array (optionnel) | Détails d'allocation par échéance (voir structure ci-dessous) |
-| created_at | timestamp | Date de création |
-| updated_at | timestamp | Date de dernière modification |
+**Endpoint** : `POST /portfolios/traditional/repayments/{id}/upload-receipt`
 
-**Structure de l'allocation:**
+**Corps de la requête** (multipart/form-data) :
+- `receipt`: Fichier du reçu (PDF, PNG, JPG)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "receipt_url": "https://storage.wanzo.com/receipts/PMT-00001-uploaded.pdf"
+}
+```
+
+#### Générer un reçu automatiquement
+
+**Endpoint** : `POST /portfolios/traditional/repayments/{id}/generate-receipt`
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "receiptUrl": "https://storage.wanzo.com/receipts/generated-PMT-00001.pdf"
+}
+```
+
+#### Télécharger un justificatif
+
+**Endpoint** : `GET /portfolios/traditional/repayments/{id}/supporting-document`
+
+**Réponse** : `Blob` (application/pdf)
+
+#### Téléverser un justificatif
+
+**Endpoint** : `POST /portfolios/traditional/payments/{id}/supporting-document`
+
+**Corps de la requête** (multipart/form-data) :
+- `document`: Fichier justificatif (PDF, PNG, JPG)
+
+**Réponse réussie** (200 OK) :
+
+```json
+{
+  "success": true,
+  "document_url": "https://storage.wanzo.com/docs/support-PMT-00001.pdf",
+  "message": "Document téléchargé avec succès"
+}
+```
+
+### Échéancier de paiement
+
+**Endpoint** : `GET /portfolios/traditional/credit-contracts/{contractId}/payment-schedule`
+
+**Réponse réussie** (200 OK) :
+
 ```json
 [
   {
-    "schedule_id": "uuid",
-    "principal_amount": 0.00,
-    "interest_amount": 0.00,
-    "penalties_amount": 0.00,
-    "fees_amount": 0.00
+    "id": "schedule-uuid-1",
+    "due_date": "2026-01-01T00:00:00.000Z",
+    "principal_amount": 400000,
+    "interest_amount": 100000,
+    "total_amount": 500000,
+    "status": "paid",
+    "payment_date": "2026-01-05T10:00:00.000Z",
+    "payment_amount": 500000
+  },
+  {
+    "id": "schedule-uuid-2",
+    "due_date": "2026-02-01T00:00:00.000Z",
+    "principal_amount": 420000,
+    "interest_amount": 80000,
+    "total_amount": 500000,
+    "status": "pending"
   }
 ]
 ```
 
-### Pénalité
-| Champ | Type | Description |
-|-------|------|-------------|
-| id | string | Identifiant unique de la pénalité |
-| contract_id | string | Identifiant du contrat de crédit |
-| schedule_id | string | Identifiant de l'échéance concernée |
-| due_date | string | Date d'échéance prévue (format ISO) |
-| penalty_date | string | Date d'application de la pénalité (format ISO) |
-| penalty_amount | number | Montant de la pénalité |
-| penalty_rate | number | Taux de pénalité appliqué (%) |
-| days_late | number | Nombre de jours de retard |
-| original_amount | number | Montant original de l'échéance |
-| total_due | number | Montant total dû (échéance + pénalité) |
-| status | string | Statut ('active', 'paid', 'canceled') |
-| notes | string | Notes sur la pénalité |
-| cancellation_reason | string | Raison de l'annulation (si applicable) |
-| canceled_by | string | Identifiant de l'utilisateur ayant annulé la pénalité |
-| canceler_name | string | Nom de l'utilisateur ayant annulé la pénalité |
-| canceled_at | string | Date d'annulation (format ISO) |
-| created_at | string | Date de création (format ISO) |
-| updated_at | string | Date de dernière modification (format ISO) |
+## Codes d'erreur
 
-### Détails de paiement
-| Champ | Type | Description |
-|-------|------|-------------|
-| bank_name | string | Nom de la banque (pour paiements bancaires) |
-| account_number | string | Numéro de compte masqué (pour paiements bancaires) |
-| transaction_id | string | Identifiant de transaction de la banque |
-| provider | string | Fournisseur du service (pour mobile money) |
-| phone_number | string | Numéro de téléphone (pour mobile money) |
-| received_by | string | Nom de la personne ayant reçu le paiement (pour espèces) |
-| notes | string | Notes additionnelles sur le paiement |
+| Code | Description |
+|------|-------------|
+| 400 | Données invalides ou montant incorrect |
+| 404 | Paiement ou contrat non trouvé |
+| 409 | Conflit (paiement déjà traité) |
+| 422 | Opération non autorisée selon le statut |
 
-### Historique de paiement
-| Champ | Type | Description |
-|-------|------|-------------|
-| date | string | Date du paiement (format ISO) |
-| amount | number | Montant payé |
-| method | string | Méthode de paiement utilisée |
-| reference | string | Référence de la transaction |
+## Règles métier
+
+1. **Montant minimum** : Le montant doit être supérieur à 0.01
+2. **Allocation automatique** : Le paiement est automatiquement réparti entre capital, intérêts et pénalités selon l'ordre de priorité défini
+3. **Glissement (slippage)** : 
+   - Positif = paiement en retard
+   - Négatif = paiement en avance
+   - 0 = paiement à l'échéance
+4. **Annulation** : Un paiement complété ne peut être annulé que par un administrateur
+5. **Justificatifs** : Recommandé pour tout paiement > 500 USD équivalent
+6. **Mobile Money** : 
+   - Le numéro de téléphone doit inclure l'indicatif pays (+243 pour RDC)
+   - Les providers supportés : Orange Money, M-Pesa, Airtel Money

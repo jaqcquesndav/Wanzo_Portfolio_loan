@@ -1,5 +1,7 @@
 # Configuration de base
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document décrit la configuration de base de l'API Wanzo Portfolio Institution, notamment les URLs, les headers et le format des réponses.
 
 ## URL de base
@@ -7,9 +9,23 @@ Ce document décrit la configuration de base de l'API Wanzo Portfolio Institutio
 Toutes les requêtes API doivent être préfixées par l'URL de base correspondant à l'environnement utilisé :
 
 - **Développement** : `http://localhost:8000/portfolio/api/v1`
-- **Production** : `https://api.wanzo-portfolio.com/portfolio/api/v1`
+- **Production** : `https://api.wanzo.com/portfolio/api/v1`
 
 **IMPORTANT** : Les URLs complètes incluent le préfixe `/portfolio/api/v1/` comme configuré dans l'API Gateway pour le service portfolio-institution.
+
+### Architecture Backend
+```
+Frontend → API Gateway (port 8000) → Microservices internes
+                                    ├─ portfolio-institution-service (3005)
+                                    ├─ accounting-service
+                                    ├─ customer-service
+                                    └─ autres services...
+```
+
+### Serveur de Production
+- **VM Azure** : Canada Central
+- **IP** : 4.205.236.59
+- **Port Gateway** : 8000
 
 ## Headers
 

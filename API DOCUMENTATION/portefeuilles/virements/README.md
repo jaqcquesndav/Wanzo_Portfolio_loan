@@ -1,5 +1,10 @@
 # Virements (Disbursements) - Portefeuille Traditionnel
 
+> ⚠️ **Note** : Ce document est conservé pour référence historique. 
+> La documentation mise à jour avec le support Mobile Money se trouve dans [debloquements/README.md](../debloquements/README.md).
+
+---
+
 Ce document décrit les endpoints pour la gestion des virements (décaissements) dans le cadre des portefeuilles traditionnels.
 
 > **Note importante** : Ces endpoints sont spécifiques aux déboursements de crédits traditionnels (Institution → Client). 

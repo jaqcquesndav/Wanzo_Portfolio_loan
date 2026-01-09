@@ -7,6 +7,8 @@ import { apiClient } from '../base.api';
 export const chatApi = {
   /**
    * Envoie un message au système de chat
+   * @param message - Le message à envoyer
+   * @param streaming - Activer le mode streaming (défaut: false)
    */
   sendMessage: (message: {
     content: string;
@@ -17,7 +19,9 @@ export const chatApi = {
       companyId?: string;
       entityType?: string;
       entityId?: string;
+      institutionId?: string;
     };
+    streaming?: boolean;
   }) => {
     return apiClient.post<{
       id: string;
@@ -38,6 +42,35 @@ export const chatApi = {
         }>;
       };
     }>('/chat/messages', message);
+  },
+
+  /**
+   * Envoie un message avec streaming activé
+   * Note: Le streaming est géré via WebSocket dans chatStreamService.ts
+   * Cette méthode envoie uniquement le message initial à l'API REST
+   */
+  sendMessageWithStreaming: (message: {
+    content: string;
+    contextId: string;
+    metadata?: {
+      portfolioId?: string;
+      portfolioType?: 'traditional' | 'investment' | 'leasing';
+      companyId?: string;
+      institutionId?: string;
+    };
+  }) => {
+    return apiClient.post<{
+      id: string;
+      requestMessageId: string;
+      content: string;
+      timestamp: string;
+      sender: 'user';
+      contextId: string;
+      streamingEnabled: boolean;
+    }>('/chat/messages', {
+      ...message,
+      streaming: true
+    });
   },
 
   /**

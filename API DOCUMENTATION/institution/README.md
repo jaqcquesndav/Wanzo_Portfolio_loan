@@ -1,16 +1,39 @@
 # Documentation de l'API Institution
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Cette section détaille les endpoints de l'API liés à la gestion des institutions financières dans la plateforme Wanzo Portfolio Institution. Ces endpoints permettent de gérer les informations institutionnelles, les gestionnaires, et les documents réglementaires.
+
+## ⚠️ Important : Obtention de l'institutionId
+
+**Le token JWT ne contient pas l'institutionId.** L'ID de l'institution doit être obtenu via l'endpoint `/users/me` lors de l'authentification :
+
+```javascript
+// Lors du login, appeler /users/me pour obtenir l'institutionId
+const response = await fetch('/portfolio/api/v1/users/me', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const { user, institution } = await response.json();
+const institutionId = institution.id; // Stocker cet ID pour les appels suivants
+```
+
+Tous les endpoints institution nécessitent cet `institutionId` dans l'URL.
 
 ## Récupération des informations de l'institution
 
-Récupère les informations détaillées concernant l'institution financière actuellement connectée.
+Récupère les informations détaillées concernant une institution financière par son ID.
 
 ### Requête
 
 ```
-GET /portfolio/api/v1/institution
+GET /portfolio/api/v1/institutions/${institutionId}
 ```
+
+### Paramètres d'URL
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| institutionId | string | Oui | L'ID de l'institution (obtenu via `/users/me`) |
 
 ### Réponse
 
@@ -62,8 +85,14 @@ Met à jour les informations de l'institution financière.
 ### Requête
 
 ```
-PUT /portfolio/api/v1/institution
+PUT /portfolio/api/v1/institutions/${institutionId}
 ```
+
+### Paramètres d'URL
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| institutionId | string | Oui | L'ID de l'institution |
 
 ### Corps de la requête
 
@@ -122,8 +151,14 @@ Récupère la liste de tous les gestionnaires associés à l'institution.
 #### Requête
 
 ```
-GET /portfolio/api/v1/institution/managers
+GET /portfolio/api/v1/institutions/${institutionId}/managers
 ```
+
+#### Paramètres d'URL
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| institutionId | string | Oui | L'ID de l'institution |
 
 #### Réponse
 
@@ -161,8 +196,14 @@ Ajoute un nouveau gestionnaire à l'institution.
 #### Requête
 
 ```
-POST /portfolio/api/v1/institution/managers
+POST /portfolio/api/v1/institutions/${institutionId}/managers
 ```
+
+#### Paramètres d'URL
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| institutionId | string | Oui | L'ID de l'institution |
 
 #### Corps de la requête
 

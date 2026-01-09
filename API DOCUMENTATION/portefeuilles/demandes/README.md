@@ -2,126 +2,270 @@
 
 Cette API permet de gérer les demandes de crédit dans le cadre des portefeuilles traditionnels, incluant la création, la consultation, l'analyse, l'approbation ou le rejet des demandes de crédit.
 
+## Entités et DTOs
+
+### CreditRequest (Entité principale)
+
+```typescript
+interface CreditRequest {
+  id: string;
+  memberId: string;                       // ID du client/entreprise
+  productId: string;                      // ID du produit de crédit
+  portfolioId?: string;                   // ID du portefeuille associé
+  receptionDate: string;                  // Date de réception (ISO 8601)
+  requestAmount: number;
+  currency: string;                       // Code devise ISO 4217 (CDF, USD, XOF, EUR, XAF)
+  periodicity: CreditPeriodicity;
+  interestRate: number;                   // Taux d'intérêt en %
+  reason: string;                         // Motif de la demande
+  scheduleType: ScheduleType;             // Type d'amortissement
+  schedulesCount: number;                 // Nombre d'échéances
+  deferredPaymentsCount: number;          // Nombre d'échéances différées
+  gracePeriod?: number;                   // Période de grâce en mois
+  financingPurpose: string;               // Objectif du financement
+  creditManagerId: string;                // ID du gestionnaire de crédit
+  status: CreditRequestStatus;
+  isGroup: boolean;                       // Crédit de groupe ou individuel
+  groupId?: string;                       // ID du groupe si crédit de groupe
+  distributions?: CreditDistribution[];   // Répartition si crédit de groupe
+  documents?: CreditDocument[];           // Documents justificatifs
+  rejectionReason?: string;               // Raison du rejet si rejeté
+  metadata?: CreditRequestMetadata;       // Métadonnées de synchronisation
+  createdAt: string;
+  updatedAt?: string;
+}
+```
+
+### Enums et Types
+
+```typescript
+// Statuts de la demande de crédit (15 valeurs)
+type CreditRequestStatus = 
+  | 'draft'          // Brouillon (non soumis)
+  | 'submitted'      // Soumis pour analyse
+  | 'under_review'   // En cours d'examen
+  | 'pending'        // En attente de décision
+  | 'analysis'       // En analyse (scoring, vérifications)
+  | 'approved'       // Approuvé (en attente de déblocage)
+  | 'rejected'       // Rejeté
+  | 'canceled'       // Annulé par le demandeur
+  | 'disbursed'      // Déboursé (fonds transférés)
+  | 'active'         // Crédit actif (en cours de remboursement)
+  | 'closed'         // Crédit clôturé (remboursé intégralement)
+  | 'defaulted'      // En défaut de paiement
+  | 'restructured'   // Restructuré (échéancier modifié)
+  | 'consolidated'   // Consolidé avec d'autres crédits
+  | 'in_litigation'; // En contentieux/litige
+
+// Périodicité des remboursements (7 valeurs)
+type CreditPeriodicity = 
+  | 'daily'       // Quotidien
+  | 'weekly'      // Hebdomadaire
+  | 'biweekly'    // Bi-hebdomadaire
+  | 'monthly'     // Mensuel
+  | 'quarterly'   // Trimestriel
+  | 'semiannual'  // Semestriel
+  | 'annual';     // Annuel
+
+// Type d'échéancier/amortissement (3 valeurs)
+type ScheduleType = 
+  | 'constant'     // Échéances constantes (amortissement linéaire)
+  | 'degressive'   // Échéances dégressives
+  | 'progressive'; // Échéances progressives
+
+// Types de documents acceptés (9 valeurs)
+type CreditDocumentType = 
+  | 'business_plan'        // Plan d'affaires
+  | 'financial_statements' // États financiers
+  | 'identity_document'    // Pièce d'identité
+  | 'proof_of_address'     // Justificatif de domicile
+  | 'tax_certificate'      // Attestation fiscale
+  | 'bank_statements'      // Relevés bancaires
+  | 'project_file'         // Dossier de projet
+  | 'guarantee_document'   // Document de garantie
+  | 'other';               // Autre document
+```
+
+### Types imbriqués
+
+```typescript
+// Document attaché à une demande
+interface CreditDocument {
+  id: string;
+  name: string;
+  type: CreditDocumentType;
+  url: string;
+  size?: number;                // Taille en bytes
+  mimeType?: string;            // Type MIME (application/pdf, image/jpeg, etc.)
+  uploadedBy?: string;          // ID de l'utilisateur qui a uploadé
+  uploadedAt: string;           // Date d'upload (ISO 8601)
+  description?: string;
+}
+
+// Métadonnées de synchronisation (avec gestion commerciale)
+interface CreditRequestMetadata {
+  sourceRequestId?: string;      // ID de la demande source
+  syncedFrom?: string;           // Service source (ex: 'gestion_commerciale')
+  businessInformation?: any;     // Informations commerciales
+  financialInformation?: any;    // Informations financières
+  creditScore?: any;             // Score de crédit
+  firstSyncAt?: string;          // Date de première synchronisation
+  lastSyncAt?: string;           // Date de dernière synchronisation
+}
+
+// Répartition pour crédit de groupe
+interface CreditDistribution {
+  id: string;
+  creditRequestId: string;
+  memberId: string;              // ID du membre du groupe
+  amount: number;                // Montant attribué
+  createdAt: string;
+}
+
+// Analyse de crédit
+interface CreditAnalysis {
+  id: string;
+  creditRequestId: string;
+  financialData: {
+    income: number;              // Revenus
+    expenses: number;            // Dépenses
+    existingDebts: number;       // Dettes existantes
+    assets: number;              // Actifs
+  };
+  creditAssessment: {
+    debtToIncomeRatio: number;   // Ratio dette/revenu
+    creditScore: number;         // Score de crédit
+    repaymentCapacity: number;   // Capacité de remboursement
+    riskLevel: 'low' | 'medium' | 'high';
+  };
+  recommendation: 'approve' | 'reject' | 'pending';
+  comments: string;
+  analyzedBy: string;            // ID de l'analyste
+  analyzedAt: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Garant physique
+interface PhysicalGuarantor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  idType: 'passport' | 'nationalId' | 'drivingLicense' | 'other';
+  idNumber: string;
+  gender: 'male' | 'female' | 'other';
+  profession: string;
+  employer?: string;
+  address: string;
+  photoUrl?: string;
+  signatureUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Garant moral (personne morale)
+interface LegalGuarantor {
+  id: string;
+  name: string;
+  registrationNumber: string;
+  registrationDate: string;
+  address: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+```
+
 ## Points d'accès
 
 ### Liste des demandes de crédit
 
-Récupère la liste des demandes de crédit pour un portefeuille traditionnel spécifique.
-
 **Endpoint** : `GET /portfolios/traditional/credit-requests`
 
 **Paramètres de requête** :
-- `portfolioId` (optionnel) : Identifiant unique du portefeuille traditionnel
-- `status` (optionnel) : Filtre par statut (draft, submitted, under_review, pending, analysis, approved, rejected, canceled, disbursed, active, closed, defaulted, restructured, consolidated, in_litigation)
-- `clientId` (optionnel) : Filtre par identifiant du membre (memberId)
-- `productType` (optionnel) : Filtre par type de produit (productId)
-- `dateFrom` (optionnel) : Filtre par date de création (début)
-- `dateTo` (optionnel) : Filtre par date de création (fin)
-- `search` (optionnel) : Recherche textuelle
-- `sortBy` (optionnel) : Trier par (createdAt, requestAmount, memberId)
-- `sortOrder` (optionnel) : Ordre de tri (asc, desc)
-
-**Réponse réussie** (200 OK) :
-
-```json
-[
-  {
-    "id": "req-001",
-    "memberId": "mem-001",
-    "productId": "prod-001",
-    "receptionDate": "2023-07-15",
-    "requestAmount": 50000,
-    "periodicity": "monthly",
-    "interestRate": 8.5,
-    "reason": "Expansion des activités commerciales et ouverture d'une nouvelle boutique",
-    "scheduleType": "constant",
-    "schedulesCount": 12,
-    "deferredPaymentsCount": 0,
-    "financingPurpose": "Achat de stocks et aménagement de local",
-    "creditManagerId": "mgr-001",
-    "isGroup": false,
-    "documents": [
-      {
-        "id": "doc-001",
-        "name": "Plan d'affaires.pdf",
-        "type": "business_plan",
-        "url": "/documents/plan-affaires-mem001.pdf",
-        "size": 2457600,
-        "mimeType": "application/pdf",
-        "uploadedAt": "2023-07-15T09:00:00Z"
-      },
-      {
-        "id": "doc-002",
-        "name": "Bilans financiers 2022-2023.pdf",
-        "type": "financial_statements",
-        "url": "/documents/bilans-mem001.pdf",
-        "size": 1843200,
-        "mimeType": "application/pdf",
-        "uploadedAt": "2023-07-15T09:15:00Z"
-      }
-    ],
-    "status": "pending",
-    "createdAt": "2023-07-15T09:30:45Z",
-    "updatedAt": "2023-07-15T09:30:45Z"
-  },
-  {
-    "id": "req-002",
-    "memberId": "mem-002",
-    "productId": "prod-002",
-    "receptionDate": "2023-06-22",
-    "requestAmount": 75000,
-    "periodicity": "monthly",
-    "interestRate": 7.25,
-    "reason": "Acquisition d'équipements de construction pour de nouveaux contrats",
-    "scheduleType": "constant",
-    "schedulesCount": 24,
-    "deferredPaymentsCount": 0,
-    "financingPurpose": "Achat d'équipements de construction",
-    "creditManagerId": "mgr-002",
-    "isGroup": false,
-    "status": "analysis",
-    "createdAt": "2023-06-22T14:15:30Z",
-    "updatedAt": "2023-07-01T10:25:15Z"
-  }
-]
-```
-
-### Détails d'une demande de crédit
-
-Récupère les détails complets d'une demande de crédit spécifique.
-
-**Endpoint** : `GET /portfolios/traditional/credit-requests/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `portfolioId` | string | Non | Filtrer par portefeuille |
+| `status` | CreditRequestStatus | Non | Filtrer par statut |
+| `clientId` | string | Non | Filtrer par client/membre |
+| `productId` | string | Non | Filtrer par produit |
+| `dateFrom` | string | Non | Date de création min (ISO 8601) |
+| `dateTo` | string | Non | Date de création max (ISO 8601) |
+| `search` | string | Non | Recherche textuelle |
+| `page` | number | Non | Numéro de page (défaut: 1) |
+| `limit` | number | Non | Éléments par page (défaut: 10) |
+| `sortBy` | string | Non | Champ de tri (createdAt, requestAmount) |
+| `sortOrder` | string | Non | Ordre (asc, desc) |
 
 **Réponse réussie** (200 OK) :
 
 ```json
 {
-  "id": "req-003",
-  "memberId": "mem-003",
-  "productId": "prod-003",
-  "receptionDate": "2023-05-10",
-  "requestAmount": 120000,
-  "periodicity": "monthly",
-  "interestRate": 6.75,
-  "reason": "Développement d'un nouveau produit technologique",
-  "scheduleType": "degressive",
-  "schedulesCount": 36,
-  "deferredPaymentsCount": 3,
-  "gracePeriod": 2,
-  "financingPurpose": "R&D et prototypage",
-  "creditManagerId": "mgr-003",
-  "isGroup": false,
-  "status": "approved",
-  "createdAt": "2023-05-10T11:20:05Z",
-  "updatedAt": "2023-06-15T16:45:30Z"
+  "success": true,
+  "data": [
+    {
+      "id": "CR-00001",
+      "memberId": "COMP-001",
+      "productId": "PROD-001",
+      "portfolioId": "TP-00001",
+      "receptionDate": "2025-02-01",
+      "requestAmount": 50000.00,
+      "currency": "USD",
+      "periodicity": "monthly",
+      "interestRate": 8.5,
+      "reason": "Expansion des activités commerciales",
+      "scheduleType": "constant",
+      "schedulesCount": 12,
+      "deferredPaymentsCount": 0,
+      "gracePeriod": 1,
+      "financingPurpose": "Achat de stocks et équipements",
+      "creditManagerId": "USER-001",
+      "status": "approved",
+      "isGroup": false,
+      "documents": [
+        {
+          "id": "DOC-001",
+          "name": "Plan d'affaires.pdf",
+          "type": "business_plan",
+          "url": "/documents/CR-00001/business-plan.pdf",
+          "size": 2457600,
+          "mimeType": "application/pdf",
+          "uploadedAt": "2025-02-01T09:00:00Z"
+        },
+        {
+          "id": "DOC-002",
+          "name": "États financiers 2024.pdf",
+          "type": "financial_statements",
+          "url": "/documents/CR-00001/financials.pdf",
+          "size": 1843200,
+          "mimeType": "application/pdf",
+          "uploadedAt": "2025-02-01T09:15:00Z"
+        }
+      ],
+      "metadata": {
+        "syncedFrom": "gestion_commerciale",
+        "sourceRequestId": "GC-2025-00123",
+        "lastSyncAt": "2025-02-01T10:00:00Z"
+      },
+      "createdAt": "2025-02-01T09:30:00Z",
+      "updatedAt": "2025-02-05T14:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 25,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 3
+  }
+}
 ```
 
-### Création d'une demande de crédit
+### Détails d'une demande
 
-Crée une nouvelle demande de crédit.
+**Endpoint** : `GET /portfolios/traditional/credit-requests/{id}`
+
+**Réponse réussie** (200 OK) : Retourne l'objet `CreditRequest` complet avec ses relations (documents, garanties, analyse).
+
+### Créer une demande de crédit
 
 **Endpoint** : `POST /portfolios/traditional/credit-requests`
 
@@ -129,439 +273,206 @@ Crée une nouvelle demande de crédit.
 
 ```json
 {
-  "memberId": "mem-004",
-  "productId": "prod-001",
-  "receptionDate": "2025-08-03",
-  "requestAmount": 50000,
+  "memberId": "COMP-001",
+  "productId": "PROD-001",
+  "portfolioId": "TP-00001",
+  "receptionDate": "2025-02-01",
+  "requestAmount": 50000.00,
+  "currency": "USD",
   "periodicity": "monthly",
   "interestRate": 8.5,
   "reason": "Expansion des activités commerciales",
   "scheduleType": "constant",
   "schedulesCount": 12,
   "deferredPaymentsCount": 0,
-  "financingPurpose": "Achat de stocks et aménagement de local",
-  "creditManagerId": "mgr-001",
-  "isGroup": false,
-  "gracePeriod": 0
+  "gracePeriod": 1,
+  "financingPurpose": "Achat de stocks et équipements",
+  "creditManagerId": "USER-001",
+  "isGroup": false
 }
 ```
 
-**Réponse réussie** (201 Created) :
+**Réponse réussie** (201 Created) : Retourne l'objet `CreditRequest` créé avec statut `draft`.
+
+### Mettre à jour une demande
+
+**Endpoint** : `PUT /portfolios/traditional/credit-requests/{id}`
+
+**Corps de la requête** : Champs partiels de `CreditRequest`
+
+**Note** : Seules les demandes avec statut `draft` ou `submitted` peuvent être modifiées.
+
+### Soumettre une demande
+
+**Endpoint** : `POST /portfolios/traditional/credit-requests/{id}/submit`
+
+**Réponse réussie** (200 OK) :
 
 ```json
 {
   "success": true,
   "data": {
-    "id": "123e4567-e89b-12d3-a456-426614174006",
-    "memberId": "mem-004",
-    "productId": "prod-001",
-    "receptionDate": "2025-08-03",
-    "requestAmount": 50000,
-    "periodicity": "monthly",
-    "interestRate": 8.5,
-    "reason": "Expansion des activités commerciales",
-    "scheduleType": "constant",
-    "schedulesCount": 12,
-    "deferredPaymentsCount": 0,
-    "financingPurpose": "Achat de stocks et aménagement de local",
-    "creditManagerId": "mgr-001",
-    "isGroup": false,
-    "portfolioId": null,
-    "currency": "XOF",
-    "status": "draft",
-    "metadata": {
-      "sourceRequestId": null,
-      "syncedFrom": null
-    },
-    "createdAt": "2025-08-03T10:30:00.000Z",
-    "updatedAt": "2025-08-03T10:30:00.000Z"
+    "id": "CR-00001",
+    "status": "submitted",
+    "updatedAt": "2025-02-01T10:00:00Z"
   }
 }
 ```
 
-### Mise à jour d'une demande de crédit
+### Approuver une demande
 
-Met à jour les informations d'une demande de crédit existante.
-
-**Endpoint** : `PUT /portfolios/traditional/credit-requests/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
-
-**Corps de la requête** (champs optionnels) :
-
-```json
-{
-  "requestAmount": 55000,
-  "periodicity": "monthly",
-  "interestRate": 8.0,
-  "reason": "Expansion des activités commerciales et recrutement",
-  "schedulesCount": 15,
-  "financingPurpose": "Achat de matériel, extension d'activité et recrutement"
-}
-```
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "id": "req-001",
-  "memberId": "mem-001",
-  "productId": "prod-001",
-  "receptionDate": "2023-07-15",
-  "requestAmount": 55000,
-  "periodicity": "monthly",
-  "interestRate": 8.0,
-  "reason": "Expansion des activités commerciales et recrutement",
-  "scheduleType": "constant",
-  "schedulesCount": 15,
-  "deferredPaymentsCount": 0,
-  "financingPurpose": "Achat de matériel, extension d'activité et recrutement",
-  "creditManagerId": "mgr-001",
-  "isGroup": false,
-  "status": "pending",
-  "createdAt": "2023-07-15T09:30:45Z",
-  "updatedAt": "2025-08-03T12:15:00.000Z"
-}
-```
-
-### Changement de statut d'une demande
-
-Met à jour le statut d'une demande de crédit.
-
-**Endpoint** : `PATCH /portfolios/traditional/credit-requests/{id}/status`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
+**Endpoint** : `POST /portfolios/traditional/credit-requests/{id}/approve`
 
 **Corps de la requête** :
 
 ```json
 {
-  "status": "approved"
+  "approvedAmount": 50000.00,
+  "approvedInterestRate": 8.5,
+  "conditions": "Mise en place des garanties avant déblocage",
+  "approvedBy": "USER-002"
 }
 ```
 
-**Statuts valides** :
-- `draft` : Brouillon
-- `submitted` : Soumise
-- `under_review` : En revue
-- `pending` : En attente
-- `analysis` : En analyse
-- `approved` : Approuvée
-- `rejected` : Rejetée
-- `canceled` : Annulée
-- `disbursed` : Décaissée
-- `active` : Active
-- `closed` : Fermée
-- `defaulted` : En défaut
-- `restructured` : Restructurée
-- `consolidated` : Consolidée
-- `in_litigation` : En litige
+### Rejeter une demande
 
-**Réponse réussie** (200 OK) :
+**Endpoint** : `POST /portfolios/traditional/credit-requests/{id}/reject`
+
+**Corps de la requête** :
 
 ```json
 {
-  "id": "req-001",
-  "memberId": "mem-001",
-  "productId": "prod-001",
-  "receptionDate": "2023-07-15",
-  "requestAmount": 50000,
-  "periodicity": "monthly",
-  "interestRate": 8.5,
-  "reason": "Expansion des activités commerciales et ouverture d'une nouvelle boutique",
-  "scheduleType": "constant",
-  "schedulesCount": 12,
-  "deferredPaymentsCount": 0,
-  "financingPurpose": "Achat de stocks et aménagement de local",
-  "creditManagerId": "mgr-001",
-  "isGroup": false,
-  "status": "approved",
-  "createdAt": "2023-07-15T09:30:45Z",
-  "updatedAt": "2025-08-03T14:30:00.000Z"
+  "rejectionReason": "Capacité de remboursement insuffisante",
+  "rejectedBy": "USER-002"
 }
 ```
 
-### Suppression d'une demande de crédit
+### Annuler une demande
 
-Supprime définitivement une demande de crédit.
+**Endpoint** : `POST /portfolios/traditional/credit-requests/{id}/cancel`
 
-**Endpoint** : `DELETE /portfolios/traditional/credit-requests/{id}`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
-
-**Réponse réussie** (204 No Content) : Corps vide
-
-**Réponse d'erreur** (404 Not Found) :
+**Corps de la requête** :
 
 ```json
 {
-  "error": "Credit request not found",
-  "message": "La demande de crédit avec l'ID spécifié n'existe pas",
-  "code": "CREDIT_REQUEST_NOT_FOUND"
+  "cancellationReason": "Demande annulée par le client"
 }
 ```
 
-### Réinitialisation des données (développement/test)
-
-Remet les demandes de crédit aux données d'exemple initiales.
-
-**Endpoint** : `POST /portfolios/traditional/credit-requests/reset`
-
-**Réponse réussie** (200 OK) :
-
-```json
-[
-  {
-    "id": "req-001",
-    "memberId": "mem-001",
-    "productId": "prod-001",
-    "receptionDate": "2023-07-15",
-    "requestAmount": 50000,
-    "periodicity": "monthly",
-    "interestRate": 8.5,
-    "reason": "Expansion des activités commerciales et ouverture d'une nouvelle boutique",
-    "scheduleType": "constant",
-    "schedulesCount": 12,
-    "deferredPaymentsCount": 0,
-    "financingPurpose": "Achat de stocks et aménagement de local",
-    "creditManagerId": "mgr-001",
-    "isGroup": false,
-    "status": "pending",
-    "createdAt": "2023-07-15T09:30:45Z",
-    "updatedAt": "2023-07-15T09:30:45Z"
-  }
-  // ... autres demandes d'exemple
-]
-```
-
-## Structure de données complète
-
-### Objet CreditRequest
-
-```typescript
-interface CreditRequest {
-  id: string;
-  memberId: string;                    // ID du membre/client
-  productId: string;                   // ID du produit financier
-  receptionDate: string;               // Date de réception de la demande
-  requestAmount: number;               // Montant demandé
-  currency: string;                    // Devise (ex: XOF, USD, EUR)
-  periodicity: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual';
-  interestRate: number;                // Taux d'intérêt
-  reason: string;                      // Motif de la demande
-  scheduleType: 'constant' | 'degressive';  // Type d'échéancier
-  schedulesCount: number;              // Nombre d'échéances
-  deferredPaymentsCount: number;       // Nombre de paiements différés
-  gracePeriod?: number;                // Période de grâce (optionnel)
-  financingPurpose: string;            // Objet du financement
-  creditManagerId: string;             // ID du gestionnaire de crédit
-  status: CreditRequestStatus;         // Statut de la demande
-  isGroup: boolean;                    // Demande de groupe ou individuelle
-  groupId?: string;                    // ID du groupe (si applicable)
-  distributions?: CreditDistribution[]; // Distributions (si groupe)
-  documents?: CreditDocument[];        // Documents et pièces jointes
-  rejectionReason?: string;            // Raison du rejet (si applicable)
-  portfolioId?: string;                // ID du portefeuille associé
-  metadata?: CreditRequestMetadata;    // Métadonnées de synchronisation
-  createdAt: string;                   // Date de création (ISO)
-  updatedAt?: string;                  // Date de mise à jour (ISO)
-}
-
-interface CreditRequestMetadata {
-  sourceRequestId?: string;            // ID de la demande source (gestion commerciale)
-  syncedFrom?: string;                 // Service source (ex: 'gestion_commerciale')
-  businessInformation?: any;           // Informations commerciales
-  financialInformation?: any;          // Informations financières
-  creditScore?: any;                   // Score de crédit
-  firstSyncAt?: string;                // Date de première synchronisation
-  lastSyncAt?: string;                 // Date de dernière synchronisation
-}
-
-interface CreditDistribution {
-  id: string;
-  creditRequestId: string;
-  memberId: string;
-  amount: number;
-  createdAt: string;
-}
-
-interface CreditDocument {
-  id: string;
-  name: string;
-  type: 'business_plan' | 'financial_statements' | 'identity_document' | 'proof_of_address' | 'tax_certificate' | 'bank_statements' | 'project_file' | 'guarantee_document' | 'other';
-  url: string;
-  size?: number;                       // Taille en bytes
-  mimeType?: string;                   // Type MIME (application/pdf, image/jpeg, etc.)
-  uploadedBy?: string;                 // ID de l'utilisateur qui a uploadé
-  uploadedAt: string;                  // Date d'upload (ISO 8601)
-  description?: string;                // Description optionnelle
-}
-```
-
-### Types de statut
-
-```typescript
-type CreditRequestStatus = 
-  | 'draft'           // Brouillon
-  | 'submitted'       // Soumise
-  | 'under_review'    // En revue
-  | 'pending'         // En attente
-  | 'analysis'        // En analyse
-  | 'approved'        // Approuvée
-  | 'rejected'        // Rejetée
-  | 'canceled'        // Annulée
-  | 'disbursed'       // Décaissée
-  | 'active'          // Active
-  | 'closed'          // Fermée
-  | 'defaulted'       // En défaut
-  | 'restructured'    // Restructurée
-  | 'consolidated'    // Consolidée
-  | 'in_litigation';  // En litige
-
-type CreditPeriodicity = 
-  | 'daily'
-  | 'weekly'
-  | 'biweekly'
-  | 'monthly'
-  | 'quarterly'
-  | 'semiannual'
-  | 'annual';
-```
-
-## Gestion des documents
-
-### Ajout d'un document à une demande de crédit
-
-Ajoute un nouveau document à une demande de crédit existante.
+### Ajouter un document
 
 **Endpoint** : `POST /portfolios/traditional/credit-requests/{id}/documents`
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
-
-**Corps de la requête** :
-
-```json
-{
-  "name": "Bilan actualisé",
-  "type": "financial_statements",
-  "content": "base64_encoded_content",
-  "mimeType": "application/pdf",
-  "description": "Bilan actualisé pour le premier semestre 2025"
-}
-```
-
-**Types de documents valides** :
-- `business_plan` : Plan d'affaires
-- `financial_statements` : États financiers
-- `identity_document` : Pièce d'identité
-- `proof_of_address` : Justificatif de domicile
-- `tax_certificate` : Attestation fiscale
-- `bank_statements` : Relevés bancaires
-- `project_file` : Dossier de projet
-- `guarantee_document` : Document de garantie
-- `other` : Autre type de document
-
-**Réponse réussie** (201 Created) :
-
-```json
-{
-  "id": "doc-011",
-  "name": "Bilan actualisé",
-  "type": "financial_statements",
-  "url": "/documents/bilan-actualise-mem001.pdf",
-  "size": 1536000,
-  "mimeType": "application/pdf",
-  "uploadedAt": "2025-07-25T15:30:00.000Z",
-  "description": "Bilan actualisé pour le premier semestre 2025"
-}
-```
-
-### Récupérer les documents d'une demande
-
-Récupère tous les documents associés à une demande de crédit.
-
-**Endpoint** : `GET /portfolios/traditional/credit-requests/{id}/documents`
-
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
+**Corps de la requête** (multipart/form-data) :
+- `file`: Fichier du document (PDF, PNG, JPG)
+- `type`: Type de document (CreditDocumentType)
+- `description`: Description optionnelle
 
 **Réponse réussie** (200 OK) :
 
 ```json
-[
-  {
-    "id": "doc-001",
-    "name": "Plan d'affaires.pdf",
-    "type": "business_plan",
-    "url": "/documents/plan-affaires-mem001.pdf",
-    "size": 2457600,
+{
+  "success": true,
+  "data": {
+    "id": "DOC-003",
+    "name": "Relevé bancaire.pdf",
+    "type": "bank_statements",
+    "url": "/documents/CR-00001/bank-statement.pdf",
+    "size": 524288,
     "mimeType": "application/pdf",
-    "uploadedBy": "user-123",
-    "uploadedAt": "2023-07-15T09:00:00Z",
-    "description": "Plan d'affaires détaillé pour l'expansion"
-  },
-  {
-    "id": "doc-002",
-    "name": "Bilans financiers 2022-2023.pdf",
-    "type": "financial_statements",
-    "url": "/documents/bilans-mem001.pdf",
-    "size": 1843200,
-    "mimeType": "application/pdf",
-    "uploadedAt": "2023-07-15T09:15:00Z"
+    "uploadedAt": "2025-02-02T11:00:00Z"
   }
-]
+}
 ```
 
 ### Supprimer un document
 
-Supprime un document d'une demande de crédit.
-
 **Endpoint** : `DELETE /portfolios/traditional/credit-requests/{id}/documents/{documentId}`
 
-**Paramètres de chemin** :
-- `id` : Identifiant unique de la demande de crédit
-- `documentId` : Identifiant unique du document
+### Analyse de crédit
 
-**Réponse réussie** (204 No Content) : Corps vide
+**Endpoint** : `POST /portfolios/traditional/credit-requests/{id}/analysis`
 
----
-
-## Gestion des erreurs
-
-Toutes les réponses d'erreur suivent le format standard :
+**Corps de la requête** :
 
 ```json
 {
-  "error": "Error type",
-  "message": "Description de l'erreur en français",
-  "code": "ERROR_CODE",
-  "details": {}  // Optionnel, détails supplémentaires
+  "financialData": {
+    "income": 15000.00,
+    "expenses": 8000.00,
+    "existingDebts": 5000.00,
+    "assets": 100000.00
+  },
+  "creditAssessment": {
+    "debtToIncomeRatio": 0.33,
+    "creditScore": 720,
+    "repaymentCapacity": 7000.00,
+    "riskLevel": "low"
+  },
+  "recommendation": "approve",
+  "comments": "Profil solide avec capacité de remboursement adéquate"
 }
 ```
 
-**Codes d'erreur courants** :
-- `CREDIT_REQUEST_NOT_FOUND` (404) : Demande de crédit introuvable
-- `INVALID_CREDIT_REQUEST_DATA` (400) : Données de demande invalides
-- `CREDIT_REQUEST_ALREADY_PROCESSED` (409) : Demande déjà traitée
-- `INSUFFICIENT_PERMISSIONS` (403) : Permissions insuffisantes
-- `DOCUMENT_UPLOAD_FAILED` (500) : Échec de l'upload du document
-- `DOCUMENT_NOT_FOUND` (404) : Document introuvable
+### Synchronisation depuis gestion commerciale
 
----
+**Endpoint** : `POST /portfolios/traditional/credit-requests/sync`
 
-## 📋 Métadonnées de Synchronisation Inter-Services
+**Corps de la requête** :
 
-Le champ `metadata` est critique pour l'intégration avec `gestion-commerciale-service`. Il maintient la traçabilité des demandes synchronisées.
-
-**Structure:**
 ```json
 {
-  "sourceRequestId": "uuid",
-  "syncedFrom": "gestion-commerciale-service",
-  "creditScore": { "score": 75, "riskLevel": "MEDIUM" }
+  "sourceRequestId": "GC-2025-00123",
+  "syncedFrom": "gestion_commerciale",
+  "memberId": "COMP-001",
+  "requestAmount": 50000.00,
+  "currency": "USD",
+  "businessInformation": {
+    "sector": "Commerce",
+    "yearsInBusiness": 5
+  },
+  "financialInformation": {
+    "annualRevenue": 200000.00,
+    "netProfit": 30000.00
+  },
+  "creditScore": {
+    "score": 720,
+    "rating": "A"
+  }
 }
 ```
+
+## Codes d'erreur
+
+| Code | Description |
+|------|-------------|
+| 400 | Données invalides ou paramètres manquants |
+| 404 | Demande non trouvée |
+| 409 | Conflit (transition de statut non autorisée) |
+| 422 | Opération non autorisée selon le statut |
+
+## Règles métier
+
+1. **Transitions de statut** :
+   - `draft` → `submitted`
+   - `submitted` → `under_review` → `analysis` → `approved` / `rejected`
+   - `approved` → `disbursed` → `active`
+   - `active` → `closed` / `defaulted` / `restructured`
+   - `canceled` peut survenir depuis `draft`, `submitted`, `pending`
+
+2. **Documents requis** : 
+   - Minimum 2 documents obligatoires avant soumission
+   - `business_plan` ou `project_file` requis
+   - `financial_statements` ou `bank_statements` requis
+
+3. **Montants** :
+   - Montant minimum : défini par le produit
+   - Montant maximum : défini par le produit et la capacité
+
+4. **Période de grâce** :
+   - Maximum 6 mois selon le produit
+   - Différé des intérêts configurable
+
+5. **Synchronisation** :
+   - Les demandes synchronisées conservent l'ID source
+   - Mise à jour automatique des métadonnées à chaque sync

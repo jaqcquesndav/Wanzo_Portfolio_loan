@@ -5,16 +5,13 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { FormField, Input } from '../../ui/Form';
 import { Button } from '../../ui/Button';
-import { Switch } from '../../ui/Switch';
 import { useNotification } from '../../../contexts/useNotification';
-import { usersApi } from '../../../services/api/shared/users.api';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export function SecuritySettings() {
   const { showNotification } = useNotification();
   const { t } = useTranslation();
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
+  const { user } = useAuth0();
 
   // Schéma de validation dynamique avec traductions
   const passwordSchema = z.object({
@@ -42,44 +39,16 @@ export function SecuritySettings() {
     resolver: zodResolver(passwordSchema)
   });
 
-  const handlePasswordChange = async (data: PasswordFormData) => {
+  const handlePasswordChange = async (_data: PasswordFormData) => {
     try {
-      await usersApi.changePassword(data.currentPassword, data.newPassword);
-      showNotification(t('messages.passwordUpdated'), 'success');
+      // Le changement de mot de passe est géré par Auth0
+      // Rediriger vers la page de changement de mot de passe Auth0
+      showNotification(t('messages.passwordChangeRedirect'), 'info');
+      // Note: En production, utiliser auth0.changePassword() ou rediriger vers Auth0
       reset();
     } catch (err) {
       console.error('Password change error:', err);
       showNotification(t('messages.passwordError'), 'error');
-    }
-  };
-
-  const handleTwoFactorToggle = async () => {
-    try {
-      if (!twoFactorEnabled) {
-        // Envoyer un code par email
-        await usersApi.sendTwoFactorCode();
-        setIsVerifying(true);
-        showNotification(t('messages.verificationSent'), 'success');
-      } else {
-        setTwoFactorEnabled(false);
-        showNotification(t('messages.twoFactorDisabled'), 'success');
-      }
-    } catch (err) {
-      console.error('Two factor toggle error:', err);
-      showNotification(t('messages.settingsError'), 'error');
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    try {
-      // Vérifier le code
-      await usersApi.verifyTwoFactorCode(verificationCode);
-      setTwoFactorEnabled(true);
-      setIsVerifying(false);
-      showNotification(t('messages.twoFactorEnabled'), 'success');
-    } catch (err) {
-      console.error('Verification code error:', err);
-      showNotification(t('messages.invalidCode'), 'error');
     }
   };
 
@@ -90,43 +59,16 @@ export function SecuritySettings() {
           {t('settings.security.twoFactor')}
         </h2>
         
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">
-              {t('settings.security.twoFactorDescription')}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            {t('settings.security.twoFactorAuth0', 'L\'authentification à deux facteurs est gérée par Auth0. Vous pouvez la configurer depuis votre profil Auth0.')}
+          </p>
+          {user?.email && (
+            <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+              {t('settings.security.connectedAs', 'Connecté en tant que')}: {user.email}
             </p>
-            <p className="text-sm text-gray-500 mt-1">
-              {twoFactorEnabled ? t('settings.security.enabled') : t('settings.security.disabled')}
-            </p>
-          </div>
-          <Switch
-            checked={twoFactorEnabled}
-            onChange={handleTwoFactorToggle}
-          />
+          )}
         </div>
-
-        {isVerifying && (
-          <div className="mt-4 space-y-4">
-            <FormField label={t('settings.security.verificationCode')}>
-              <div className="flex space-x-4">
-                <Input
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder={t('settings.security.verificationCode')}
-                  maxLength={6}
-                  className="flex-1"
-                />
-                <Button onClick={handleVerifyCode}>
-                  {t('common.confirm')}
-                </Button>
-              </div>
-            </FormField>
-            <p className="text-sm text-gray-500">
-              {t('messages.verificationSent')}
-            </p>
-          </div>
-        )}
       </div>
 
       <div className="border-t dark:border-gray-700 pt-6">
@@ -134,12 +76,19 @@ export function SecuritySettings() {
           {t('settings.security.changePassword')}
         </h2>
 
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">
+            {t('settings.security.passwordAuth0', 'Le changement de mot de passe est géré par Auth0. Utilisez le lien "Mot de passe oublié" sur la page de connexion pour réinitialiser votre mot de passe.')}
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit(handlePasswordChange)} className="space-y-4">
           <FormField label={t('settings.security.currentPassword')} error={errors.currentPassword?.message}>
             <Input
               type="password"
               {...register('currentPassword')}
               autoComplete="current-password"
+              disabled
             />
           </FormField>
 
@@ -148,6 +97,7 @@ export function SecuritySettings() {
               type="password"
               {...register('newPassword')}
               autoComplete="new-password"
+              disabled
             />
           </FormField>
 
@@ -156,10 +106,11 @@ export function SecuritySettings() {
               type="password"
               {...register('confirmPassword')}
               autoComplete="new-password"
+              disabled
             />
           </FormField>
 
-          <Button type="submit" loading={isSubmitting}>
+          <Button type="submit" loading={isSubmitting} disabled>
             {t('settings.security.updatePassword')}
           </Button>
         </form>

@@ -8,7 +8,6 @@ export * from './portfolio.api';
 export * from './portfolio-accounts.api';
 export * from './risk.api';
 export * from './user.api';
-export * from './users.api';
 
 /**
  * Services API partagés
@@ -22,5 +21,6 @@ export * from './users.api';
  * - portfolioApi: Fonctionnalités communes aux portefeuilles
  * - riskApi: Gestion des risques
  * - userApi: Gestion des utilisateurs (profils, rôles, etc.)
- * - usersApi: Gestion de la sécurité des utilisateurs (mot de passe, 2FA, etc.)
+ * 
+ * Note: L'authentification et le 2FA sont gérés par Auth0 côté backend
  */

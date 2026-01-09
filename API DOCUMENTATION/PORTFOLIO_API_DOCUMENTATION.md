@@ -2,7 +2,9 @@
 
 Cette documentation décrit la structure des URLs et les endpoints disponibles pour communiquer avec le microservice Portfolio Institution via l'API Gateway.
 
-*Cette documentation est générée automatiquement à partir du code source du frontend.*
+*Cette documentation est synchronisée avec le code source TypeScript (`src/types/*.ts`).*
+
+**Dernière mise à jour** : Janvier 2026
 
 ## Informations générales
 
@@ -19,6 +21,10 @@ Cette documentation décrit la structure des URLs et les endpoints disponibles p
 ### Architecture
 - **API Gateway**: Port 8000 (point d'entrée unique)
 - **Portfolio Institution Service**: Port 3005 (interne, routé par API Gateway)
+
+### Méthodes de paiement supportées
+- **Virement bancaire** : Comptes bancaires (BankAccount)
+- **Mobile Money** : Orange Money, M-Pesa, Airtel Money, Africell Money (MobileMoneyAccount)
 
 ## Authentification
 
@@ -92,6 +98,68 @@ Les réponses suivent un format standardisé:
 }
 ```
 
+## Référence des DTOs (Types TypeScript)
+
+Cette section référence les structures de données conformes au code source (`src/types/*.ts`).
+
+### Portefeuilles et Crédits
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| Portfolio | [portefeuilles/README.md](./portefeuilles/README.md) | `src/types/portfolio.ts` |
+| CreditRequest | [portefeuilles/demandes/README.md](./portefeuilles/demandes/README.md) | `src/types/credit.ts` |
+| CreditContract | [portefeuilles/contrats/README.md](./portefeuilles/contrats/README.md) | `src/types/credit-contract.ts` |
+| Disbursement | [portefeuilles/debloquements/README.md](./portefeuilles/debloquements/README.md) | `src/types/disbursement.ts` |
+| CreditPayment | [portefeuilles/remboursements/README.md](./portefeuilles/remboursements/README.md) | `src/types/credit-payment.ts` |
+| Guarantee | [portefeuilles/garanties/README.md](./portefeuilles/garanties/README.md) | `src/types/guarantee.ts` |
+
+### Comptes et Paiements
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| BankAccount | [portefeuilles/comptes/README.md](./portefeuilles/comptes/README.md) | `src/types/bankAccount.ts` |
+| MobileMoneyAccount | [portefeuilles/comptes/README.md](./portefeuilles/comptes/README.md) | `src/types/mobileMoneyAccount.ts` |
+
+### Utilisateurs et Institution
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| User | [utilisateurs/README.md](./utilisateurs/README.md) | `src/types/user.ts` |
+| UserWithInstitutionResponse | [utilisateurs/README.md](./utilisateurs/README.md) | `src/types/user.ts` |
+
+### Risques
+
+| Entité | Documentation | Source |
+|--------|---------------|--------|
+| CompanyRiskProfile | [centrale-risque/README.md](./centrale-risque/README.md) | `src/types/centrale-risque.ts` |
+| PaymentIncident | [centrale-risque/README.md](./centrale-risque/README.md) | `src/types/centrale-risque.ts` |
+| CentralRiskEntry | [centrale-risque/README.md](./centrale-risque/README.md) | `src/types/centrale-risque.ts` |
+
+### Enums principaux (conformes au code)
+
+```typescript
+// Statuts de portefeuille (9 valeurs - conformes OHADA)
+type PortfolioStatus = 'draft' | 'pending' | 'active' | 'suspended' | 'inactive' | 'closing' | 'for_sale' | 'sold' | 'archived';
+
+// Statuts de demande de crédit (15 valeurs)
+type CreditRequestStatus = 'draft' | 'submitted' | 'under_review' | 'pending' | 'analysis' | 'approved' | 'rejected' | 'canceled' | 'disbursed' | 'active' | 'closed' | 'defaulted' | 'restructured' | 'consolidated' | 'in_litigation';
+
+// Statuts de contrat (6 valeurs)
+type ContractStatus = 'active' | 'completed' | 'defaulted' | 'restructured' | 'in_litigation' | 'suspended';
+
+// Statuts de déboursement (8 valeurs)
+type DisbursementStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'canceled';
+
+// Types de garantie (10 valeurs)
+type GuaranteeType = 'materiel' | 'immobilier' | 'caution_bancaire' | 'fonds_garantie' | 'assurance_credit' | 'nantissement' | 'gage' | 'hypotheque' | 'depot_especes' | 'autre';
+
+// Fournisseurs Mobile Money RDC (5 valeurs)
+type MobileMoneyProvider = 'Orange Money' | 'M-Pesa' | 'Airtel Money' | 'Africell Money' | 'Vodacom M-Pesa';
+
+// Types de compte pour paiements
+type AccountType = 'bank' | 'mobile_money';
+```
+
 ## Relations hiérarchiques et workflow
 
 Le système suit une hiérarchie stricte pour organiser les entités et leurs relations :
@@ -133,14 +201,24 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/portfolios` | Récupère tous les portefeuilles (avec pagination et filtres) |
-| GET | `/portfolios/${id}` | Récupère un portefeuille par son ID |
-| POST | `/portfolios` | Crée un nouveau portefeuille |
-| PUT | `/portfolios/${id}` | Met à jour un portefeuille |
-| DELETE | `/portfolios/${id}` | Supprime un portefeuille |
-| PUT | `/portfolios/${id}/status` | Change le statut d'un portefeuille |
-| POST | `/portfolios/${id}/close` | Ferme définitivement un portefeuille |
-| GET | `/portfolios/${id}/products` | Récupère tous les produits financiers d'un portefeuille |
+| GET | `/portfolios/traditional` | Récupère tous les portefeuilles (avec pagination et filtres) |
+| GET | `/portfolios/traditional/${id}` | Récupère un portefeuille par son ID |
+| POST | `/portfolios/traditional` | Crée un nouveau portefeuille |
+| PUT | `/portfolios/traditional/${id}` | Met à jour un portefeuille |
+| DELETE | `/portfolios/traditional/${id}` | Supprime un portefeuille |
+| GET | `/portfolios/traditional/${id}/products` | Récupère le portefeuille avec ses produits financiers |
+| GET | `/portfolios/traditional/${id}/metrics` | Récupère les métriques détaillées d'un portefeuille |
+
+#### Gestion du statut
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/portfolios/traditional/${id}/activate` | Active un portefeuille (requiert compte et produit) |
+| POST | `/portfolios/traditional/${id}/suspend` | Suspend un portefeuille temporairement |
+| POST | `/portfolios/traditional/${id}/close` | Ferme définitivement un portefeuille |
+| POST | `/portfolios/traditional/${id}/list-for-sale` | Met un portefeuille en vente (cession) |
+| POST | `/portfolios/traditional/${id}/archive` | Archive un portefeuille (fermeture permanente) |
+| POST | `/portfolios/traditional/${id}/status` | Change le statut d'un portefeuille |
 
 #### Produits financiers (associés à un portefeuille)
 
@@ -242,6 +320,20 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 
 ### 7. Utilisateurs
 
+#### Profil utilisateur courant
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/users/me` | Récupère l'utilisateur courant **avec son institution** (version lite, optimisée ~5KB) |
+| PUT | `/users/me` | Met à jour le profil de l'utilisateur courant |
+| GET | `/users/profile` | Récupère le profil simple de l'utilisateur courant (sans institution) |
+
+> **Note importante** : 
+> - `/users/me` retourne `{ user, institution, auth0Id, role, permissions }` - idéal pour login/dashboard
+> - `PUT /users/me` permet à l'utilisateur de modifier son propre profil
+> - `/users/profile` retourne uniquement les données de l'utilisateur
+> - L'institution dans `/users/me` est chargée en version "lite" (documents uniquement, pas tous les users)
+
 #### Gestion des utilisateurs
 
 | Méthode | URL | Description |
@@ -250,7 +342,23 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 | GET | `/users/${id}` | Récupère un utilisateur par son ID |
 | POST | `/users` | Crée un nouvel utilisateur |
 | PUT | `/users/${id}` | Met à jour un utilisateur |
+| PATCH | `/users/${id}/status` | Change le statut d'un utilisateur |
 | DELETE | `/users/${id}` | Supprime un utilisateur |
+
+#### Vérification d'identité
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/users/${id}/verify-identity` | Soumet les documents de vérification d'identité |
+| PUT | `/users/${id}/verify-identity` | Approuve ou rejette une vérification d'identité (admin) |
+
+#### Gestion des rôles et suspensions
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| PUT | `/users/${id}/role` | Change le rôle et les permissions d'un utilisateur |
+| POST | `/users/${id}/suspend` | Suspend un utilisateur |
+| POST | `/users/${id}/reactivate` | Réactive un utilisateur suspendu |
 
 #### Activités et historique
 
@@ -263,8 +371,9 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 | Méthode | URL | Description |
 |---------|-----|-------------|
 | GET | `/users/${id}/preferences` | Récupère toutes les préférences d'un utilisateur |
-| GET | `/users/${id}/preferences/${category}` | Récupère les préférences par catégorie |
-| PUT | `/users/${id}/preferences` | Met à jour une préférence spécifique |
+| GET | `/users/${id}/preferences?category=${category}` | Récupère les préférences par catégorie |
+| POST | `/users/${id}/preferences` | Crée une préférence utilisateur |
+| DELETE | `/users/${id}/preferences/${preferenceId}` | Supprime une préférence |
 
 #### Sessions utilisateur
 
@@ -272,6 +381,13 @@ Le système suit une hiérarchie stricte pour organiser les entités et leurs re
 |---------|-----|-------------|
 | GET | `/users/${id}/sessions` | Récupère toutes les sessions actives d'un utilisateur |
 | DELETE | `/users/${id}/sessions/${sessionId}` | Termine une session spécifique |
+| DELETE | `/users/${id}/sessions` | Termine toutes les sessions d'un utilisateur |
+
+#### Permissions
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/permissions` | Récupère toutes les permissions disponibles |
 
 ### 8. Prospection et Entreprises
 
@@ -544,30 +660,58 @@ GET /companies/search?q=TechCongo
 ]
 ```
 
-### 9. Gestion des risques
+### 9. Centrale des Risques
 
-#### Évaluations de risque
+> **Base Route** : `/centrale-risque`
 
-| Méthode | URL | Description |
-|---------|-----|-------------|
-| GET | `/risk` | Récupère toutes les évaluations de risque |
-| POST | `/risk` | Crée une nouvelle évaluation de risque |
-| PUT | `/risk/${id}` | Met à jour une évaluation de risque |
-
-#### Évaluations spécialisées par secteur
+#### Entrées de risque
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/risk/credit/${companyId}` | Récupère l'évaluation de risque crédit d'une entreprise |
-| GET | `/risk/leasing/${companyId}` | Récupère l'évaluation de risque leasing d'une entreprise |
+| GET | `/centrale-risque/risk-entries` | Récupère toutes les entrées de risque |
+| GET | `/centrale-risque/risk-entries/${id}` | Récupère une entrée de risque par ID |
+| POST | `/centrale-risque/risk-entries` | Crée une nouvelle entrée de risque |
+| PUT | `/centrale-risque/risk-entries/${id}` | Met à jour une entrée de risque |
+| DELETE | `/centrale-risque/risk-entries/${id}` | Supprime une entrée de risque |
 
-#### Centrale des risques
+#### Incidents de paiement
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/risk/central/company/${companyId}` | Récupère les informations de risque de la centrale des risques |
-| POST | `/risk/central` | Crée une nouvelle entrée de risque central |
-| PUT | `/risk/central/entries/${id}` | Met à jour une entrée de risque central |
+| GET | `/centrale-risque/incidents` | Récupère tous les incidents |
+| GET | `/centrale-risque/incidents/${id}` | Récupère un incident par ID |
+| POST | `/centrale-risque/incidents` | Crée un nouvel incident |
+| PUT | `/centrale-risque/incidents/${id}` | Met à jour un incident |
+| DELETE | `/centrale-risque/incidents/${id}` | Supprime un incident |
+
+#### Alertes de risque
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/centrale-risque/alerts` | Récupère toutes les alertes |
+| GET | `/centrale-risque/alerts/${id}` | Récupère une alerte par ID |
+| POST | `/centrale-risque/alerts` | Crée une nouvelle alerte |
+| PUT | `/centrale-risque/alerts/${id}` | Met à jour une alerte |
+| PUT | `/centrale-risque/alerts/${id}/acknowledge` | Acquitte une alerte |
+| DELETE | `/centrale-risque/alerts/${id}` | Supprime une alerte |
+
+#### Statistiques et rapports
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/centrale-risque/stats` | Récupère les statistiques globales de risque |
+| GET | `/centrale-risque/entity/${entityId}/summary` | Récupère le résumé de risque d'une entité |
+| POST | `/centrale-risque/reports` | Génère un rapport de risque |
+
+#### Endpoints legacy
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/centrale-risque/credit-risks` | Liste des risques crédit (legacy) |
+| GET | `/centrale-risque/credit-risks/${id}` | Détail risque crédit (legacy) |
+| POST | `/centrale-risque/credit-risks` | Crée un risque crédit (legacy) |
+| PUT | `/centrale-risque/credit-risks/${id}` | Met à jour risque crédit (legacy) |
+| DELETE | `/centrale-risque/credit-risks/${id}` | Supprime risque crédit (legacy) |
 
 ### 10. Paiements
 
@@ -624,23 +768,43 @@ GET /companies/search?q=TechCongo
 | POST | `/prospection/leads` | Crée un nouveau lead |
 | PUT | `/prospection/leads/${id}` | Met à jour un lead |
 
-### 13. Chat et notifications
+### 13. Chat Adha AI
+
+> **Architecture** : Le chat communique avec Adha AI via Kafka. Les contextes maintiennent l'historique de conversation pour la mémoire de l'IA.
+
+#### Messages
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/chat/conversations` | Récupère toutes les conversations |
-| GET | `/chat/conversations/${id}` | Récupère une conversation par son ID |
-| POST | `/chat/conversations` | Crée une nouvelle conversation |
-| DELETE | `/chat/conversations/${id}` | Supprime une conversation |
-| GET | `/chat/messages` | Récupère tous les messages |
-| GET | `/chat/messages/${conversationId}` | Récupère les messages d'une conversation |
-| POST | `/chat/messages` | Envoie un nouveau message |
-| PUT | `/chat/messages/${messageId}` | Met à jour un message |
-| POST | `/chat/messages/${messageId}/rating` | Évalue un message |
-| DELETE | `/chat/contexts/${id}` | Supprime un contexte de chat |
-| GET | `/notifications` | Récupère toutes les notifications |
-| POST | `/notifications` | Crée une nouvelle notification |
-| PUT | `/notifications/${id}/read` | Marque une notification comme lue |
+| POST | `/chat/messages` | Envoie un message à Adha AI et reçoit la réponse |
+| GET | `/chat/contexts/${contextId}/messages` | Récupère l'historique des messages d'un contexte |
+| POST | `/chat/messages/${messageId}/rating` | Évalue un message (feedback pour Adha AI) |
+| POST | `/chat/messages/${messageId}/attachments` | Ajoute une pièce jointe à un message |
+
+#### Contextes de conversation
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| POST | `/chat/contexts` | Crée un nouveau contexte de conversation |
+| GET | `/chat/contexts` | Récupère tous les contextes de l'utilisateur |
+| GET | `/chat/contexts/${id}` | Récupère un contexte par son ID |
+| PUT | `/chat/contexts/${id}` | Met à jour un contexte (titre, métadonnées) |
+| DELETE | `/chat/contexts/${id}` | Supprime un contexte et tous ses messages |
+
+#### Suggestions et rapports
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/chat/suggestions` | Récupère des suggestions de questions basées sur le contexte |
+| POST | `/chat/reports` | Génère un rapport à partir des conversations |
+| GET | `/chat/predefined-responses` | Récupère les réponses prédéfinies (par catégorie) |
+
+#### Endpoints legacy
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/chat/${id}/usage` | Récupère les statistiques d'utilisation de tokens |
+| GET | `/chat/aggregated-context/${institutionId}` | Récupère le contexte agrégé pour Adha AI |
 
 ### 14. Dashboard et métriques
 
@@ -649,21 +813,32 @@ GET /companies/search?q=TechCongo
 | Méthode | URL | Description |
 |---------|-----|-------------|
 | GET | `/dashboard` | Récupère les données du tableau de bord principal |
-| GET | `/dashboard/traditional` | Récupère le tableau de bord traditionnel |
+| GET | `/dashboard/traditional` | Récupère le tableau de bord traditionnel avec filtres |
 
 #### Métriques OHADA
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/dashboard/ohada` | Récupère les métriques de conformité OHADA globales |
-| GET | `/dashboard/ohada/portfolio/${portfolioId}` | Récupère les métriques OHADA d'un portefeuille spécifique |
+| GET | `/dashboard/metrics/ohada` | Récupère toutes les métriques OHADA des portefeuilles |
+| GET | `/dashboard/metrics/portfolio/${portfolioId}` | Récupère les métriques OHADA d'un portefeuille spécifique |
+| GET | `/dashboard/metrics/global` | Récupère les métriques globales agrégées |
+| GET | `/dashboard/compliance/summary` | Récupère le résumé de conformité réglementaire |
+
+#### Analyse de risque
+
+| Méthode | URL | Description |
+|---------|-----|-------------|
+| GET | `/dashboard/risk/central-bank` | Données de risque de la banque centrale |
+| GET | `/dashboard/risk/portfolios/${id}` | Analyse de risque d'un portefeuille |
 
 #### Préférences et widgets
 
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/dashboard/preferences` | Récupère les préférences du tableau de bord |
-| PUT | `/dashboard/preferences/widget` | Met à jour les préférences d'un widget |
+| GET | `/dashboard/preferences/${userId}` | Récupère les préférences du dashboard |
+| PUT | `/dashboard/preferences/${userId}/widget/${widgetId}` | Met à jour un widget |
+| POST | `/dashboard/preferences/${userId}/reset` | Réinitialise les préférences |
+| GET | `/dashboard/widgets/available` | Liste des widgets disponibles |
 
 ### 15. Notifications
 
@@ -704,14 +879,90 @@ GET /companies/search?q=TechCongo
 
 #### Gestion d'institution
 
+> **⚠️ Architecture importante**: 
+> - L'institution est chargée **automatiquement en 2 étapes** après la connexion :
+>   1. `GET /users/me` → Récupère l'utilisateur + **Institution LITE** (optimisée ~5KB)
+>   2. `GET /institutions/${institutionId}` → Récupère l'**Institution FULL** (données complètes)
+> - Les deux appels sont faits automatiquement par le `AuthContext`
+> - L'`institutionId` est stocké dans le contexte global et utilisé pour toutes les opérations
+
+**Flux de chargement de l'institution:**
+```
+1. User Login → Auth0 → Token JWT
+2. Frontend appelle GET /users/me (automatique)
+3. Backend retourne { user, institution (LITE), auth0Id, role, permissions }
+4. Frontend extrait institutionId
+5. Frontend appelle GET /institutions/${institutionId} (automatique)
+6. Backend retourne Institution FULL (avec managers, documents, settings complets)
+7. Frontend stocke Institution FULL dans AuthContext + AppContextStore
+8. Page /institution utilise directement le contexte (pas d'appel API supplémentaire)
+```
+
 | Méthode | URL | Description |
 |---------|-----|-------------|
-| GET | `/institution/managers` | Récupère tous les gestionnaires d'institution |
-| POST | `/institution/managers` | Crée un nouveau gestionnaire |
-| PUT | `/institution/managers/${id}` | Met à jour un gestionnaire d'institution |
-| DELETE | `/institution/managers/${id}` | Supprime un gestionnaire d'institution |
+| GET | `/institutions` | Récupère les données de l'institution de l'utilisateur courant |
+| GET | `/institutions/profile` | Récupère le profil de l'institution |
+| POST | `/institutions/profile` | Crée le profil de l'institution |
+| PUT | `/institutions/profile` | Met à jour le profil de l'institution |
+| GET | `/institutions/profile/v2.1` | Récupère le profil enrichi v2.1 (sync customer-service) |
+| GET | `/institutions/${institutionId}/managers` | Récupère tous les gestionnaires d'institution |
+| POST | `/institutions/${institutionId}/managers` | Ajoute un gestionnaire |
+| PUT | `/institutions/managers/${managerId}` | Met à jour un gestionnaire d'institution |
+| DELETE | `/institutions/managers/${managerId}` | Supprime un gestionnaire d'institution |
+| GET | `/institutions/documents` | Récupère les documents de l'institution |
+| POST | `/institutions/documents` | Téléverse un document institutionnel |
+| POST | `/institutions/validate` | Valide le profil de l'institution |
 
 ## Exemples d'utilisation
+
+### Récupérer l'utilisateur courant avec son institution
+
+```javascript
+// CRITIQUE: Cet appel est fait AUTOMATIQUEMENT après le login
+// Il charge l'utilisateur ET l'institution en une seule requête
+// Le frontend stocke ces données dans le contexte global
+
+const fetchCurrentUserWithInstitution = async () => {
+  try {
+    const response = await fetch('http://localhost:8000/portfolio/api/v1/users/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const { user, institution, auth0Id, role, permissions } = result.data;
+      
+      // Utilisation typique dans le frontend
+      setCurrentUser(user);
+      setInstitution(institution);  // Logo, nom, settings...
+      setPermissions(permissions);
+      
+      return result.data;
+    } else {
+      throw new Error(result.message);
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil:', error);
+    throw error;
+  }
+};
+
+// Structure de la réponse:
+// {
+//   "success": true,
+//   "data": {
+//     "user": { id, name, email, role, permissions, ... },
+//     "institution": { id, name, logo, type, documents, settings, ... },
+//     "auth0Id": "auth0|xxx",
+//     "role": "portfolio_manager",
+//     "permissions": ["read:portfolios", "write:portfolios", ...]
+//   }
+// }
+```
 
 ### Récupérer tous les portefeuilles
 
@@ -995,6 +1246,21 @@ const completeWorkflow = async () => {
 
 ## ✨ Nouvelles fonctionnalités découvertes
 
+### Mises à jour du 29 décembre 2025
+
+#### 👤 Endpoint utilisateur optimisé `/users/me`
+- **Nouveau endpoint** : `GET /users/me` retourne l'utilisateur courant **avec son institution**
+- **Chargement optimisé** : Institution chargée en version "lite" (documents uniquement, pas tous les users)
+- **Performance** : ~5KB vs ~100KB+ pour l'endpoint `/institutions` complet
+- **Cas d'utilisation** : Login, Dashboard, Header (contexte institutionnel sans liste des employés)
+- **Structure de réponse** : `{ user, institution, auth0Id, role, permissions }`
+- **Différenciation claire** :
+  - `/users/me` → User + Institution (lite) pour login/dashboard
+  - `/users/profile` → User uniquement pour profil simple
+  - `/institutions` → Institution complète avec tous les users pour admin
+
+---
+
 ### Mises à jour du 18 novembre 2025
 
 #### 🎯 Module de Prospection Avancée
@@ -1066,4 +1332,18 @@ const completeWorkflow = async () => {
 
 ---
 
-*Documentation mise à jour le 10 novembre 2025 suite à l'analyse complète du code source du portfolio-institution-service.*
+*Documentation mise à jour le 4 janvier 2026 - Conformité 100% code source atteinte.*
+
+### Mises à jour du 4 janvier 2026
+
+#### ✅ Conformité 100% Documentation-Code
+- **PUT /users/me** : Ajout endpoint mise à jour profil utilisateur courant
+- **POST /users/:id/verify-identity** : Soumission documents vérification
+- **PUT /users/:id/verify-identity** : Approbation/rejet vérification (admin)
+- **PUT /users/:id/role** : Changement de rôle utilisateur
+- **POST /users/:id/suspend** : Suspension utilisateur
+- **POST /users/:id/reactivate** : Réactivation utilisateur
+- **GET /permissions** : Liste permissions disponibles
+- **POST /chat/messages/:messageId/attachments** : Pièces jointes messages chat
+- **Section Centrale-Risque** : Documentation complète `/centrale-risque/*`
+- **Section Chat Adha AI** : Architecture Kafka et endpoints contextes

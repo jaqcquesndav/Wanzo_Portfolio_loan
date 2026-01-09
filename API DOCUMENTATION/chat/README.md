@@ -1,5 +1,7 @@
 ﻿# Chat API
 
+> **Synchronisée avec le code source TypeScript** - Janvier 2026
+
 Ce document décrit les endpoints pour la gestion des conversations et messages dans l'API Wanzo Portfolio Institution.
 
 ## Types de données
@@ -556,3 +558,314 @@ Les modèles d'IA disponibles sont définis dans le module `chat.ts` et incluent
 | 422  | Entité non traitable - Validation échouée |
 | 429  | Trop de requêtes - Limite de taux dépassée |
 | 500  | Erreur serveur interne |
+
+## Streaming des Réponses IA (Nouveau - Janvier 2026)
+
+### Vue d'ensemble
+
+Le système de streaming permet au frontend de recevoir les réponses de l'IA ADHA en temps réel, chunk par chunk. Cela est particulièrement utile pour les analyses de portefeuille complexes qui peuvent prendre plusieurs secondes.
+
+### Architecture Streaming
+
+```
+Frontend (WebSocket/SSE) ← Backend ← Kafka (portfolio.chat.stream) ← ADHA AI Service
+```
+
+**Topic Kafka utilisé**: `portfolio.chat.stream`
+
+### Structure des Événements de Streaming
+
+#### PortfolioStreamChunkEvent (Interface TypeScript)
+
+```typescript
+interface PortfolioStreamChunkEvent {
+  id: string;                    // UUID unique du chunk
+  requestMessageId: string;      // ID du message original de l'utilisateur
+  conversationId: string;        // ID du contexte de chat
+  type: 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result';
+  content: string;               // Contenu du chunk
+  chunkId: number;               // Numéro de séquence du chunk
+  timestamp: string;             // ISO 8601 format
+  userId: string;
+  companyId: string;             // institutionId
+  
+  // Présents uniquement dans les messages 'end'
+  totalChunks?: number;
+  suggestedActions?: string[];   // Actions recommandées basées sur l'analyse
+  processingDetails?: {
+    totalChunks: number;
+    contentLength: number;
+    aiModel: string;
+    source: string;              // 'portfolio_institution'
+  };
+  
+  metadata?: {
+    source: string;              // 'adha_ai_service'
+    streamVersion: string;       // '1.0.0'
+    streamComplete?: boolean;    // true pour 'end'
+    error?: boolean;             // true pour 'error'
+    institutionId?: string;      // ID de l'institution
+    portfolioId?: string;        // ID du portefeuille analysé
+    portfolioType?: string;      // 'traditional', 'investment', 'leasing'
+  };
+}
+```
+
+### Types de Chunks
+
+| Type | Description | Utilisation |
+|------|-------------|-------------|
+| `chunk` | Fragment de texte de la réponse | Affichage progressif |
+| `end` | Fin du stream avec contenu complet | Finalisation + actions suggérées |
+| `error` | Erreur pendant le traitement | Notification utilisateur |
+| `tool_call` | L'IA appelle une fonction d'analyse | Indicateur de traitement |
+| `tool_result` | Résultat d'un appel de fonction | Données d'analyse |
+
+### Exemple de Chunk de Contenu
+
+```json
+{
+  "id": "chunk-uuid-123",
+  "requestMessageId": "msg-456",
+  "conversationId": "ctx123",
+  "type": "chunk",
+  "content": "Analyse du portefeuille PME en cours...",
+  "chunkId": 1,
+  "timestamp": "2026-01-09T12:00:01.123Z",
+  "userId": "user-abc",
+  "companyId": "inst-xyz",
+  "metadata": {
+    "source": "adha_ai_service",
+    "streamVersion": "1.0.0",
+    "institutionId": "inst-xyz",
+    "portfolioId": "port456",
+    "portfolioType": "traditional"
+  }
+}
+```
+
+### Exemple de Message de Fin (Analyse de Portefeuille)
+
+```json
+{
+  "id": "end-uuid-456",
+  "requestMessageId": "msg-456",
+  "conversationId": "ctx123",
+  "type": "end",
+  "content": "Le portefeuille PME présente un encours total de 2.5M€ avec un taux de défaut de 3.2%. Les secteurs les plus performants sont le commerce (45%) et les services (30%). Je recommande de diversifier vers le secteur technologique pour réduire le risque sectoriel.",
+  "chunkId": 12,
+  "totalChunks": 11,
+  "timestamp": "2026-01-09T12:00:08.456Z",
+  "userId": "user-abc",
+  "companyId": "inst-xyz",
+  "suggestedActions": [
+    "Augmenter l'exposition au secteur technologique",
+    "Réviser les critères de scoring pour le commerce",
+    "Planifier une revue trimestrielle du portefeuille"
+  ],
+  "processingDetails": {
+    "totalChunks": 11,
+    "contentLength": 425,
+    "aiModel": "adha-1",
+    "source": "portfolio_institution"
+  },
+  "metadata": {
+    "source": "adha_ai_service",
+    "streamVersion": "1.0.0",
+    "streamComplete": true,
+    "institutionId": "inst-xyz",
+    "portfolioId": "port456",
+    "portfolioType": "traditional"
+  }
+}
+```
+
+### Exemple de Message d'Erreur
+
+```json
+{
+  "id": "error-uuid-789",
+  "requestMessageId": "msg-456",
+  "conversationId": "ctx123",
+  "type": "error",
+  "content": "Impossible d'accéder aux données du portefeuille",
+  "chunkId": -1,
+  "timestamp": "2026-01-09T12:00:02.000Z",
+  "userId": "user-abc",
+  "companyId": "inst-xyz",
+  "metadata": {
+    "source": "adha_ai_service",
+    "streamVersion": "1.0.0",
+    "error": true,
+    "institutionId": "inst-xyz"
+  }
+}
+```
+
+### Événements Locaux (EventEmitter2)
+
+Le backend émet des événements locaux via WebSocket :
+
+| Événement | Description | Payload |
+|-----------|-------------|---------|
+| `portfolio.stream.chunk` | Nouveau chunk reçu | `{ requestMessageId, conversationId, institutionId, content, chunkId, accumulatedContent }` |
+| `portfolio.stream.end` | Stream terminé | `{ requestMessageId, conversationId, institutionId, content, totalChunks, processingTime, suggestedActions }` |
+| `portfolio.stream.error` | Erreur de streaming | `{ requestMessageId, conversationId, institutionId, error }` |
+| `portfolio.stream.tool` | Appel/résultat d'outil | `{ requestMessageId, conversationId, institutionId, type, content }` |
+
+### Intégration Frontend (Flutter/Dart)
+
+#### Connexion WebSocket
+
+```dart
+class PortfolioStreamService {
+  WebSocket? _socket;
+  final StreamController<PortfolioStreamChunk> _chunkController = 
+      StreamController<PortfolioStreamChunk>.broadcast();
+  
+  Stream<PortfolioStreamChunk> get chunkStream => _chunkController.stream;
+  
+  Future<void> connect(String institutionId) async {
+    _socket = await WebSocket.connect(
+      'wss://api.wanzo.com/ws/portfolio-chat/$institutionId'
+    );
+    
+    _socket!.listen((data) {
+      final chunk = PortfolioStreamChunk.fromJson(jsonDecode(data));
+      _chunkController.add(chunk);
+    });
+  }
+  
+  void sendMessage(String contextId, String content, Map<String, dynamic> metadata) {
+    _socket?.add(jsonEncode({
+      'action': 'sendMessage',
+      'contextId': contextId,
+      'content': content,
+      'metadata': metadata,
+      'streaming': true,
+    }));
+  }
+}
+```
+
+#### Modèle de Chunk (Dart)
+
+```dart
+class PortfolioStreamChunk {
+  final String id;
+  final String requestMessageId;
+  final String conversationId;
+  final String type; // 'chunk', 'end', 'error'
+  final String content;
+  final int chunkId;
+  final String timestamp;
+  final String userId;
+  final String institutionId;
+  final int? totalChunks;
+  final List<String>? suggestedActions;
+  final Map<String, dynamic>? processingDetails;
+  final Map<String, dynamic>? metadata;
+  
+  PortfolioStreamChunk({
+    required this.id,
+    required this.requestMessageId,
+    required this.conversationId,
+    required this.type,
+    required this.content,
+    required this.chunkId,
+    required this.timestamp,
+    required this.userId,
+    required this.institutionId,
+    this.totalChunks,
+    this.suggestedActions,
+    this.processingDetails,
+    this.metadata,
+  });
+  
+  factory PortfolioStreamChunk.fromJson(Map<String, dynamic> json) {
+    return PortfolioStreamChunk(
+      id: json['id'],
+      requestMessageId: json['requestMessageId'],
+      conversationId: json['conversationId'],
+      type: json['type'],
+      content: json['content'],
+      chunkId: json['chunkId'],
+      timestamp: json['timestamp'],
+      userId: json['userId'],
+      institutionId: json['companyId'] ?? json['metadata']?['institutionId'],
+      totalChunks: json['totalChunks'],
+      suggestedActions: (json['suggestedActions'] as List?)?.cast<String>(),
+      processingDetails: json['processingDetails'],
+      metadata: json['metadata'],
+    );
+  }
+}
+```
+
+#### Utilisation dans un BLoC
+
+```dart
+class ChatBloc extends Bloc<ChatEvent, ChatState> {
+  final PortfolioStreamService _streamService;
+  StreamSubscription? _chunkSubscription;
+  StringBuffer _accumulatedContent = StringBuffer();
+  
+  ChatBloc(this._streamService) : super(ChatInitial()) {
+    on<SendMessage>(_onSendMessage);
+    
+    _chunkSubscription = _streamService.chunkStream.listen(_handleChunk);
+  }
+  
+  void _handleChunk(PortfolioStreamChunk chunk) {
+    switch (chunk.type) {
+      case 'chunk':
+        _accumulatedContent.write(chunk.content);
+        emit(ChatStreaming(
+          content: _accumulatedContent.toString(),
+          chunkId: chunk.chunkId,
+        ));
+        break;
+        
+      case 'end':
+        emit(ChatMessageReceived(
+          content: chunk.content,
+          suggestedActions: chunk.suggestedActions ?? [],
+          processingDetails: chunk.processingDetails,
+        ));
+        _accumulatedContent.clear();
+        break;
+        
+      case 'error':
+        emit(ChatError(message: chunk.content));
+        _accumulatedContent.clear();
+        break;
+    }
+  }
+}
+```
+
+### Configuration du Streaming
+
+Pour activer le streaming dans les requêtes API, ajoutez `streaming: true` :
+
+```json
+{
+  "content": "Analysez la performance du portefeuille PME",
+  "contextId": "ctx123",
+  "metadata": {
+    "portfolioId": "port456",
+    "portfolioType": "traditional",
+    "institutionId": "inst-xyz"
+  },
+  "streaming": true
+}
+```
+
+### Bonnes Pratiques Frontend
+
+1. **Affichage progressif**: Utiliser un `StreamBuilder` pour afficher le texte au fur et à mesure
+2. **Actions suggérées**: Afficher les `suggestedActions` comme boutons d'action rapide
+3. **Indicateur visuel**: Montrer un indicateur de "typing" pendant le streaming
+4. **Gestion des erreurs**: Toujours gérer le type `error` pour informer l'utilisateur
+5. **Timeout**: Implémenter un timeout de 45s pour les analyses complexes
+6. **Retry**: Proposer un bouton "Réessayer" en cas d'erreur
