@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Message, Conversation, AIModel, StreamingState, PortfolioStreamChunkEvent } from '../types/chat';
 import { AI_MODELS } from '../types/chat';
-import { generateResponse } from '../data/mockChatResponses';
 import { chatApi } from '../services/api/chat.api';
 import { getChatStreamService, ChatStreamService } from '../services/streaming';
 
@@ -726,18 +725,11 @@ export const useChatStore = create<ChatStore>()(
           // Mode mock - générer une réponse localement
           await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Récupérer le dernier message et le contexte
-          const lastMessage = conversation.messages[conversation.messages.length - 1];
+          // Réponse par défaut (mode mock désactivé - API par défaut)
+          const response = "Le mode API est requis pour utiliser le chat. Veuillez vérifier votre connexion.";
           
-          // Détecter le mode à partir du contexte
-          const isAnalyseMode = conversation.context.some(ctx => ctx.includes('[MODE ANALYSE]'));
-          
-          // Générer une réponse adaptée au mode
-          const currentMode = isAnalyseMode ? 'analyse' : 'chat';
-          const response = generateResponse(lastMessage.content, currentMode);
-          
-          // Ajouter la réponse dans le même mode
-          store.addMessage(response, 'bot', undefined, currentMode);
+          // Ajouter la réponse
+          store.addMessage(response, 'bot');
         } finally {
           set({ isTyping: false });
         }
