@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Bell, MessageSquare, Menu } from 'lucide-react';
+import { Search, Bell, MessageSquare, Menu, PanelRight } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Form';
 import { ProfileMenu } from './ProfileMenu';
 import { NotificationsPopover } from '../notifications/NotificationsPopover';
-import { AIChat } from '../chat/AIChat';
 import { CurrencyDisplay } from './CurrencyDisplay';
+import { useChatPanel } from '../../contexts/PanelContext';
 
 interface DynamicHeaderProps {
   onMenuClick: () => void;
@@ -15,7 +15,9 @@ interface DynamicHeaderProps {
 export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  
+  // Utiliser le nouveau système de panels pour le chat
+  const chatPanel = useChatPanel();
 
   const isProspectionPage = location.pathname.startsWith('/prospection');
 
@@ -56,20 +58,26 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
             {/* Affichage de la devise et du taux de change */}
             <CurrencyDisplay />
             
-            {/* Bouton de chat toujours visible */}
+            {/* Bouton de chat - Ouvre le panel latéral */}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowChat(!showChat)}
-              className="relative group"
+              onClick={() => chatPanel.toggle()}
+              className={`relative group ${chatPanel.isOpen ? 'bg-primary/10' : ''}`}
             >
-              <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:text-primary" />
+              {chatPanel.isOpen ? (
+                <PanelRight className="h-5 w-5 text-primary" />
+              ) : (
+                <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:text-primary" />
+              )}
               <span className="sr-only">Assistant IA</span>
-              {/* Badge "Nouveau" */}
-              <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full" />
+              {/* Badge "Nouveau" - masqué si ouvert */}
+              {!chatPanel.isOpen && (
+                <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full" />
+              )}
               {/* Tooltip */}
               <span className="absolute hidden group-hover:block bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap">
-                Assistant IA
+                {chatPanel.isOpen ? 'Fermer le chat' : 'Ouvrir le chat'}
               </span>
             </Button>
 
@@ -103,9 +111,6 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
           </div>
         </div>
       </div>
-
-      {/* Chat flottant */}
-      {showChat && <AIChat onClose={() => setShowChat(false)} />}
     </header>
   );
 }

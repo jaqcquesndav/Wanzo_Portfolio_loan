@@ -1,7 +1,8 @@
 import { lazy } from 'react';
 
 // Composants essentiels au chargement initial (non lazy loaded)
-export { default as Layout } from '../components/layout/Layout';
+// Utiliser le nouveau LayoutWithPanels qui supporte le split-view
+export { LayoutWithPanels as Layout } from '../components/layout/LayoutWithPanels';
 export { default as PortfolioTypeSelector } from '../pages/PortfolioTypeSelector';
 export { default as AuthCallback } from '../pages/AuthCallback';
 export { default as Dashboard } from '../pages/Dashboard';
