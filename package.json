@@ -54,6 +54,7 @@
     "react-router-dom": "^6.22.2",
     "react-syntax-highlighter": "^15.6.1",
     "recharts": "^2.15.4",
+    "socket.io-client": "^4.7.0",
     "tailwind-merge": "^2.2.1",
     "uuid": "^11.1.0",
     "xlsx": "^0.18.5",

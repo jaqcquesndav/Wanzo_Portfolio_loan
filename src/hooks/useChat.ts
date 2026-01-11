@@ -14,18 +14,8 @@ export function useChat() {
     const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
     if (savedHistory) {
       setMessages(JSON.parse(savedHistory));
-    } else {
-      // Message initial si pas d'historique
-      const initialMessage: Message = {
-        id: '1',
-        sender: 'bot',
-        content: "Bonjour ! Je suis Adha, votre assistant. Comment puis-je vous aider aujourd'hui ?",
-        timestamp: new Date().toISOString(),
-        likes: 0,
-        dislikes: 0
-      };
-      setMessages([initialMessage]);
     }
+    // Si pas d'historique, on laisse le tableau vide - le backend fournira le message d'accueil
   }, []);
 
   // Sauvegarder l'historique à chaque modification

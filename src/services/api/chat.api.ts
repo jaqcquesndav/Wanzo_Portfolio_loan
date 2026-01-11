@@ -12,7 +12,8 @@ import type {
   MessageRating,
   ChatReport,
   ChatMode,
-  MessageAttachment
+  MessageAttachment,
+  StreamingResponse
 } from '../../types/chat';
 import { AI_MODELS } from '../../types/chat';
 
@@ -172,19 +173,12 @@ class ChatApiService {
       };
     } catch (error) {
       console.error('Erreur lors de la création du contexte:', error);
-      // Retourner un contexte local en cas d'erreur
+      // Retourner un contexte local vide en cas d'erreur (sans message prédéfini)
       return {
         id: `local-${Date.now()}`,
         title: data?.title || 'Nouvelle conversation',
         timestamp: new Date().toISOString(),
-        messages: [{
-          id: '1',
-          sender: 'bot',
-          content: "Bonjour ! Je suis Adha, votre assistant. Comment puis-je vous aider aujourd'hui ?",
-          timestamp: new Date().toISOString(),
-          likes: 0,
-          dislikes: 0
-        }],
+        messages: [],
         isActive: true,
         model: AI_MODELS[0],
         context: [],
@@ -254,7 +248,8 @@ class ChatApiService {
   }
 
   /**
-   * Envoie un nouveau message
+   * Envoie un nouveau message (mode synchrone)
+   * Attend la réponse complète de l'IA ADHA
    */
   async sendMessage(params: SendMessageParams): Promise<SendMessageResponse> {
     try {
@@ -276,6 +271,25 @@ class ChatApiService {
         contextId: params.contextId || '',
         metadata: params.metadata
       };
+    }
+  }
+
+  /**
+   * Envoie un message en mode streaming
+   * Retourne immédiatement avec les infos WebSocket pour recevoir la réponse chunk par chunk
+   * @see API DOCUMENTATION/chat/README.md - Section "Mode Streaming"
+   */
+  async sendStreamingMessage(params: SendMessageParams): Promise<StreamingResponse> {
+    try {
+      return await apiClient.post<StreamingResponse>(API_ENDPOINTS.chat.messages.stream, {
+        content: params.content,
+        contextId: params.contextId,
+        metadata: params.metadata,
+        mode: params.mode || 'chat'
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du message streaming:', error);
+      throw error;
     }
   }
 

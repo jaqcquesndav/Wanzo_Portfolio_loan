@@ -164,6 +164,7 @@ export const API_ENDPOINTS = {
     messages: {
       base: '/chat/messages',
       send: '/chat/messages',
+      stream: '/chat/stream', // Mode streaming - retourne immédiatement, réponse via WebSocket
       getById: (id: string) => `/chat/messages/${id}`,
       update: (id: string) => `/chat/messages/${id}`,
       rate: (messageId: string) => `/chat/messages/${messageId}/rating`,

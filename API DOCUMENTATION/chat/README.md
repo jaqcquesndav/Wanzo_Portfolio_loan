@@ -1,53 +1,130 @@
-﻿# Chat API
+﻿# Chat API - Portfolio Institution Service
 
-> **Synchronisée avec le code source TypeScript** - Janvier 2026
+> **Synchronisée avec le code source TypeScript** - Janvier 2026  
+> **Version**: 2.0 (Streaming WebSocket + Mode Synchrone)
 
-Ce document décrit les endpoints pour la gestion des conversations et messages dans l'API Wanzo Portfolio Institution.
+Ce document décrit l'architecture complète et les endpoints pour la gestion des conversations avec l'assistant IA ADHA dans l'API Wanzo Portfolio Institution.
 
-## Types de données
+## Architecture Globale
 
-Les types principaux utilisés dans l'API de chat:
+```
+┌─────────────────┐      ┌─────────────────────────┐      ┌─────────────────┐
+│    Frontend     │      │   Portfolio Service     │      │  ADHA AI Svc    │
+│   (Flutter)     │      │   (NestJS)              │      │                 │
+└────────┬────────┘      └────────────┬────────────┘      └────────┬────────┘
+         │                            │                            │
+         │  POST /chat/messages       │                            │
+         │  (Mode Sync)               │   portfolio.chat.message   │
+         ├───────────────────────────►├───────────────────────────►│
+         │                            │   (Kafka)                  │
+         │◄───────────────────────────┤◄───────────────────────────┤
+         │  Réponse JSON complète     │   portfolio.chat.response  │
+         │                            │                            │
+         │  POST /chat/stream         │                            │
+         │  (Mode Streaming)          │   portfolio.chat.message   │
+         ├───────────────────────────►├───────────────────────────►│
+         │  {messageId, wsInfo}       │   (streaming: true)        │
+         │◄───────────────────────────┤                            │
+         │                            │                            │
+         │  WebSocket                 │   portfolio.chat.stream    │
+         │  subscribe_conversation    │◄───────────────────────────┤
+         │◄═══════════════════════════╪═══════════════════════════╡
+         │  adha.stream.chunk (×N)    │   Chunks temps réel        │
+         │  adha.stream.end           │                            │
+         │                            │                            │
+└─────────────────────────────────────┴────────────────────────────┘
+```
+
+### Topics Kafka
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `portfolio.chat.message` | Portfolio → ADHA AI | Messages utilisateur (sync ou streaming) |
+| `portfolio.chat.response` | ADHA AI → Portfolio | Réponses complètes (mode synchrone) |
+| `portfolio.chat.stream` | ADHA AI → Portfolio | Chunks de réponse (mode streaming) |
+
+### Modes de Communication
+
+| Mode | Endpoint | Utilisation | Latence |
+|------|----------|-------------|---------|
+| **Synchrone** | `POST /chat/messages` | Questions rapides, mobile | ~2-5s |
+| **Streaming** | `POST /chat/stream` | Analyses longues, UX temps réel | Immédiat (chunks) |
+
+## Types de Données (TypeScript)
 
 ```typescript
-interface Message {
+// Rôles du message
+enum MessageRole {
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  SYSTEM = 'system',
+}
+
+// Message de chat
+interface ChatMessage {
   id: string;
-  sender: 'user' | 'bot';
+  role: MessageRole;
   content: string;
   timestamp: string;
-  likes?: number;
-  dislikes?: number;
-  attachment?: {
-    name: string;
-    type: string;
-    content: string;
+  metadata?: {
+    tokensUsed?: number;
+    processingTime?: number;
+    streaming?: boolean;
+    suggestedActions?: SuggestedAction[];
   };
-  error?: boolean;
+  attachments?: Attachment[];
 }
 
-interface Conversation {
+// Contexte de conversation
+interface ChatContext {
   id: string;
   title: string;
-  timestamp: string;
-  messages: Message[];
-  isActive: boolean;
-  model: AIModel;
-  context: string[];
+  created_at: string;
+  updated_at: string;
+  metadata: ContextMetadata;
+  messageCount: number;
+  lastMessage?: {
+    content: string;
+    timestamp: string;
+    sender: string;
+  };
 }
 
-interface AIModel {
+// Métadonnées contextuelles
+interface ContextMetadata {
+  title?: string;
+  portfolioId?: string;
+  portfolioType?: 'traditional' | 'investment' | 'leasing';
+  clientId?: string;
+  companyId?: string;
+  entityType?: string;
+  entityId?: string;
+  [key: string]: any;
+}
+
+// Actions suggérées par l'IA
+interface SuggestedAction {
+  type: string;
+  payload: any;
+}
+
+// Pièce jointe
+interface Attachment {
   id: string;
   name: string;
-  description: string;
-  capabilities: string[];
-  contextLength: number;
+  type: string;
+  url: string;
+  size?: number;
 }
 ```
 
 ## Endpoints
 
-### Envoyer un message
+---
 
-Envoie un message au système de chat.
+### 1. Mode Synchrone - Envoyer un message
+
+Envoie un message et **attend** la réponse complète de l'IA ADHA.
 
 #### Requête
 
@@ -55,48 +132,139 @@ Envoie un message au système de chat.
 POST /portfolio/api/v1/chat/messages
 ```
 
+#### Headers
+
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
 #### Corps de la requête
 
 ```json
 {
-  "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
-  "contextId": "ctx123",
+  "content": "Analysez la performance du portefeuille PME ce trimestre",
+  "contextId": "ctx-uuid-123",
   "metadata": {
-    "portfolioId": "port456",
+    "portfolioId": "port-456",
     "portfolioType": "traditional",
-    "companyId": "comp789",
-    "entityType": "portfolio",
-    "entityId": "port456"
+    "clientId": "client-789",
+    "entityType": "portfolio"
   }
 }
 ```
 
-#### Réponse
+| Champ | Type | Requis | Description |
+|-------|------|--------|-------------|
+| `content` | string | ✅ | Message de l'utilisateur |
+| `contextId` | string | ❌ | ID du contexte (conversation). Si absent, une nouvelle conversation est créée |
+| `metadata` | object | ❌ | Informations contextuelles pour l'IA |
+
+#### Réponse (200 OK)
 
 ```json
 {
-  "id": "msg001",
-  "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
-  "timestamp": "2025-07-25T12:00:00.000Z",
+  "id": "msg-001",
+  "content": "Analysez la performance du portefeuille PME ce trimestre",
+  "timestamp": "2026-01-11T12:00:00.000Z",
   "sender": "user",
-  "contextId": "ctx123",
+  "contextId": "ctx-uuid-123",
   "metadata": {
-    "portfolioId": "port456",
+    "portfolioId": "port-456",
     "portfolioType": "traditional"
   },
   "response": {
-    "id": "msg002",
-    "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
-    "timestamp": "2025-07-25T12:00:02.000Z",
+    "id": "msg-002",
+    "content": "📊 **Analyse du Portefeuille PME - Q4 2025**\n\nLe portefeuille présente une performance globale positive avec:\n- Encours total: 2.5M€ (+12% vs Q3)\n- Taux de défaut: 3.2% (-0.5 pts)\n- Secteurs performants: Commerce (45%), Services (30%)\n\nJe recommande de diversifier vers le secteur technologique.",
+    "timestamp": "2026-01-11T12:00:03.500Z",
     "sender": "assistant",
-    "attachments": []
+    "processingDetails": {
+      "tokensUsed": 450,
+      "processingTime": 3500,
+      "aiModel": "adha-1"
+    },
+    "suggestedActions": [
+      {"type": "view_portfolio", "payload": {"portfolioId": "port-456"}},
+      {"type": "generate_report", "payload": {"type": "quarterly"}}
+    ]
   }
 }
 ```
 
-### Récupérer l'historique des messages
+---
 
-Récupère l'historique des messages pour un contexte spécifique.
+### 2. Mode Streaming - Envoyer un message avec réponse temps réel
+
+Envoie un message et **retourne immédiatement**. Les réponses arrivent **chunk par chunk via WebSocket**.
+
+> ⚡ **Recommandé pour** : Analyses longues, expérience utilisateur temps réel, affichage progressif
+
+#### Requête
+
+```
+POST /portfolio/api/v1/chat/stream
+```
+
+#### Headers
+
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+#### Corps de la requête
+
+```json
+{
+  "content": "Effectuez une analyse détaillée des risques de défaut sur l'ensemble du portefeuille avec projections",
+  "contextId": "ctx-uuid-123",
+  "metadata": {
+    "title": "Analyse risques Q4",
+    "portfolioId": "port-456",
+    "portfolioType": "traditional",
+    "institutionId": "inst-xyz"
+  }
+}
+```
+
+#### Réponse (201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "messageId": "msg-stream-uuid-789",
+    "conversationId": "ctx-uuid-123",
+    "userMessageId": "user-msg-001"
+  },
+  "websocket": {
+    "namespace": "/chat",
+    "events": {
+      "subscribe": "subscribe_conversation",
+      "chunk": "adha.stream.chunk",
+      "end": "adha.stream.end",
+      "error": "adha.stream.error",
+      "tool": "adha.stream.tool"
+    }
+  }
+}
+```
+
+#### Workflow Streaming Complet
+
+```
+1. POST /chat/stream → Reçoit messageId
+2. WebSocket.connect('wss://api.wanzo.com/socket.io')
+3. WebSocket.emit('subscribe_conversation', { conversationId })
+4. WebSocket.on('adha.stream.chunk') → Afficher chunk progressif
+5. WebSocket.on('adha.stream.end') → Finaliser affichage
+```
+
+---
+
+### 3. Récupérer l'historique des messages
+
+Récupère l'historique paginé des messages pour un contexte.
 
 #### Requête
 
@@ -104,53 +272,49 @@ Récupère l'historique des messages pour un contexte spécifique.
 GET /portfolio/api/v1/chat/contexts/{contextId}/messages
 ```
 
-#### Paramètres de chemin
-- `contextId` : Identifiant unique du contexte de chat
+#### Paramètres
 
-#### Paramètres de requête
-- `limit` (optionnel) : Nombre maximum de messages à récupérer
-- `before` (optionnel) : Récupérer les messages avant cette date/ID
-- `after` (optionnel) : Récupérer les messages après cette date/ID
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `contextId` | string | ✅ | ID du contexte (path param) |
+| `limit` | number | ❌ | Nombre max de messages (défaut: 50) |
+| `before` | string | ❌ | Pagination - messages avant cet ID/date |
+| `after` | string | ❌ | Pagination - messages après cet ID/date |
 
-#### Réponse
+#### Réponse (200 OK)
 
 ```json
 {
   "messages": [
     {
-      "id": "msg001",
-      "content": "Bonjour, pouvez-vous me donner des informations sur le portefeuille PME?",
-      "timestamp": "2025-07-25T12:00:00.000Z",
-      "sender": "user",
-      "contextId": "ctx123",
+      "id": "msg-001",
+      "role": "user",
+      "content": "Analysez le portefeuille PME",
+      "timestamp": "2026-01-11T12:00:00.000Z",
+      "metadata": {"portfolioId": "port-456"}
+    },
+    {
+      "id": "msg-002",
+      "role": "assistant",
+      "content": "📊 Le portefeuille PME présente...",
+      "timestamp": "2026-01-11T12:00:03.000Z",
       "metadata": {
-        "portfolioId": "port456",
-        "portfolioType": "traditional"
+        "streaming": true,
+        "totalChunks": 12,
+        "processingTime": 2800
       }
-    },
-    {
-      "id": "msg002",
-      "content": "Bonjour! Je serais ravi de vous aider. Le portefeuille PME contient actuellement 15 entreprises avec un encours total de 2.5M€. Souhaitez-vous des informations plus détaillées?",
-      "timestamp": "2025-07-25T12:00:02.000Z",
-      "sender": "assistant",
-      "contextId": "ctx123"
-    },
-    {
-      "id": "msg003",
-      "content": "Oui, pouvez-vous me donner la répartition par secteur d'activité?",
-      "timestamp": "2025-07-25T12:01:30.000Z",
-      "sender": "user",
-      "contextId": "ctx123"
     }
   ],
   "hasMore": true,
-  "nextCursor": "msg004"
+  "nextCursor": "msg-003"
 }
 ```
 
-### Créer un nouveau contexte de chat
+---
 
-Crée un nouveau contexte de conversation.
+### 4. Créer un nouveau contexte (conversation)
+
+Crée une nouvelle session de conversation avec mémoire.
 
 #### Requête
 
@@ -522,30 +686,48 @@ FormData contenant le fichier à télécharger.
 }
 ```
 
-## Implémentation technique
+## Architecture Technique Backend
 
-Les endpoints ci-dessus sont implémentés dans le module `chat.api.ts` qui fournit les fonctions suivantes:
+### Composants Implémentés
 
-- `sendMessage(message)`: Envoie un message au système de chat
-- `getMessageHistory(contextId, params)`: Récupère l'historique des messages pour un contexte
-- `createContext(data)`: Crée un nouveau contexte de chat
-- `getContextById(id)`: Récupère un contexte de chat par son ID
-- `getAllContexts(params)`: Récupère tous les contextes de chat
-- `updateContext(id, updates)`: Met à jour un contexte de chat
-- `deleteContext(id)`: Supprime un contexte de chat
-- `getChatSuggestions(contextId, data)`: Récupère des suggestions de chat
-- `generateChatReport(params)`: Génère un rapport basé sur les conversations
-- `getPredefinedResponses(category)`: Récupère des réponses prédéfinies
-- `rateMessage(messageId, rating)`: Évalue un message
-- `addAttachment(messageId, file)`: Ajoute une pièce jointe à un message
+| Composant | Fichier | Description |
+|-----------|---------|-------------|
+| **ChatModule** | `src/modules/chat/chat.module.ts` | Module principal, orchestration |
+| **ChatController** | `controllers/chat.controller.ts` | Endpoints HTTP (sync + stream) |
+| **PortfolioAdhaAiService** | `services/adha-ai.service.ts` | Communication Kafka vers ADHA AI |
+| **ChatService** | `services/chat.service.ts` | Logique métier, persistance |
+| **PortfolioChatGateway** | `gateways/chat.gateway.ts` | WebSocket Gateway (Socket.IO) |
+| **PortfolioStreamingConsumer** | `consumers/streaming.consumer.ts` | Consumer Kafka chunks streaming |
+| **AdhaResponseConsumer** | `consumers/adha-response.consumer.ts` | Consumer Kafka réponses sync |
 
-Les modèles d'IA disponibles sont définis dans le module `chat.ts` et incluent:
+### Topics Kafka
 
-1. Adha Crédit - Spécialisé en gestion de crédits et analyse de risques
-2. Adha Prospection - Analyse des opportunités de marché et ciblage client
-3. Adha Leasing - Expert en contrats de leasing et gestion d'équipements
-4. Adha Invest - Spécialisé en capital-investissement et valorisation
-5. Adha Analytics - Analyse approfondie des données financières et prévisions
+```typescript
+// Définis dans adha-ai.service.ts
+export const PortfolioChatTopics = {
+  CHAT_MESSAGE: 'portfolio.chat.message',      // → ADHA AI
+  CHAT_RESPONSE: 'portfolio.chat.response',    // ← ADHA AI (sync)
+  CHAT_STREAM: 'portfolio.chat.stream',        // ← ADHA AI (streaming)
+  ANALYSIS_REQUEST: 'portfolio.analysis.request',
+  ANALYSIS_RESPONSE: 'portfolio.analysis.response',
+};
+```
+
+### Services Backend
+
+| Service | Méthodes principales |
+|---------|---------------------|
+| **ChatService** | `sendMessage()`, `createContext()`, `addMessage()`, `getMessageHistory()`, `getSuggestions()` |
+| **PortfolioAdhaAiService** | `sendMessage()` (sync), `sendMessageStreaming()` (async), `handleAdhaResponse()` |
+| **PortfolioChatGateway** | `sendStreamChunk()`, `handleSubscribeConversation()`, `sendToUser()` |
+
+### Modèles d'IA ADHA disponibles
+
+1. **Adha Crédit** - Spécialisé en gestion de crédits et analyse de risques
+2. **Adha Prospection** - Analyse des opportunités de marché et ciblage client
+3. **Adha Leasing** - Expert en contrats de leasing et gestion d'équipements
+4. **Adha Invest** - Spécialisé en capital-investissement et valorisation
+5. **Adha Analytics** - Analyse approfondie des données financières et prévisions
 
 ## Codes d'erreur
 
@@ -558,27 +740,66 @@ Les modèles d'IA disponibles sont définis dans le module `chat.ts` et incluent
 | 422  | Entité non traitable - Validation échouée |
 | 429  | Trop de requêtes - Limite de taux dépassée |
 | 500  | Erreur serveur interne |
+| 503  | Kafka non disponible - Service IA temporairement indisponible |
 
-## Streaming des Réponses IA (Nouveau - Janvier 2026)
+---
+
+## Streaming des Réponses IA (v2.0 - Janvier 2026)
 
 ### Vue d'ensemble
 
-Le système de streaming permet au frontend de recevoir les réponses de l'IA ADHA en temps réel, chunk par chunk. Cela est particulièrement utile pour les analyses de portefeuille complexes qui peuvent prendre plusieurs secondes.
+Le système de streaming permet au frontend de recevoir les réponses de l'IA ADHA **en temps réel, chunk par chunk**, offrant une expérience utilisateur fluide pour les analyses complexes.
 
-### Architecture Streaming
+### Architecture Streaming Complète
 
 ```
-Frontend (WebSocket/SSE) ← Backend ← Kafka (portfolio.chat.stream) ← ADHA AI Service
+┌───────────────────────────────────────────────────────────────────────────┐
+│                           STREAMING FLOW                                  │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Frontend (Flutter)           Portfolio Service            ADHA AI        │
+│  ══════════════════           ═════════════════            ════════       │
+│                                                                           │
+│  1. POST /chat/stream ─────────► ChatController                           │
+│                                       │                                   │
+│  2. ◄─── { messageId, wsInfo }        │                                   │
+│                                       ▼                                   │
+│                              PortfolioAdhaAiService                       │
+│                                       │                                   │
+│                                       │   portfolio.chat.message          │
+│                                       └──────────────────────────► Kafka  │
+│                                                                     │     │
+│  3. WebSocket.connect()                                             │     │
+│     ────────────────────► PortfolioChatGateway                      │     │
+│                                                                     │     │
+│  4. emit('subscribe_conversation')                                  │     │
+│     ────────────────────► join(room)                                │     │
+│                                                                     ▼     │
+│                                                              ADHA AI Svc  │
+│                                                                     │     │
+│  5.                                     portfolio.chat.stream       │     │
+│                           ◄──────────────────────────────────── Kafka     │
+│                                       │                                   │
+│                          PortfolioStreamingConsumer                       │
+│                                       │                                   │
+│                                       ▼                                   │
+│                          PortfolioChatGateway.sendStreamChunk()           │
+│                                       │                                   │
+│  6. ◄═══ adha.stream.chunk ═══════════╯                                   │
+│     ◄═══ adha.stream.chunk                                                │
+│     ◄═══ adha.stream.chunk                                                │
+│     ◄═══ adha.stream.end ────────► Sauvegarde DB                          │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
-
-**Topic Kafka utilisé**: `portfolio.chat.stream`
 
 ### Structure des Événements de Streaming
 
-#### PortfolioStreamChunkEvent (Interface TypeScript)
+#### StreamChunkEvent (Interface TypeScript Backend)
 
 ```typescript
-interface PortfolioStreamChunkEvent {
+// Défini dans streaming.consumer.ts
+interface StreamChunkEvent {
   id: string;                    // UUID unique du chunk
   requestMessageId: string;      // ID du message original de l'utilisateur
   conversationId: string;        // ID du contexte de chat
@@ -702,121 +923,267 @@ interface PortfolioStreamChunkEvent {
 }
 ```
 
-### Événements Locaux (EventEmitter2)
+### Événements WebSocket (Socket.IO)
 
-Le backend émet des événements locaux via WebSocket :
+Le backend utilise **Socket.IO** pour le streaming temps réel. Les événements sont émis sur le namespace `/` (racine).
 
-| Événement | Description | Payload |
-|-----------|-------------|---------|
-| `portfolio.stream.chunk` | Nouveau chunk reçu | `{ requestMessageId, conversationId, institutionId, content, chunkId, accumulatedContent }` |
-| `portfolio.stream.end` | Stream terminé | `{ requestMessageId, conversationId, institutionId, content, totalChunks, processingTime, suggestedActions }` |
-| `portfolio.stream.error` | Erreur de streaming | `{ requestMessageId, conversationId, institutionId, error }` |
-| `portfolio.stream.tool` | Appel/résultat d'outil | `{ requestMessageId, conversationId, institutionId, type, content }` |
+#### Événements du Client → Serveur
 
-### Intégration Frontend (Flutter/Dart)
+| Événement | Payload | Description |
+|-----------|---------|-------------|
+| `subscribe_conversation` | `{ conversationId: string }` | S'abonner aux updates d'une conversation |
+| `unsubscribe_conversation` | `{ conversationId: string }` | Se désabonner d'une conversation |
 
-#### Connexion WebSocket
+#### Événements du Serveur → Client
+
+| Événement | Description | Quand |
+|-----------|-------------|-------|
+| `adha.stream.chunk` | Nouveau chunk de contenu | Pendant le streaming |
+| `adha.stream.end` | Fin du stream, contenu complet | Fin du traitement |
+| `adha.stream.error` | Erreur de traitement | En cas d'erreur |
+| `adha.stream.tool` | Appel/résultat d'outil IA | Pendant le traitement |
+
+### Intégration Frontend (Flutter/Dart) avec Socket.IO
+
+#### Installation des dépendances
+
+```yaml
+# pubspec.yaml
+dependencies:
+  socket_io_client: ^2.0.0
+  http: ^1.1.0
+```
+
+#### Service de Streaming Complet
 
 ```dart
-class PortfolioStreamService {
-  WebSocket? _socket;
-  final StreamController<PortfolioStreamChunk> _chunkController = 
-      StreamController<PortfolioStreamChunk>.broadcast();
+import 'dart:async';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class PortfolioChatStreamService {
+  IO.Socket? _socket;
+  final String baseUrl;
+  final String Function() getToken; // Getter pour le JWT
   
-  Stream<PortfolioStreamChunk> get chunkStream => _chunkController.stream;
+  final StreamController<StreamingChunk> _chunkController = 
+      StreamController<StreamingChunk>.broadcast();
   
-  Future<void> connect(String institutionId) async {
-    _socket = await WebSocket.connect(
-      'wss://api.wanzo.com/ws/portfolio-chat/$institutionId'
+  Stream<StreamingChunk> get chunkStream => _chunkController.stream;
+  
+  PortfolioChatStreamService({
+    required this.baseUrl,
+    required this.getToken,
+  });
+  
+  /// Connexion WebSocket avec authentification JWT
+  Future<void> connect() async {
+    _socket = IO.io(
+      baseUrl, // ex: 'https://api.wanzo.com'
+      IO.OptionBuilder()
+        .setTransports(['websocket'])
+        .setPath('/socket.io')
+        .setExtraHeaders({'Authorization': 'Bearer ${getToken()}'})
+        .setQuery({'token': getToken()})
+        .enableAutoConnect()
+        .build(),
     );
     
-    _socket!.listen((data) {
-      final chunk = PortfolioStreamChunk.fromJson(jsonDecode(data));
-      _chunkController.add(chunk);
+    _socket!.onConnect((_) {
+      print('✅ WebSocket connected');
+    });
+    
+    _socket!.onDisconnect((_) {
+      print('❌ WebSocket disconnected');
+    });
+    
+    // Écouter les événements de streaming
+    _socket!.on('adha.stream.chunk', (data) {
+      _chunkController.add(StreamingChunk.fromJson(data));
+    });
+    
+    _socket!.on('adha.stream.end', (data) {
+      _chunkController.add(StreamingChunk.fromJson(data));
+    });
+    
+    _socket!.on('adha.stream.error', (data) {
+      _chunkController.add(StreamingChunk.fromJson(data));
+    });
+    
+    _socket!.on('adha.stream.tool', (data) {
+      _chunkController.add(StreamingChunk.fromJson(data));
     });
   }
   
-  void sendMessage(String contextId, String content, Map<String, dynamic> metadata) {
-    _socket?.add(jsonEncode({
-      'action': 'sendMessage',
-      'contextId': contextId,
-      'content': content,
-      'metadata': metadata,
-      'streaming': true,
-    }));
+  /// S'abonner aux updates d'une conversation
+  void subscribeToConversation(String conversationId) {
+    _socket?.emit('subscribe_conversation', {'conversationId': conversationId});
+  }
+  
+  /// Se désabonner d'une conversation
+  void unsubscribeFromConversation(String conversationId) {
+    _socket?.emit('unsubscribe_conversation', {'conversationId': conversationId});
+  }
+  
+  /// Envoyer un message en mode streaming
+  Future<StreamingResponse> sendStreamingMessage({
+    required String content,
+    String? contextId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/portfolio/api/v1/chat/stream'),
+      headers: {
+        'Authorization': 'Bearer ${getToken()}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'content': content,
+        'contextId': contextId,
+        'metadata': metadata,
+      }),
+    );
+    
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      final streamResponse = StreamingResponse.fromJson(data);
+      
+      // Auto-subscribe à la conversation
+      subscribeToConversation(streamResponse.conversationId);
+      
+      return streamResponse;
+    } else {
+      throw Exception('Failed to send message: ${response.body}');
+    }
+  }
+  
+  void disconnect() {
+    _socket?.disconnect();
+    _socket?.dispose();
+  }
+  
+  void dispose() {
+    disconnect();
+    _chunkController.close();
   }
 }
-```
 
-#### Modèle de Chunk (Dart)
+/// Réponse de l'endpoint /chat/stream
+class StreamingResponse {
+  final String messageId;
+  final String conversationId;
+  final String userMessageId;
+  
+  StreamingResponse({
+    required this.messageId,
+    required this.conversationId,
+    required this.userMessageId,
+  });
+  
+  factory StreamingResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'];
+    return StreamingResponse(
+      messageId: data['messageId'],
+      conversationId: data['conversationId'],
+      userMessageId: data['userMessageId'],
+    );
+  }
+}
 
-```dart
-class PortfolioStreamChunk {
-  final String id;
+/// Chunk de streaming reçu via WebSocket
+class StreamingChunk {
   final String requestMessageId;
   final String conversationId;
-  final String type; // 'chunk', 'end', 'error'
+  final String type; // 'chunk', 'end', 'error', 'tool_call', 'tool_result'
   final String content;
   final int chunkId;
-  final String timestamp;
-  final String userId;
-  final String institutionId;
   final int? totalChunks;
-  final List<String>? suggestedActions;
+  final List<Map<String, dynamic>>? suggestedActions;
   final Map<String, dynamic>? processingDetails;
   final Map<String, dynamic>? metadata;
   
-  PortfolioStreamChunk({
-    required this.id,
+  StreamingChunk({
     required this.requestMessageId,
     required this.conversationId,
     required this.type,
     required this.content,
     required this.chunkId,
-    required this.timestamp,
-    required this.userId,
-    required this.institutionId,
     this.totalChunks,
     this.suggestedActions,
     this.processingDetails,
     this.metadata,
   });
   
-  factory PortfolioStreamChunk.fromJson(Map<String, dynamic> json) {
-    return PortfolioStreamChunk(
-      id: json['id'],
+  factory StreamingChunk.fromJson(Map<String, dynamic> json) {
+    return StreamingChunk(
       requestMessageId: json['requestMessageId'],
       conversationId: json['conversationId'],
       type: json['type'],
-      content: json['content'],
-      chunkId: json['chunkId'],
-      timestamp: json['timestamp'],
-      userId: json['userId'],
-      institutionId: json['companyId'] ?? json['metadata']?['institutionId'],
+      content: json['content'] ?? '',
+      chunkId: json['chunkId'] ?? 0,
       totalChunks: json['totalChunks'],
-      suggestedActions: (json['suggestedActions'] as List?)?.cast<String>(),
+      suggestedActions: json['suggestedActions'] != null
+          ? List<Map<String, dynamic>>.from(json['suggestedActions'])
+          : null,
       processingDetails: json['processingDetails'],
       metadata: json['metadata'],
     );
   }
+  
+  bool get isChunk => type == 'chunk';
+  bool get isEnd => type == 'end';
+  bool get isError => type == 'error';
+  bool get isToolCall => type == 'tool_call';
+  bool get isToolResult => type == 'tool_result';
 }
 ```
 
-#### Utilisation dans un BLoC
+#### Utilisation dans un BLoC (Flutter Bloc Pattern)
 
 ```dart
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  final PortfolioStreamService _streamService;
+  final PortfolioChatStreamService _streamService;
   StreamSubscription? _chunkSubscription;
-  StringBuffer _accumulatedContent = StringBuffer();
+  final StringBuffer _accumulatedContent = StringBuffer();
   
   ChatBloc(this._streamService) : super(ChatInitial()) {
+    on<InitializeChat>(_onInitializeChat);
     on<SendMessage>(_onSendMessage);
-    
-    _chunkSubscription = _streamService.chunkStream.listen(_handleChunk);
+    on<ProcessChunk>(_onProcessChunk);
   }
   
-  void _handleChunk(PortfolioStreamChunk chunk) {
+  Future<void> _onInitializeChat(InitializeChat event, Emitter<ChatState> emit) async {
+    await _streamService.connect();
+    
+    _chunkSubscription = _streamService.chunkStream.listen((chunk) {
+      add(ProcessChunk(chunk));
+    });
+  }
+  
+  Future<void> _onSendMessage(SendMessage event, Emitter<ChatState> emit) async {
+    emit(ChatSending());
+    _accumulatedContent.clear();
+    
+    try {
+      final response = await _streamService.sendStreamingMessage(
+        content: event.content,
+        contextId: event.contextId,
+        metadata: event.metadata,
+      );
+      
+      emit(ChatWaitingForStream(
+        messageId: response.messageId,
+        conversationId: response.conversationId,
+      ));
+    } catch (e) {
+      emit(ChatError(message: e.toString()));
+    }
+  }
+  
+  void _onProcessChunk(ProcessChunk event, Emitter<ChatState> emit) {
+    final chunk = event.chunk;
+    
     switch (chunk.type) {
       case 'chunk':
         _accumulatedContent.write(chunk.content);
@@ -829,6 +1196,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       case 'end':
         emit(ChatMessageReceived(
           content: chunk.content,
+          totalChunks: chunk.totalChunks ?? 0,
           suggestedActions: chunk.suggestedActions ?? [],
           processingDetails: chunk.processingDetails,
         ));
@@ -839,33 +1207,68 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         emit(ChatError(message: chunk.content));
         _accumulatedContent.clear();
         break;
+        
+      case 'tool_call':
+        emit(ChatToolProcessing(toolName: chunk.content));
+        break;
+        
+      case 'tool_result':
+        _accumulatedContent.write(chunk.content);
+        emit(ChatStreaming(
+          content: _accumulatedContent.toString(),
+          chunkId: chunk.chunkId,
+        ));
+        break;
     }
+  }
+  
+  @override
+  Future<void> close() {
+    _chunkSubscription?.cancel();
+    _streamService.dispose();
+    return super.close();
   }
 }
 ```
 
-### Configuration du Streaming
+### Bonnes Pratiques
 
-Pour activer le streaming dans les requêtes API, ajoutez `streaming: true` :
+1. **Affichage progressif**: Utiliser un `StreamBuilder` ou BLoC pour afficher le texte chunk par chunk
+2. **Actions suggérées**: Afficher les `suggestedActions` comme boutons d'action rapide après `end`
+3. **Indicateur visuel**: Montrer un indicateur "typing" ou animation pendant le streaming
+4. **Gestion des erreurs**: Toujours gérer le type `error` et proposer un retry
+5. **Timeout**: Implémenter un timeout de 120s (configurable)
+6. **Reconnexion**: Gérer la reconnexion automatique en cas de perte de connexion WebSocket
+7. **Cleanup**: Désabonner des conversations non actives pour économiser les ressources
 
-```json
-{
-  "content": "Analysez la performance du portefeuille PME",
-  "contextId": "ctx123",
-  "metadata": {
-    "portfolioId": "port456",
-    "portfolioType": "traditional",
-    "institutionId": "inst-xyz"
-  },
-  "streaming": true
-}
+### Configuration Avancée
+
+#### Timeout et Retry côté Backend
+
+```typescript
+// Dans PortfolioAdhaAiService (adha-ai.service.ts)
+// Timeout configuré à 120s pour les réponses sync
+setTimeout(() => {
+  // Fallback response si pas de réponse après 120s
+}, 120000);
 ```
 
-### Bonnes Pratiques Frontend
+#### CORS configuré pour le Gateway WebSocket
 
-1. **Affichage progressif**: Utiliser un `StreamBuilder` pour afficher le texte au fur et à mesure
-2. **Actions suggérées**: Afficher les `suggestedActions` comme boutons d'action rapide
-3. **Indicateur visuel**: Montrer un indicateur de "typing" pendant le streaming
-4. **Gestion des erreurs**: Toujours gérer le type `error` pour informer l'utilisateur
-5. **Timeout**: Implémenter un timeout de 45s pour les analyses complexes
-6. **Retry**: Proposer un bouton "Réessayer" en cas d'erreur
+```typescript
+// Dans PortfolioChatGateway (chat.gateway.ts)
+@WebSocketGateway({
+  namespace: '/',
+  path: '/socket.io',
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:8000',
+      'https://wanzo.io',
+      'https://*.wanzo.io',
+    ],
+    credentials: true,
+  },
+})
+```

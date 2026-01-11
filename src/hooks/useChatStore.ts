@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Message, Conversation, AIModel, StreamingState, PortfolioStreamChunkEvent } from '../types/chat';
+import type { Message, Conversation, AIModel, StreamingState, PortfolioStreamChunkEvent, ChatMetadata } from '../types/chat';
 import { AI_MODELS } from '../types/chat';
 import { chatApi } from '../services/api/chat.api';
 import { getChatStreamService, ChatStreamService } from '../services/streaming';
@@ -110,23 +110,9 @@ export const useChatStore = create<ChatStore>()(
         description: 'Aide générale sur tous les sujets',
         context: ['general']
       },
-      conversations: [{
-        id: '1',
-        title: 'Nouvelle conversation',
-        timestamp: new Date().toISOString(),
-        messages: [{
-          id: '1',
-          sender: 'bot',
-          content: "Bonjour ! Je suis Adha, votre assistant. Comment puis-je vous aider aujourd'hui ?",
-          timestamp: new Date().toISOString(),
-          likes: 0,
-          dislikes: 0
-        }],
-        isActive: true,
-        model: AI_MODELS[0],
-        context: []
-      }],
-      activeConversationId: '1',
+      // Conversations initialisées vide - seront chargées depuis l'API ou créées localement au besoin
+      conversations: [],
+      activeConversationId: null,
 
       // Actions UI
       setFloating: (floating) => set({ isFloating: floating }),
@@ -208,19 +194,12 @@ export const useChatStore = create<ChatStore>()(
             // Créer une conversation via l'API
             newConversation = await chatApi.createConversation('Nouvelle conversation');
           } else {
-            // Version mock
+            // Version mock - sans message d'accueil prédéfini
             newConversation = {
               id: Date.now().toString(),
               title: 'Nouvelle conversation',
               timestamp: new Date().toISOString(),
-              messages: [{
-                id: '1',
-                sender: 'bot',
-                content: "Bonjour ! Je suis Adha, votre assistant. Comment puis-je vous aider aujourd'hui ?",
-                timestamp: new Date().toISOString(),
-                likes: 0,
-                dislikes: 0
-              }],
+              messages: [],
               isActive: true,
               model: store.selectedModel,
               context: []
@@ -275,24 +254,62 @@ export const useChatStore = create<ChatStore>()(
       fetchConversations: async () => {
         const store = get();
         
-        if (!store.isApiMode) {
-          // En mode mock, on ne fait rien
-          return;
-        }
-        
         set({ isTyping: true });
         
         try {
-          const conversations = await chatApi.getConversations();
-          
-          if (conversations.length > 0) {
-            set({ 
-              conversations, 
-              activeConversationId: conversations[0].id 
-            });
+          if (store.isApiMode) {
+            // Mode API: charger depuis le backend
+            const conversations = await chatApi.getConversations();
+            
+            if (conversations.length > 0) {
+              set({ 
+                conversations, 
+                activeConversationId: conversations[0].id 
+              });
+            } else {
+              // Aucune conversation, créer une nouvelle via l'API
+              const newConversation = await chatApi.createConversation('Nouvelle conversation');
+              set({ 
+                conversations: [newConversation], 
+                activeConversationId: newConversation.id 
+              });
+            }
+          } else {
+            // Mode mock: créer une conversation locale si aucune n'existe
+            if (store.conversations.length === 0) {
+              const mockConversation: Conversation = {
+                id: '1',
+                title: 'Nouvelle conversation',
+                timestamp: new Date().toISOString(),
+                messages: [],
+                isActive: true,
+                model: AI_MODELS[0],
+                context: []
+              };
+              set({ 
+                conversations: [mockConversation], 
+                activeConversationId: '1' 
+              });
+            }
           }
         } catch (error) {
           console.error('Erreur lors du chargement des conversations:', error);
+          // En cas d'erreur, créer une conversation locale vide
+          if (store.conversations.length === 0) {
+            const fallbackConversation: Conversation = {
+              id: `local-${Date.now()}`,
+              title: 'Nouvelle conversation',
+              timestamp: new Date().toISOString(),
+              messages: [],
+              isActive: true,
+              model: AI_MODELS[0],
+              context: []
+            };
+            set({ 
+              conversations: [fallbackConversation], 
+              activeConversationId: fallbackConversation.id 
+            });
+          }
         } finally {
           set({ isTyping: false });
         }
@@ -357,16 +374,25 @@ export const useChatStore = create<ChatStore>()(
           }));
           
           try {
-            // Envoyer le message via WebSocket avec streaming
-            const messageId = streamService.sendMessage(
-              activeConversation.id,
+            // Construire les métadonnées pour l'API
+            const metadata: ChatMetadata = {
+              portfolioId: store.currentPortfolioId || undefined,
+              portfolioType: store.currentPortfolioType,
+              institutionId: store.currentInstitutionId || undefined
+            };
+
+            // Envoyer le message via l'API REST /chat/stream
+            const streamResponse = await chatApi.sendStreamingMessage({
               content,
-              {
-                portfolioId: store.currentPortfolioId || undefined,
-                portfolioType: store.currentPortfolioType,
-                institutionId: store.currentInstitutionId || undefined
-              }
-            );
+              contextId: activeConversation.id,
+              metadata,
+              mode: mode === 'analyse' ? 'analyse' : 'chat'
+            });
+            
+            const messageId = streamResponse.data.messageId;
+            
+            // Préparer le streaming via Socket.IO
+            streamService.prepareStreaming(messageId, streamResponse.data.conversationId);
             
             // Remplacer le message en attente par le message réel
             set(state => ({
@@ -376,7 +402,7 @@ export const useChatStore = create<ChatStore>()(
                       ...conv,
                       messages: conv.messages.map(msg => 
                         msg.id === pendingMessage.id 
-                          ? { ...msg, id: messageId, pending: false } 
+                          ? { ...msg, id: streamResponse.data.userMessageId, pending: false } 
                           : msg
                       )
                     }

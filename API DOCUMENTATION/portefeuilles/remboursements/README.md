@@ -358,115 +358,24 @@ Récupère la liste des remboursements effectués pour un contrat de crédit sp�
 
 **Conditions** : Seuls les paiements avec statut `pending` peuvent être supprimés.
 
-### Gestion des reçus et justificatifs
+### Ajouter un justificatif
 
-#### Obtenir l'URL du reçu
-
-**Endpoint** : `GET /portfolios/traditional/repayments/{id}/receipt`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "receipt_url": "https://storage.wanzo.com/receipts/PMT-00001.pdf"
-}
-```
-
-#### Télécharger le reçu
-
-**Endpoint** : `GET /portfolios/traditional/repayments/{id}/receipt/download`
-
-**Réponse** : `Blob` (application/pdf)
-
-#### Vérifier si un reçu existe
-
-**Endpoint** : `GET /portfolios/traditional/repayments/{id}/has-receipt`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "has_receipt": true
-}
-```
-
-#### Téléverser un reçu
-
-**Endpoint** : `POST /portfolios/traditional/repayments/{id}/upload-receipt`
+**Endpoint** : `POST /portfolios/traditional/repayments/{id}/receipt`
 
 **Corps de la requête** (multipart/form-data) :
-- `receipt`: Fichier du reçu (PDF, PNG, JPG)
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "receipt_url": "https://storage.wanzo.com/receipts/PMT-00001-uploaded.pdf"
-}
-```
-
-#### Générer un reçu automatiquement
-
-**Endpoint** : `POST /portfolios/traditional/repayments/{id}/generate-receipt`
-
-**Réponse réussie** (200 OK) :
-
-```json
-{
-  "receiptUrl": "https://storage.wanzo.com/receipts/generated-PMT-00001.pdf"
-}
-```
-
-#### Télécharger un justificatif
-
-**Endpoint** : `GET /portfolios/traditional/repayments/{id}/supporting-document`
-
-**Réponse** : `Blob` (application/pdf)
-
-#### Téléverser un justificatif
-
-**Endpoint** : `POST /portfolios/traditional/payments/{id}/supporting-document`
-
-**Corps de la requête** (multipart/form-data) :
-- `document`: Fichier justificatif (PDF, PNG, JPG)
+- `file`: Fichier du justificatif (PDF, PNG, JPG)
 
 **Réponse réussie** (200 OK) :
 
 ```json
 {
   "success": true,
-  "document_url": "https://storage.wanzo.com/docs/support-PMT-00001.pdf",
-  "message": "Document téléchargé avec succès"
-}
-```
-
-### Échéancier de paiement
-
-**Endpoint** : `GET /portfolios/traditional/credit-contracts/{contractId}/payment-schedule`
-
-**Réponse réussie** (200 OK) :
-
-```json
-[
-  {
-    "id": "schedule-uuid-1",
-    "due_date": "2026-01-01T00:00:00.000Z",
-    "principal_amount": 400000,
-    "interest_amount": 100000,
-    "total_amount": 500000,
-    "status": "paid",
-    "payment_date": "2026-01-05T10:00:00.000Z",
-    "payment_amount": 500000
-  },
-  {
-    "id": "schedule-uuid-2",
-    "due_date": "2026-02-01T00:00:00.000Z",
-    "principal_amount": 420000,
-    "interest_amount": 80000,
-    "total_amount": 500000,
-    "status": "pending"
+  "data": {
+    "id": "PMT-00001",
+    "receipt_url": "https://storage.example.com/receipts/PMT-00001.pdf",
+    "has_supporting_document": true
   }
-]
+}
 ```
 
 ## Codes d'erreur

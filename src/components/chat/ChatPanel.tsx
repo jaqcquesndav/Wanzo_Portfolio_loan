@@ -22,10 +22,15 @@ import {
   BarChart3,
   PanelRightClose,
   PanelRight,
-  Columns
+  Columns,
+  TrendingUp,
+  FileText,
+  Calculator,
+  HelpCircle
 } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
+import { useAuth } from '../../contexts/useAuth';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageContent } from './MessageContent';
 import { SourceSelector } from './SourceSelector';
@@ -71,6 +76,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const isFullscreen = secondaryPanel.isFullscreen;
   
   const adhaWriteMode = useAdhaWriteMode();
+  const { user } = useAuth();
 
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -82,15 +88,22 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
   const messages = React.useMemo(() => activeConversation?.messages || [], [activeConversation]);
+  
+  // Obtenir le prénom de l'utilisateur
+  const getUserFirstName = () => {
+    if (user?.givenName) return user.givenName;
+    if (user?.name) return user.name.split(' ')[0];
+    return 'là';
+  };
 
-  // Charger les conversations au démarrage en mode API
+  // Charger les conversations au démarrage
   useEffect(() => {
-    if (isApiMode && !isInitialized) {
+    if (!isInitialized) {
       fetchConversations().then(() => {
         setIsInitialized(true);
       });
     }
-  }, [isApiMode, isInitialized, fetchConversations]);
+  }, [isInitialized, fetchConversations]);
 
   // Connexion WebSocket pour le streaming
   useEffect(() => {
@@ -249,37 +262,89 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
           <div className="flex-1 overflow-y-auto">
             <div className={`px-3 py-4 space-y-1 ${isFullscreen ? 'max-w-4xl mx-auto' : ''}`}>
               {messages.length === 0 ? (
-                /* État vide */
-                <div className="flex flex-col items-center justify-center h-full py-12 text-center">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3">
-                    <MessageSquare className="h-6 w-6 text-primary" />
+                /* Écran d'accueil style ChatGPT/Claude/Gemini */
+                <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
+                  {/* Logo ADHA animé */}
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-2xl flex items-center justify-center">
+                      <Sparkles className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    </div>
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                    Commencez une conversation
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                    Posez une question à ADHA sur votre portefeuille.
+                  
+                  {/* Message de bienvenue personnalisé */}
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Bonjour, {getUserFirstName()} 👋
+                  </h2>
+                  <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md">
+                    Je suis <span className="font-medium text-primary">ADHA</span>, votre assistant intelligent. 
+                    Comment puis-je vous aider aujourd'hui ?
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                  
+                  {/* Suggestions de prompts - style cartes */}
+                  <div className={`grid gap-3 w-full max-w-lg ${isFullscreen ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     <button 
-                      onClick={() => setNewMessage("Analyse le portefeuille actuel")}
-                      className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full transition-colors"
+                      onClick={() => setNewMessage("Analyse la performance de mon portefeuille")}
+                      className="group flex items-start gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all text-left"
                     >
-                      📊 Analyser
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Analyse de portefeuille</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Performance, tendances et opportunités</p>
+                      </div>
                     </button>
+                    
                     <button 
-                      onClick={() => setNewMessage("Quels sont les risques majeurs ?")}
-                      className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full transition-colors"
+                      onClick={() => setNewMessage("Quels sont les risques majeurs à surveiller ?")}
+                      className="group flex items-start gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all text-left"
                     >
-                      ⚠️ Risques
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Évaluation des risques</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Alertes et points d'attention</p>
+                      </div>
                     </button>
+                    
                     <button 
-                      onClick={() => setNewMessage("Génère un rapport de synthèse")}
-                      className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full transition-colors"
+                      onClick={() => setNewMessage("Génère un rapport de synthèse mensuel")}
+                      className="group flex items-start gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all text-left"
                     >
-                      📄 Rapport
+                      <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Génération de rapports</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Synthèses et documents automatisés</p>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setNewMessage("Aide-moi à créer une écriture comptable")}
+                      className="group flex items-start gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all text-left"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <Calculator className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Écritures comptables</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Générer et valider des écritures</p>
+                      </div>
                     </button>
                   </div>
+                  
+                  {/* Tip du mode écriture */}
+                  {!adhaWriteMode.isActive && (
+                    <div className="mt-6 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                      <HelpCircle className="h-3.5 w-3.5" />
+                      <span>Activez le <span className="font-medium text-primary cursor-pointer hover:underline" onClick={() => adhaWriteMode.toggle()}>mode Écriture</span> pour générer des écritures comptables</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 messages.map((message) => (

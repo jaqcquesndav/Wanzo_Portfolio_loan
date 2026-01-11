@@ -6,11 +6,7 @@ export interface Message {
   likes?: number;
   dislikes?: number;
   isEditing?: boolean;
-  attachment?: {
-    name: string;
-    type: string;
-    content: string;
-  };
+  attachment?: MessageAttachment;
   error?: boolean;
   pending?: boolean;
   retry?: number;
@@ -18,6 +14,107 @@ export interface Message {
   isStreaming?: boolean;
   /** Actions suggérées par l'IA à la fin du streaming */
   suggestedActions?: string[];
+  /** Métadonnées du message */
+  metadata?: ChatMetadata;
+}
+
+/**
+ * Mode de chat (conversation normale ou analyse pour écritures comptables)
+ */
+export type ChatMode = 'chat' | 'analyse';
+
+/**
+ * Pièce jointe d'un message
+ */
+export interface MessageAttachment {
+  id?: string;
+  name: string;
+  type: string;
+  url?: string;
+  content?: string;
+  size?: number;
+  uploaded_at?: string;
+}
+
+/**
+ * Métadonnées contextuelles pour le chat
+ */
+export interface ChatMetadata {
+  title?: string;
+  portfolioId?: string;
+  portfolioType?: 'traditional' | 'investment' | 'leasing';
+  clientId?: string;
+  companyId?: string;
+  entityType?: string;
+  entityId?: string;
+  institutionId?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Suggestion de chat basée sur le contexte
+ */
+export interface ChatSuggestion {
+  id: string;
+  text: string;
+  category: string;
+  relevance: number;
+}
+
+/**
+ * Réponse prédéfinie
+ */
+export interface PredefinedResponse {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+}
+
+/**
+ * Évaluation d'un message
+ */
+export interface MessageRating {
+  id: string;
+  messageId: string;
+  score: 1 | 2 | 3 | 4 | 5;
+  feedback?: string;
+  timestamp: string;
+}
+
+/**
+ * Rapport généré depuis les conversations
+ */
+export interface ChatReport {
+  id: string;
+  title: string;
+  format: 'pdf' | 'docx' | 'html';
+  url: string;
+  generated_at: string;
+  size: number;
+}
+
+/**
+ * Réponse de l'endpoint /chat/stream
+ */
+export interface StreamingResponse {
+  success: boolean;
+  data: {
+    messageId: string;
+    conversationId: string;
+    userMessageId: string;
+  };
+  websocket: {
+    namespace: string;
+    events: {
+      subscribe: string;
+      chunk: string;
+      end: string;
+      error: string;
+      tool: string;
+    };
+  };
 }
 
 /**

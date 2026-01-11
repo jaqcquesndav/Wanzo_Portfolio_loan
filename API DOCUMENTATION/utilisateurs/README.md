@@ -549,22 +549,16 @@ interface InstitutionLite {
 ## Règles métier
 
 1. **Email unique** : Un email ne peut être associé qu'à un seul compte
-2. **Authentification et 2FA** :
-   - L'authentification est gérée par **Auth0**
-   - Le 2FA est configuré directement dans Auth0 (pas d'endpoint local)
-   - Le changement de mot de passe passe par Auth0
-3. **Vérification d'identité** :
+2. **Vérification d'identité** :
    - Obligatoire pour les rôles Admin et Portfolio_Manager
    - Le document doit être valide et lisible
    - Expiration automatique après 5 ans
-4. **Rôles et permissions** :
+3. **Rôles et permissions** :
    - Admin : Tous les droits
    - Portfolio_Manager : Gestion des portefeuilles et crédits
    - Auditor : Consultation uniquement
    - User : Accès limité selon permissions assignées
-5. **Suspension** :
+4. **Suspension** :
    - Un utilisateur suspendu ne peut plus se connecter
    - Les données restent accessibles en lecture seule
-6. **Endpoint /users/me** :
-   - Retourne l'utilisateur courant avec son institution associée
-   - Optimisé pour le login (~5KB vs ~100KB+)
+5. **Mots de passe** : Gérés par Auth0, non stockés localement
