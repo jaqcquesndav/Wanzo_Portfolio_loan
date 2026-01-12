@@ -1,5 +1,6 @@
 import { networkService } from './networkService';
 import { apiClient } from '../api/base.api';
+import { getAccessToken } from '../api/authHeaders';
 import { API_CONFIG } from '../../config/api';
 
 export interface SyncQueueItem {
@@ -91,7 +92,7 @@ class SyncService {
 
   startSync(): void {
     // Vérifier si l'utilisateur est connecté
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (!token) {
       console.warn('No authentication token found, sync disabled');
       return;
@@ -142,7 +143,7 @@ class SyncService {
         throw new Error('No network connection');
       }
 
-      const token = localStorage.getItem('token');
+      const token = getAccessToken();
       if (!token) {
         throw new Error('No authentication token');
       }

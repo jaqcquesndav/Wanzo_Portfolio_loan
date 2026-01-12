@@ -1,5 +1,6 @@
 // Service pour la sauvegarde locale des formulaires via IndexedDB
 import { openDB, type IDBPDatabase } from 'idb';
+import { getAuthHeaders } from './api/authHeaders';
 
 interface PendingForm {
   id: string;
@@ -122,7 +123,7 @@ class LocalStorageService {
   }
 
   private async syncFormToBackend(form: PendingForm): Promise<void> {
-    // Simulation d'appel API - à implémenter selon vos endpoints
+    // Endpoints API pour la synchronisation
     const endpoints = {
       portfolio: '/api/portfolios',
       credit_request: '/api/credit-requests',
@@ -131,10 +132,7 @@ class LocalStorageService {
 
     const response = await fetch(endpoints[form.type], {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Ajoutez vos headers d'authentification ici
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(form.data)
     });
 

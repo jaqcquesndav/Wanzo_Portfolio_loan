@@ -77,10 +77,27 @@ interface GetContextsParams {
 }
 
 /**
- * Réponse de la liste des contextes
+ * Contexte tel que renvoyé par le backend
+ */
+interface BackendContext {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  metadata: Record<string, unknown>;
+  messageCount: number;
+  lastMessage: {
+    content: string;
+    timestamp: string;
+    sender: string;
+  } | null;
+}
+
+/**
+ * Réponse de la liste des contextes (format backend)
  */
 interface GetContextsResponse {
-  contexts: Conversation[];
+  contexts: BackendContext[];
   total: number;
   limit: number;
   offset: number;
@@ -117,6 +134,7 @@ class ChatApiService {
   
   /**
    * Récupère tous les contextes de chat de l'utilisateur
+   * Note: Le backend renvoie { data: { contexts: [...], total, limit, offset } }
    */
   async getContexts(params?: GetContextsParams): Promise<GetContextsResponse> {
     try {
@@ -128,7 +146,23 @@ class ChatApiService {
       if (params?.companyId) queryParams.append('companyId', params.companyId);
 
       const url = `${API_ENDPOINTS.chat.contexts.getAll}?${queryParams.toString()}`;
-      return await apiClient.get<GetContextsResponse>(url);
+      const response = await apiClient.get<GetContextsResponse | { data: GetContextsResponse }>(url);
+      
+      // Le backend peut renvoyer { data: { contexts: [...] } } ou directement { contexts: [...] }
+      // Gérer les deux cas
+      if ('data' in response && response.data && 'contexts' in response.data) {
+        console.log('[ChatApi] getContexts - Format avec enveloppe data:', response.data);
+        return response.data;
+      }
+      
+      // Format direct
+      if ('contexts' in response) {
+        console.log('[ChatApi] getContexts - Format direct:', response);
+        return response as GetContextsResponse;
+      }
+      
+      console.warn('[ChatApi] getContexts - Format inattendu:', response);
+      return { contexts: [], total: 0, limit: 10, offset: 0 };
     } catch (error) {
       console.error('Erreur lors de la récupération des contextes:', error);
       return { contexts: [], total: 0, limit: 10, offset: 0 };
@@ -137,10 +171,23 @@ class ChatApiService {
 
   /**
    * Alias pour getContexts - compatibilité avec l'ancien code
+   * Transforme les contextes backend en format Conversation frontend
    */
   async getConversations(): Promise<Conversation[]> {
     const response = await this.getContexts();
-    return response.contexts;
+    
+    // Transformer les contextes backend en format Conversation frontend
+    return response.contexts.map(ctx => ({
+      id: ctx.id,
+      title: ctx.title,
+      timestamp: ctx.updated_at || ctx.created_at || new Date().toISOString(),
+      messages: [], // Les messages seront chargés séparément si nécessaire
+      isActive: false,
+      model: AI_MODELS[0],
+      context: [],
+      synced: true,
+      lastSyncTime: ctx.updated_at
+    }));
   }
 
   /**
@@ -148,7 +195,21 @@ class ChatApiService {
    */
   async getContextById(contextId: string): Promise<Conversation | null> {
     try {
-      return await apiClient.get<Conversation>(API_ENDPOINTS.chat.contexts.getById(contextId));
+      const response = await apiClient.get<BackendContext | { data: BackendContext }>(API_ENDPOINTS.chat.contexts.getById(contextId));
+      
+      // Gérer l'enveloppe data si présente
+      const ctx = 'data' in response && response.data ? response.data : response as BackendContext;
+      
+      return {
+        id: ctx.id,
+        title: ctx.title,
+        timestamp: ctx.updated_at || ctx.created_at || new Date().toISOString(),
+        messages: [],
+        isActive: true,
+        model: AI_MODELS[0],
+        context: [],
+        synced: true
+      };
     } catch (error) {
       console.error(`Erreur lors de la récupération du contexte ${contextId}:`, error);
       return null;
@@ -160,16 +221,25 @@ class ChatApiService {
    */
   async createContext(data?: { title?: string; metadata?: ChatMetadata }): Promise<Conversation> {
     try {
-      const response = await apiClient.post<Conversation>(API_ENDPOINTS.chat.contexts.create, {
+      const response = await apiClient.post<BackendContext | { data: BackendContext }>(API_ENDPOINTS.chat.contexts.create, {
         title: data?.title || 'Nouvelle conversation',
         metadata: data?.metadata
       });
+      
+      // Gérer l'enveloppe data si présente
+      const ctx = 'data' in response && response.data ? response.data : response as BackendContext;
+      
+      console.log('[ChatApi] createContext - Réponse backend:', ctx);
+      
       return {
-        ...response,
+        id: ctx.id,
+        title: ctx.title,
+        timestamp: ctx.updated_at || ctx.created_at || new Date().toISOString(),
         messages: [],
         isActive: true,
         model: AI_MODELS[0],
-        context: []
+        context: [],
+        synced: true
       };
     } catch (error) {
       console.error('Erreur lors de la création du contexte:', error);
@@ -253,13 +323,28 @@ class ChatApiService {
    */
   async sendMessage(params: SendMessageParams): Promise<SendMessageResponse> {
     try {
-      return await apiClient.post<SendMessageResponse>(API_ENDPOINTS.chat.messages.send, {
+      const response = await apiClient.post<SendMessageResponse | { data: SendMessageResponse }>(API_ENDPOINTS.chat.messages.send, {
         content: params.content,
         contextId: params.contextId,
         metadata: params.metadata,
         attachment: params.attachment,
         mode: params.mode || 'chat'
       });
+      
+      console.log('[ChatApi] sendMessage - Réponse brute:', response);
+      
+      // Gérer l'enveloppe data si présente
+      if ('data' in response && response.data && 'id' in response.data) {
+        return response.data;
+      }
+      
+      // Format direct
+      if ('id' in response) {
+        return response as SendMessageResponse;
+      }
+      
+      console.error('[ChatApi] sendMessage - Format de réponse inattendu:', response);
+      throw new Error('Format de réponse message inattendu');
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message:', error);
       // Retourner un message local avec erreur
@@ -281,12 +366,58 @@ class ChatApiService {
    */
   async sendStreamingMessage(params: SendMessageParams): Promise<StreamingResponse> {
     try {
-      return await apiClient.post<StreamingResponse>(API_ENDPOINTS.chat.messages.stream, {
+      const response = await apiClient.post<StreamingResponse | { data: StreamingResponse['data']; websocket?: StreamingResponse['websocket'] }>(API_ENDPOINTS.chat.messages.stream, {
         content: params.content,
         contextId: params.contextId,
         metadata: params.metadata,
         mode: params.mode || 'chat'
       });
+      
+      console.log('[ChatApi] sendStreamingMessage - Réponse brute:', response);
+      
+      // Si la réponse a été déballée par apiClient (juste data), reconstruire le format attendu
+      if ('messageId' in response) {
+        return {
+          success: true,
+          data: response as StreamingResponse['data'],
+          websocket: {
+            namespace: '/',  // Namespace racine selon la doc
+            events: {
+              subscribe: 'subscribe_conversation',
+              chunk: 'adha.stream.chunk',
+              end: 'adha.stream.end',
+              error: 'adha.stream.error',
+              tool: 'adha.stream.tool'
+            }
+          }
+        };
+      }
+      
+      // Format complet StreamingResponse
+      if ('success' in response && 'data' in response) {
+        return response as StreamingResponse;
+      }
+      
+      // Format avec data mais sans success
+      if ('data' in response && response.data && 'messageId' in response.data) {
+        return {
+          success: true,
+          data: response.data,
+          websocket: response.websocket || {
+            namespace: '/',  // Namespace racine selon la doc
+            events: {
+              subscribe: 'subscribe_conversation',
+              chunk: 'adha.stream.chunk',
+              end: 'adha.stream.end',
+              error: 'adha.stream.error',
+              tool: 'adha.stream.tool'
+            }
+          }
+        };
+      }
+      
+      console.error('[ChatApi] sendStreamingMessage - Format de réponse inattendu:', response);
+      throw new Error('Format de réponse streaming inattendu');
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message streaming:', error);
       throw error;

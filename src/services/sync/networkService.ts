@@ -1,3 +1,5 @@
+import { getAccessToken } from '../api/authHeaders';
+
 class NetworkService {
   private online: boolean = navigator.onLine;
   private baseUrl: string = import.meta.env.VITE_API_URL;
@@ -53,7 +55,7 @@ class NetworkService {
         method: 'HEAD',
         signal: controller.signal,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getAccessToken() || ''}`
         }
       });
 
@@ -96,7 +98,7 @@ class NetworkService {
       const response = await fetch(`${this.baseUrl}/health`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getAccessToken() || ''}`
         }
       });
       const latency = performance.now() - start;

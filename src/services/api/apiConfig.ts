@@ -46,8 +46,25 @@ export const API_ENDPOINTS = {
   VALUATIONS: '/investment/valuations'
 };
 
-// Headers par défaut pour les requêtes API
-export const DEFAULT_HEADERS = {
+// Headers par défaut pour les requêtes API (statiques)
+export const DEFAULT_HEADERS_STATIC = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
 };
+
+// Import pour les headers authentifiés
+import { getAuthHeaders } from './authHeaders';
+
+/**
+ * Récupère les headers par défaut avec authentification
+ * UTILISER CETTE FONCTION pour toutes les requêtes API authentifiées
+ * 
+ * @returns Headers avec Content-Type, Accept et Authorization Bearer token
+ */
+export const DEFAULT_HEADERS = getAuthHeaders();
+
+/**
+ * Fonction pour obtenir les headers avec authentification à jour
+ * À utiliser dans les méthodes async pour garantir un token frais
+ */
+export const getDefaultHeaders = (): HeadersInit => getAuthHeaders();

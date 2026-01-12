@@ -1,5 +1,6 @@
 import { emailTemplates } from './templates';
 import type { EmailTemplate } from './types';
+import { getAuthHeaders } from '../api/authHeaders';
 
 class EmailService {
   private async sendEmail(to: string, subject: string, html: string): Promise<void> {
@@ -10,13 +11,10 @@ class EmailService {
         return;
       }
 
-      // In production, implement actual email sending
+      // In production, implement actual email sending with authentication
       const response = await fetch('/api/email/send', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ to, subject, html })
       });
 

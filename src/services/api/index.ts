@@ -19,6 +19,18 @@ import { investmentApi } from './investment';
 // Exporter l'API client de base
 export { apiClient };
 
+// Exporter les utilitaires d'authentification
+export {
+  getAccessToken,
+  isAuthenticated,
+  getAuthHeaders,
+  getAuthHeadersForUpload,
+  createAuthHeaders,
+  createAuthHeadersForUpload,
+  addAuthToHeaders,
+  authenticatedFetch
+} from './authHeaders';
+
 // Exporter les services API partagés
 export * from './shared';
 

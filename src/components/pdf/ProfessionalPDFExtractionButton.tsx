@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { FileUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { getAuthHeadersForUpload } from '../../services/api/authHeaders';
 
 interface ExtractedData {
   [key: string]: string | number | undefined;
@@ -56,6 +57,7 @@ export const ProfessionalPDFExtractionButton: React.FC<ProfessionalPDFExtraction
 
       const response = await fetch('/api/extract-pdf', {
         method: 'POST',
+        headers: getAuthHeadersForUpload(),
         body: formData
       });
 

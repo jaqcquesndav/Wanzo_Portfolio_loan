@@ -12,8 +12,8 @@ export interface Message {
   retry?: number;
   /** Indique si le message est en cours de streaming */
   isStreaming?: boolean;
-  /** Actions suggérées par l'IA à la fin du streaming */
-  suggestedActions?: string[];
+  /** Actions suggérées par l'IA à la fin du streaming - peut être string[] ou {type, payload}[] */
+  suggestedActions?: Array<string | { type: string; payload: unknown }>;
   /** Métadonnées du message */
   metadata?: ChatMetadata;
 }
@@ -97,6 +97,7 @@ export interface ChatReport {
 
 /**
  * Réponse de l'endpoint /chat/stream
+ * @see API DOCUMENTATION/chat/README.md - Section "Mode Streaming"
  */
 export interface StreamingResponse {
   success: boolean;
@@ -106,13 +107,13 @@ export interface StreamingResponse {
     userMessageId: string;
   };
   websocket: {
-    namespace: string;
+    namespace: string;  // '/' selon la doc
     events: {
-      subscribe: string;
-      chunk: string;
-      end: string;
-      error: string;
-      tool: string;
+      subscribe: string;  // 'subscribe_conversation'
+      chunk: string;      // 'adha.stream.chunk'
+      end: string;        // 'adha.stream.end'
+      error: string;      // 'adha.stream.error'
+      tool: string;       // 'adha.stream.tool'
     };
   };
 }
@@ -147,14 +148,15 @@ export interface PortfolioStreamChunkEvent {
   companyId: string;
   /** Présent uniquement dans les messages 'end' */
   totalChunks?: number;
-  /** Actions recommandées basées sur l'analyse */
-  suggestedActions?: string[];
+  /** Actions recommandées basées sur l'analyse - peut être string[] ou {type, payload}[] */
+  suggestedActions?: Array<string | { type: string; payload: unknown }>;
   /** Détails de traitement */
   processingDetails?: {
-    totalChunks: number;
-    contentLength: number;
-    aiModel: string;
-    source: string;
+    totalChunks?: number;
+    contentLength?: number;
+    aiModel?: string;
+    tokensUsed?: number;  // Ajouté selon la doc
+    source?: string;
   };
   /** Métadonnées du streaming */
   metadata?: StreamChunkMetadata;

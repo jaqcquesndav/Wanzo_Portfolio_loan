@@ -35,9 +35,9 @@ export function ConversationList({
   );
 
   return (
-    <div className="w-72 flex flex-col h-full bg-gray-50/50 dark:bg-gray-800/50">
-      {/* Header avec bouton nouvelle conversation */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      {/* Header avec bouton nouvelle conversation - fixé en haut */}
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={onNew}
           className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm hover:shadow-md"
@@ -47,8 +47,8 @@ export function ConversationList({
         </button>
       </div>
       
-      {/* Liste des conversations */}
-      <div className="flex-1 overflow-y-auto py-2">
+      {/* Liste des conversations - scrollable, prend tout l'espace restant */}
+      <div className="flex-1 overflow-y-auto min-h-0 py-2">
         {sortedConversations.length === 0 ? (
           /* État vide élégant */
           <div className="p-6 text-center text-gray-500 dark:text-gray-400">

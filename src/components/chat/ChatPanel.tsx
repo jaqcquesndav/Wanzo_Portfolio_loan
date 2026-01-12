@@ -25,12 +25,12 @@ import {
   Columns,
   TrendingUp,
   FileText,
-  Calculator,
   HelpCircle
 } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
 import { useAuth } from '../../contexts/useAuth';
+import { useAppContextStore } from '../../stores/appContextStore';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageContent } from './MessageContent';
 import { SourceSelector } from './SourceSelector';
@@ -43,6 +43,9 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ onClose }: ChatPanelProps) {
+  // Récupérer l'institutionId depuis le store global (mis à jour après /me)
+  const globalInstitutionId = useAppContextStore(state => state.institutionId);
+  
   const {
     conversations,
     activeConversationId,
@@ -59,7 +62,6 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     toggleDislike,
     currentPortfolioType,
     currentPortfolioId,
-    currentInstitutionId,
     selectedTask,
     setPortfolioType,
     setSelectedTask,
@@ -89,11 +91,13 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const activeConversation = conversations.find(c => c.id === activeConversationId);
   const messages = React.useMemo(() => activeConversation?.messages || [], [activeConversation]);
   
-  // Obtenir le prénom de l'utilisateur
+  // Obtenir le prénom de l'utilisateur connecté
   const getUserFirstName = () => {
     if (user?.givenName) return user.givenName;
+    if (user?.firstName) return user.firstName;
     if (user?.name) return user.name.split(' ')[0];
-    return 'là';
+    if (user?.email) return user.email.split('@')[0];
+    return '';
   };
 
   // Charger les conversations au démarrage
@@ -105,10 +109,13 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     }
   }, [isInitialized, fetchConversations]);
 
-  // Connexion WebSocket pour le streaming
+  // Connexion WebSocket pour le streaming - utilise l'institutionId du contexte global
   useEffect(() => {
-    if (isApiMode && isStreamingEnabled && currentInstitutionId && !isWebSocketConnected) {
-      connectWebSocket(currentInstitutionId);
+    console.log('[ChatPanel] WebSocket effect - globalInstitutionId:', globalInstitutionId, 'isApiMode:', isApiMode, 'isStreamingEnabled:', isStreamingEnabled, 'isWebSocketConnected:', isWebSocketConnected);
+    
+    if (isApiMode && isStreamingEnabled && globalInstitutionId && !isWebSocketConnected) {
+      console.log('[ChatPanel] Connexion WebSocket avec institutionId:', globalInstitutionId);
+      connectWebSocket(globalInstitutionId);
     }
     
     return () => {
@@ -116,7 +123,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
         disconnectWebSocket();
       }
     };
-  }, [isApiMode, isStreamingEnabled, currentInstitutionId, isWebSocketConnected, connectWebSocket, disconnectWebSocket]);
+  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket, disconnectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
@@ -159,25 +166,8 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-      {/* Structure avec sidebar optionnelle */}
-      <div className="flex flex-1 h-full overflow-hidden">
-        {/* Sidebar conversations - visible en fullscreen ou si activée */}
-        {showSidebar && (
-          <div className="flex-shrink-0 w-64 h-full border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <ConversationList 
-              conversations={conversations}
-              activeId={activeConversationId}
-              onSelect={setActiveConversation}
-              onDelete={deleteConversation}
-              onNew={createNewConversation}
-            />
-          </div>
-        )}
-        
-        {/* Contenu principal du chat */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          {/* Header compact */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+      {/* Header global - couvre toute la largeur */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 w-full">
             <div className="flex items-center space-x-2 min-w-0">
               {/* Toggle sidebar */}
               <button 
@@ -256,27 +246,34 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-          </div>
+      </div>
 
+      {/* Structure avec sidebar et contenu */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Sidebar conversations */}
+        {showSidebar && (
+          <aside className="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col overflow-hidden">
+            <ConversationList 
+              conversations={conversations}
+              activeId={activeConversationId}
+              onSelect={setActiveConversation}
+              onDelete={deleteConversation}
+              onNew={createNewConversation}
+            />
+          </aside>
+        )}
+        
+        {/* Contenu principal du chat */}
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Zone des messages */}
           <div className="flex-1 overflow-y-auto">
             <div className={`px-3 py-4 space-y-1 ${isFullscreen ? 'max-w-4xl mx-auto' : ''}`}>
               {messages.length === 0 ? (
                 /* Écran d'accueil style ChatGPT/Claude/Gemini */
                 <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
-                  {/* Logo ADHA animé */}
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-2xl flex items-center justify-center">
-                      <Sparkles className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                    </div>
-                  </div>
-                  
                   {/* Message de bienvenue personnalisé */}
                   <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                    Bonjour, {getUserFirstName()} 👋
+                    Bonjour{getUserFirstName() ? `, ${getUserFirstName()}` : ''} 👋
                   </h2>
                   <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md">
                     Je suis <span className="font-medium text-primary">ADHA</span>, votre assistant intelligent. 
@@ -325,24 +322,24 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                     </button>
                     
                     <button 
-                      onClick={() => setNewMessage("Aide-moi à créer une écriture comptable")}
+                      onClick={() => setNewMessage("Quels sont les prospects prioritaires à contacter ?")}
                       className="group flex items-start gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all text-left"
                     >
                       <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                        <Calculator className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        <User className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Écritures comptables</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Générer et valider des écritures</p>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Prospection client</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Identifier et prioriser les prospects</p>
                       </div>
                     </button>
                   </div>
                   
-                  {/* Tip du mode écriture */}
+                  {/* Tip du mode analyse */}
                   {!adhaWriteMode.isActive && (
                     <div className="mt-6 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
                       <HelpCircle className="h-3.5 w-3.5" />
-                      <span>Activez le <span className="font-medium text-primary cursor-pointer hover:underline" onClick={() => adhaWriteMode.toggle()}>mode Écriture</span> pour générer des écritures comptables</span>
+                      <span>Activez le <span className="font-medium text-primary cursor-pointer hover:underline" onClick={() => adhaWriteMode.toggle()}>mode Analyse</span> pour des analyses approfondies</span>
                     </div>
                   )}
                 </div>
@@ -448,15 +445,20 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                               Suggestions
                             </p>
                             <div className="flex flex-wrap gap-1">
-                              {message.suggestedActions.slice(0, 3).map((action, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => addMessage(action, 'user')}
-                                  className="text-xs px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors"
-                                >
-                                  {action.length > 30 ? action.substring(0, 30) + '...' : action}
-                                </button>
-                              ))}
+                              {message.suggestedActions.slice(0, 3).map((action, index) => {
+                                // Gérer les deux formats: string ou {type, payload}
+                                const actionText = typeof action === 'string' ? action : action.type;
+                                const displayText = actionText.length > 30 ? actionText.substring(0, 30) + '...' : actionText;
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => addMessage(actionText, 'user')}
+                                    className="text-xs px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors"
+                                  >
+                                    {displayText}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -540,7 +542,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
             
           {/* Zone de saisie compacte */}
           <div className="p-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-            <div className="relative">
+            <div className="flex items-end gap-2">
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -549,7 +551,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                   ? "Décrivez l'analyse..." 
                   : "Posez votre question..."
                 }
-                className="w-full px-3 py-2 pr-10 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none text-sm placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
+                className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none text-sm placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                 rows={1}
                 style={{ minHeight: '36px', maxHeight: '120px' }}
               />
@@ -558,14 +560,14 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                 onClick={handleSend}
                 disabled={!newMessage.trim()}
                 className={`
-                  absolute right-1.5 bottom-1.5 p-1.5 rounded-md transition-all
+                  p-2.5 rounded-lg transition-all flex-shrink-0
                   ${newMessage.trim() 
                     ? 'bg-primary text-white hover:bg-primary/90' 
                     : 'bg-gray-100 dark:bg-gray-600 text-gray-400 cursor-not-allowed'
                   }
                 `}
               >
-                <Send className="h-3.5 w-3.5" />
+                <Send className="h-4 w-4" />
               </button>
             </div>
             
@@ -621,7 +623,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
 
       {/* Source Selector Modal */}

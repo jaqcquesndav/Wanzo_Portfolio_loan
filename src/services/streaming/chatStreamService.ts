@@ -14,6 +14,7 @@ import type {
   StreamingState, 
   StreamingConfig
 } from '../../types/chat';
+import { getAccessToken } from '../api/authHeaders';
 
 // Configuration par défaut
 const DEFAULT_CONFIG: StreamingConfig = {
@@ -38,7 +39,7 @@ const SOCKET_EVENTS = {
 // Types pour les callbacks
 type ChunkCallback = (chunk: PortfolioStreamChunkEvent) => void;
 type ErrorCallback = (error: Error) => void;
-type CompleteCallback = (content: string, suggestedActions?: string[]) => void;
+type CompleteCallback = (content: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => void;
 type ConnectionCallback = (connected: boolean) => void;
 
 /**
@@ -100,12 +101,17 @@ export class ChatStreamService {
         this.socket = io(this.config.websocketUrl, {
           path: '/socket.io',
           transports: ['websocket'],
+          // Authentification via l'objet auth (méthode sécurisée Socket.IO)
           auth: {
             token
           },
+          // Query params pour l'institutionId (pas le token pour des raisons de sécurité)
           query: {
-            token,
             institutionId
+          },
+          // Headers supplémentaires si le backend les supporte
+          extraHeaders: {
+            'Authorization': `Bearer ${token}`
           },
           reconnection: this.config.autoRetry,
           reconnectionAttempts: this.config.maxRetries,
@@ -463,12 +469,11 @@ export class ChatStreamService {
   }
 
   /**
-   * Récupère le token d'authentification
+   * Récupère le token d'authentification Auth0
    */
   private getAuthToken(): string {
-    // Essayer de récupérer le token depuis le localStorage
-    const tokenKey = 'auth_token';
-    return localStorage.getItem(tokenKey) || '';
+    // Utiliser le module centralisé d'authentification
+    return getAccessToken() || '';
   }
 }
 

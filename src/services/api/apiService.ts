@@ -1,4 +1,5 @@
-import { API_BASE_URL, API_TIMEOUT, DEFAULT_HEADERS } from './apiConfig';
+import { API_BASE_URL, API_TIMEOUT } from './apiConfig';
+import { getAuthHeaders } from './authHeaders';
 
 // Type générique pour les réponses API
 interface ApiResponse<T> {
@@ -9,6 +10,9 @@ interface ApiResponse<T> {
 
 /**
  * Service générique pour les requêtes API
+ * 
+ * Ce service utilise automatiquement le token d'authentification Auth0
+ * via getAuthHeaders() pour toutes les requêtes.
  */
 export class ApiService {
   /**
@@ -24,7 +28,7 @@ export class ApiService {
       
       const response = await fetch(url, {
         method: 'GET',
-        headers: DEFAULT_HEADERS,
+        headers: getAuthHeaders(),
         signal: controller.signal
       });
       
@@ -63,7 +67,7 @@ export class ApiService {
       
       const response = await fetch(url, {
         method: 'POST',
-        headers: DEFAULT_HEADERS,
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
         signal: controller.signal
       });
@@ -103,7 +107,7 @@ export class ApiService {
       
       const response = await fetch(url, {
         method: 'PUT',
-        headers: DEFAULT_HEADERS,
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
         signal: controller.signal
       });
@@ -143,7 +147,7 @@ export class ApiService {
       
       const response = await fetch(url, {
         method: 'DELETE',
-        headers: DEFAULT_HEADERS,
+        headers: getAuthHeaders(),
         signal: controller.signal
       });
       

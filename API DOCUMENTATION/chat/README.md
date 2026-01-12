@@ -238,7 +238,7 @@ Content-Type: application/json
     "userMessageId": "user-msg-001"
   },
   "websocket": {
-    "namespace": "/chat",
+    "namespace": "/",
     "events": {
       "subscribe": "subscribe_conversation",
       "chunk": "adha.stream.chunk",
@@ -713,6 +713,45 @@ export const PortfolioChatTopics = {
 };
 ```
 
+### Format Standardisé des Messages Kafka (Important!)
+
+> **⚠️ Mise à jour Janvier 2026**: Tous les messages envoyés à ADHA AI utilisent le format standardisé 
+> `MessageVersionManager.createStandardMessage()` pour garantir la compatibilité et le bon routage 
+> du `conversationId` dans les réponses streaming.
+
+```typescript
+// Structure du message Kafka standardisé
+interface StandardKafkaMessage<T> {
+  id: string;          // UUID unique du message
+  eventType: string;   // ex: 'portfolio.chat.message'
+  data: T;             // L'événement (PortfolioChatMessageEvent)
+  metadata: {
+    id: string;
+    correlationId: string;
+    timestamp: string;
+    source: string;    // 'portfolio-institution-service'
+    version: {
+      version: string;
+      schemaVersion: string;
+    };
+  };
+}
+
+// Exemple d'utilisation dans adha-ai.service.ts
+const standardMessage = MessageVersionManager.createStandardMessage(
+  PortfolioChatTopics.CHAT_MESSAGE,
+  event,  // PortfolioChatMessageEvent avec conversationId
+  'portfolio-institution-service'
+);
+await this.kafkaClient.emit(topic, standardMessage).toPromise();
+```
+
+Ce format garantit que le `conversationId` est correctement transmis à travers le cycle complet :
+1. Portfolio Service → ADHA AI (via `portfolio.chat.message`)
+2. ADHA AI extrait `data.conversationId` 
+3. ADHA AI renvoie les chunks avec le même `conversationId`
+4. WebSocket route vers la bonne room `conversation:{conversationId}`
+
 ### Services Backend
 
 | Service | Méthodes principales |
@@ -812,23 +851,15 @@ interface StreamChunkEvent {
   
   // Présents uniquement dans les messages 'end'
   totalChunks?: number;
-  suggestedActions?: string[];   // Actions recommandées basées sur l'analyse
+  suggestedActions?: Array<{type: string; payload: any}>;  // Actions recommandées
   processingDetails?: {
-    totalChunks: number;
-    contentLength: number;
-    aiModel: string;
-    source: string;              // 'portfolio_institution'
+    totalChunks?: number;
+    contentLength?: number;
+    aiModel?: string;
+    tokensUsed?: number;
   };
   
-  metadata?: {
-    source: string;              // 'adha_ai_service'
-    streamVersion: string;       // '1.0.0'
-    streamComplete?: boolean;    // true pour 'end'
-    error?: boolean;             // true pour 'error'
-    institutionId?: string;      // ID de l'institution
-    portfolioId?: string;        // ID du portefeuille analysé
-    portfolioType?: string;      // 'traditional', 'investment', 'leasing'
-  };
+  metadata?: Record<string, any>;
 }
 ```
 

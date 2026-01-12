@@ -1,5 +1,6 @@
 // src/services/api/traditional/payment.api.ts
 import { apiClient } from '../base.api';
+import { getAuthHeadersForUpload } from '../authHeaders';
 import type { CreditPayment } from '../../../types/credit-payment';
 import { traditionalDataService } from './dataService';
 
@@ -256,9 +257,10 @@ export const paymentApi = {
       const formData = new FormData();
       formData.append('receipt', file);
       
-      // Vérifions comment apiClient est implémenté
+      // Utiliser les headers d'authentification pour l'upload
       const response = await fetch(`/api/portfolios/traditional/repayments/${id}/upload-receipt`, {
         method: 'POST',
+        headers: getAuthHeadersForUpload(),
         body: formData,
       });
       
@@ -373,6 +375,7 @@ export const paymentApi = {
       
       const response = await fetch(`/api/portfolios/traditional/payments/${paymentId}/supporting-document`, {
         method: 'POST',
+        headers: getAuthHeadersForUpload(),
         body: formData,
       });
       
@@ -521,6 +524,7 @@ export const paymentApi = {
       
       const response = await fetch(`/api/portfolios/traditional/repayments/${id}/receipt`, {
         method: 'POST',
+        headers: getAuthHeadersForUpload(),
         body: formData,
       });
       

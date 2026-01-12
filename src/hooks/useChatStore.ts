@@ -4,6 +4,7 @@ import type { Message, Conversation, AIModel, StreamingState, PortfolioStreamChu
 import { AI_MODELS } from '../types/chat';
 import { chatApi } from '../services/api/chat.api';
 import { getChatStreamService, ChatStreamService } from '../services/streaming';
+import { getInstitutionId } from '../stores/appContextStore';
 
 // Définition du type Task
 export interface Task {
@@ -37,7 +38,7 @@ interface ChatStore {
   currentPortfolioType: 'traditional' | 'leasing' | 'investment';
   selectedTask: Task | null;
   currentPortfolioId: string | null;
-  currentInstitutionId: string | null;
+  // Note: institutionId n'est plus stocké ici - utiliser getInstitutionId() du store global
   
   // Actions UI
   setFloating: (floating: boolean) => void;
@@ -57,7 +58,7 @@ interface ChatStore {
   setPortfolioType: (type: 'traditional' | 'leasing' | 'investment') => void;
   setSelectedTask: (task: Task) => void;
   setCurrentPortfolioId: (id: string | null) => void;
-  setCurrentInstitutionId: (id: string | null) => void;
+  // Note: setCurrentInstitutionId supprimé - institutionId vient du store global via getInstitutionId()
   
   // Actions conversations
   createNewConversation: () => void;
@@ -88,11 +89,11 @@ export const useChatStore = create<ChatStore>()(
       isOpen: false,
       isTyping: false,
       isRecording: false,
-      isApiMode: false, // Par défaut, on utilise les mocks pour les tests
+      isApiMode: true, // Mode API activé par défaut pour communication backend
       selectedModel: AI_MODELS[0],
       currentPortfolioType: 'traditional',
       currentPortfolioId: null,
-      currentInstitutionId: null,
+      // institutionId n'est plus stocké - utiliser getInstitutionId() au moment de l'utilisation
       
       // État streaming
       streamingState: {
@@ -126,20 +127,30 @@ export const useChatStore = create<ChatStore>()(
       setStreamingEnabled: (enabled) => set({ isStreamingEnabled: enabled }),
       
       connectWebSocket: async (institutionId: string) => {
+        console.log('[ChatStore] connectWebSocket - Tentative de connexion pour institution:', institutionId);
+        
+        if (!institutionId) {
+          console.warn('[ChatStore] connectWebSocket - institutionId manquant, connexion annulée');
+          return;
+        }
+        
         try {
           streamService = getChatStreamService();
+          console.log('[ChatStore] connectWebSocket - Service de streaming obtenu');
           
           // S'abonner aux changements de connexion
           streamService.onConnectionChange((connected) => {
+            console.log('[ChatStore] WebSocket connexion changée:', connected);
             set({ isWebSocketConnected: connected });
           });
           
           await streamService.connect(institutionId);
-          set({ currentInstitutionId: institutionId, isWebSocketConnected: true });
-          console.log('[ChatStore] WebSocket connecté pour institution:', institutionId);
+          set({ isWebSocketConnected: true });
+          console.log('[ChatStore] ✅ WebSocket connecté pour institution:', institutionId);
         } catch (error) {
-          console.error('[ChatStore] Erreur de connexion WebSocket:', error);
+          console.error('[ChatStore] ❌ Erreur de connexion WebSocket:', error);
           set({ isWebSocketConnected: false });
+          // Le mode synchrone sera utilisé comme fallback
         }
       },
       
@@ -180,7 +191,7 @@ export const useChatStore = create<ChatStore>()(
       setPortfolioType: (type) => set({ currentPortfolioType: type }),
       setSelectedTask: (task) => set({ selectedTask: task }),
       setCurrentPortfolioId: (id) => set({ currentPortfolioId: id }),
-      setCurrentInstitutionId: (id) => set({ currentInstitutionId: id }),
+      // setCurrentInstitutionId supprimé - institutionId vient du store global
 
       // Actions conversations
       createNewConversation: async () => {
@@ -219,18 +230,43 @@ export const useChatStore = create<ChatStore>()(
 
       deleteConversation: async (id) => {
         const store = get();
+        console.log('[ChatStore] deleteConversation - ID:', id, 'isApiMode:', store.isApiMode);
+        
+        // Vérifier si l'ID est local (ne pas appeler l'API pour les IDs locaux)
+        const isLocalId = id.startsWith('local-') || /^\d+$/.test(id);
         
         try {
-          if (store.isApiMode) {
-            // Supprimer via l'API
+          if (store.isApiMode && !isLocalId) {
+            // Supprimer via l'API uniquement si l'ID est un UUID du backend
+            console.log('[ChatStore] Tentative de suppression via API (ID backend)...');
             const result = await chatApi.deleteConversation(id);
+            console.log('[ChatStore] Résultat suppression API:', result);
+            
             if (!result.success) {
-              console.error('Échec de la suppression de la conversation via l\'API');
-              return;
+              console.warn('[ChatStore] Échec de la suppression via l\'API, suppression locale uniquement');
             }
+          } else if (isLocalId) {
+            console.log('[ChatStore] ID local détecté, suppression locale uniquement (pas d\'appel API)');
           }
           
-          // Mise à jour du state local
+          // Mise à jour du state local (toujours exécuté)
+          set(state => {
+            const newConversations = state.conversations.filter(c => c.id !== id);
+            const newActiveId = state.activeConversationId === id 
+              ? newConversations[0]?.id || null 
+              : state.activeConversationId;
+            
+            console.log('[ChatStore] Suppression locale - Nouvelles conversations:', newConversations.length);
+            
+            return {
+              conversations: newConversations,
+              activeConversationId: newActiveId
+            };
+          });
+        } catch (error) {
+          console.error(`[ChatStore] Erreur lors de la suppression de la conversation ${id}:`, error);
+          
+          // Supprimer localement même en cas d'erreur
           set(state => {
             const newConversations = state.conversations.filter(c => c.id !== id);
             const newActiveId = state.activeConversationId === id 
@@ -242,8 +278,6 @@ export const useChatStore = create<ChatStore>()(
               activeConversationId: newActiveId
             };
           });
-        } catch (error) {
-          console.error(`Erreur lors de la suppression de la conversation ${id}:`, error);
         }
       },
 
@@ -253,6 +287,8 @@ export const useChatStore = create<ChatStore>()(
       
       fetchConversations: async () => {
         const store = get();
+        
+        // L'institutionId est obtenu du store global via getInstitutionId() au moment de l'utilisation
         
         set({ isTyping: true });
         
@@ -335,7 +371,21 @@ export const useChatStore = create<ChatStore>()(
           c => c.id === store.activeConversationId
         );
 
-        if (!activeConversation) return;
+        // DEBUG: Log l'état actuel
+        console.log('[ChatStore] addMessage - État:', {
+          isApiMode: store.isApiMode,
+          isStreamingEnabled: store.isStreamingEnabled,
+          isWebSocketConnected: store.isWebSocketConnected,
+          type,
+          hasStreamService: !!streamService,
+          activeConversationId: store.activeConversationId,
+          globalInstitutionId: getInstitutionId() // Toujours lire depuis le store global
+        });
+
+        if (!activeConversation) {
+          console.warn('[ChatStore] addMessage - Pas de conversation active');
+          return;
+        }
 
         // Construire le contexte avec le mode sélectionné
         const modeInfo = mode === 'analyse' ? '[MODE ANALYSE]' : '[MODE CHAT]';
@@ -348,6 +398,7 @@ export const useChatStore = create<ChatStore>()(
         
         // Mode API avec streaming activé
         if (store.isApiMode && store.isStreamingEnabled && store.isWebSocketConnected && type === 'user' && streamService) {
+          console.log('[ChatStore] addMessage - Mode: API Streaming');
           // Ajouter un message "pending" en attendant la réponse de l'API
           const pendingMessage: Message = {
             id: `pending-${Date.now()}`,
@@ -374,12 +425,17 @@ export const useChatStore = create<ChatStore>()(
           }));
           
           try {
+            // Récupérer l'institutionId depuis le contexte global (mis à jour après /me)
+            const effectiveInstitutionId = getInstitutionId();
+            
             // Construire les métadonnées pour l'API
             const metadata: ChatMetadata = {
               portfolioId: store.currentPortfolioId || undefined,
               portfolioType: store.currentPortfolioType,
-              institutionId: store.currentInstitutionId || undefined
+              institutionId: effectiveInstitutionId || undefined
             };
+
+            console.log('[ChatStore] sendStreamingMessage - metadata:', metadata);
 
             // Envoyer le message via l'API REST /chat/stream
             const streamResponse = await chatApi.sendStreamingMessage({
@@ -425,7 +481,7 @@ export const useChatStore = create<ChatStore>()(
               set({ isTyping: true });
             });
             
-            streamService.onComplete(messageId, (finalContent: string, suggestedActions?: string[]) => {
+            streamService.onComplete(messageId, (finalContent: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => {
               get().updateStreamingContent(`bot-${messageId}`, finalContent, true);
               
               // Mettre à jour avec les actions suggérées si présentes
@@ -497,6 +553,7 @@ export const useChatStore = create<ChatStore>()(
             return;
           }
         } else if (store.isApiMode && type === 'user') {
+          console.log('[ChatStore] addMessage - Mode: API Normal (sans streaming)');
           // Ajouter un message "pending" en attendant la réponse de l'API
           const pendingMessage: Message = {
             id: `pending-${Date.now()}`,
@@ -524,16 +581,24 @@ export const useChatStore = create<ChatStore>()(
           
           try {
             // Envoyer le message via l'API
-            const sentMessage = await chatApi.sendMessage(
-              activeConversation.id,
+            const apiResponse = await chatApi.sendMessage({
               content,
+              contextId: activeConversation.id,
               attachment,
               mode
-            );
+            });
             
-            // Remplacer le message en attente par le message réel
-            newMessage = {
-              ...sentMessage,
+            console.log('[ChatStore] Réponse API sendMessage:', apiResponse);
+            
+            // Remplacer le message en attente par le message utilisateur réel
+            const userMessage: Message = {
+              id: apiResponse.id,
+              sender: 'user',
+              content: apiResponse.content,
+              timestamp: apiResponse.timestamp,
+              likes: 0,
+              dislikes: 0,
+              attachment,
               pending: false
             };
             
@@ -543,12 +608,40 @@ export const useChatStore = create<ChatStore>()(
                   ? {
                       ...conv,
                       messages: conv.messages.map(msg => 
-                        msg.id === pendingMessage.id ? newMessage : msg
+                        msg.id === pendingMessage.id ? userMessage : msg
                       )
                     }
                   : conv
               )
             }));
+            
+            // Si l'API a retourné une réponse du bot, l'ajouter aussi
+            if (apiResponse.response) {
+              const botMessage: Message = {
+                id: apiResponse.response.id,
+                sender: 'bot',
+                content: apiResponse.response.content,
+                timestamp: apiResponse.response.timestamp,
+                likes: 0,
+                dislikes: 0,
+                pending: false
+              };
+              
+              set(state => ({
+                conversations: state.conversations.map(conv => 
+                  conv.id === state.activeConversationId
+                    ? {
+                        ...conv,
+                        messages: [...conv.messages, botMessage]
+                      }
+                    : conv
+                ),
+                isTyping: false
+              }));
+            }
+            
+            // En mode API, la réponse bot vient du backend, ne pas appeler simulateBotResponse
+            return;
           } catch (error) {
             console.error('Erreur lors de l\'envoi du message:', error);
             
@@ -570,6 +663,7 @@ export const useChatStore = create<ChatStore>()(
           }
         } else {
           // Version mock ou message bot local
+          console.log('[ChatStore] addMessage - Mode: MOCK/Local (isApiMode:', store.isApiMode, ', type:', type, ')');
           newMessage = {
             id: Date.now().toString(),
             sender: type,
@@ -751,8 +845,8 @@ export const useChatStore = create<ChatStore>()(
           // Mode mock - générer une réponse localement
           await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Réponse par défaut (mode mock désactivé - API par défaut)
-          const response = "Le mode API est requis pour utiliser le chat. Veuillez vérifier votre connexion.";
+          // Message informatif si le mode API n'est pas activé
+          const response = "⚠️ **Mode hors-ligne actif**\n\nPour utiliser ADHA avec toutes ses fonctionnalités, assurez-vous que:\n\n1. Vous êtes connecté à Internet\n2. Le serveur backend est accessible\n3. Votre session est authentifiée\n\n*Essayez de rafraîchir la page si le problème persiste.*";
           
           // Ajouter la réponse
           store.addMessage(response, 'bot');
@@ -762,7 +856,38 @@ export const useChatStore = create<ChatStore>()(
       }
     }),
     {
-      name: 'chat-storage'
+      name: 'chat-storage',
+      version: 3, // Incrémenté pour supprimer currentInstitutionId
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>;
+        
+        // Migration v2 -> v3: Supprimer currentInstitutionId (géré par store global)
+        if (version < 3) {
+          console.log('[ChatStore] Migration v2->v3: Suppression de currentInstitutionId (utilise store global)');
+          // Supprimer currentInstitutionId de l'état persisté
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { currentInstitutionId: _removed, ...rest } = state;
+          return {
+            ...rest,
+            isApiMode: true
+          };
+        }
+        
+        return state;
+      },
+      // Toujours forcer isApiMode à true lors de la réhydratation
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<ChatStore> | undefined;
+        const merged: ChatStore = {
+          ...currentState,
+          ...persisted,
+          // Forcer isApiMode
+          isApiMode: true
+          // Note: institutionId n'est plus stocké - utiliser getInstitutionId() au moment de l'utilisation
+        };
+        console.log('[ChatStore] État réhydraté:', { isApiMode: merged.isApiMode, globalInstitutionId: getInstitutionId() });
+        return merged;
+      }
     }
   )
 );
