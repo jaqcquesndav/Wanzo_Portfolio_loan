@@ -99,12 +99,12 @@ export default function PortfolioTypeSelector() {
           <button 
             onClick={handleAuth0Login}
             disabled={isLoading}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-4 rounded-lg w-full flex items-center justify-center transition duration-300 disabled:opacity-50"
+            className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg w-full flex items-center justify-center transition duration-300 disabled:opacity-50"
           >
             {isLoading ? (
               <>
                 <Spinner size="sm" />
-                <span className="ml-2">Redirection vers Auth0...</span>
+                <span className="ml-2 text-white">Redirection vers Auth0...</span>
               </>
             ) : (
               <>
@@ -114,7 +114,7 @@ export default function PortfolioTypeSelector() {
                   <path d="M14.9366 17.0645H12.9256V12.3828C12.9256 11.1216 12.1357 10.8952 11.7462 10.8952C11.3566 10.8952 10.5667 11.2299 10.5667 12.3828V17.0645H8.55579V8.4375H10.5667V9.53799C10.7616 9.09205 11.5515 8.21593 12.9256 8.21593C14.2997 8.21593 14.9366 9.31143 14.9366 10.8952V17.0645Z" fill="white"/>
                   <path d="M6.47276 7.35578C5.67895 7.35578 5.03613 6.70526 5.03613 5.90132C5.03613 5.09738 5.67895 4.44687 6.47276 4.44687C7.26657 4.44687 7.90939 5.09738 7.90939 5.90132C7.90939 6.70526 7.26657 7.35578 6.47276 7.35578Z" fill="white"/>
                 </svg>
-                Continuer avec Auth0
+                <span className="text-white">Continuer avec Auth0</span>
               </>
             )}
           </button>
