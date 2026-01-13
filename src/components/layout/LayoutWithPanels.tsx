@@ -109,16 +109,21 @@ export function LayoutWithPanels() {
             <aside 
               className={`
                 flex-shrink-0 h-full 
-                transition-[width] duration-200 ease-out
-                ${isAnimating ? 'duration-300' : ''}
                 ${sidebarCollapsed ? 'w-16' : 'w-60'}
               `}
+              style={{
+                transition: isAnimating ? 'width 0.2s ease-out' : 'none',
+                willChange: 'width',
+              }}
             >
               <DynamicSidebar collapsed={sidebarCollapsed} />
             </aside>
 
             {/* Zone principale + Panel */}
-            <div className={`flex-1 flex min-w-0 overflow-hidden ${isHorizontalLayout ? 'flex-row' : 'flex-col'}`}>
+            <div 
+              className={`flex-1 flex min-w-0 overflow-hidden ${isHorizontalLayout ? 'flex-row' : 'flex-col'}`}
+              style={{ contain: 'layout' }}
+            >
               {/* Contenu principal */}
               <main className="flex-1 min-w-0 overflow-auto bg-gray-50 dark:bg-gray-900">
                 <div className="w-full h-full p-3 md:p-4 lg:p-6">

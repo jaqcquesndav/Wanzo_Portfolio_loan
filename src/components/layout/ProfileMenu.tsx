@@ -4,12 +4,14 @@ import { Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../contexts/useAuth';
 import { Button } from '../ui/Button';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
 import { auth0Service } from '../../services/api/auth/auth0Service';
 import { resetTokenExchangeFlag } from '../../pages/AuthCallback';
 
 export function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { logout: contextLogout } = useAuth();
@@ -118,8 +120,8 @@ export function ProfileMenu() {
 
             <button
               onClick={() => {
-                handleLogout();
                 setIsOpen(false);
+                setShowLogoutModal(true);
               }}
               className="flex w-full items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
@@ -129,6 +131,21 @@ export function ProfileMenu() {
           </div>
         </div>
       )}
+
+      {/* Modal de confirmation de déconnexion */}
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Déconnexion"
+        message="Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte."
+        confirmLabel="Se déconnecter"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={() => {
+          setShowLogoutModal(false);
+          handleLogout();
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </div>
   );
 }

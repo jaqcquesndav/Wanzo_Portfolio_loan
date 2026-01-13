@@ -66,13 +66,15 @@ export default function Layout() {
 
         {/* Layout Desktop avec flex */}
         {!isMobile && (
-          <div className="flex w-full transition-all duration-150 relative">
+          <div className="flex w-full relative">
             {/* Sidebar Desktop */}
             <aside 
               className="sticky top-16 h-[calc(100vh-4rem)] flex-shrink-0"
               style={{ 
                 width: `${sidebarWidth}px`,
-                transition: 'width 0.25s ease-out' 
+                transition: 'width 0.2s ease-out',
+                willChange: 'width',
+                contain: 'layout',
               }}
             >
               <DynamicSidebar 
@@ -84,7 +86,7 @@ export default function Layout() {
             {/* Contenu principal - s'adapte à la largeur du sidebar */}
             <main
               className="flex-1 min-h-screen flex flex-col items-stretch justify-start"
-              style={{ transition: 'margin-left 0.25s ease-out' }}
+              style={{ contain: 'layout' }}
             >
               <div className="container mx-auto w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
                 <Outlet />
@@ -105,7 +107,7 @@ export default function Layout() {
             )}
             
             <main
-              className="flex-1 min-h-screen transition-all duration-300 flex flex-col items-stretch justify-start"
+              className="flex-1 min-h-screen flex flex-col items-stretch justify-start"
             >
               <div className="container mx-auto w-full p-1 sm:p-2 md:p-3 lg:p-4 overflow-x-hidden">
                 <Outlet />

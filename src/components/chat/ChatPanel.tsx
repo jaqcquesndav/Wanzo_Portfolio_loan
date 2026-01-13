@@ -43,8 +43,11 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ onClose }: ChatPanelProps) {
-  // Récupérer l'institutionId depuis le store global (mis à jour après /me)
+  // Récupérer l'institutionId ET le flag isContextLoaded depuis le store global
+  // CRITIQUE: On attend que /users/me soit terminé avant toute connexion
+  // Note: Sélectionner les valeurs séparément pour éviter les re-renders infinis
   const globalInstitutionId = useAppContextStore(state => state.institutionId);
+  const isContextLoaded = useAppContextStore(state => state.isContextLoaded);
   
   const {
     conversations,
@@ -100,6 +103,15 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     return '';
   };
 
+  // Log unique quand le contexte est prêt
+  useEffect(() => {
+    if (isContextLoaded && globalInstitutionId) {
+      console.log('[ChatPanel] ✅ Contexte prêt - institutionId:', globalInstitutionId);
+    } else if (isContextLoaded && !globalInstitutionId) {
+      console.warn('[ChatPanel] ⚠️ Contexte chargé mais institutionId manquant!');
+    }
+  }, [isContextLoaded, globalInstitutionId]);
+
   // Charger les conversations au démarrage
   useEffect(() => {
     if (!isInitialized) {
@@ -109,21 +121,48 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     }
   }, [isInitialized, fetchConversations]);
 
-  // Connexion WebSocket pour le streaming - utilise l'institutionId du contexte global
+  // Connexion WebSocket pour le streaming
+  // CRITIQUE: Attendre que isContextLoaded soit true ET que institutionId soit disponible
   useEffect(() => {
-    console.log('[ChatPanel] WebSocket effect - globalInstitutionId:', globalInstitutionId, 'isApiMode:', isApiMode, 'isStreamingEnabled:', isStreamingEnabled, 'isWebSocketConnected:', isWebSocketConnected);
+    console.log('[ChatPanel] 🔍 useEffect WebSocket - État:', {
+      isContextLoaded,
+      isApiMode,
+      isStreamingEnabled,
+      globalInstitutionId,
+      isWebSocketConnected
+    });
     
-    if (isApiMode && isStreamingEnabled && globalInstitutionId && !isWebSocketConnected) {
-      console.log('[ChatPanel] Connexion WebSocket avec institutionId:', globalInstitutionId);
+    // Ne rien faire tant que le contexte n'est pas chargé
+    if (!isContextLoaded) {
+      console.log('[ChatPanel] ⏳ Attente du contexte (/users/me)...');
+      return;
+    }
+    
+    // CRITIQUE: institutionId DOIT être disponible pour la connexion WebSocket
+    if (!globalInstitutionId) {
+      console.warn('[ChatPanel] ⚠️ institutionId non disponible! La connexion WebSocket ne peut pas être établie.');
+      console.warn('[ChatPanel] ℹ️ Assurez-vous que /users/me a retourné un institutionId valide.');
+      return;
+    }
+    
+    // Vérifier si on peut connecter le WebSocket
+    const canConnect = isApiMode && isStreamingEnabled && !isWebSocketConnected;
+    
+    console.log('[ChatPanel] 🔌 canConnect:', canConnect, {
+      isApiMode,
+      isStreamingEnabled,
+      institutionId: globalInstitutionId,
+      notAlreadyConnected: !isWebSocketConnected
+    });
+    
+    if (canConnect) {
+      console.log('[ChatPanel] 🚀 Connexion WebSocket avec institutionId:', globalInstitutionId);
       connectWebSocket(globalInstitutionId);
     }
     
-    return () => {
-      if (isWebSocketConnected) {
-        disconnectWebSocket();
-      }
-    };
-  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket, disconnectWebSocket]);
+    // Note: pas de cleanup ici car on veut maintenir la connexion active
+    // La déconnexion se fait via disconnectWebSocket() explicitement
+  }, [isContextLoaded, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
@@ -137,6 +176,24 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
+    
+    // Vérifier la connexion WebSocket avant l'envoi (mode streaming)
+    if (isApiMode && isStreamingEnabled && !isWebSocketConnected) {
+      console.warn('[ChatPanel] ⚠️ Tentative d\'envoi sans connexion WebSocket');
+      
+      // Tenter de connecter si institutionId est disponible
+      if (globalInstitutionId) {
+        console.log('[ChatPanel] 🔌 Tentative de connexion avant envoi...');
+        try {
+          await connectWebSocket(globalInstitutionId);
+          // Attendre un court délai pour que la connexion soit établie
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (e) {
+          console.error('[ChatPanel] ❌ Échec connexion WebSocket:', e);
+        }
+      }
+    }
+    
     await addMessage(newMessage, 'user', undefined, adhaWriteMode.isActive ? 'analyse' : 'chat');
     setNewMessage('');
   };
@@ -165,10 +222,13 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+    <div 
+      className="h-full flex flex-col bg-white dark:bg-gray-900"
+      style={{ contain: 'layout', minWidth: 0 }}
+    >
       {/* Header global - couvre toute la largeur */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 w-full">
-            <div className="flex items-center space-x-2 min-w-0">
+            <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
               {/* Toggle sidebar */}
               <button 
                 onClick={() => setShowSidebar(!showSidebar)} 
@@ -249,10 +309,13 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
       </div>
 
       {/* Structure avec sidebar et contenu */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden" style={{ contain: 'strict' }}>
         {/* Sidebar conversations */}
         {showSidebar && (
-          <aside className="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col overflow-hidden">
+          <aside 
+            className="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col overflow-hidden"
+            style={{ contain: 'layout' }}
+          >
             <ConversationList 
               conversations={conversations}
               activeId={activeConversationId}
@@ -264,9 +327,9 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
         )}
         
         {/* Contenu principal du chat */}
-        <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ contain: 'layout' }}>
           {/* Zone des messages */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
             <div className={`px-3 py-4 space-y-1 ${isFullscreen ? 'max-w-4xl mx-auto' : ''}`}>
               {messages.length === 0 ? (
                 /* Écran d'accueil style ChatGPT/Claude/Gemini */

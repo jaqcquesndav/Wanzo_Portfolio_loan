@@ -110,13 +110,19 @@ export function DynamicSidebar({ onClose, collapsed = false }: DynamicSidebarPro
   if (!user) return null;
 
   return (
-    <div className={`
-      h-full flex flex-col bg-primary dark:bg-gray-800 
-      border-r-2 border-primary-dark
-      transition-[width] duration-200 ease-out 
-      overflow-hidden overflow-y-auto
-      ${collapsed ? 'w-16' : 'w-60'}
-    `}>
+    <div 
+      className={`
+        h-full flex flex-col bg-primary dark:bg-gray-800 
+        border-r-2 border-primary-dark
+        overflow-hidden overflow-y-auto
+        ${collapsed ? 'w-16' : 'w-60'}
+      `}
+      style={{
+        transition: 'width 0.2s ease-out',
+        willChange: 'width',
+        contain: 'layout',
+      }}
+    >
       {/* Header */}
       <div className={`flex-shrink-0 border-b border-primary-dark/30 ${collapsed ? 'p-2' : 'px-4 py-3'}`}>
         <div className="flex items-center justify-between">

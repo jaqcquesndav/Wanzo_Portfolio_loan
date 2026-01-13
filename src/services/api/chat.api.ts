@@ -11,7 +11,6 @@ import type {
   PredefinedResponse,
   MessageRating,
   ChatReport,
-  ChatMode,
   MessageAttachment,
   StreamingResponse
 } from '../../types/chat';
@@ -19,13 +18,14 @@ import { AI_MODELS } from '../../types/chat';
 
 /**
  * Paramètres pour l'envoi d'un message
+ * @see API DOCUMENTATION/chat/README.md - Payload: { content, contextId, metadata }
  */
 interface SendMessageParams {
   content: string;
   contextId?: string;
   metadata?: ChatMetadata;
   attachment?: MessageAttachment;
-  mode?: ChatMode;
+  // Note: mode n'est PAS supporté par le backend - utiliser metadata.portfolioType si besoin
 }
 
 /**
@@ -327,8 +327,7 @@ class ChatApiService {
         content: params.content,
         contextId: params.contextId,
         metadata: params.metadata,
-        attachment: params.attachment,
-        mode: params.mode || 'chat'
+        attachment: params.attachment
       });
       
       console.log('[ChatApi] sendMessage - Réponse brute:', response);
@@ -369,8 +368,7 @@ class ChatApiService {
       const response = await apiClient.post<StreamingResponse | { data: StreamingResponse['data']; websocket?: StreamingResponse['websocket'] }>(API_ENDPOINTS.chat.messages.stream, {
         content: params.content,
         contextId: params.contextId,
-        metadata: params.metadata,
-        mode: params.mode || 'chat'
+        metadata: params.metadata
       });
       
       console.log('[ChatApi] sendStreamingMessage - Réponse brute:', response);

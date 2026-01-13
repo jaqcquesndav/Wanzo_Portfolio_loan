@@ -15,5 +15,6 @@ export {
   isAppContextReady,
   getAppContext,
   isDemoMode,
+  waitForInstitutionId,
 } from './appContextStore';
 export type { AppContextState, AppContextActions } from './appContextStore';

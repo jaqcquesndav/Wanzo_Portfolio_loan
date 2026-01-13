@@ -127,34 +127,63 @@ export const useChatStore = create<ChatStore>()(
       setStreamingEnabled: (enabled) => set({ isStreamingEnabled: enabled }),
       
       connectWebSocket: async (institutionId: string) => {
-        console.log('[ChatStore] connectWebSocket - Tentative de connexion pour institution:', institutionId);
+        console.log('[ChatStore] 🔌 connectWebSocket - Début avec institutionId:', institutionId);
         
+        // Validation critique: institutionId DOIT être présent
         if (!institutionId) {
-          console.warn('[ChatStore] connectWebSocket - institutionId manquant, connexion annulée');
+          console.error('[ChatStore] ❌ connectWebSocket - institutionId MANQUANT!');
+          console.error('[ChatStore] ℹ️ L\'institutionId doit être obtenu via /users/me avant la connexion WebSocket');
+          set({ isWebSocketConnected: false });
           return;
         }
         
         try {
+          // Récupérer le singleton du service de streaming
+          // IMPORTANT: Toujours utiliser le singleton pour éviter les connexions multiples
           streamService = getChatStreamService();
-          console.log('[ChatStore] connectWebSocket - Service de streaming obtenu');
+          console.log('[ChatStore] connectWebSocket - Service de streaming obtenu:', {
+            hasService: !!streamService,
+            isConnected: streamService?.isConnected(),
+            currentInstitutionId: streamService?.institutionId
+          });
           
-          // S'abonner aux changements de connexion
+          // Vérifier si déjà connecté avec le même institutionId
+          if (streamService.isConnected()) {
+            const currentInstId = streamService.institutionId;
+            if (currentInstId === institutionId) {
+              console.log('[ChatStore] ✅ Déjà connecté avec le bon institutionId');
+              set({ isWebSocketConnected: true });
+              return;
+            } else {
+              // Connecté mais avec un autre institutionId - reconnecter
+              console.log('[ChatStore] 🔄 Reconnexion nécessaire (institutionId différent):', {
+                current: currentInstId,
+                new: institutionId
+              });
+              streamService.disconnect();
+            }
+          }
+          
+          // S'abonner aux changements de connexion (une seule fois)
           streamService.onConnectionChange((connected) => {
-            console.log('[ChatStore] WebSocket connexion changée:', connected);
+            console.log('[ChatStore] 📡 WebSocket connexion changée:', connected);
             set({ isWebSocketConnected: connected });
           });
           
+          console.log('[ChatStore] connectWebSocket - Appel de connect()...');
           await streamService.connect(institutionId);
           set({ isWebSocketConnected: true });
-          console.log('[ChatStore] ✅ WebSocket connecté pour institution:', institutionId);
+          console.log('[ChatStore] ✅ WebSocket connecté avec succès pour institution:', institutionId);
         } catch (error) {
           console.error('[ChatStore] ❌ Erreur de connexion WebSocket:', error);
           set({ isWebSocketConnected: false });
-          // Le mode synchrone sera utilisé comme fallback
+          // Le mode synchrone sera utilisé comme fallback automatiquement
+          console.log('[ChatStore] ℹ️ Fallback: les messages utiliseront le mode synchrone');
         }
       },
       
       disconnectWebSocket: () => {
+        console.log('[ChatStore] 🔌 disconnectWebSocket - Déconnexion...');
         if (streamService) {
           streamService.disconnect();
           streamService = null;
@@ -163,28 +192,48 @@ export const useChatStore = create<ChatStore>()(
       },
       
       updateStreamingContent: (messageId: string, content: string, isComplete = false) => {
-        set(state => ({
-          conversations: state.conversations.map(conv => 
+        console.log('[ChatStore] 🔄 updateStreamingContent:', { 
+          messageId, 
+          contentLength: content.length, 
+          isComplete,
+          activeConversationId: get().activeConversationId
+        });
+        
+        set(state => {
+          const updatedConversations = state.conversations.map(conv => 
             conv.id === state.activeConversationId
               ? {
                   ...conv,
-                  messages: conv.messages.map(msg =>
-                    msg.id === messageId 
-                      ? { 
-                          ...msg, 
-                          content, 
-                          isStreaming: !isComplete,
-                          pending: false
-                        } 
-                      : msg
-                  )
+                  messages: conv.messages.map(msg => {
+                    if (msg.id === messageId) {
+                      console.log('[ChatStore] ✅ Message trouvé et mis à jour:', messageId);
+                      return { 
+                        ...msg, 
+                        content, 
+                        isStreaming: !isComplete,
+                        pending: false
+                      };
+                    }
+                    return msg;
+                  })
                 }
               : conv
-          ),
-          streamingState: isComplete 
-            ? { messageId: null, accumulatedContent: '', lastChunkId: -1, isActive: false }
-            : { ...state.streamingState, accumulatedContent: content }
-        }));
+          );
+          
+          // Vérifier si le message a été trouvé
+          const activeConv = updatedConversations.find(c => c.id === state.activeConversationId);
+          const messageFound = activeConv?.messages.some(m => m.id === messageId);
+          if (!messageFound) {
+            console.warn('[ChatStore] ⚠️ Message non trouvé:', messageId, 'Messages disponibles:', activeConv?.messages.map(m => m.id));
+          }
+          
+          return {
+            conversations: updatedConversations,
+            streamingState: isComplete 
+              ? { messageId: null, accumulatedContent: '', lastChunkId: -1, isActive: false }
+              : { ...state.streamingState, accumulatedContent: content }
+          };
+        });
       },
       
       // Actions contexte
@@ -371,15 +420,20 @@ export const useChatStore = create<ChatStore>()(
           c => c.id === store.activeConversationId
         );
 
+        // Récupérer le service de streaming (singleton)
+        // IMPORTANT: Toujours utiliser getChatStreamService() car la variable locale peut être null
+        const currentStreamService = store.isWebSocketConnected ? getChatStreamService() : null;
+        
         // DEBUG: Log l'état actuel
         console.log('[ChatStore] addMessage - État:', {
           isApiMode: store.isApiMode,
           isStreamingEnabled: store.isStreamingEnabled,
           isWebSocketConnected: store.isWebSocketConnected,
           type,
-          hasStreamService: !!streamService,
+          hasStreamService: !!currentStreamService,
+          streamServiceConnected: currentStreamService?.isConnected(),
           activeConversationId: store.activeConversationId,
-          globalInstitutionId: getInstitutionId() // Toujours lire depuis le store global
+          globalInstitutionId: getInstitutionId()
         });
 
         if (!activeConversation) {
@@ -396,8 +450,38 @@ export const useChatStore = create<ChatStore>()(
 
         let newMessage: Message;
         
+        // ========================== SÉLECTION DU MODE ==========================
         // Mode API avec streaming activé
-        if (store.isApiMode && store.isStreamingEnabled && store.isWebSocketConnected && type === 'user' && streamService) {
+        // IMPORTANT: Toutes les conditions doivent être vraies pour utiliser le streaming
+        // Sinon, on utilise le mode synchrone (/chat/messages) comme fallback
+        
+        const streamingConditions = {
+          isApiMode: store.isApiMode,
+          isStreamingEnabled: store.isStreamingEnabled,
+          isWebSocketConnected: store.isWebSocketConnected,
+          isUserMessage: type === 'user',
+          hasStreamService: !!currentStreamService,
+          serviceIsConnected: currentStreamService?.isConnected() === true,
+          hasInstitutionId: !!getInstitutionId()
+        };
+        
+        const canUseStreaming = Object.values(streamingConditions).every(v => v === true);
+        
+        console.log('[ChatStore] 🔍 Mode sélection:', {
+          canUseStreaming,
+          mode: canUseStreaming ? 'STREAMING (/chat/stream)' : 'SYNCHRONE (/chat/messages)',
+          conditions: streamingConditions
+        });
+        
+        if (!canUseStreaming && store.isApiMode && type === 'user') {
+          // Log détaillé pour comprendre pourquoi le streaming n'est pas disponible
+          const failedConditions = Object.entries(streamingConditions)
+            .filter(([, v]) => v !== true)
+            .map(([k]) => k);
+          console.warn('[ChatStore] ⚠️ Streaming non disponible, fallback synchrone. Conditions manquantes:', failedConditions);
+        }
+        
+        if (canUseStreaming && currentStreamService) {
           console.log('[ChatStore] addMessage - Mode: API Streaming');
           // Ajouter un message "pending" en attendant la réponse de l'API
           const pendingMessage: Message = {
@@ -425,30 +509,115 @@ export const useChatStore = create<ChatStore>()(
           }));
           
           try {
-            // Récupérer l'institutionId depuis le contexte global (mis à jour après /me)
-            const effectiveInstitutionId = getInstitutionId();
-            
             // Construire les métadonnées pour l'API
+            // Note: institutionId n'est PAS accepté dans les metadata selon la doc API
+            // Les champs acceptés sont: title, portfolioId, portfolioType, clientId, companyId, entityType, entityId
             const metadata: ChatMetadata = {
               portfolioId: store.currentPortfolioId || undefined,
-              portfolioType: store.currentPortfolioType,
-              institutionId: effectiveInstitutionId || undefined
+              portfolioType: store.currentPortfolioType
             };
 
             console.log('[ChatStore] sendStreamingMessage - metadata:', metadata);
 
-            // Envoyer le message via l'API REST /chat/stream
+            // ⚠️ WORKFLOW CORRECT selon la documentation:
+            // 1. Vérifier que le WebSocket est connecté
+            // 2. S'abonner à la conversation AVANT d'envoyer le message HTTP
+            // 3. Envoyer le message HTTP
+            // 4. Recevoir les chunks via WebSocket
+            // @see API DOCUMENTATION/chat/README.md - Section "Workflow Streaming"
+            
+            const workflowStart = Date.now();
+            console.log('[ChatStore] 🚀 ========== DÉBUT WORKFLOW STREAMING ==========');
+            console.log('[ChatStore] 📋 ConversationId local:', activeConversation.id);
+            
+            // ÉTAPE 0: Vérifier la connexion WebSocket
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 0: Vérification WebSocket`);
+            if (!currentStreamService.isConnected()) {
+              console.error('[ChatStore] ❌ WebSocket non connecté! Les chunks seront perdus.');
+              console.error('[ChatStore] ℹ️ État: isWebSocketConnected=', store.isWebSocketConnected);
+              throw new Error('WebSocket non connecté. Veuillez réessayer.');
+            }
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ WebSocket connecté`);
+            
+            // ÉTAPE 0.5: Vérifier si l'ID est local (timestamp ou local-xxx)
+            // Si oui, créer d'abord la conversation côté backend pour obtenir l'ID réel
+            const isLocalId = activeConversation.id.startsWith('local-') || /^\d+$/.test(activeConversation.id);
+            let backendConversationId = activeConversation.id;
+            
+            if (isLocalId) {
+              console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ⚠️ ID local détecté, création conversation backend...`);
+              try {
+                const newBackendConversation = await chatApi.createConversation(activeConversation.title || 'Nouvelle conversation');
+                backendConversationId = newBackendConversation.id;
+                console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ Conversation backend créée:`, backendConversationId);
+                
+                // Mettre à jour l'ID local avec l'ID du backend dans le store
+                set(state => ({
+                  conversations: state.conversations.map(conv => 
+                    conv.id === activeConversation.id
+                      ? { ...conv, id: backendConversationId }
+                      : conv
+                  ),
+                  activeConversationId: backendConversationId
+                }));
+                console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ Store mis à jour avec ID backend`);
+              } catch (createError) {
+                console.error(`[ChatStore] [${Date.now() - workflowStart}ms] ❌ Échec création conversation backend:`, createError);
+                throw new Error('Impossible de créer la conversation. Veuillez réessayer.');
+              }
+            }
+            
+            // ÉTAPE 1: S'abonner à la conversation avec l'ID BACKEND AVANT d'envoyer le message
+            // ⚠️ CRITIQUE: Utiliser backendConversationId, PAS activeConversation.id
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 1: Abonnement WebSocket à la conversation backend:`, backendConversationId);
+            try {
+              await currentStreamService.subscribeToConversationAsync(backendConversationId, 3000);
+              console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ Abonnement confirmé pour:`, backendConversationId);
+            } catch (subscribeError) {
+              console.warn(`[ChatStore] [${Date.now() - workflowStart}ms] ⚠️ Timeout acknowledgement:`, subscribeError);
+              // L'abonnement a quand même été envoyé, on continue
+              console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ℹ️ Abonnement envoyé (sans confirmation serveur)`);
+            }
+            
+            // ÉTAPE 1.5: Délai pour s'assurer que le serveur a traité l'abonnement
+            // ⚠️ CRITIQUE: Comme accounting - attendre 200ms avant POST /chat/stream
+            // Sans ce délai, le serveur peut ne pas avoir rejoint la room à temps
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 1.5: Délai 200ms pour confirmation serveur...`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ Délai terminé`);
+
+            // ÉTAPE 2: Envoyer le message via l'API REST /chat/stream avec l'ID BACKEND
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 2: POST /chat/stream avec contextId:`, backendConversationId);
             const streamResponse = await chatApi.sendStreamingMessage({
               content,
-              contextId: activeConversation.id,
-              metadata,
-              mode: mode === 'analyse' ? 'analyse' : 'chat'
+              contextId: backendConversationId,
+              metadata
             });
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ Message envoyé, réponse:`, streamResponse.data);
             
             const messageId = streamResponse.data.messageId;
+            const conversationId = streamResponse.data.conversationId;
             
-            // Préparer le streaming via Socket.IO
-            streamService.prepareStreaming(messageId, streamResponse.data.conversationId);
+            // ÉTAPE 3: Si le backend retourne encore un ID différent (cas rare), s'abonner aussi
+            if (conversationId && conversationId !== backendConversationId) {
+              console.warn(`[ChatStore] [${Date.now() - workflowStart}ms] ⚠️ Backend a retourné un ID différent! Attendu: ${backendConversationId}, Reçu: ${conversationId}`);
+              console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 3: Abonnement au nouvel ID:`, conversationId);
+              await currentStreamService.subscribeToConversationAsync(conversationId, 2000);
+              
+              // Mettre à jour le store avec ce nouvel ID
+              set(state => ({
+                conversations: state.conversations.map(conv => 
+                  conv.id === backendConversationId
+                    ? { ...conv, id: conversationId }
+                    : conv
+                ),
+                activeConversationId: conversationId
+              }));
+              backendConversationId = conversationId;
+            }
+            
+            // Préparer l'état de streaming (sans ré-abonnement car déjà fait)
+            currentStreamService.prepareStreamingWithoutSubscribe(messageId, conversationId);
             
             // Remplacer le message en attente par le message réel
             set(state => ({
@@ -472,16 +641,28 @@ export const useChatStore = create<ChatStore>()(
             // S'abonner aux événements de streaming
             let accumulatedContent = '';
             
-            streamService.onChunk(messageId, (chunk: PortfolioStreamChunkEvent) => {
+            console.log('[ChatStore] 📡 Abonnement aux événements de streaming pour messageId:', messageId);
+            
+            currentStreamService.onChunk(messageId, (chunk: PortfolioStreamChunkEvent) => {
+              console.log('[ChatStore] 📦 Chunk reçu:', { 
+                type: chunk.type, 
+                content: chunk.content?.substring(0, 50),
+                messageId: `bot-${messageId}`
+              });
               if (chunk.type === 'chunk') {
                 accumulatedContent += chunk.content;
+                console.log('[ChatStore] 📝 Mise à jour contenu:', accumulatedContent.length, 'caractères');
                 get().updateStreamingContent(`bot-${messageId}`, accumulatedContent, false);
               }
               // Garder l'indicateur de typing actif pendant le streaming
               set({ isTyping: true });
             });
             
-            streamService.onComplete(messageId, (finalContent: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => {
+            currentStreamService.onComplete(messageId, (finalContent: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => {
+              console.log('[ChatStore] ✅ Streaming terminé:', { 
+                finalContentLength: finalContent.length,
+                messageId: `bot-${messageId}`
+              });
               get().updateStreamingContent(`bot-${messageId}`, finalContent, true);
               
               // Mettre à jour avec les actions suggérées si présentes
@@ -505,7 +686,7 @@ export const useChatStore = create<ChatStore>()(
               set({ isTyping: false });
             });
             
-            streamService.onError(messageId, (error: Error) => {
+            currentStreamService.onError(messageId, (error: Error) => {
               console.error('[ChatStore] Erreur de streaming:', error);
               
               // Marquer le message comme erreur
@@ -580,12 +761,11 @@ export const useChatStore = create<ChatStore>()(
           }));
           
           try {
-            // Envoyer le message via l'API
+            // Envoyer le message via l'API (sans mode - non supporté par le backend)
             const apiResponse = await chatApi.sendMessage({
               content,
               contextId: activeConversation.id,
-              attachment,
-              mode
+              attachment
             });
             
             console.log('[ChatStore] Réponse API sendMessage:', apiResponse);
@@ -876,16 +1056,24 @@ export const useChatStore = create<ChatStore>()(
         return state;
       },
       // Toujours forcer isApiMode à true lors de la réhydratation
+      // Et réinitialiser isWebSocketConnected car le socket n'existe plus après rechargement
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<ChatStore> | undefined;
         const merged: ChatStore = {
           ...currentState,
           ...persisted,
           // Forcer isApiMode
-          isApiMode: true
+          isApiMode: true,
+          // IMPORTANT: Toujours réinitialiser isWebSocketConnected à false
+          // car le socket n'existe plus après un rechargement de page
+          isWebSocketConnected: false,
           // Note: institutionId n'est plus stocké - utiliser getInstitutionId() au moment de l'utilisation
         };
-        console.log('[ChatStore] État réhydraté:', { isApiMode: merged.isApiMode, globalInstitutionId: getInstitutionId() });
+        console.log('[ChatStore] État réhydraté:', { 
+          isApiMode: merged.isApiMode, 
+          isWebSocketConnected: merged.isWebSocketConnected,
+          globalInstitutionId: getInstitutionId() 
+        });
         return merged;
       }
     }

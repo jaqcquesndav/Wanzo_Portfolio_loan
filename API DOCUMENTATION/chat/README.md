@@ -10,7 +10,7 @@ Ce document décrit l'architecture complète et les endpoints pour la gestion de
 ```
 ┌─────────────────┐      ┌─────────────────────────┐      ┌─────────────────┐
 │    Frontend     │      │   Portfolio Service     │      │  ADHA AI Svc    │
-│   (Flutter)     │      │   (NestJS)              │      │                 │
+│   (React+Vite)  │      │   (NestJS)              │      │                 │
 └────────┬────────┘      └────────────┬────────────┘      └────────┬────────┘
          │                            │                            │
          │  POST /chat/messages       │                            │
@@ -34,6 +34,680 @@ Ce document décrit l'architecture complète et les endpoints pour la gestion de
          │                            │                            │
 └─────────────────────────────────────┴────────────────────────────┘
 ```
+
+---
+
+## ⚠️ IMPORTANT : Workflow Streaming - Ordre des Opérations
+
+> **🚨 ERREUR FRÉQUENTE** : Si le frontend envoie le message HTTP **AVANT** de se connecter au WebSocket,
+> les chunks de réponse seront **perdus** car aucun client ne sera abonné à la room de conversation.
+
+### Symptôme côté backend (logs)
+```
+⚠️ No clients subscribed to conversation xxx - chunk not delivered!
+📤 Sending chunk chunk 53 to 0 clients in room conversation:xxx
+```
+
+### ✅ Workflow CORRECT (obligatoire)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ORDRE DES OPÉRATIONS POUR LE STREAMING                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  1️⃣  WebSocket.connect() via API Gateway                                │
+│      URL: wss://api.wanzo.com/portfolio/chat (ou ws://localhost:8000)   │
+│      ⚠️ NE PAS se connecter directement au port 3005 !                  │
+│                                                                         │
+│  2️⃣  WebSocket.emit('subscribe_conversation', { conversationId })       │
+│      → Le client rejoint la room conversation:{id}                      │
+│      → ATTENDRE la confirmation de connexion                            │
+│                                                                         │
+│  3️⃣  POST /portfolio/api/v1/chat/stream via API Gateway                 │
+│      → Envoyer le message HTTP seulement APRÈS l'étape 2                │
+│      → Retourne { messageId, conversationId }                           │
+│                                                                         │
+│  4️⃣  Recevoir les événements WebSocket                                  │
+│      → adha.stream.chunk (×N) - chunks progressifs                      │
+│      → adha.stream.end - fin du stream avec contenu complet             │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### ❌ Workflow INCORRECT (perte de données)
+
+```
+1. POST /chat/stream  ← Message envoyé
+2. WebSocket.connect() ← Trop tard ! Les chunks arrivent déjà
+3. subscribe_conversation ← Trop tard ! Chunks perdus
+```
+
+### URLs de Connexion WebSocket (via API Gateway)
+
+| Environnement | URL WebSocket | Path |
+|---------------|---------------|------|
+| **Production** | `wss://api.wanzo.com` | `/portfolio/chat` |
+| **Développement** | `ws://localhost:8000` | `/portfolio/chat` |
+
+> **⚠️ Ne JAMAIS se connecter directement à `ws://localhost:3005/socket.io`** en dehors des tests.
+> Toujours passer par l'API Gateway qui gère l'authentification et le routage.
+
+---
+
+## 🎯 GUIDE COMPLET : Implémentation Frontend Streaming (React/TypeScript)
+
+> **Ce guide vous montre comment implémenter correctement le streaming dans votre application React.**
+> Suivez ces étapes **dans l'ordre exact** pour éviter la perte de chunks.
+
+### Architecture du Streaming
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        FLUX DE DONNÉES STREAMING                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   [Frontend React]                                                              │
+│        │                                                                        │
+│        │ 1️⃣ WebSocket.connect('ws://localhost:8000', {path: '/portfolio/chat'}) │
+│        │                                                                        │
+│        ▼                                                                        │
+│   [API Gateway :8000]  ──────────────────────────────────────────────┐          │
+│        │                                                             │          │
+│        │ Proxy: /portfolio/chat → portfolio-service:3005/socket.io   │          │
+│        │                                                             │          │
+│        ▼                                                             │          │
+│   [Portfolio Service :3005]                                          │          │
+│        │                                                             │          │
+│        │ 2️⃣ emit('subscribe_conversation', {conversationId})         │          │
+│        │    → Client rejoint room: conversation:{id}                 │          │
+│        │                                                             │          │
+│        │ 3️⃣ POST /portfolio/api/v1/chat/stream                       │          │
+│        │    → Message envoyé via Kafka                               │          │
+│        │                                                             │          │
+│        ▼                                                             │          │
+│   [Kafka] ──► portfolio.chat.message ──► [ADHA AI Service]           │          │
+│                                               │                      │          │
+│                                               │ Traitement IA        │          │
+│                                               ▼                      │          │
+│   [Kafka] ◄── portfolio.chat.stream ◄── Chunks générés               │          │
+│        │                                                             │          │
+│        ▼                                                             │          │
+│   [Portfolio Service]                                                │          │
+│        │                                                             │          │
+│        │ 4️⃣ emit('adha.stream.chunk') → room conversation:{id}       │          │
+│        │ 5️⃣ emit('adha.stream.end')   → Fin du stream                │          │
+│        │                                                             │          │
+│        ▼                                                             │          │
+│   [Frontend React] ◄─────────────────────────────────────────────────┘          │
+│        │                                                                        │
+│        └──► Affichage progressif du texte                                       │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 📋 ÉTAPE 1 : Connexion WebSocket (AVANT tout message)
+
+```typescript
+// ✅ CORRECT : Connexion via API Gateway
+import { io, Socket } from 'socket.io-client';
+
+const socket: Socket = io('http://localhost:8000', {
+  path: '/portfolio/chat',  // ⚠️ Le proxy réécrira vers /socket.io
+  transports: ['websocket', 'polling'],
+  auth: {
+    token: 'Bearer eyJhbGciOiJSUzI1NiI...'  // JWT Auth0
+  }
+});
+
+socket.on('connect', () => {
+  console.log('✅ WebSocket connecté:', socket.id);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('❌ Erreur connexion:', error.message);
+});
+```
+
+```typescript
+// ❌ INCORRECT : Connexion directe au service (ne fonctionne pas en prod)
+const socket = io('http://localhost:3005', {
+  path: '/socket.io'  // ❌ Bypass l'API Gateway - INTERDIT
+});
+```
+
+---
+
+### 📋 ÉTAPE 2 : Configuration des Listeners (AVANT l'abonnement)
+
+```typescript
+// Configurer TOUS les listeners avant de s'abonner
+socket.on('adha.stream.chunk', (data: StreamChunk) => {
+  console.log(`📦 Chunk ${data.chunkIndex}:`, data.content);
+  // Accumuler le texte progressivement
+  setStreamingContent(prev => prev + data.content);
+});
+
+socket.on('adha.stream.end', (data: StreamEnd) => {
+  console.log('✅ Stream terminé:', data.totalChunks, 'chunks');
+  setIsStreaming(false);
+  // Sauvegarder le message complet
+  addMessageToHistory({
+    role: 'assistant',
+    content: data.fullContent,
+    metadata: data.metadata
+  });
+});
+
+socket.on('adha.stream.error', (error: StreamError) => {
+  console.error('❌ Erreur streaming:', error.message);
+  setError(error.message);
+  setIsStreaming(false);
+});
+
+// Types TypeScript
+interface StreamChunk {
+  conversationId: string;
+  messageId: string;
+  chunkIndex: number;
+  content: string;
+  isLast: boolean;
+}
+
+interface StreamEnd {
+  conversationId: string;
+  messageId: string;
+  fullContent: string;
+  totalChunks: number;
+  metadata: {
+    processingTime: number;
+    tokensUsed: number;
+  };
+}
+
+interface StreamError {
+  conversationId: string;
+  messageId: string;
+  code: string;
+  message: string;
+}
+```
+
+---
+
+### 📋 ÉTAPE 3 : S'abonner à la Conversation (AVANT d'envoyer le message)
+
+```typescript
+// ⚠️ CRITIQUE : Cette étape DOIT être faite AVANT le POST /chat/stream
+
+const subscribeToConversation = (conversationId: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    socket.emit('subscribe_conversation', { conversationId }, (response: any) => {
+      if (response?.success) {
+        console.log(`✅ Abonné à conversation: ${conversationId}`);
+        resolve();
+      } else {
+        console.error('❌ Échec abonnement:', response?.error);
+        reject(new Error(response?.error || 'Subscription failed'));
+      }
+    });
+    
+    // Timeout de sécurité
+    setTimeout(() => reject(new Error('Subscription timeout')), 5000);
+  });
+};
+
+// Utilisation
+await subscribeToConversation('ctx-uuid-123');
+// ✅ Maintenant on peut envoyer le message HTTP
+```
+
+---
+
+### 📋 ÉTAPE 4 : Envoyer le Message HTTP (APRÈS l'abonnement WebSocket)
+
+```typescript
+const sendStreamingMessage = async (
+  content: string,
+  conversationId?: string
+): Promise<{ messageId: string; conversationId: string }> => {
+  
+  const response = await fetch('http://localhost:8000/portfolio/api/v1/chat/stream', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      content,
+      contextId: conversationId,
+      metadata: {
+        portfolioId: 'port-456',
+        portfolioType: 'traditional'
+      }
+    })
+  });
+  
+  const data = await response.json();
+  return {
+    messageId: data.data.messageId,
+    conversationId: data.data.conversationId
+  };
+};
+```
+
+---
+
+### 📋 ÉTAPE 5 : Si Nouvelle Conversation, S'abonner avec le Nouveau ID
+
+```typescript
+// Si contextId n'était pas fourni, le backend crée une nouvelle conversation
+// Il faut s'abonner à ce nouveau conversationId !
+
+const handleSendMessage = async (content: string, existingConversationId?: string) => {
+  setIsStreaming(true);
+  setStreamingContent('');
+  
+  // Si conversation existante, s'abonner d'abord
+  if (existingConversationId) {
+    await subscribeToConversation(existingConversationId);
+  }
+  
+  // Envoyer le message
+  const { messageId, conversationId } = await sendStreamingMessage(content, existingConversationId);
+  
+  // ⚠️ Si nouvelle conversation créée, s'abonner MAINTENANT
+  if (!existingConversationId && conversationId) {
+    await subscribeToConversation(conversationId);
+    // Note: Quelques premiers chunks peuvent être perdus dans ce cas
+    // Recommandation: Toujours créer la conversation d'abord via POST /chat/contexts
+  }
+  
+  console.log(`📤 Message envoyé: ${messageId} dans conversation: ${conversationId}`);
+};
+```
+
+---
+
+### 🎣 Hook React Complet : `usePortfolioChatStreaming`
+
+```typescript
+// hooks/usePortfolioChatStreaming.ts
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
+
+interface StreamingState {
+  isConnected: boolean;
+  isStreaming: boolean;
+  streamingContent: string;
+  error: string | null;
+  currentConversationId: string | null;
+}
+
+interface StreamChunk {
+  conversationId: string;
+  messageId: string;
+  chunkIndex: number;
+  content: string;
+  isLast: boolean;
+}
+
+interface StreamEnd {
+  conversationId: string;
+  messageId: string;
+  fullContent: string;
+  totalChunks: number;
+  metadata: { processingTime: number; tokensUsed: number };
+}
+
+interface UsePortfolioChatStreamingOptions {
+  token: string;
+  baseUrl?: string;
+  onChunk?: (chunk: StreamChunk) => void;
+  onComplete?: (data: StreamEnd) => void;
+  onError?: (error: Error) => void;
+}
+
+export const usePortfolioChatStreaming = (options: UsePortfolioChatStreamingOptions) => {
+  const {
+    token,
+    baseUrl = 'http://localhost:8000',
+    onChunk,
+    onComplete,
+    onError
+  } = options;
+  
+  const socketRef = useRef<Socket | null>(null);
+  const [state, setState] = useState<StreamingState>({
+    isConnected: false,
+    isStreaming: false,
+    streamingContent: '',
+    error: null,
+    currentConversationId: null
+  });
+  
+  // 1️⃣ Initialiser la connexion WebSocket
+  useEffect(() => {
+    const socket = io(baseUrl, {
+      path: '/portfolio/chat',
+      transports: ['websocket', 'polling'],
+      auth: { token: `Bearer ${token}` },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+    
+    socket.on('connect', () => {
+      console.log('✅ Portfolio WebSocket connecté:', socket.id);
+      setState(prev => ({ ...prev, isConnected: true, error: null }));
+    });
+    
+    socket.on('disconnect', (reason) => {
+      console.log('⚠️ WebSocket déconnecté:', reason);
+      setState(prev => ({ ...prev, isConnected: false }));
+    });
+    
+    socket.on('connect_error', (error) => {
+      console.error('❌ Erreur connexion WebSocket:', error.message);
+      setState(prev => ({ ...prev, error: error.message }));
+      onError?.(error);
+    });
+    
+    // 2️⃣ Listeners pour le streaming
+    socket.on('adha.stream.chunk', (data: StreamChunk) => {
+      setState(prev => ({
+        ...prev,
+        streamingContent: prev.streamingContent + data.content
+      }));
+      onChunk?.(data);
+    });
+    
+    socket.on('adha.stream.end', (data: StreamEnd) => {
+      setState(prev => ({
+        ...prev,
+        isStreaming: false,
+        streamingContent: data.fullContent
+      }));
+      onComplete?.(data);
+    });
+    
+    socket.on('adha.stream.error', (error: { message: string }) => {
+      setState(prev => ({
+        ...prev,
+        isStreaming: false,
+        error: error.message
+      }));
+      onError?.(new Error(error.message));
+    });
+    
+    socketRef.current = socket;
+    
+    return () => {
+      socket.disconnect();
+    };
+  }, [token, baseUrl]);
+  
+  // 3️⃣ S'abonner à une conversation
+  const subscribeToConversation = useCallback(async (conversationId: string): Promise<void> => {
+    const socket = socketRef.current;
+    if (!socket?.connected) {
+      throw new Error('WebSocket non connecté');
+    }
+    
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout abonnement conversation'));
+      }, 5000);
+      
+      socket.emit('subscribe_conversation', { conversationId }, (response: any) => {
+        clearTimeout(timeout);
+        if (response?.success) {
+          setState(prev => ({ ...prev, currentConversationId: conversationId }));
+          resolve();
+        } else {
+          reject(new Error(response?.error || 'Échec abonnement'));
+        }
+      });
+    });
+  }, []);
+  
+  // 4️⃣ Envoyer un message en streaming
+  const sendMessage = useCallback(async (
+    content: string,
+    conversationId?: string,
+    metadata?: Record<string, any>
+  ): Promise<{ messageId: string; conversationId: string }> => {
+    
+    // Réinitialiser l'état
+    setState(prev => ({
+      ...prev,
+      isStreaming: true,
+      streamingContent: '',
+      error: null
+    }));
+    
+    // ⚠️ CRUCIAL : S'abonner AVANT d'envoyer si conversation existante
+    if (conversationId) {
+      await subscribeToConversation(conversationId);
+    }
+    
+    // Envoyer la requête HTTP
+    const response = await fetch(`${baseUrl}/portfolio/api/v1/chat/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        content,
+        contextId: conversationId,
+        metadata
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Erreur envoi message');
+    }
+    
+    const data = await response.json();
+    const newConversationId = data.data.conversationId;
+    
+    // ⚠️ Si nouvelle conversation, s'abonner maintenant
+    if (!conversationId && newConversationId) {
+      await subscribeToConversation(newConversationId);
+    }
+    
+    return {
+      messageId: data.data.messageId,
+      conversationId: newConversationId
+    };
+  }, [token, baseUrl, subscribeToConversation]);
+  
+  // 5️⃣ Se désabonner d'une conversation
+  const unsubscribeFromConversation = useCallback((conversationId: string) => {
+    socketRef.current?.emit('unsubscribe_conversation', { conversationId });
+    setState(prev => ({ ...prev, currentConversationId: null }));
+  }, []);
+  
+  return {
+    ...state,
+    sendMessage,
+    subscribeToConversation,
+    unsubscribeFromConversation,
+    socket: socketRef.current
+  };
+};
+```
+
+---
+
+### 💻 Exemple d'Utilisation du Hook
+
+```tsx
+// components/PortfolioChat.tsx
+import React, { useState } from 'react';
+import { usePortfolioChatStreaming } from '../hooks/usePortfolioChatStreaming';
+
+export const PortfolioChat: React.FC<{ token: string }> = ({ token }) => {
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  
+  const {
+    isConnected,
+    isStreaming,
+    streamingContent,
+    error,
+    sendMessage
+  } = usePortfolioChatStreaming({
+    token,
+    baseUrl: 'http://localhost:8000',
+    onComplete: (data) => {
+      // Ajouter la réponse complète à l'historique
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.fullContent
+      }]);
+      setConversationId(data.conversationId);
+    },
+    onError: (err) => {
+      console.error('Erreur chat:', err);
+    }
+  });
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    
+    // Ajouter le message utilisateur
+    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    
+    try {
+      await sendMessage(input, conversationId || undefined, {
+        portfolioId: 'port-456',
+        portfolioType: 'traditional'
+      });
+      setInput('');
+    } catch (err) {
+      console.error('Erreur envoi:', err);
+    }
+  };
+  
+  return (
+    <div className="portfolio-chat">
+      {/* Indicateur de connexion */}
+      <div className={`status ${isConnected ? 'connected' : 'disconnected'}`}>
+        {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
+      </div>
+      
+      {/* Messages */}
+      <div className="messages">
+        {messages.map((msg, i) => (
+          <div key={i} className={`message ${msg.role}`}>
+            {msg.content}
+          </div>
+        ))}
+        
+        {/* Message en cours de streaming */}
+        {isStreaming && (
+          <div className="message assistant streaming">
+            {streamingContent}
+            <span className="cursor">▊</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Erreur */}
+      {error && <div className="error">❌ {error}</div>}
+      
+      {/* Formulaire */}
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Posez votre question sur le portefeuille..."
+          disabled={!isConnected || isStreaming}
+        />
+        <button type="submit" disabled={!isConnected || isStreaming}>
+          {isStreaming ? '⏳' : '📤'}
+        </button>
+      </form>
+    </div>
+  );
+};
+```
+
+---
+
+### 📊 Points Clés à Retenir
+
+| Étape | Action | Timing | Conséquence si Ignoré |
+|-------|--------|--------|----------------------|
+| 1 | `io.connect()` | Au montage du composant | ❌ Aucune communication possible |
+| 2 | `socket.on('adha.stream.*')` | Après connexion | ❌ Événements non capturés |
+| 3 | `emit('subscribe_conversation')` | **AVANT** POST | ❌ **Chunks perdus (0 clients)** |
+| 4 | `POST /chat/stream` | Après abonnement | - |
+| 5 | Traiter chunks | Pendant streaming | ❌ Affichage incomplet |
+
+---
+
+### ❌ Erreur Courante à Éviter
+
+```typescript
+// ❌ MAUVAIS : Envoyer AVANT de s'abonner
+const sendMessage = async () => {
+  const response = await fetch('/portfolio/api/v1/chat/stream', {...});
+  const data = await response.json();
+  
+  // Trop tard ! Les chunks arrivent déjà et sont perdus
+  socket.emit('subscribe_conversation', { conversationId: data.conversationId });
+};
+
+// ✅ BON : S'abonner AVANT d'envoyer
+const sendMessage = async () => {
+  // D'abord s'abonner (si conversation existante)
+  if (existingConversationId) {
+    await subscribeToConversation(existingConversationId);
+  }
+  
+  // Ensuite envoyer
+  const response = await fetch('/portfolio/api/v1/chat/stream', {...});
+  const data = await response.json();
+  
+  // Si nouvelle conversation, s'abonner immédiatement
+  if (!existingConversationId) {
+    await subscribeToConversation(data.conversationId);
+  }
+};
+```
+
+---
+
+### 🔍 Pourquoi "0 clients subscribed" ?
+
+Si vous voyez ce message dans les logs backend :
+```
+📤 Sending chunk chunk 53 to 0 clients in room conversation:xxx
+```
+
+**Causes possibles :**
+
+1. **WebSocket non connecté** - Vérifiez `socket.connected === true`
+2. **Path incorrect** - Doit être `/portfolio/chat` via API Gateway
+3. **Abonnement manquant** - `subscribe_conversation` non appelé
+4. **Ordre incorrect** - POST envoyé avant l'abonnement
+5. **ConversationId différent** - L'abonnement utilise un ID différent
+
+**Debug rapide :**
+```typescript
+console.log('Socket connecté:', socket.connected);
+console.log('Socket ID:', socket.id);
+console.log('ConversationId abonné:', currentConversationId);
+```
+
+---
 
 ### Topics Kafka
 
@@ -253,12 +927,16 @@ Content-Type: application/json
 #### Workflow Streaming Complet
 
 ```
-1. POST /chat/stream → Reçoit messageId
-2. WebSocket.connect('wss://api.wanzo.com/socket.io')
+1. POST /chat/stream → Reçoit messageId + conversationId
+2. WebSocket.connect('wss://api.wanzo.com/portfolio/chat')  ← Via API Gateway
+   - path: '/portfolio/chat' (sera réécrit en /socket.io par le proxy)
 3. WebSocket.emit('subscribe_conversation', { conversationId })
 4. WebSocket.on('adha.stream.chunk') → Afficher chunk progressif
 5. WebSocket.on('adha.stream.end') → Finaliser affichage
 ```
+
+> **⚠️ Important**: Le frontend se connecte via l'API Gateway (`/portfolio/chat`), 
+> pas directement au service portfolio. Le proxy réécrira le path vers `/socket.io`.
 
 ---
 
@@ -789,6 +1467,17 @@ Ce format garantit que le `conversationId` est correctement transmis à travers 
 
 Le système de streaming permet au frontend de recevoir les réponses de l'IA ADHA **en temps réel, chunk par chunk**, offrant une expérience utilisateur fluide pour les analyses complexes.
 
+### URLs de Connexion WebSocket
+
+| Environnement | URL Base | Path WebSocket | URL Complète |
+|---------------|----------|----------------|--------------|
+| **Production** | `wss://api.wanzo.com` | `/portfolio/chat` | `wss://api.wanzo.com/portfolio/chat` |
+| **Développement** | `ws://localhost:8000` | `/portfolio/chat` | `ws://localhost:8000/portfolio/chat` |
+| **Direct (sans proxy)** | `ws://localhost:3005` | `/socket.io` | `ws://localhost:3005/socket.io` |
+
+> **⚠️ Important**: En production et développement standard, passez TOUJOURS par l'API Gateway 
+> avec le path `/portfolio/chat`. Le proxy réécrira automatiquement vers `/socket.io` du service.
+
 ### Architecture Streaming Complète
 
 ```
@@ -796,28 +1485,29 @@ Le système de streaming permet au frontend de recevoir les réponses de l'IA AD
 │                           STREAMING FLOW                                  │
 ├───────────────────────────────────────────────────────────────────────────┤
 │                                                                           │
-│  Frontend (Flutter)           Portfolio Service            ADHA AI        │
-│  ══════════════════           ═════════════════            ════════       │
+│  Frontend (React)       API Gateway         Portfolio Service   ADHA AI   │
+│  ═══════════════        ═══════════         ═════════════════   ════════  │
 │                                                                           │
-│  1. POST /chat/stream ─────────► ChatController                           │
-│                                       │                                   │
-│  2. ◄─── { messageId, wsInfo }        │                                   │
-│                                       ▼                                   │
-│                              PortfolioAdhaAiService                       │
-│                                       │                                   │
-│                                       │   portfolio.chat.message          │
-│                                       └──────────────────────────► Kafka  │
-│                                                                     │     │
-│  3. WebSocket.connect()                                             │     │
-│     ────────────────────► PortfolioChatGateway                      │     │
-│                                                                     │     │
-│  4. emit('subscribe_conversation')                                  │     │
-│     ────────────────────► join(room)                                │     │
-│                                                                     ▼     │
-│                                                              ADHA AI Svc  │
+│  1. POST /portfolio/api/v1/chat/stream                                    │
+│     ────────────────────► Proxy ────────────► ChatController              │
+│                                                    │                      │
+│  2. ◄─────────────────────────────────────────────┤                      │
+│     { messageId, conversationId, wsInfo }         │                      │
+│                                                    ▼                      │
+│                                          PortfolioAdhaAiService           │
+│                                                    │                      │
+│                                                    │ portfolio.chat.message│
+│                                                    └─────────────► Kafka  │
+│                                                                      │    │
+│  3. WebSocket.connect('/portfolio/chat')                             │    │
+│     ─────────────────► WS Proxy ──────────► PortfolioChatGateway     │    │
+│                        (→ /socket.io)                                │    │
+│                                                                      ▼    │
+│  4. emit('subscribe_conversation')                            ADHA AI Svc │
+│     ─────────────────────────────────────► join(room)              │      │
 │                                                                     │     │
 │  5.                                     portfolio.chat.stream       │     │
-│                           ◄──────────────────────────────────── Kafka     │
+│                           ◄────────────────────────────────── Kafka ◄┘    │
 │                                       │                                   │
 │                          PortfolioStreamingConsumer                       │
 │                                       │                                   │
@@ -974,297 +1664,528 @@ Le backend utilise **Socket.IO** pour le streaming temps réel. Les événements
 | `adha.stream.error` | Erreur de traitement | En cas d'erreur |
 | `adha.stream.tool` | Appel/résultat d'outil IA | Pendant le traitement |
 
-### Intégration Frontend (Flutter/Dart) avec Socket.IO
+### Intégration Frontend (React/TypeScript) avec Socket.IO
 
 #### Installation des dépendances
 
-```yaml
-# pubspec.yaml
-dependencies:
-  socket_io_client: ^2.0.0
-  http: ^1.1.0
+```bash
+# npm
+npm install socket.io-client axios
+
+# yarn
+yarn add socket.io-client axios
+
+# pnpm
+pnpm add socket.io-client axios
+```
+
+#### Types TypeScript
+
+```typescript
+// types/chat.types.ts
+
+/** Type de chunk de streaming */
+export type StreamChunkType = 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result';
+
+/** Chunk reçu via WebSocket */
+export interface StreamingChunk {
+  id: string;
+  requestMessageId: string;
+  conversationId: string;
+  type: StreamChunkType;
+  content: string;
+  chunkId: number;
+  totalChunks?: number;
+  suggestedActions?: Array<{ type: string; payload: unknown }>;
+  processingDetails?: {
+    totalChunks?: number;
+    contentLength?: number;
+    aiModel?: string;
+    tokensUsed?: number;
+    processingTime?: number;
+  };
+  metadata?: Record<string, unknown>;
+}
+
+/** Réponse de l'endpoint POST /chat/stream */
+export interface StreamingResponse {
+  success: boolean;
+  data: {
+    messageId: string;
+    conversationId: string;
+    userMessageId: string;
+  };
+  websocket: {
+    namespace: string;
+    events: {
+      subscribe: string;
+      chunk: string;
+      end: string;
+      error: string;
+      tool: string;
+    };
+  };
+}
+
+/** DTO pour envoyer un message */
+export interface SendMessageDto {
+  content: string;
+  contextId?: string;
+  metadata?: {
+    title?: string;
+    portfolioId?: string;
+    portfolioType?: 'traditional' | 'investment' | 'leasing';
+    clientId?: string;
+    institutionId?: string;
+    [key: string]: unknown;
+  };
+}
 ```
 
 #### Service de Streaming Complet
 
-```dart
-import 'dart:async';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+```typescript
+// services/portfolioChatStreamService.ts
+import { io, Socket } from 'socket.io-client';
+import axios from 'axios';
+import type { StreamingChunk, StreamingResponse, SendMessageDto } from '../types/chat.types';
 
-class PortfolioChatStreamService {
-  IO.Socket? _socket;
-  final String baseUrl;
-  final String Function() getToken; // Getter pour le JWT
-  
-  final StreamController<StreamingChunk> _chunkController = 
-      StreamController<StreamingChunk>.broadcast();
-  
-  Stream<StreamingChunk> get chunkStream => _chunkController.stream;
-  
-  PortfolioChatStreamService({
-    required this.baseUrl,
-    required this.getToken,
-  });
-  
-  /// Connexion WebSocket avec authentification JWT
-  Future<void> connect() async {
-    _socket = IO.io(
-      baseUrl, // ex: 'https://api.wanzo.com'
-      IO.OptionBuilder()
-        .setTransports(['websocket'])
-        .setPath('/socket.io')
-        .setExtraHeaders({'Authorization': 'Bearer ${getToken()}'})
-        .setQuery({'token': getToken()})
-        .enableAutoConnect()
-        .build(),
-    );
-    
-    _socket!.onConnect((_) {
-      print('✅ WebSocket connected');
-    });
-    
-    _socket!.onDisconnect((_) {
-      print('❌ WebSocket disconnected');
-    });
-    
-    // Écouter les événements de streaming
-    _socket!.on('adha.stream.chunk', (data) {
-      _chunkController.add(StreamingChunk.fromJson(data));
-    });
-    
-    _socket!.on('adha.stream.end', (data) {
-      _chunkController.add(StreamingChunk.fromJson(data));
-    });
-    
-    _socket!.on('adha.stream.error', (data) {
-      _chunkController.add(StreamingChunk.fromJson(data));
-    });
-    
-    _socket!.on('adha.stream.tool', (data) {
-      _chunkController.add(StreamingChunk.fromJson(data));
+type ChunkCallback = (chunk: StreamingChunk) => void;
+
+/**
+ * Service de streaming pour le chat Portfolio Institution
+ * Gère la connexion WebSocket et les appels API pour le streaming ADHA AI
+ */
+export class PortfolioChatStreamService {
+  private socket: Socket | null = null;
+  private baseUrl: string;
+  private getToken: () => string;
+  private chunkListeners: Set<ChunkCallback> = new Set();
+
+  constructor(baseUrl: string, getToken: () => string) {
+    this.baseUrl = baseUrl; // ex: 'https://api.wanzo.com' ou 'http://localhost:8000'
+    this.getToken = getToken;
+  }
+
+  /**
+   * ⚠️ ÉTAPE 1 : Connexion WebSocket via API Gateway
+   * DOIT être appelé AVANT d'envoyer un message HTTP
+   */
+  connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.socket = io(this.baseUrl, {
+        path: '/portfolio/chat', // ⚠️ Important: path via API Gateway (réécrit en /socket.io)
+        transports: ['websocket', 'polling'],
+        auth: {
+          token: this.getToken(),
+        },
+        extraHeaders: {
+          Authorization: `Bearer ${this.getToken()}`,
+        },
+      });
+
+      this.socket.on('connect', () => {
+        console.log('✅ WebSocket connected to portfolio chat');
+        resolve();
+      });
+
+      this.socket.on('disconnect', (reason) => {
+        console.log('❌ WebSocket disconnected:', reason);
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.error('❌ WebSocket connection error:', error);
+        reject(error);
+      });
+
+      // Écouter les événements de streaming
+      this.socket.on('adha.stream.chunk', (data: StreamingChunk) => {
+        this.notifyListeners(data);
+      });
+
+      this.socket.on('adha.stream.end', (data: StreamingChunk) => {
+        this.notifyListeners(data);
+      });
+
+      this.socket.on('adha.stream.error', (data: StreamingChunk) => {
+        this.notifyListeners(data);
+      });
+
+      this.socket.on('adha.stream.tool', (data: StreamingChunk) => {
+        this.notifyListeners(data);
+      });
     });
   }
-  
-  /// S'abonner aux updates d'une conversation
-  void subscribeToConversation(String conversationId) {
-    _socket?.emit('subscribe_conversation', {'conversationId': conversationId});
-  }
-  
-  /// Se désabonner d'une conversation
-  void unsubscribeFromConversation(String conversationId) {
-    _socket?.emit('unsubscribe_conversation', {'conversationId': conversationId});
-  }
-  
-  /// Envoyer un message en mode streaming
-  Future<StreamingResponse> sendStreamingMessage({
-    required String content,
-    String? contextId,
-    Map<String, dynamic>? metadata,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/portfolio/api/v1/chat/stream'),
-      headers: {
-        'Authorization': 'Bearer ${getToken()}',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'content': content,
-        'contextId': contextId,
-        'metadata': metadata,
-      }),
-    );
-    
-    if (response.statusCode == 201) {
-      final data = jsonDecode(response.body);
-      final streamResponse = StreamingResponse.fromJson(data);
-      
-      // Auto-subscribe à la conversation
-      subscribeToConversation(streamResponse.conversationId);
-      
-      return streamResponse;
-    } else {
-      throw Exception('Failed to send message: ${response.body}');
+
+  /**
+   * ⚠️ ÉTAPE 2 : S'abonner à une conversation
+   * DOIT être appelé AVANT d'envoyer le message HTTP
+   */
+  subscribeToConversation(conversationId: string): void {
+    if (!this.socket?.connected) {
+      console.warn('⚠️ Socket not connected! Call connect() first.');
+      return;
     }
+    this.socket.emit('subscribe_conversation', { conversationId });
+    console.log(`📡 Subscribed to conversation: ${conversationId}`);
   }
-  
-  void disconnect() {
-    _socket?.disconnect();
-    _socket?.dispose();
+
+  /** Se désabonner d'une conversation */
+  unsubscribeFromConversation(conversationId: string): void {
+    this.socket?.emit('unsubscribe_conversation', { conversationId });
   }
-  
-  void dispose() {
-    disconnect();
-    _chunkController.close();
+
+  /**
+   * ⚠️ ÉTAPE 3 : Envoyer un message en mode streaming
+   * DOIT être appelé APRÈS connect() et subscribeToConversation()
+   */
+  async sendStreamingMessage(dto: SendMessageDto): Promise<StreamingResponse> {
+    const response = await axios.post<StreamingResponse>(
+      `${this.baseUrl}/portfolio/api/v1/chat/stream`,
+      dto,
+      {
+        headers: {
+          Authorization: `Bearer ${this.getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  /** Ajouter un listener pour les chunks */
+  onChunk(callback: ChunkCallback): () => void {
+    this.chunkListeners.add(callback);
+    return () => this.chunkListeners.delete(callback);
+  }
+
+  private notifyListeners(chunk: StreamingChunk): void {
+    this.chunkListeners.forEach((cb) => cb(chunk));
+  }
+
+  /** Déconnecter le WebSocket */
+  disconnect(): void {
+    this.socket?.disconnect();
+    this.socket = null;
+  }
+
+  /** Vérifier si connecté */
+  get isConnected(): boolean {
+    return this.socket?.connected ?? false;
   }
 }
 
-/// Réponse de l'endpoint /chat/stream
-class StreamingResponse {
-  final String messageId;
-  final String conversationId;
-  final String userMessageId;
-  
-  StreamingResponse({
-    required this.messageId,
-    required this.conversationId,
-    required this.userMessageId,
-  });
-  
-  factory StreamingResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'];
-    return StreamingResponse(
-      messageId: data['messageId'],
-      conversationId: data['conversationId'],
-      userMessageId: data['userMessageId'],
-    );
-  }
-}
+// Singleton pour utilisation globale
+let chatServiceInstance: PortfolioChatStreamService | null = null;
 
-/// Chunk de streaming reçu via WebSocket
-class StreamingChunk {
-  final String requestMessageId;
-  final String conversationId;
-  final String type; // 'chunk', 'end', 'error', 'tool_call', 'tool_result'
-  final String content;
-  final int chunkId;
-  final int? totalChunks;
-  final List<Map<String, dynamic>>? suggestedActions;
-  final Map<String, dynamic>? processingDetails;
-  final Map<String, dynamic>? metadata;
-  
-  StreamingChunk({
-    required this.requestMessageId,
-    required this.conversationId,
-    required this.type,
-    required this.content,
-    required this.chunkId,
-    this.totalChunks,
-    this.suggestedActions,
-    this.processingDetails,
-    this.metadata,
-  });
-  
-  factory StreamingChunk.fromJson(Map<String, dynamic> json) {
-    return StreamingChunk(
-      requestMessageId: json['requestMessageId'],
-      conversationId: json['conversationId'],
-      type: json['type'],
-      content: json['content'] ?? '',
-      chunkId: json['chunkId'] ?? 0,
-      totalChunks: json['totalChunks'],
-      suggestedActions: json['suggestedActions'] != null
-          ? List<Map<String, dynamic>>.from(json['suggestedActions'])
-          : null,
-      processingDetails: json['processingDetails'],
-      metadata: json['metadata'],
-    );
+export const getChatService = (baseUrl: string, getToken: () => string): PortfolioChatStreamService => {
+  if (!chatServiceInstance) {
+    chatServiceInstance = new PortfolioChatStreamService(baseUrl, getToken);
   }
-  
-  bool get isChunk => type == 'chunk';
-  bool get isEnd => type == 'end';
-  bool get isError => type == 'error';
-  bool get isToolCall => type == 'tool_call';
-  bool get isToolResult => type == 'tool_result';
-}
+  return chatServiceInstance;
+};
 ```
 
-#### Utilisation dans un BLoC (Flutter Bloc Pattern)
+#### Hook React pour le Streaming Chat
 
-```dart
-class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  final PortfolioChatStreamService _streamService;
-  StreamSubscription? _chunkSubscription;
-  final StringBuffer _accumulatedContent = StringBuffer();
-  
-  ChatBloc(this._streamService) : super(ChatInitial()) {
-    on<InitializeChat>(_onInitializeChat);
-    on<SendMessage>(_onSendMessage);
-    on<ProcessChunk>(_onProcessChunk);
-  }
-  
-  Future<void> _onInitializeChat(InitializeChat event, Emitter<ChatState> emit) async {
-    await _streamService.connect();
+```typescript
+// hooks/usePortfolioChat.ts
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { PortfolioChatStreamService } from '../services/portfolioChatStreamService';
+import type { StreamingChunk, SendMessageDto } from '../types/chat.types';
+
+interface UseChatOptions {
+  baseUrl: string;
+  getToken: () => string;
+  conversationId?: string;
+}
+
+interface UseChatReturn {
+  /** Contenu accumulé pendant le streaming */
+  streamingContent: string;
+  /** Indique si un streaming est en cours */
+  isStreaming: boolean;
+  /** Indique si une erreur s'est produite */
+  error: string | null;
+  /** Dernier chunk reçu (pour métadonnées) */
+  lastChunk: StreamingChunk | null;
+  /** Actions suggérées (disponibles après 'end') */
+  suggestedActions: Array<{ type: string; payload: unknown }>;
+  /** Connecter le WebSocket (ÉTAPE 1) */
+  connect: () => Promise<void>;
+  /** S'abonner à une conversation (ÉTAPE 2) */
+  subscribe: (conversationId: string) => void;
+  /** Envoyer un message (ÉTAPE 3) */
+  sendMessage: (dto: SendMessageDto) => Promise<void>;
+  /** Réinitialiser l'état */
+  reset: () => void;
+  /** Déconnecter */
+  disconnect: () => void;
+}
+
+export const usePortfolioChat = ({ baseUrl, getToken, conversationId }: UseChatOptions): UseChatReturn => {
+  const serviceRef = useRef<PortfolioChatStreamService | null>(null);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastChunk, setLastChunk] = useState<StreamingChunk | null>(null);
+  const [suggestedActions, setSuggestedActions] = useState<Array<{ type: string; payload: unknown }>>([]);
+
+  // Initialiser le service
+  useEffect(() => {
+    serviceRef.current = new PortfolioChatStreamService(baseUrl, getToken);
     
-    _chunkSubscription = _streamService.chunkStream.listen((chunk) {
-      add(ProcessChunk(chunk));
-    });
-  }
-  
-  Future<void> _onSendMessage(SendMessage event, Emitter<ChatState> emit) async {
-    emit(ChatSending());
-    _accumulatedContent.clear();
-    
-    try {
-      final response = await _streamService.sendStreamingMessage(
-        content: event.content,
-        contextId: event.contextId,
-        metadata: event.metadata,
-      );
-      
-      emit(ChatWaitingForStream(
-        messageId: response.messageId,
-        conversationId: response.conversationId,
-      ));
-    } catch (e) {
-      emit(ChatError(message: e.toString()));
-    }
-  }
-  
-  void _onProcessChunk(ProcessChunk event, Emitter<ChatState> emit) {
-    final chunk = event.chunk;
-    
+    return () => {
+      serviceRef.current?.disconnect();
+    };
+  }, [baseUrl, getToken]);
+
+  // Gérer les chunks reçus
+  const handleChunk = useCallback((chunk: StreamingChunk) => {
+    setLastChunk(chunk);
+
     switch (chunk.type) {
       case 'chunk':
-        _accumulatedContent.write(chunk.content);
-        emit(ChatStreaming(
-          content: _accumulatedContent.toString(),
-          chunkId: chunk.chunkId,
-        ));
+        setStreamingContent((prev) => prev + chunk.content);
+        setIsStreaming(true);
         break;
-        
+
       case 'end':
-        emit(ChatMessageReceived(
-          content: chunk.content,
-          totalChunks: chunk.totalChunks ?? 0,
-          suggestedActions: chunk.suggestedActions ?? [],
-          processingDetails: chunk.processingDetails,
-        ));
-        _accumulatedContent.clear();
+        setStreamingContent(chunk.content); // Contenu complet
+        setIsStreaming(false);
+        if (chunk.suggestedActions) {
+          setSuggestedActions(chunk.suggestedActions);
+        }
         break;
-        
+
       case 'error':
-        emit(ChatError(message: chunk.content));
-        _accumulatedContent.clear();
+        setError(chunk.content);
+        setIsStreaming(false);
         break;
-        
+
       case 'tool_call':
-        emit(ChatToolProcessing(toolName: chunk.content));
+        console.log('🔧 Tool call:', chunk.content);
         break;
-        
+
       case 'tool_result':
-        _accumulatedContent.write(chunk.content);
-        emit(ChatStreaming(
-          content: _accumulatedContent.toString(),
-          chunkId: chunk.chunkId,
-        ));
+        setStreamingContent((prev) => prev + chunk.content);
         break;
     }
-  }
-  
-  @override
-  Future<void> close() {
-    _chunkSubscription?.cancel();
-    _streamService.dispose();
-    return super.close();
-  }
+  }, []);
+
+  // Écouter les chunks
+  useEffect(() => {
+    const service = serviceRef.current;
+    if (!service) return;
+
+    const unsubscribe = service.onChunk(handleChunk);
+    return unsubscribe;
+  }, [handleChunk]);
+
+  const connect = useCallback(async () => {
+    await serviceRef.current?.connect();
+  }, []);
+
+  const subscribe = useCallback((convId: string) => {
+    serviceRef.current?.subscribeToConversation(convId);
+  }, []);
+
+  const sendMessage = useCallback(async (dto: SendMessageDto) => {
+    setError(null);
+    setStreamingContent('');
+    setSuggestedActions([]);
+    setIsStreaming(true);
+
+    try {
+      const response = await serviceRef.current?.sendStreamingMessage(dto);
+      
+      // Si nouvelle conversation créée, s'abonner
+      if (response?.data.conversationId && !conversationId) {
+        subscribe(response.data.conversationId);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi');
+      setIsStreaming(false);
+    }
+  }, [conversationId, subscribe]);
+
+  const reset = useCallback(() => {
+    setStreamingContent('');
+    setIsStreaming(false);
+    setError(null);
+    setLastChunk(null);
+    setSuggestedActions([]);
+  }, []);
+
+  const disconnect = useCallback(() => {
+    serviceRef.current?.disconnect();
+  }, []);
+
+  return {
+    streamingContent,
+    isStreaming,
+    error,
+    lastChunk,
+    suggestedActions,
+    connect,
+    subscribe,
+    sendMessage,
+    reset,
+    disconnect,
+  };
+};
+```
+
+#### Composant React - Chat avec Streaming
+
+```tsx
+// components/PortfolioChat.tsx
+import React, { useState, useEffect } from 'react';
+import { usePortfolioChat } from '../hooks/usePortfolioChat';
+
+interface PortfolioChatProps {
+  conversationId?: string;
+  portfolioId?: string;
+  portfolioType?: 'traditional' | 'investment' | 'leasing';
 }
+
+export const PortfolioChat: React.FC<PortfolioChatProps> = ({
+  conversationId: initialConversationId,
+  portfolioId,
+  portfolioType,
+}) => {
+  const [input, setInput] = useState('');
+  const [conversationId, setConversationId] = useState(initialConversationId);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const {
+    streamingContent,
+    isStreaming,
+    error,
+    suggestedActions,
+    connect,
+    subscribe,
+    sendMessage,
+    reset,
+  } = usePortfolioChat({
+    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    getToken: () => localStorage.getItem('token') || '',
+    conversationId,
+  });
+
+  // ⚠️ WORKFLOW CORRECT : Connexion au montage
+  useEffect(() => {
+    const initConnection = async () => {
+      try {
+        // ÉTAPE 1 : Connecter le WebSocket
+        await connect();
+        setIsConnected(true);
+        
+        // ÉTAPE 2 : S'abonner si conversation existante
+        if (conversationId) {
+          subscribe(conversationId);
+        }
+      } catch (err) {
+        console.error('Failed to connect:', err);
+      }
+    };
+
+    initConnection();
+  }, [connect, subscribe, conversationId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !isConnected) return;
+
+    const message = input;
+    setInput('');
+    reset();
+
+    // ÉTAPE 3 : Envoyer le message (WebSocket déjà connecté)
+    await sendMessage({
+      content: message,
+      contextId: conversationId,
+      metadata: {
+        portfolioId,
+        portfolioType,
+      },
+    });
+  };
+
+  const handleSuggestedAction = (action: { type: string; payload: unknown }) => {
+    console.log('Action clicked:', action);
+    // Implémenter la logique selon le type d'action
+  };
+
+  return (
+    <div className="portfolio-chat">
+      {/* Indicateur de connexion */}
+      <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+        {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
+      </div>
+
+      {/* Zone de réponse */}
+      <div className="chat-response">
+        {isStreaming && (
+          <div className="typing-indicator">
+            <span>ADHA analyse...</span>
+            <div className="dots">
+              <span>.</span><span>.</span><span>.</span>
+            </div>
+          </div>
+        )}
+        
+        {streamingContent && (
+          <div className="assistant-message">
+            {streamingContent}
+          </div>
+        )}
+
+        {error && (
+          <div className="error-message">
+            ❌ {error}
+            <button onClick={reset}>Réessayer</button>
+          </div>
+        )}
+
+        {/* Actions suggérées */}
+        {suggestedActions.length > 0 && (
+          <div className="suggested-actions">
+            {suggestedActions.map((action, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSuggestedAction(action)}
+                className="action-button"
+              >
+                {String(action.type)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Formulaire d'envoi */}
+      <form onSubmit={handleSubmit} className="chat-input-form">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Posez une question sur votre portefeuille..."
+          disabled={!isConnected || isStreaming}
+        />
+        <button type="submit" disabled={!isConnected || isStreaming || !input.trim()}>
+          {isStreaming ? '⏳' : '📤'}
+        </button>
+      </form>
+    </div>
+  );
+};
 ```
 
 ### Bonnes Pratiques
 
-1. **Affichage progressif**: Utiliser un `StreamBuilder` ou BLoC pour afficher le texte chunk par chunk
+1. **Affichage progressif**: Utiliser le hook `usePortfolioChat` pour afficher le texte chunk par chunk
 2. **Actions suggérées**: Afficher les `suggestedActions` comme boutons d'action rapide après `end`
 3. **Indicateur visuel**: Montrer un indicateur "typing" ou animation pendant le streaming
 4. **Gestion des erreurs**: Toujours gérer le type `error` et proposer un retry

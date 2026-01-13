@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   PanelContext, 
   PanelState, 
@@ -7,6 +7,7 @@ import {
   PanelPosition,
   defaultPanelConfig,
   defaultPanelState,
+  getPanelConstraints,
   PANEL_STATE_KEY 
 } from './panelTypes';
 
@@ -16,13 +17,20 @@ function loadPanelState(): Partial<PanelState> {
     const saved = localStorage.getItem(PANEL_STATE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
+      const constraints = getPanelConstraints();
+      
+      // Clamp saved values to current viewport constraints
+      const width = Math.min(Math.max(parsed.panelWidth || defaultPanelConfig.width, constraints.minWidth), constraints.maxWidth);
+      const height = Math.min(Math.max(parsed.panelHeight || defaultPanelConfig.height, constraints.minHeight), constraints.maxHeight);
+      
       return {
         panelPosition: parsed.panelPosition || 'right',
         isSidebarCollapsed: parsed.isSidebarCollapsed || false,
         secondaryPanel: {
           ...defaultPanelConfig,
-          width: parsed.panelWidth || defaultPanelConfig.width,
-          height: parsed.panelHeight || defaultPanelConfig.height,
+          ...constraints,
+          width,
+          height,
         },
       };
     }
@@ -47,13 +55,40 @@ function savePanelState(state: Partial<PanelState>) {
 }
 
 export function PanelProvider({ children }: { children: React.ReactNode }) {
-  // Charger l'état initial depuis localStorage
-  const initialState = useMemo(() => ({
-    ...defaultPanelState,
-    ...loadPanelState(),
-  }), []);
+  // Charger l'état initial depuis localStorage avec contraintes dynamiques
+  const initialState = useMemo(() => {
+    const constraints = getPanelConstraints();
+    return {
+      ...defaultPanelState,
+      secondaryPanel: {
+        ...defaultPanelState.secondaryPanel,
+        ...constraints,
+      },
+      ...loadPanelState(),
+    };
+  }, []);
 
   const [state, setState] = useState<PanelState>(initialState);
+
+  // Update constraints when window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      const constraints = getPanelConstraints();
+      setState(prev => ({
+        ...prev,
+        secondaryPanel: {
+          ...prev.secondaryPanel,
+          ...constraints,
+          // Clamp current dimensions to new constraints
+          width: Math.min(Math.max(prev.secondaryPanel.width, constraints.minWidth), constraints.maxWidth),
+          height: Math.min(Math.max(prev.secondaryPanel.height, constraints.minHeight), constraints.maxHeight),
+        },
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Ouvrir un panel
   const openPanel = useCallback((type: PanelType) => {
@@ -140,23 +175,24 @@ export function PanelProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setState(prev => ({ ...prev, isAnimating: false })), 300);
   }, []);
 
-  // Redimensionner le panel
+  // Redimensionner le panel - appelé uniquement à la fin du drag
   const resizePanel = useCallback((dimension: number) => {
     setState(prev => {
       const config = prev.secondaryPanel;
+      const clampedDimension = prev.panelPosition === 'right'
+        ? Math.min(Math.max(dimension, config.minWidth), config.maxWidth)
+        : Math.min(Math.max(dimension, config.minHeight), config.maxHeight);
+      
       const newState = {
         ...prev,
         secondaryPanel: {
           ...config,
-          width: prev.panelPosition === 'right' 
-            ? Math.min(Math.max(dimension, config.minWidth), config.maxWidth)
-            : config.width,
-          height: prev.panelPosition === 'bottom'
-            ? Math.min(Math.max(dimension, config.minHeight), config.maxHeight)
-            : config.height,
+          width: prev.panelPosition === 'right' ? clampedDimension : config.width,
+          height: prev.panelPosition === 'bottom' ? clampedDimension : config.height,
         },
       };
-      savePanelState(newState);
+      // Defer localStorage save to avoid blocking
+      requestAnimationFrame(() => savePanelState(newState));
       return newState;
     });
   }, []);

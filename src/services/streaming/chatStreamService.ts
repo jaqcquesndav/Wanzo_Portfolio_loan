@@ -16,9 +16,45 @@ import type {
 } from '../../types/chat';
 import { getAccessToken } from '../api/authHeaders';
 
+/**
+ * Configuration WebSocket selon l'environnement
+ * @see API DOCUMENTATION/chat/README.md - Section "URLs de Connexion WebSocket"
+ * 
+ * ✅ WORKFLOW CORRECT (selon la documentation et accounting):
+ * 1. WebSocket.connect('ws://localhost:8000', {path: '/portfolio/chat'})
+ * 2. emit('subscribe_conversation', { conversationId }) + délai 200ms
+ * 3. POST /chat/stream
+ * 
+ * | Environnement     | URL Base              | Path WebSocket     |
+ * |-------------------|----------------------|-------------------|
+ * | Production        | wss://api.wanzo.com  | /portfolio/chat   |
+ * | Développement     | ws://localhost:8000  | /portfolio/chat   |
+ */
+const getWebSocketConfig = () => {
+  // Variable d'environnement dédiée au WebSocket (prioritaire)
+  const wsUrl = import.meta.env.VITE_WS_URL;
+  
+  if (wsUrl) {
+    // Déterminer le path selon l'URL
+    const isDirectConnection = wsUrl.includes(':3005');
+    return {
+      url: wsUrl,
+      path: isDirectConnection ? '/socket.io' : '/portfolio/chat'
+    };
+  }
+  
+  // Par défaut: via API Gateway avec path de service (comme accounting)
+  // Le proxy API Gateway route /portfolio/chat vers le service portfolio
+  return {
+    url: 'http://localhost:8000',
+    path: '/portfolio/chat'
+  };
+};
+
 // Configuration par défaut
 const DEFAULT_CONFIG: StreamingConfig = {
-  websocketUrl: import.meta.env.VITE_API_URL || 'https://api.wanzo.com',
+  websocketUrl: getWebSocketConfig().url,
+  websocketPath: getWebSocketConfig().path,
   timeout: 120000, // 120s selon la doc
   autoRetry: true,
   maxRetries: 3
@@ -86,8 +122,15 @@ export class ChatStreamService {
    * Se connecte au serveur Socket.IO pour le streaming
    */
   async connect(institutionId: string): Promise<void> {
+    console.log('[ChatStreamService] 🔌 connect() appelé avec institutionId:', institutionId);
+    console.log('[ChatStreamService] État actuel:', {
+      hasSocket: !!this.socket,
+      socketConnected: this.socket?.connected,
+      socketId: this.socket?.id
+    });
+    
     if (this.socket?.connected) {
-      console.log('[ChatStreamService] Déjà connecté');
+      console.log('[ChatStreamService] ✅ Déjà connecté, socket.id:', this.socket.id);
       return;
     }
 
@@ -98,12 +141,28 @@ export class ChatStreamService {
 
     return new Promise((resolve, reject) => {
       try {
-        this.socket = io(this.config.websocketUrl, {
-          path: '/socket.io',
-          transports: ['websocket'],
+        // Toujours utiliser l'API Gateway (port 8000) avec path /portfolio/chat
+        // L'API Gateway réécrit le path vers /socket.io du service portfolio
+        // Note: Le namespace "/" (racine) est utilisé via l'API Gateway
+        // Le namespace "/chat" dans la réponse POST est informatif uniquement
+        const wsConfig = getWebSocketConfig();
+        const wsUrl = this.config.websocketUrl || wsConfig.url;
+        const wsPath = this.config.websocketPath || wsConfig.path;
+        
+        console.log('[ChatStreamService] 🔌 Connexion WebSocket via API Gateway:', {
+          url: wsUrl,
+          path: wsPath,
+          namespace: '/ (default)',
+          institutionId,
+          hasToken: !!this.getAuthToken()
+        });
+        
+        this.socket = io(wsUrl, {
+          path: wsPath,
+          transports: ['websocket', 'polling'],  // Fallback polling si WebSocket échoue
           // Authentification via l'objet auth (méthode sécurisée Socket.IO)
           auth: {
-            token
+            token: `Bearer ${token}`
           },
           // Query params pour l'institutionId (pas le token pour des raisons de sécurité)
           query: {
@@ -117,11 +176,17 @@ export class ChatStreamService {
           reconnectionAttempts: this.config.maxRetries,
           reconnectionDelay: 1000,
           reconnectionDelayMax: 30000,
-          timeout: 10000
+          timeout: 10000,
+          forceNew: false  // Réutiliser connexion existante si possible (comme accounting)
         });
 
+        console.log('[ChatStreamService] 📡 Socket créé, en attente de connexion...');
+
         this.socket.on('connect', () => {
-          console.log('[ChatStreamService] ✅ Socket.IO connecté');
+          console.log('[ChatStreamService] ✅ Socket.IO CONNECTÉ!', {
+            socketId: this.socket?.id,
+            connected: this.socket?.connected
+          });
           this.reconnectAttempts = 0;
           this.notifyConnectionChange(true);
           
@@ -132,12 +197,19 @@ export class ChatStreamService {
         });
 
         this.socket.on('disconnect', (reason) => {
-          console.log('[ChatStreamService] ❌ Socket.IO déconnecté:', reason);
+          console.log('[ChatStreamService] ❌ Socket.IO DÉCONNECTÉ:', {
+            reason,
+            socketId: this.socket?.id
+          });
           this.notifyConnectionChange(false);
         });
 
         this.socket.on('connect_error', (error) => {
-          console.error('[ChatStreamService] Erreur de connexion Socket.IO:', error);
+          console.error('[ChatStreamService] ❌ ERREUR de connexion Socket.IO:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+          });
           this.notifyConnectionChange(false);
           if (this.reconnectAttempts === 0) {
             reject(error);
@@ -167,39 +239,149 @@ export class ChatStreamService {
   private setupStreamListeners(): void {
     if (!this.socket) return;
 
+    console.log('[ChatStreamService] 🎧 Configuration des listeners pour les événements de streaming');
+
     // Chunk de contenu
     this.socket.on(SOCKET_EVENTS.STREAM_CHUNK, (chunk: PortfolioStreamChunkEvent) => {
+      console.log('[ChatStreamService] 📦 CHUNK REÇU:', {
+        requestMessageId: chunk.requestMessageId,
+        type: chunk.type,
+        chunkId: chunk.chunkId,
+        contentPreview: chunk.content?.substring(0, 30)
+      });
       this.handleChunk(chunk);
     });
 
     // Fin du streaming
     this.socket.on(SOCKET_EVENTS.STREAM_END, (chunk: PortfolioStreamChunkEvent) => {
+      console.log('[ChatStreamService] 🏁 STREAM_END REÇU:', chunk.requestMessageId);
       this.handleEnd(chunk);
     });
 
     // Erreur de streaming
     this.socket.on(SOCKET_EVENTS.STREAM_ERROR, (chunk: PortfolioStreamChunkEvent) => {
+      console.log('[ChatStreamService] ❌ STREAM_ERROR REÇU:', chunk);
       this.handleError(chunk);
     });
 
     // Événements d'outil (tool_call, tool_result)
     this.socket.on(SOCKET_EVENTS.STREAM_TOOL, (chunk: PortfolioStreamChunkEvent) => {
+      console.log('[ChatStreamService] 🔧 STREAM_TOOL REÇU:', chunk);
       this.handleToolEvent(chunk);
+    });
+    
+    // Écouter la confirmation d'abonnement du serveur (comme accounting)
+    this.socket.on(SOCKET_EVENTS.SUBSCRIBE_CONVERSATION, (response: { success: boolean; conversationId: string; error?: string }) => {
+      if (response.success) {
+        console.log('[ChatStreamService] ✅ Serveur confirme abonnement:', response.conversationId);
+        this.subscribedConversations.add(response.conversationId);
+      } else {
+        console.error('[ChatStreamService] ❌ Échec abonnement côté serveur:', response.error);
+      }
+    });
+    
+    // Écouter les exceptions du serveur
+    this.socket.on('exception', (error: unknown) => {
+      console.error('[ChatStreamService] 🚨 EXCEPTION du serveur:', error);
+      console.error('[ChatStreamService] 🚨 Détails:', JSON.stringify(error, null, 2));
+    });
+    
+    // Écouter TOUS les événements pour debug
+    this.socket.onAny((eventName, ...args) => {
+      console.log('[ChatStreamService] 📡 Event reçu:', eventName, args);
+      // Log détaillé pour les exceptions
+      if (eventName === 'exception') {
+        console.error('[ChatStreamService] 🚨 Exception payload:', JSON.stringify(args, null, 2));
+      }
     });
   }
 
   /**
    * S'abonne aux mises à jour d'une conversation
+   * @see API DOCUMENTATION/chat/README.md - ÉTAPE 2: S'abonner AVANT d'envoyer le message HTTP
    */
   subscribeToConversation(conversationId: string): void {
     if (!this.socket?.connected) {
-      console.warn('[ChatStreamService] Socket non connecté, impossible de souscrire');
+      console.error('[ChatStreamService] ❌ Socket non connecté, impossible de souscrire à:', conversationId);
+      console.error('[ChatStreamService] ℹ️ État socket:', {
+        exists: !!this.socket,
+        connected: this.socket?.connected,
+        id: this.socket?.id
+      });
       return;
     }
 
-    this.socket.emit(SOCKET_EVENTS.SUBSCRIBE_CONVERSATION, { conversationId });
+    // Log détaillé pour debug du problème "0 clients subscribed"
+    const roomName = `conversation:${conversationId}`;
+    console.log('[ChatStreamService] 📡 ÉTAPE 2: Émission subscribe_conversation:', { 
+      conversationId,
+      roomName,  // La room que le serveur doit utiliser
+      socketId: this.socket.id,
+      socketConnected: this.socket.connected,
+      transportType: this.socket.io?.engine?.transport?.name
+    });
+    
+    // Émettre avec callback pour avoir la confirmation du serveur
+    this.socket.emit(SOCKET_EVENTS.SUBSCRIBE_CONVERSATION, { conversationId }, (ack: unknown) => {
+      console.log('[ChatStreamService] 📬 ACK reçu pour subscribe_conversation:', ack);
+    });
+    
     this.subscribedConversations.add(conversationId);
-    console.log('[ChatStreamService] Souscrit à la conversation:', conversationId);
+    console.log('[ChatStreamService] ✅ Abonnement émis pour room:', roomName);
+  }
+
+  /**
+   * S'abonne aux mises à jour d'une conversation avec confirmation (acknowledgement)
+   * @see API DOCUMENTATION/chat/README.md - ÉTAPE 2: S'abonner AVANT d'envoyer le message HTTP
+   * @returns Promise qui se résout quand l'abonnement est confirmé ou après timeout
+   */
+  async subscribeToConversationAsync(conversationId: string, timeoutMs = 5000): Promise<void> {
+    console.log('[ChatStreamService] 📡 subscribeToConversationAsync - Début:', {
+      conversationId,
+      timeoutMs,
+      socketConnected: this.socket?.connected,
+      socketId: this.socket?.id
+    });
+
+    if (!this.socket?.connected) {
+      console.error('[ChatStreamService] ❌ Socket non connecté pour abonnement async');
+      throw new Error('Socket non connecté');
+    }
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        // En cas de timeout, on considère quand même l'abonnement comme envoyé
+        // car le backend peut ne pas supporter les acknowledgements
+        console.warn('[ChatStreamService] ⚠️ Timeout acknowledgement - abonnement envoyé sans confirmation:', conversationId);
+        this.subscribedConversations.add(conversationId);
+        resolve(); // On résout quand même car l'emit a été fait
+      }, timeoutMs);
+
+      console.log('[ChatStreamService] 📤 Émission subscribe_conversation avec callback:', { conversationId });
+      
+      this.socket!.emit(SOCKET_EVENTS.SUBSCRIBE_CONVERSATION, { conversationId }, (response: unknown) => {
+        clearTimeout(timeout);
+        console.log('[ChatStreamService] 📥 Réponse du serveur pour abonnement:', response);
+        
+        // Le callback peut retourner un objet avec success ou simplement être appelé
+        if (response && typeof response === 'object' && 'success' in response) {
+          if ((response as { success: boolean }).success) {
+            this.subscribedConversations.add(conversationId);
+            console.log('[ChatStreamService] ✅ Abonnement confirmé par le serveur:', conversationId);
+            resolve();
+          } else {
+            const error = (response as { error?: string }).error || 'Raison inconnue';
+            console.error('[ChatStreamService] ❌ Échec abonnement:', error);
+            reject(new Error(`Échec abonnement: ${error}`));
+          }
+        } else {
+          // Pas de réponse structurée, considérer comme succès
+          this.subscribedConversations.add(conversationId);
+          console.log('[ChatStreamService] ✅ Abonnement envoyé (pas de réponse structurée):', conversationId);
+          resolve();
+        }
+      });
+    });
   }
 
   /**
@@ -225,6 +407,7 @@ export class ChatStreamService {
   /**
    * Prépare le streaming pour un message
    * Note: L'envoi du message se fait via l'API REST (/chat/stream)
+   * @deprecated Utiliser prepareStreamingWithoutSubscribe + subscribeToConversation manuellement
    */
   prepareStreaming(messageId: string, conversationId: string): void {
     // Réinitialiser l'état de streaming
@@ -240,6 +423,32 @@ export class ChatStreamService {
 
     // Configurer le timeout
     this.setupMessageTimeout(messageId);
+  }
+
+  /**
+   * Prépare le streaming pour un message SANS s'abonner à la conversation
+   * Utiliser cette méthode quand l'abonnement a déjà été fait manuellement
+   * @see API DOCUMENTATION/chat/README.md - Workflow correct: subscribe AVANT POST
+   */
+  prepareStreamingWithoutSubscribe(messageId: string, conversationId: string): void {
+    // Réinitialiser l'état de streaming
+    this.streamingState = {
+      messageId,
+      accumulatedContent: '',
+      lastChunkId: -1,
+      isActive: true
+    };
+
+    // Ajouter à la liste des conversations souscrites (pour la reconnexion)
+    this.subscribedConversations.add(conversationId);
+
+    // Configurer le timeout
+    this.setupMessageTimeout(messageId);
+    
+    console.log('[ChatStreamService] ✅ Streaming préparé (sans re-subscribe):', {
+      messageId,
+      conversationId
+    });
   }
 
   /**
@@ -285,7 +494,14 @@ export class ChatStreamService {
    * Vérifie si le service est connecté
    */
   isConnected(): boolean {
-    return this.socket?.connected ?? false;
+    const connected = this.socket?.connected ?? false;
+    console.log('[ChatStreamService] isConnected() appelé:', {
+      hasSocket: !!this.socket,
+      socketConnected: this.socket?.connected,
+      socketId: this.socket?.id,
+      result: connected
+    });
+    return connected;
   }
 
   /**

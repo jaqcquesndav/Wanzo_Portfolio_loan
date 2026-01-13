@@ -348,9 +348,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
         } else {
-          // PAS AUTHENTIFIÉ - Activer le mode démo automatiquement en développement
-          console.log('🔐 AuthContext: Pas authentifié (pas de token), activation mode démo automatique');
-          enableDemoMode();
+          // PAS AUTHENTIFIÉ - Laisser afficher la page de login
+          console.log('🔐 AuthContext: Pas authentifié (pas de token)');
+          setContextStatus('unauthenticated');
+          setIsContextLoaded(true);
+          
+          // Rediriger vers la page de login si on n'y est pas déjà
+          if (window.location.pathname !== '/' && window.location.pathname !== '/auth/callback') {
+            window.location.href = '/';
+          }
         }
       } catch (err) {
         console.error('❌ AuthContext: Erreur lors de la vérification de l\'authentification:', err);

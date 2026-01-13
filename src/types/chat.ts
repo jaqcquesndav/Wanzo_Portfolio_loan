@@ -190,11 +190,14 @@ export interface StreamingState {
 
 /**
  * Configuration du streaming
+ * @see API DOCUMENTATION/chat/README.md - Section "URLs de Connexion WebSocket"
  */
 export interface StreamingConfig {
-  /** URL du WebSocket */
+  /** URL du WebSocket (ex: ws://localhost:3005 ou wss://api.wanzo.com) */
   websocketUrl: string;
-  /** Timeout en ms (défaut: 45000) */
+  /** Path du WebSocket (ex: /socket.io ou /portfolio/chat) */
+  websocketPath?: string;
+  /** Timeout en ms (défaut: 120000 selon la doc) */
   timeout?: number;
   /** Réessayer automatiquement en cas d'erreur */
   autoRetry?: boolean;

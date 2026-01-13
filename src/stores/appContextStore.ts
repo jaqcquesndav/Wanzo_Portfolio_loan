@@ -107,12 +107,7 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
         // 3. null si aucun des deux n'est disponible
         const effectiveInstitutionId = explicitInstitutionId || institution?.id || null;
         
-        console.log('📦 appContextStore.setContext:', {
-          userId: user?.id,
-          institutionId: effectiveInstitutionId,
-          hasInstitution: !!institution,
-          isDemoMode
-        });
+        console.log('📦 [AppContext] setContext - institutionId:', effectiveInstitutionId, '| user:', user?.id);
         
         set({
           user,
@@ -172,9 +167,33 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
 /**
  * Fonction utilitaire pour obtenir l'institutionId de manière synchrone
  * Utilisable en dehors des composants React (ex: dans les services API)
+ * 
+ * IMPORTANT: Cette fonction essaie d'abord le store Zustand, puis fallback sur localStorage
+ * car le store peut ne pas être encore hydraté au premier rendu.
  */
 export const getInstitutionId = (): string | null => {
-  return useAppContextStore.getState().institutionId;
+  // 1. Essayer le store Zustand (source de vérité)
+  const storeInstitutionId = useAppContextStore.getState().institutionId;
+  if (storeInstitutionId) {
+    return storeInstitutionId;
+  }
+  
+  // 2. Fallback: Lire directement depuis localStorage si le store n'est pas encore hydraté
+  try {
+    const storedData = localStorage.getItem('app-context-storage');
+    if (storedData) {
+      const parsed = JSON.parse(storedData);
+      const fallbackId = parsed?.state?.institutionId || null;
+      if (fallbackId) {
+        console.log('[AppContext] getInstitutionId - Fallback localStorage:', fallbackId);
+        return fallbackId;
+      }
+    }
+  } catch (e) {
+    console.warn('[AppContext] Erreur lecture localStorage:', e);
+  }
+  
+  return null;
 };
 
 /**
@@ -199,4 +218,39 @@ export const getAppContext = (): AppContextState => {
  */
 export const isDemoMode = (): boolean => {
   return useAppContextStore.getState().isDemoMode;
+};
+
+/**
+ * Fonction utilitaire pour attendre que l'institutionId soit disponible
+ * Utilisable pour s'assurer que le contexte est prêt avant une action
+ * @param timeout - Temps max d'attente en ms (défaut: 5000)
+ * @returns Promise avec l'institutionId ou null si timeout
+ */
+export const waitForInstitutionId = (timeout = 5000): Promise<string | null> => {
+  return new Promise((resolve) => {
+    // Vérifier immédiatement
+    const immediate = getInstitutionId();
+    if (immediate) {
+      resolve(immediate);
+      return;
+    }
+    
+    // Sinon, attendre les mises à jour du store
+    const startTime = Date.now();
+    const unsubscribe = useAppContextStore.subscribe((state) => {
+      if (state.institutionId) {
+        unsubscribe();
+        resolve(state.institutionId);
+      } else if (Date.now() - startTime > timeout) {
+        unsubscribe();
+        resolve(null);
+      }
+    });
+    
+    // Timeout de sécurité
+    setTimeout(() => {
+      unsubscribe();
+      resolve(getInstitutionId());
+    }, timeout);
+  });
 };

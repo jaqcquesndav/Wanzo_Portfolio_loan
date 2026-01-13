@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   CreditCard, 
   Briefcase, 
@@ -139,27 +139,28 @@ export function SourceSelector({
   onSelect 
 }: SourceSelectorProps) {
   const [activeCategory, setActiveCategory] = useState<SourceCategory>('portfolio');
-  const [availablePortfolios, setAvailablePortfolios] = useState<PortfolioItem[]>([]);
   const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(selectedPortfolioId || null);
 
   // Charger les données des portefeuilles
-  const traditional = useTraditionalPortfolios();
+  const { portfolios: traditionalPortfolios, loading } = useTraditionalPortfolios();
+
+  // Mémoriser les IDs des portefeuilles pour une comparaison stable
+  const portfolioIds = useMemo(() => 
+    (traditionalPortfolios || []).map(p => p.id).join(','),
+    [traditionalPortfolios]
+  );
 
   // Combiner tous les portefeuilles et les organiser par type
-  useEffect(() => {
-    let allPortfolios: PortfolioItem[] = [];
-    
-    // Respecter le principe d'isolation: ne charger que les portefeuilles du type actuel
-    if (currentPortfolioType === 'traditional') {
-      allPortfolios = (traditional.portfolios || []).map(p => ({ 
-        id: p.id, 
-        name: p.name, 
-        type: 'traditional' as const 
-      }));
-    }
-    
-    setAvailablePortfolios(allPortfolios);
-  }, [traditional.portfolios, currentPortfolioType]);
+  // Utiliser useMemo avec une dépendance stable (string des IDs)
+  const availablePortfolios = useMemo(() => {
+    if (currentPortfolioType !== 'traditional') return [];
+    return (traditionalPortfolios || []).map(p => ({ 
+      id: p.id, 
+      name: p.name, 
+      type: 'traditional' as const 
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portfolioIds, currentPortfolioType]);
 
   if (!isOpen) return null;
   

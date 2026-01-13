@@ -14,6 +14,42 @@
   cursor: ew-resize !important;
 }
 
+/* CRITICAL: Prevent ALL animations and transitions during panel resize */
+body.resizing {
+  cursor: ew-resize !important;
+}
+
+body.resizing *,
+body.resizing *::before,
+body.resizing *::after {
+  cursor: inherit !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  /* Disable ALL transitions during resize */
+  transition: none !important;
+  animation: none !important;
+}
+
+body.resizing iframe,
+body.resizing embed,
+body.resizing object,
+body.resizing video {
+  pointer-events: none !important;
+}
+
+/* GPU acceleration for smooth animations */
+.panel-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth resize performance - applied to resizable panels */
+.resize-smooth {
+  will-change: width, height;
+  contain: layout style;
+}
+
 /* Styles pour le sidebar compact */
 .compact-sidebar .sidebar-label,
 .compact-sidebar h3,

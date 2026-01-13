@@ -45,8 +45,8 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     deleteConversation,
     setActiveConversation,
     fetchConversations,
-    connectWebSocket,
-    disconnectWebSocket
+    connectWebSocket
+    // Note: disconnectWebSocket retiré - la connexion est maintenue pendant toute la session
   } = useChatStore();
   
   const adhaWriteMode = useAdhaWriteMode();
@@ -81,17 +81,27 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
 
   // Connexion WebSocket pour le streaming quand l'institution est connue
   useEffect(() => {
-    if (isApiMode && isStreamingEnabled && globalInstitutionId && !isWebSocketConnected) {
+    console.log('[ChatContainer] 🔍 WebSocket effect check:', {
+      globalInstitutionId,
+      isApiMode,
+      isStreamingEnabled,
+      isWebSocketConnected,
+      shouldConnect: isApiMode && isStreamingEnabled && globalInstitutionId && !isWebSocketConnected
+    });
+    
+    // CRITIQUE: institutionId DOIT être disponible pour la connexion WebSocket
+    if (!globalInstitutionId) {
+      console.warn('[ChatContainer] ⚠️ institutionId non disponible! Connexion WebSocket impossible.');
+      return;
+    }
+    
+    if (isApiMode && isStreamingEnabled && !isWebSocketConnected) {
+      console.log('[ChatContainer] 🔌 Tentative de connexion WebSocket avec institutionId:', globalInstitutionId);
       connectWebSocket(globalInstitutionId);
     }
     
-    // Cleanup à la déconnexion
-    return () => {
-      if (isWebSocketConnected) {
-        disconnectWebSocket();
-      }
-    };
-  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket, disconnectWebSocket]);
+    // Note: pas de cleanup ici - la déconnexion est gérée explicitement
+  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
@@ -100,6 +110,20 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
+    
+    console.log('[ChatContainer] 📤 handleSend - État streaming:', {
+      isWebSocketConnected,
+      isStreamingEnabled,
+      globalInstitutionId,
+      isApiMode
+    });
+    
+    // Vérifier si on a besoin de connecter le WebSocket avant d'envoyer
+    if (isApiMode && isStreamingEnabled && !isWebSocketConnected && globalInstitutionId) {
+      console.log('[ChatContainer] 🔌 Tentative de connexion WebSocket avant envoi...');
+      await connectWebSocket(globalInstitutionId);
+    }
+    
     // Ajout du mode dans le contexte lors de l'envoi
     await addMessage(newMessage, 'user', undefined, adhaWriteMode.isActive ? 'analyse' : 'chat');
     setNewMessage('');

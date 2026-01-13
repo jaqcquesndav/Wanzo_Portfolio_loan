@@ -55,15 +55,30 @@ export interface PanelActions {
 
 export type PanelContextType = PanelState & PanelActions;
 
+// Responsive panel constraints - calculated based on viewport
+export const getPanelConstraints = () => {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1920;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 1080;
+  
+  return {
+    // Panel can take up to 70% of viewport width/height
+    minWidth: Math.max(280, vw * 0.15),  // Min 15% or 280px
+    maxWidth: Math.min(vw * 0.70, vw - 100), // Max 70% of viewport, leave 100px for content
+    minHeight: Math.max(200, vh * 0.15), // Min 15% or 200px  
+    maxHeight: Math.min(vh * 0.70, vh - 150), // Max 70% of viewport, leave 150px for header
+  };
+};
+
 export const defaultPanelConfig: PanelConfig = {
   type: null,
   isFullscreen: false,
   width: 420,
-  height: 400,
-  minWidth: 320,
-  maxWidth: 800,
-  minHeight: 300,
-  maxHeight: 600,
+  height: 350,
+  // These are initial values, will be recalculated dynamically
+  minWidth: 280,
+  maxWidth: 1200,
+  minHeight: 200,
+  maxHeight: 700,
 };
 
 export const defaultPanelState: PanelState = {
