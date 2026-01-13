@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { User, Bot, Copy, ThumbsUp, ThumbsDown, Check, Pencil } from 'lucide-react';
+import { User, Bot, Copy, ThumbsUp, ThumbsDown, Check, Pencil, FileText, Image, Download } from 'lucide-react';
+import { MessageContent } from './MessageContent';
 import type { Message, Contact } from '../../types/chat';
 
 interface ChatMessageProps {
@@ -136,15 +137,47 @@ export function ChatMessage({
               </div>
             </div>
           ) : (
-            <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-              {message.content}
+            <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+              <MessageContent 
+                content={message.content}
+                isStreaming={isStreaming && isBot}
+                onEdit={isBot && onEdit ? (newContent) => onEdit(message.id, newContent) : undefined}
+              />
             </div>
           )}
 
-          {/* Pièce jointe */}
+          {/* Pièce jointe - style amélioré */}
           {message.attachment && (
-            <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg inline-flex items-center space-x-2">
-              <span className="text-xs text-gray-600 dark:text-gray-300">{message.attachment.name}</span>
+            <div className="mt-3 inline-flex items-center space-x-3 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="p-2 bg-white dark:bg-gray-700 rounded-lg">
+                {message.attachment.type?.startsWith('image/') ? (
+                  <Image className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <FileText className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">
+                  {message.attachment.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {message.attachment.type || 'Fichier'}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (message.attachment?.content) {
+                    const link = document.createElement('a');
+                    link.href = message.attachment.content;
+                    link.download = message.attachment.name;
+                    link.click();
+                  }
+                }}
+                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                title="Télécharger"
+              >
+                <Download className="h-4 w-4" />
+              </button>
             </div>
           )}
         </div>

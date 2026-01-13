@@ -10,20 +10,23 @@ function copyProductionFiles() {
     name: 'copy-production-files',
     closeBundle() {
       const distDir = path.resolve(__dirname, 'dist');
+      const serverSrc = path.resolve(__dirname, 'production-server.js');
+      const packageSrc = path.resolve(__dirname, 'production-package.json');
       
-      // Copy production-server.js to dist/server.js
-      fs.copyFileSync(
-        path.resolve(__dirname, 'production-server.js'),
-        path.join(distDir, 'server.js')
-      );
+      // Only copy if source files exist (they may not exist in CI)
+      if (fs.existsSync(serverSrc)) {
+        fs.copyFileSync(serverSrc, path.join(distDir, 'server.js'));
+        console.log('✅ production-server.js copied to dist/server.js');
+      } else {
+        console.warn('⚠️ production-server.js not found, skipping copy');
+      }
       
-      // Copy production-package.json to dist/package.json
-      fs.copyFileSync(
-        path.resolve(__dirname, 'production-package.json'),
-        path.join(distDir, 'package.json')
-      );
-      
-      console.log('✅ Production files copied to dist/');
+      if (fs.existsSync(packageSrc)) {
+        fs.copyFileSync(packageSrc, path.join(distDir, 'package.json'));
+        console.log('✅ production-package.json copied to dist/package.json');
+      } else {
+        console.warn('⚠️ production-package.json not found, skipping copy');
+      }
     }
   };
 }
