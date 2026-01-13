@@ -3,29 +3,37 @@ import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Plugin to copy production files to dist/
 function copyProductionFiles() {
   return {
     name: 'copy-production-files',
     closeBundle() {
-      const distDir = path.resolve(__dirname, 'dist');
-      const serverSrc = path.resolve(__dirname, 'production-server.js');
-      const packageSrc = path.resolve(__dirname, 'production-package.json');
-      
-      // Only copy if source files exist (they may not exist in CI)
-      if (fs.existsSync(serverSrc)) {
-        fs.copyFileSync(serverSrc, path.join(distDir, 'server.js'));
-        console.log('✅ production-server.js copied to dist/server.js');
-      } else {
-        console.warn('⚠️ production-server.js not found, skipping copy');
-      }
-      
-      if (fs.existsSync(packageSrc)) {
-        fs.copyFileSync(packageSrc, path.join(distDir, 'package.json'));
-        console.log('✅ production-package.json copied to dist/package.json');
-      } else {
-        console.warn('⚠️ production-package.json not found, skipping copy');
+      try {
+        const distDir = path.resolve(__dirname, 'dist');
+        const serverSrc = path.resolve(__dirname, 'production-server.js');
+        const packageSrc = path.resolve(__dirname, 'production-package.json');
+        
+        // Only copy if source files exist (they may not exist in CI)
+        if (fs.existsSync(serverSrc)) {
+          fs.copyFileSync(serverSrc, path.join(distDir, 'server.js'));
+          console.log('✅ production-server.js copied to dist/server.js');
+        } else {
+          console.warn('⚠️ production-server.js not found, skipping copy');
+        }
+        
+        if (fs.existsSync(packageSrc)) {
+          fs.copyFileSync(packageSrc, path.join(distDir, 'package.json'));
+          console.log('✅ production-package.json copied to dist/package.json');
+        } else {
+          console.warn('⚠️ production-package.json not found, skipping copy');
+        }
+      } catch (error) {
+        console.warn('⚠️ Error copying production files:', error.message);
       }
     }
   };
