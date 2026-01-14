@@ -639,20 +639,55 @@ export const useChatStore = create<ChatStore>()(
             get().addStreamingMessage(messageId);
             
             // S'abonner aux événements de streaming
-            let accumulatedContent = '';
+            // ✅ IMPORTANT: Le service accumule maintenant le contenu dans chunk.content
+            // Plus besoin d'accumuler ici
             
-            console.log('[ChatStore] 📡 Abonnement aux événements de streaming pour messageId:', messageId);
+            // Garder une référence à l'ID de conversation actif pour ce streaming
+            const streamingConversationId = backendConversationId;
+            
+            console.log('[ChatStore] 📡 Abonnement aux événements de streaming:', {
+              messageId,
+              conversationId: streamingConversationId,
+              botMessageId: `bot-${messageId}`
+            });
             
             currentStreamService.onChunk(messageId, (chunk: PortfolioStreamChunkEvent) => {
               console.log('[ChatStore] 📦 Chunk reçu:', { 
                 type: chunk.type, 
-                content: chunk.content?.substring(0, 50),
-                messageId: `bot-${messageId}`
+                contentLength: chunk.content?.length,
+                requestMessageId: chunk.requestMessageId,
+                conversationId: chunk.conversationId,
+                chunkId: chunk.chunkId
               });
+              
               if (chunk.type === 'chunk') {
-                accumulatedContent += chunk.content;
-                console.log('[ChatStore] 📝 Mise à jour contenu:', accumulatedContent.length, 'caractères');
-                get().updateStreamingContent(`bot-${messageId}`, accumulatedContent, false);
+                // ✅ Le contenu est DÉJÀ accumulé par le service (comme accounting)
+                // chunk.content contient tout le texte jusqu'à présent
+                console.log('[ChatStore] 📝 Mise à jour contenu:', chunk.content.length, 'caractères');
+                
+                // ✅ Mettre à jour dans la BONNE conversation (celle du chunk)
+                const targetConversationId = chunk.conversationId || streamingConversationId;
+                
+                set(state => ({
+                  conversations: state.conversations.map(conv => {
+                    // Vérifier si c'est la bonne conversation
+                    if (conv.id === targetConversationId || conv.id === streamingConversationId) {
+                      return {
+                        ...conv,
+                        // Mettre à jour l'ID si le serveur a renvoyé un nouveau
+                        id: chunk.conversationId || conv.id,
+                        messages: conv.messages.map(msg =>
+                          msg.id === `bot-${messageId}` 
+                            ? { ...msg, content: chunk.content, isStreaming: true }
+                            : msg
+                        )
+                      };
+                    }
+                    return conv;
+                  }),
+                  // Mettre à jour activeConversationId si nécessaire
+                  activeConversationId: chunk.conversationId || state.activeConversationId
+                }));
               }
               // Garder l'indicateur de typing actif pendant le streaming
               set({ isTyping: true });
@@ -661,53 +696,57 @@ export const useChatStore = create<ChatStore>()(
             currentStreamService.onComplete(messageId, (finalContent: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => {
               console.log('[ChatStore] ✅ Streaming terminé:', { 
                 finalContentLength: finalContent.length,
-                messageId: `bot-${messageId}`
+                messageId: `bot-${messageId}`,
+                conversationId: streamingConversationId
               });
-              get().updateStreamingContent(`bot-${messageId}`, finalContent, true);
               
-              // Mettre à jour avec les actions suggérées si présentes
-              if (suggestedActions && suggestedActions.length > 0) {
-                set(state => ({
-                  conversations: state.conversations.map(conv => 
-                    conv.id === state.activeConversationId
-                      ? {
-                          ...conv,
-                          messages: conv.messages.map(msg =>
-                            msg.id === `bot-${messageId}` 
-                              ? { ...msg, suggestedActions } 
-                              : msg
-                          )
-                        }
-                      : conv
-                  )
-                }));
-              }
-              
-              set({ isTyping: false });
+              // ✅ Finaliser le message dans la bonne conversation
+              set(state => ({
+                conversations: state.conversations.map(conv => {
+                  if (conv.id === state.activeConversationId || conv.id === streamingConversationId) {
+                    return {
+                      ...conv,
+                      messages: conv.messages.map(msg =>
+                        msg.id === `bot-${messageId}` 
+                          ? { 
+                              ...msg, 
+                              content: finalContent, 
+                              isStreaming: false,
+                              suggestedActions: suggestedActions && suggestedActions.length > 0 ? suggestedActions : msg.suggestedActions
+                            }
+                          : msg
+                      )
+                    };
+                  }
+                  return conv;
+                }),
+                isTyping: false
+              }));
             });
             
             currentStreamService.onError(messageId, (error: Error) => {
               console.error('[ChatStore] Erreur de streaming:', error);
               
-              // Marquer le message comme erreur
+              // Marquer le message comme erreur dans la bonne conversation
               set(state => ({
-                conversations: state.conversations.map(conv => 
-                  conv.id === state.activeConversationId
-                    ? {
-                        ...conv,
-                        messages: conv.messages.map(msg =>
-                          msg.id === `bot-${messageId}` 
-                            ? { 
-                                ...msg, 
-                                content: 'Erreur lors de la réception de la réponse. Veuillez réessayer.',
-                                error: true,
-                                isStreaming: false
-                              } 
-                            : msg
-                        )
-                      }
-                    : conv
-                ),
+                conversations: state.conversations.map(conv => {
+                  if (conv.id === state.activeConversationId || conv.id === streamingConversationId) {
+                    return {
+                      ...conv,
+                      messages: conv.messages.map(msg =>
+                        msg.id === `bot-${messageId}` 
+                          ? { 
+                              ...msg, 
+                              content: 'Erreur lors de la réception de la réponse. Veuillez réessayer.',
+                              error: true,
+                              isStreaming: false
+                            } 
+                          : msg
+                      )
+                    };
+                  }
+                  return conv;
+                }),
                 isTyping: false
               }));
             });

@@ -95,7 +95,7 @@ export class ChatStreamService {
     isActive: false
   };
   
-  // Callbacks par messageId
+  // Callbacks par messageId (clé = messageId de la réponse HTTP)
   private onChunkCallbacks: Map<string, ChunkCallback> = new Map();
   private onErrorCallbacks: Map<string, ErrorCallback> = new Map();
   private onCompleteCallbacks: Map<string, CompleteCallback> = new Map();
@@ -106,6 +106,14 @@ export class ChatStreamService {
   
   // Timeout pour les messages
   private messageTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  
+  // ✅ NOUVEAU: Accumulation du contenu par requestMessageId (comme accounting)
+  // Clé = requestMessageId des chunks, Valeur = { content accumulé, nombre de chunks }
+  private pendingMessages: Map<string, { content: string; chunkCount: number }> = new Map();
+  
+  // ✅ NOUVEAU: Mapping messageId (réponse HTTP) → requestMessageId (chunks WebSocket)
+  // Dans notre cas, messageId = requestMessageId selon les tests, mais on garde le mapping pour sécurité
+  private messageIdMapping: Map<string, string> = new Map();
 
   constructor(config?: Partial<StreamingConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -301,6 +309,12 @@ export class ChatStreamService {
    * @see API DOCUMENTATION/chat/README.md - ÉTAPE 2: S'abonner AVANT d'envoyer le message HTTP
    */
   subscribeToConversation(conversationId: string): void {
+    // ✅ Si déjà abonné, skip pour éviter l'erreur serveur
+    if (this.subscribedConversations.has(conversationId)) {
+      console.log('[ChatStreamService] ✅ Déjà abonné (sync), skip:', conversationId);
+      return;
+    }
+
     if (!this.socket?.connected) {
       console.error('[ChatStreamService] ❌ Socket non connecté, impossible de souscrire à:', conversationId);
       console.error('[ChatStreamService] ℹ️ État socket:', {
@@ -310,6 +324,9 @@ export class ChatStreamService {
       });
       return;
     }
+
+    // ✅ Ajouter au Set AVANT l'émission pour éviter les race conditions
+    this.subscribedConversations.add(conversationId);
 
     // Log détaillé pour debug du problème "0 clients subscribed"
     const roomName = `conversation:${conversationId}`;
@@ -326,7 +343,6 @@ export class ChatStreamService {
       console.log('[ChatStreamService] 📬 ACK reçu pour subscribe_conversation:', ack);
     });
     
-    this.subscribedConversations.add(conversationId);
     console.log('[ChatStreamService] ✅ Abonnement émis pour room:', roomName);
   }
 
@@ -340,21 +356,33 @@ export class ChatStreamService {
       conversationId,
       timeoutMs,
       socketConnected: this.socket?.connected,
-      socketId: this.socket?.id
+      socketId: this.socket?.id,
+      alreadySubscribed: this.subscribedConversations.has(conversationId)
     });
+
+    // ✅ Si déjà abonné à cette conversation, ne pas réabonner
+    // Cela évite l'erreur "Internal server error" côté backend
+    if (this.subscribedConversations.has(conversationId)) {
+      console.log('[ChatStreamService] ✅ Déjà abonné à la conversation, skip:', conversationId);
+      return Promise.resolve();
+    }
 
     if (!this.socket?.connected) {
       console.error('[ChatStreamService] ❌ Socket non connecté pour abonnement async');
       throw new Error('Socket non connecté');
     }
 
+    // ✅ Ajouter au Set IMMÉDIATEMENT pour éviter les doubles abonnements
+    // même si le serveur met du temps à répondre
+    this.subscribedConversations.add(conversationId);
+    console.log('[ChatStreamService] 📝 Ajouté au Set local AVANT émission:', conversationId);
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         // En cas de timeout, on considère quand même l'abonnement comme envoyé
         // car le backend peut ne pas supporter les acknowledgements
         console.warn('[ChatStreamService] ⚠️ Timeout acknowledgement - abonnement envoyé sans confirmation:', conversationId);
-        this.subscribedConversations.add(conversationId);
-        resolve(); // On résout quand même car l'emit a été fait
+        resolve(); // On résout quand même car l'emit a été fait et le Set est déjà mis à jour
       }, timeoutMs);
 
       console.log('[ChatStreamService] 📤 Émission subscribe_conversation avec callback:', { conversationId });
@@ -366,17 +394,17 @@ export class ChatStreamService {
         // Le callback peut retourner un objet avec success ou simplement être appelé
         if (response && typeof response === 'object' && 'success' in response) {
           if ((response as { success: boolean }).success) {
-            this.subscribedConversations.add(conversationId);
             console.log('[ChatStreamService] ✅ Abonnement confirmé par le serveur:', conversationId);
             resolve();
           } else {
             const error = (response as { error?: string }).error || 'Raison inconnue';
             console.error('[ChatStreamService] ❌ Échec abonnement:', error);
+            // ⚠️ Ne PAS retirer du Set - le serveur peut avoir quand même rejoint la room
+            // this.subscribedConversations.delete(conversationId);
             reject(new Error(`Échec abonnement: ${error}`));
           }
         } else {
           // Pas de réponse structurée, considérer comme succès
-          this.subscribedConversations.add(conversationId);
           console.log('[ChatStreamService] ✅ Abonnement envoyé (pas de réponse structurée):', conversationId);
           resolve();
         }
@@ -484,6 +512,20 @@ export class ChatStreamService {
   }
 
   /**
+   * Vérifie si on est déjà abonné à une conversation
+   */
+  isSubscribedToConversation(conversationId: string): boolean {
+    return this.subscribedConversations.has(conversationId);
+  }
+
+  /**
+   * Retourne la liste des conversations auxquelles on est abonné (debug)
+   */
+  getSubscribedConversations(): string[] {
+    return Array.from(this.subscribedConversations);
+  }
+
+  /**
    * Retourne l'état actuel du streaming
    */
   getStreamingState(): StreamingState {
@@ -521,6 +563,10 @@ export class ChatStreamService {
     };
 
     this.subscribedConversations.clear();
+    
+    // ✅ NOUVEAU: Nettoyer pendingMessages et messageIdMapping
+    this.pendingMessages.clear();
+    this.messageIdMapping.clear();
 
     // Nettoyer tous les timeouts
     this.messageTimeouts.forEach(timeout => clearTimeout(timeout));
@@ -529,51 +575,92 @@ export class ChatStreamService {
 
   /**
    * Traite un chunk de contenu
+   * ✅ AMÉLIORÉ: Accumulation du contenu comme accounting
    */
   private handleChunk(chunk: PortfolioStreamChunkEvent): void {
+    const { requestMessageId, content, chunkId, conversationId } = chunk;
+    
     // Annuler le timeout si on reçoit des données
-    this.clearMessageTimeout(chunk.requestMessageId);
+    this.clearMessageTimeout(requestMessageId);
+
+    // ✅ NOUVEAU: Accumuler le contenu (comme accounting)
+    const pending = this.pendingMessages.get(requestMessageId) || { content: '', chunkCount: 0 };
+    pending.content += content;
+    pending.chunkCount++;
+    this.pendingMessages.set(requestMessageId, pending);
+
+    console.log(`[ChatStreamService] 📨 CHUNK ${chunkId} pour conversation ${conversationId}:`, {
+      requestMessageId,
+      contentLength: content?.length || 0,
+      accumulatedLength: pending.content.length,
+      chunkCount: pending.chunkCount
+    });
 
     // Mettre à jour l'état si c'est pour le message en cours
-    if (chunk.requestMessageId === this.streamingState.messageId) {
+    if (requestMessageId === this.streamingState.messageId) {
       // Vérifier l'ordre des chunks
-      if (chunk.chunkId > this.streamingState.lastChunkId) {
-        this.streamingState.lastChunkId = chunk.chunkId;
-        this.streamingState.accumulatedContent += chunk.content;
+      if (chunkId > this.streamingState.lastChunkId) {
+        this.streamingState.lastChunkId = chunkId;
+        this.streamingState.accumulatedContent = pending.content;
       }
     }
 
-    // Notifier le callback
-    const callback = this.onChunkCallbacks.get(chunk.requestMessageId);
+    // ✅ IMPORTANT: Créer un chunk avec le contenu ACCUMULÉ pour le callback
+    const chunkWithAccumulatedContent: PortfolioStreamChunkEvent = {
+      ...chunk,
+      content: pending.content // Contenu accumulé, pas juste ce chunk
+    };
+
+    // Notifier le callback avec le contenu accumulé
+    const callback = this.onChunkCallbacks.get(requestMessageId);
     if (callback) {
-      callback(chunk);
+      callback(chunkWithAccumulatedContent);
+    } else {
+      console.warn('[ChatStreamService] ⚠️ Pas de callback pour requestMessageId:', requestMessageId);
     }
 
     // Réinitialiser le timeout
-    this.setupMessageTimeout(chunk.requestMessageId);
+    this.setupMessageTimeout(requestMessageId);
   }
 
   /**
    * Traite la fin du streaming
+   * ✅ AMÉLIORÉ: Utiliser le contenu accumulé comme accounting
    */
   private handleEnd(chunk: PortfolioStreamChunkEvent): void {
-    this.clearMessageTimeout(chunk.requestMessageId);
+    const { requestMessageId, conversationId, processingDetails } = chunk;
+    
+    this.clearMessageTimeout(requestMessageId);
 
-    if (chunk.requestMessageId === this.streamingState.messageId) {
+    if (requestMessageId === this.streamingState.messageId) {
       this.streamingState.isActive = false;
     }
 
-    // Utiliser le contenu complet du message 'end' ou le contenu accumulé
-    const finalContent = chunk.content || this.streamingState.accumulatedContent;
+    // ✅ NOUVEAU: Récupérer le contenu accumulé (comme accounting)
+    const pending = this.pendingMessages.get(requestMessageId);
+    const finalContent = chunk.content || pending?.content || this.streamingState.accumulatedContent;
+    
+    console.log(`[ChatStreamService] ✅ STREAM END pour conversation ${conversationId}:`, {
+      requestMessageId,
+      totalChunks: processingDetails?.totalChunks || pending?.chunkCount,
+      contentLength: finalContent.length,
+      fromPayload: !!chunk.content,
+      fromPending: !!pending?.content
+    });
+
+    // Nettoyer le pending
+    this.pendingMessages.delete(requestMessageId);
 
     // Notifier le callback de complétion
-    const callback = this.onCompleteCallbacks.get(chunk.requestMessageId);
+    const callback = this.onCompleteCallbacks.get(requestMessageId);
     if (callback) {
       callback(finalContent, chunk.suggestedActions);
+    } else {
+      console.warn('[ChatStreamService] ⚠️ Pas de callback onComplete pour requestMessageId:', requestMessageId);
     }
 
     // Nettoyer les callbacks pour ce message
-    this.cleanupMessageCallbacks(chunk.requestMessageId);
+    this.cleanupMessageCallbacks(requestMessageId);
 
     console.log('[ChatStreamService] ✅ Streaming terminé:', {
       messageId: chunk.requestMessageId,
