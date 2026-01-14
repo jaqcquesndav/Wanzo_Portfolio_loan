@@ -612,11 +612,33 @@ export class ChatStreamService {
     };
 
     // Notifier le callback avec le contenu accumulé
-    const callback = this.onChunkCallbacks.get(requestMessageId);
+    // ✅ AMÉLIORÉ: Essayer plusieurs clés pour trouver le callback
+    let callback = this.onChunkCallbacks.get(requestMessageId);
+    
+    // Si pas trouvé par requestMessageId, essayer avec le messageId du streamingState
+    if (!callback && this.streamingState.messageId) {
+      callback = this.onChunkCallbacks.get(this.streamingState.messageId);
+      if (callback) {
+        console.log('[ChatStreamService] ✅ Callback trouvé via streamingState.messageId:', this.streamingState.messageId);
+      }
+    }
+    
+    // Si toujours pas trouvé, chercher le premier callback disponible (fallback)
+    if (!callback && this.onChunkCallbacks.size > 0) {
+      const firstKey = Array.from(this.onChunkCallbacks.keys())[0];
+      callback = this.onChunkCallbacks.get(firstKey);
+      if (callback) {
+        console.log('[ChatStreamService] ⚠️ Callback trouvé via fallback (première clé):', firstKey);
+        // Ajouter un mapping pour les prochains chunks
+        this.messageIdMapping.set(requestMessageId, firstKey);
+      }
+    }
+    
     if (callback) {
       callback(chunkWithAccumulatedContent);
     } else {
-      console.warn('[ChatStreamService] ⚠️ Pas de callback pour requestMessageId:', requestMessageId);
+      console.warn('[ChatStreamService] ⚠️ Pas de callback pour requestMessageId:', requestMessageId, 
+        'Callbacks disponibles:', Array.from(this.onChunkCallbacks.keys()));
     }
 
     // Réinitialiser le timeout
@@ -652,15 +674,51 @@ export class ChatStreamService {
     this.pendingMessages.delete(requestMessageId);
 
     // Notifier le callback de complétion
-    const callback = this.onCompleteCallbacks.get(requestMessageId);
+    // ✅ AMÉLIORÉ: Essayer plusieurs clés pour trouver le callback
+    let callback = this.onCompleteCallbacks.get(requestMessageId);
+    
+    // Essayer via le mapping si existe
+    if (!callback) {
+      const mappedId = this.messageIdMapping.get(requestMessageId);
+      if (mappedId) {
+        callback = this.onCompleteCallbacks.get(mappedId);
+        if (callback) {
+          console.log('[ChatStreamService] ✅ Callback onComplete trouvé via mapping:', mappedId);
+        }
+      }
+    }
+    
+    // Essayer via streamingState.messageId
+    if (!callback && this.streamingState.messageId) {
+      callback = this.onCompleteCallbacks.get(this.streamingState.messageId);
+      if (callback) {
+        console.log('[ChatStreamService] ✅ Callback onComplete trouvé via streamingState.messageId:', this.streamingState.messageId);
+      }
+    }
+    
+    // Fallback: premier callback disponible
+    if (!callback && this.onCompleteCallbacks.size > 0) {
+      const firstKey = Array.from(this.onCompleteCallbacks.keys())[0];
+      callback = this.onCompleteCallbacks.get(firstKey);
+      if (callback) {
+        console.log('[ChatStreamService] ⚠️ Callback onComplete trouvé via fallback:', firstKey);
+      }
+    }
+    
     if (callback) {
       callback(finalContent, chunk.suggestedActions);
     } else {
-      console.warn('[ChatStreamService] ⚠️ Pas de callback onComplete pour requestMessageId:', requestMessageId);
+      console.warn('[ChatStreamService] ⚠️ Pas de callback onComplete pour requestMessageId:', requestMessageId,
+        'Callbacks disponibles:', Array.from(this.onCompleteCallbacks.keys()));
     }
 
-    // Nettoyer les callbacks pour ce message
+    // Nettoyer les callbacks pour ce message (utiliser le mapping si nécessaire)
     this.cleanupMessageCallbacks(requestMessageId);
+    const mappedId = this.messageIdMapping.get(requestMessageId);
+    if (mappedId) {
+      this.cleanupMessageCallbacks(mappedId);
+    }
+    this.messageIdMapping.delete(requestMessageId);
 
     console.log('[ChatStreamService] ✅ Streaming terminé:', {
       messageId: chunk.requestMessageId,
@@ -674,9 +732,11 @@ export class ChatStreamService {
    * Traite une erreur de streaming
    */
   private handleError(chunk: PortfolioStreamChunkEvent): void {
-    this.clearMessageTimeout(chunk.requestMessageId);
+    const { requestMessageId } = chunk;
+    
+    this.clearMessageTimeout(requestMessageId);
 
-    if (chunk.requestMessageId === this.streamingState.messageId) {
+    if (requestMessageId === this.streamingState.messageId) {
       this.streamingState.isActive = false;
       this.streamingState.error = chunk.content;
     }
@@ -684,13 +744,39 @@ export class ChatStreamService {
     const error = new Error(chunk.content || 'Erreur de streaming');
     
     // Notifier le callback d'erreur
-    const callback = this.onErrorCallbacks.get(chunk.requestMessageId);
+    // ✅ AMÉLIORÉ: Essayer plusieurs clés pour trouver le callback
+    let callback = this.onErrorCallbacks.get(requestMessageId);
+    
+    // Essayer via le mapping si existe
+    if (!callback) {
+      const mappedId = this.messageIdMapping.get(requestMessageId);
+      if (mappedId) {
+        callback = this.onErrorCallbacks.get(mappedId);
+      }
+    }
+    
+    // Essayer via streamingState.messageId
+    if (!callback && this.streamingState.messageId) {
+      callback = this.onErrorCallbacks.get(this.streamingState.messageId);
+    }
+    
+    // Fallback: premier callback disponible
+    if (!callback && this.onErrorCallbacks.size > 0) {
+      const firstKey = Array.from(this.onErrorCallbacks.keys())[0];
+      callback = this.onErrorCallbacks.get(firstKey);
+    }
+    
     if (callback) {
       callback(error);
     }
 
     // Nettoyer les callbacks pour ce message
-    this.cleanupMessageCallbacks(chunk.requestMessageId);
+    this.cleanupMessageCallbacks(requestMessageId);
+    const mappedId = this.messageIdMapping.get(requestMessageId);
+    if (mappedId) {
+      this.cleanupMessageCallbacks(mappedId);
+    }
+    this.messageIdMapping.delete(requestMessageId);
 
     console.error('[ChatStreamService] ❌ Erreur de streaming:', chunk.content);
   }

@@ -645,17 +645,24 @@ export const useChatStore = create<ChatStore>()(
             // Garder une référence à l'ID de conversation actif pour ce streaming
             const streamingConversationId = backendConversationId;
             
+            // ✅ IMPORTANT: Le serveur utilise messageId comme requestMessageId dans les chunks
+            // C'est l'ID retourné par POST /chat/stream qui sera utilisé dans les événements WebSocket
+            const streamingMessageId = messageId;
+            
             console.log('[ChatStore] 📡 Abonnement aux événements de streaming:', {
-              messageId,
+              messageId: streamingMessageId,
+              userMessageId: streamResponse.data.userMessageId,
               conversationId: streamingConversationId,
-              botMessageId: `bot-${messageId}`
+              botMessageId: `bot-${streamingMessageId}`
             });
             
-            currentStreamService.onChunk(messageId, (chunk: PortfolioStreamChunkEvent) => {
+            currentStreamService.onChunk(streamingMessageId, (chunk: PortfolioStreamChunkEvent) => {
               console.log('[ChatStore] 📦 Chunk reçu:', { 
                 type: chunk.type, 
                 contentLength: chunk.content?.length,
                 requestMessageId: chunk.requestMessageId,
+                expectedMessageId: streamingMessageId,
+                match: chunk.requestMessageId === streamingMessageId,
                 conversationId: chunk.conversationId,
                 chunkId: chunk.chunkId
               });
@@ -677,7 +684,7 @@ export const useChatStore = create<ChatStore>()(
                         // Mettre à jour l'ID si le serveur a renvoyé un nouveau
                         id: chunk.conversationId || conv.id,
                         messages: conv.messages.map(msg =>
-                          msg.id === `bot-${messageId}` 
+                          msg.id === `bot-${streamingMessageId}` 
                             ? { ...msg, content: chunk.content, isStreaming: true }
                             : msg
                         )
@@ -693,10 +700,10 @@ export const useChatStore = create<ChatStore>()(
               set({ isTyping: true });
             });
             
-            currentStreamService.onComplete(messageId, (finalContent: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => {
+            currentStreamService.onComplete(streamingMessageId, (finalContent: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => {
               console.log('[ChatStore] ✅ Streaming terminé:', { 
                 finalContentLength: finalContent.length,
-                messageId: `bot-${messageId}`,
+                messageId: `bot-${streamingMessageId}`,
                 conversationId: streamingConversationId
               });
               
@@ -707,7 +714,7 @@ export const useChatStore = create<ChatStore>()(
                     return {
                       ...conv,
                       messages: conv.messages.map(msg =>
-                        msg.id === `bot-${messageId}` 
+                        msg.id === `bot-${streamingMessageId}` 
                           ? { 
                               ...msg, 
                               content: finalContent, 
@@ -724,7 +731,7 @@ export const useChatStore = create<ChatStore>()(
               }));
             });
             
-            currentStreamService.onError(messageId, (error: Error) => {
+            currentStreamService.onError(streamingMessageId, (error: Error) => {
               console.error('[ChatStore] Erreur de streaming:', error);
               
               // Marquer le message comme erreur dans la bonne conversation
@@ -734,7 +741,7 @@ export const useChatStore = create<ChatStore>()(
                     return {
                       ...conv,
                       messages: conv.messages.map(msg =>
-                        msg.id === `bot-${messageId}` 
+                        msg.id === `bot-${streamingMessageId}` 
                           ? { 
                               ...msg, 
                               content: 'Erreur lors de la réception de la réponse. Veuillez réessayer.',
