@@ -121,8 +121,9 @@ export interface StreamingResponse {
 /**
  * Types pour le streaming des réponses IA
  * @see API DOCUMENTATION/chat/README.md - Section "Streaming des Réponses IA"
+ * v2.4.0 - 7 types standardisés
  */
-export type StreamChunkType = 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result';
+export type StreamChunkType = 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result' | 'cancelled' | 'heartbeat';
 
 /**
  * Interface pour les événements de streaming reçus via WebSocket
@@ -186,6 +187,10 @@ export interface StreamingState {
   isActive: boolean;
   /** Erreur éventuelle */
   error?: string;
+  /** Stream annulé par l'utilisateur */
+  cancelled?: boolean;
+  /** Timestamp du dernier heartbeat reçu */
+  lastHeartbeat?: number;
 }
 
 /**

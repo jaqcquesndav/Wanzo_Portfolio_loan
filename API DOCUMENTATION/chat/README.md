@@ -1,7 +1,30 @@
 ﻿# Chat API - Portfolio Institution Service
 
-> **Synchronisée avec le code source TypeScript** - Janvier 2026  
-> **Version**: 2.0 (Streaming WebSocket + Mode Synchrone)
+> **Synchronisée avec le code source TypeScript** - 14 Janvier 2026  
+> **Version**: 2.4.0 (Streaming WebSocket + Mode Synchrone + Circuit Breaker)
+
+---
+
+## 🆕 Nouveautés v2.4.0
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| **Circuit Breaker** | Protection contre les pannes en cascade avec seuil configurable |
+| **Heartbeat** | Signal périodique (30s) pour maintenir les connexions WebSocket actives |
+| **Stream Cancellation** | Annulation propre des streams en cours avec événement `cancelled` |
+| **7 types d'événements** | `chunk`, `end`, `error`, `tool_call`, `tool_result`, `cancelled`, `heartbeat` |
+| **suggestedActions structuré** | Format `{type, label?, payload}` pour actions interactives |
+
+### Configuration Environnement
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `AI_TIMEOUT` | 120000 | Timeout appel IA (ms) |
+| `STREAMING_TIMEOUT` | 180000 | Timeout streaming total (ms) |
+| `DEFAULT_TIMEOUT` | 30000 | Timeout par défaut (ms) |
+| `CIRCUIT_BREAKER_THRESHOLD` | 5 | Nombre d'échecs avant ouverture circuit |
+| `CIRCUIT_BREAKER_TIMEOUT` | 60000 | Délai avant retry (ms) |
+| `STREAM_HEARTBEAT_INTERVAL_S` | 30 | Intervalle heartbeat (secondes) |
 
 Ce document décrit l'architecture complète et les endpoints pour la gestion des conversations avec l'assistant IA ADHA dans l'API Wanzo Portfolio Institution.
 
@@ -206,6 +229,17 @@ socket.on('adha.stream.error', (error: StreamError) => {
   setIsStreaming(false);
 });
 
+socket.on('adha.stream.cancelled', (data: StreamCancelled) => {
+  console.log('🛑 Stream annulé:', data.reason);
+  setIsStreaming(false);
+});
+
+socket.on('adha.stream.heartbeat', () => {
+  // Heartbeat reçu - connexion active
+  // Utile pour réinitialiser un timeout côté client
+  resetConnectionTimeout();
+});
+
 // Types TypeScript
 interface StreamChunk {
   conversationId: string;
@@ -231,6 +265,13 @@ interface StreamError {
   messageId: string;
   code: string;
   message: string;
+}
+
+interface StreamCancelled {
+  conversationId: string;
+  messageId: string;
+  reason: string;
+  cancelledAt: string;
 }
 ```
 
@@ -779,6 +820,7 @@ interface ContextMetadata {
 // Actions suggérées par l'IA
 interface SuggestedAction {
   type: string;
+  label?: string;
   payload: any;
 }
 
@@ -1364,6 +1406,93 @@ FormData contenant le fichier à télécharger.
 }
 ```
 
+### Statistiques d'utilisation de tokens (Admin)
+
+Récupère les statistiques d'utilisation de tokens pour un contexte de chat.
+
+#### Requête
+
+```
+GET /portfolio/api/v1/chat/{id}/usage
+```
+
+#### Paramètres de chemin
+- `id` : Identifiant unique du contexte de chat
+
+#### Rôles autorisés
+- `admin`
+
+#### Réponse
+
+```json
+{
+  "success": true,
+  "usage": {
+    "totalInputTokens": 2500,
+    "totalOutputTokens": 5200,
+    "totalTokens": 7700,
+    "estimatedCost": 0.077,
+    "byModel": {
+      "adha-credit": { "tokens": 4500, "requests": 12 },
+      "adha-analytics": { "tokens": 3200, "requests": 8 }
+    }
+  }
+}
+```
+
+### Contexte agrégé pour ADHA AI
+
+Récupère le contexte agrégé du portefeuille et de la prospection pour enrichir les réponses ADHA.
+
+#### Requête
+
+```
+GET /portfolio/api/v1/chat/aggregated-context/{institutionId}
+```
+
+#### Paramètres de chemin
+- `institutionId` : Identifiant unique de l'institution
+
+#### Rôles autorisés
+- `admin`, `institution-user`
+
+#### Réponse
+
+```json
+{
+  "success": true,
+  "context": {
+    "portfolio": {
+      "totalClients": 450,
+      "totalOutstanding": 2500000000,
+      "riskDistribution": {
+        "low": 320,
+        "medium": 100,
+        "high": 30
+      },
+      "sectorDistribution": {
+        "commerce": 45,
+        "agriculture": 25,
+        "services": 20,
+        "industrie": 10
+      }
+    },
+    "prospection": {
+      "activeProspects": 85,
+      "conversionRate": 0.32,
+      "pipelineValue": 500000000
+    },
+    "recentActivity": {
+      "newCredits": 15,
+      "closedCredits": 8,
+      "defaultsLastMonth": 2
+    }
+  }
+}
+```
+
+---
+
 ## Architecture Technique Backend
 
 ### Composants Implémentés
@@ -1445,6 +1574,212 @@ Ce format garantit que le `conversationId` est correctement transmis à travers 
 3. **Adha Leasing** - Expert en contrats de leasing et gestion d'équipements
 4. **Adha Invest** - Spécialisé en capital-investissement et valorisation
 5. **Adha Analytics** - Analyse approfondie des données financières et prévisions
+
+---
+
+## 🎙️ Mode Audio Duplex (v2.4.0)
+
+> **Nouveauté**: Conversation vocale bidirectionnelle avec ADHA pour gérer vos portefeuilles à la voix.
+
+### Architecture Audio
+
+```
+┌───────────────────┐     ┌─────────────────────┐     ┌───────────────────────┐
+│   Frontend        │     │  API Gateway        │     │  ADHA AI Service      │
+│   (Microphone)    │────▶│  /portfolio/adha    │────▶│  AudioService         │
+│                   │◀────│                     │◀────│  (Whisper + TTS)      │
+│   (Haut-parleur)  │     │                     │     │                       │
+└───────────────────┘     └─────────────────────┘     └───────────────────────┘
+```
+
+### Endpoints Audio (via ADHA AI Service)
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/adha-ai/audio/transcribe/` | POST | Transcription audio → texte (Whisper) |
+| `/adha-ai/audio/synthesize/` | POST | Synthèse texte → audio (TTS) |
+| `/adha-ai/audio/duplex/` | POST | Mode duplex complet (STT + Chat IA + TTS) |
+| `/adha-ai/audio/voices/` | GET | Liste des voix disponibles |
+
+### Modes Audio Disponibles
+
+| Mode | Description | Usage Portfolio |
+|------|-------------|-----------------|
+| `transcribe_only` | STT uniquement | Dictée de notes client |
+| `speak_only` | TTS uniquement | Lecture rapport |
+| `full_duplex` | STT + Chat + TTS | Analyse vocale portefeuille |
+| `stream_duplex` | Full duplex streaming | Questions temps réel |
+
+### Voix TTS Disponibles
+
+| Voix | Caractéristique |
+|------|-----------------|
+| `nova` | Féminine, naturelle ⭐ (défaut) |
+| `alloy` | Neutre, polyvalente |
+| `echo` | Masculine, profonde |
+| `onyx` | Masculine, autoritaire |
+
+### Exemple: Analyse Vocale de Portefeuille
+
+**Request** (multipart/form-data):
+```bash
+POST /portfolio/adha-ai/audio/duplex/
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+audio: <question_vocale.webm>
+company_id: "institution-123"
+context: {
+  "portfolioId": "port-456",
+  "portfolioType": "traditional",
+  "clientId": "client-789"
+}
+voice: "nova"
+language: "fr"
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "transcription": {
+    "text": "Quel est le taux de défaut actuel du portefeuille PME?",
+    "language": "fr",
+    "duration_seconds": 4.2
+  },
+  "chat_response": {
+    "text": "Le taux de défaut actuel du portefeuille PME est de 3.2%, en baisse de 0.5% par rapport au trimestre précédent. Les secteurs les plus à risque sont le commerce (4.1%) et l'agriculture (3.8%).",
+    "conversation_id": "ctx-xyz"
+  },
+  "audio_response": {
+    "audio_base64": "UklGRiQA...",
+    "format": "mp3",
+    "duration_seconds": 8.5,
+    "voice": "nova"
+  },
+  "metrics": {
+    "total_processing_time_ms": 3200,
+    "estimated_cost_usd": 0.0058
+  }
+}
+```
+
+---
+
+## 📄 Génération de Documents (v2.4.0)
+
+> **Nouveauté**: ADHA peut générer des rapports de portefeuille (PDF, Excel) et les uploader sur Cloudinary.
+
+### Types de Documents pour Portfolio
+
+| Type | Format | Description |
+|------|--------|-------------|
+| `portfolio_report` | PDF | Rapport de portefeuille complet |
+| `risk_analysis` | PDF/Excel | Analyse des risques |
+| `client_statement` | PDF | Relevé client |
+| `credit_summary` | Excel | Récapitulatif crédits |
+| `prospection_report` | PDF | Rapport de prospection |
+
+### Endpoint Génération
+
+```
+POST /portfolio/adha-ai/documents/generate/
+```
+
+**Request**:
+```json
+{
+  "company_id": "institution-123",
+  "type": "portfolio_report",
+  "format": "pdf",
+  "data": {
+    "portfolioId": "port-456",
+    "portfolioType": "traditional",
+    "dateRange": {
+      "from": "2026-01-01",
+      "to": "2026-01-31"
+    },
+    "includeRiskAnalysis": true,
+    "includeClientDetails": false
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "document": {
+    "id": "doc_port_123456",
+    "format": "pdf",
+    "type": "portfolio_report",
+    "cloudinary_url": "https://res.cloudinary.com/wanzo/adha-documents/portfolio_report_202601.pdf",
+    "filename": "rapport_portefeuille_PME_202601.pdf",
+    "pages": 12,
+    "size_bytes": 245678
+  }
+}
+```
+
+### Export Excel Données Portefeuille
+
+**Request**:
+```json
+POST /portfolio/adha-ai/documents/export/excel/
+{
+  "company_id": "institution-123",
+  "type": "credits_list",
+  "filters": {
+    "portfolioId": "port-456",
+    "status": ["active", "late"],
+    "riskLevel": ["medium", "high"]
+  },
+  "columns": ["clientName", "creditAmount", "outstandingBalance", "dueDate", "riskScore"]
+}
+```
+
+---
+
+## 📎 Pièces Jointes dans le Chat
+
+### Upload de Documents pour Analyse
+
+Le chat portfolio supporte l'envoi de documents (contrats, garanties, bilans) pour analyse par ADHA.
+
+**Request avec pièce jointe**:
+```json
+{
+  "contextId": "ctx-123",
+  "content": "Peux-tu analyser ce bilan pour évaluer la solvabilité du client?",
+  "metadata": {
+    "portfolioId": "port-456",
+    "clientId": "client-789"
+  },
+  "attachment": {
+    "name": "bilan_client_2025.pdf",
+    "type": "application/pdf",
+    "content": "JVBERi0xLjQK..."
+  }
+}
+```
+
+### Formats Supportés
+
+| Type | Extensions | Usage |
+|------|------------|-------|
+| Documents | PDF, DOCX | Contrats, bilans |
+| Images | PNG, JPG | Pièces d'identité, garanties |
+| Tableurs | XLSX, CSV | États financiers |
+
+### Analyse par ADHA
+
+ADHA peut:
+1. **Extraire les données financières** d'un bilan
+2. **Calculer les ratios** (solvabilité, liquidité)
+3. **Évaluer le risque crédit** basé sur les documents
+4. **Comparer avec le scoring** existant
+
+---
 
 ## Codes d'erreur
 
@@ -1532,7 +1867,7 @@ interface StreamChunkEvent {
   id: string;                    // UUID unique du chunk
   requestMessageId: string;      // ID du message original de l'utilisateur
   conversationId: string;        // ID du contexte de chat
-  type: 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result';
+  type: 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result' | 'cancelled' | 'heartbeat';
   content: string;               // Contenu du chunk
   chunkId: number;               // Numéro de séquence du chunk
   timestamp: string;             // ISO 8601 format
@@ -1541,7 +1876,22 @@ interface StreamChunkEvent {
   
   // Présents uniquement dans les messages 'end'
   totalChunks?: number;
-  suggestedActions?: Array<{type: string; payload: any}>;  // Actions recommandées
+  
+  /**
+   * Actions suggérées par l'IA - Format standardisé v2.4.0
+   * @example
+   * [
+   *   { type: 'navigate', label: 'Voir le portefeuille', payload: { route: '/portfolio/123' } },
+   *   { type: 'action', label: 'Exporter en PDF', payload: { format: 'pdf' } },
+   *   { type: 'query', label: 'Analyser les risques', payload: { question: 'Quels sont les risques ?' } }
+   * ]
+   */
+  suggestedActions?: Array<{
+    type: string;      // Type d'action: 'navigate', 'action', 'query', 'info'
+    label?: string;    // Libellé affichable (optionnel)
+    payload: any;      // Données de l'action
+  }>;
+  
   processingDetails?: {
     totalChunks?: number;
     contentLength?: number;
@@ -1562,6 +1912,8 @@ interface StreamChunkEvent {
 | `error` | Erreur pendant le traitement | Notification utilisateur |
 | `tool_call` | L'IA appelle une fonction d'analyse | Indicateur de traitement |
 | `tool_result` | Résultat d'un appel de fonction | Données d'analyse |
+| `cancelled` | Stream annulé par l'utilisateur | Nettoyage UI, libération ressources |
+| `heartbeat` | Signal de connexion active | Maintien connexion (intervalle: 30s) |
 
 ### Exemple de Chunk de Contenu
 
@@ -1601,9 +1953,21 @@ interface StreamChunkEvent {
   "userId": "user-abc",
   "companyId": "inst-xyz",
   "suggestedActions": [
-    "Augmenter l'exposition au secteur technologique",
-    "Réviser les critères de scoring pour le commerce",
-    "Planifier une revue trimestrielle du portefeuille"
+    {
+      "type": "action",
+      "label": "Augmenter l'exposition au secteur technologique",
+      "payload": { "sector": "technology", "targetAllocation": 0.15 }
+    },
+    {
+      "type": "navigate",
+      "label": "Réviser les critères de scoring",
+      "payload": { "route": "/settings/scoring", "section": "commerce" }
+    },
+    {
+      "type": "query",
+      "label": "Planifier une revue trimestrielle",
+      "payload": { "question": "Créer un rappel pour la revue du portefeuille" }
+    }
   ],
   "processingDetails": {
     "totalChunks": 11,
@@ -1657,12 +2021,14 @@ Le backend utilise **Socket.IO** pour le streaming temps réel. Les événements
 
 #### Événements du Serveur → Client
 
-| Événement | Description | Quand |
-|-----------|-------------|-------|
-| `adha.stream.chunk` | Nouveau chunk de contenu | Pendant le streaming |
-| `adha.stream.end` | Fin du stream, contenu complet | Fin du traitement |
-| `adha.stream.error` | Erreur de traitement | En cas d'erreur |
-| `adha.stream.tool` | Appel/résultat d'outil IA | Pendant le traitement |
+| Événement | Description | Type de chunk | Quand |
+|-----------|-------------|---------------|-------|
+| `adha.stream.chunk` | Nouveau chunk de contenu | `chunk` | Pendant le streaming |
+| `adha.stream.end` | Fin du stream, contenu complet | `end` | Fin du traitement |
+| `adha.stream.error` | Erreur de traitement | `error` | En cas d'erreur |
+| `adha.stream.tool` | Appel/résultat d'outil IA | `tool_call` / `tool_result` | Pendant le traitement |
+| `adha.stream.cancelled` | Stream annulé par l'utilisateur | `cancelled` | Sur annulation |
+| `adha.stream.heartbeat` | Signal de connexion active | `heartbeat` | Toutes les 30s |
 
 ### Intégration Frontend (React/TypeScript) avec Socket.IO
 
@@ -1684,8 +2050,15 @@ pnpm add socket.io-client axios
 ```typescript
 // types/chat.types.ts
 
-/** Type de chunk de streaming */
-export type StreamChunkType = 'chunk' | 'end' | 'error' | 'tool_call' | 'tool_result';
+/** Type de chunk de streaming (v2.4.0 - 7 types standardisés) */
+export type StreamChunkType = 
+  | 'chunk'       // Fragment de texte
+  | 'end'         // Fin du stream
+  | 'error'       // Erreur de traitement
+  | 'tool_call'   // Appel de fonction IA
+  | 'tool_result' // Résultat de fonction
+  | 'cancelled'   // Stream annulé
+  | 'heartbeat';  // Signal de connexion
 
 /** Chunk reçu via WebSocket */
 export interface StreamingChunk {
@@ -1696,7 +2069,12 @@ export interface StreamingChunk {
   content: string;
   chunkId: number;
   totalChunks?: number;
-  suggestedActions?: Array<{ type: string; payload: unknown }>;
+  /** Actions suggérées (format standardisé v2.4.0) */
+  suggestedActions?: Array<{ 
+    type: string;      // 'navigate', 'action', 'query', 'info'
+    label?: string;    // Libellé optionnel pour l'UI
+    payload: unknown;  // Données de l'action
+  }>;
   processingDetails?: {
     totalChunks?: number;
     contentLength?: number;

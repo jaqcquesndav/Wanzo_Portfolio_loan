@@ -60,16 +60,19 @@ const DEFAULT_CONFIG: StreamingConfig = {
   maxRetries: 3
 };
 
-// Événements Socket.IO selon la documentation
+// Événements Socket.IO selon la documentation v2.4.0
 const SOCKET_EVENTS = {
   // Client → Serveur
   SUBSCRIBE_CONVERSATION: 'subscribe_conversation',
   UNSUBSCRIBE_CONVERSATION: 'unsubscribe_conversation',
+  CANCEL_STREAM: 'cancel_stream', // ✅ NOUVEAU: Annulation du stream
   // Serveur → Client
   STREAM_CHUNK: 'adha.stream.chunk',
   STREAM_END: 'adha.stream.end',
   STREAM_ERROR: 'adha.stream.error',
-  STREAM_TOOL: 'adha.stream.tool'
+  STREAM_TOOL: 'adha.stream.tool',
+  STREAM_CANCELLED: 'adha.stream.cancelled', // ✅ NOUVEAU: Stream annulé
+  STREAM_HEARTBEAT: 'adha.stream.heartbeat'  // ✅ NOUVEAU: Heartbeat (30s)
 } as const;
 
 // Types pour les callbacks
@@ -77,6 +80,7 @@ type ChunkCallback = (chunk: PortfolioStreamChunkEvent) => void;
 type ErrorCallback = (error: Error) => void;
 type CompleteCallback = (content: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => void;
 type ConnectionCallback = (connected: boolean) => void;
+type CancelledCallback = (reason: string) => void; // ✅ NOUVEAU
 
 /**
  * Classe de gestion du streaming des réponses IA via Socket.IO
@@ -100,12 +104,16 @@ export class ChatStreamService {
   private onErrorCallbacks: Map<string, ErrorCallback> = new Map();
   private onCompleteCallbacks: Map<string, CompleteCallback> = new Map();
   private onConnectionChangeCallbacks: Set<ConnectionCallback> = new Set();
+  private onCancelledCallbacks: Map<string, CancelledCallback> = new Map(); // ✅ NOUVEAU
   
   // Conversations souscrites
   private subscribedConversations: Set<string> = new Set();
   
   // Timeout pour les messages
   private messageTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  
+  // ✅ Protection contre les connexions multiples simultanées
+  private isConnecting = false;
   
   // ✅ NOUVEAU: Accumulation du contenu par requestMessageId (comme accounting)
   // Clé = requestMessageId des chunks, Valeur = { content accumulé, nombre de chunks }
@@ -131,6 +139,13 @@ export class ChatStreamService {
    */
   async connect(institutionId: string): Promise<void> {
     console.log('[ChatStreamService] 🔌 connect() appelé avec institutionId:', institutionId);
+    
+    // Protection contre les connexions multiples simultanées
+    if (this.isConnecting) {
+      console.log('[ChatStreamService] ⏳ Connexion déjà en cours, skip...');
+      return;
+    }
+    
     console.log('[ChatStreamService] État actuel:', {
       hasSocket: !!this.socket,
       socketConnected: this.socket?.connected,
@@ -142,6 +157,7 @@ export class ChatStreamService {
       return;
     }
 
+    this.isConnecting = true;
     this.currentInstitutionId = institutionId;
     
     // Récupérer le token JWT
@@ -195,6 +211,7 @@ export class ChatStreamService {
             socketId: this.socket?.id,
             connected: this.socket?.connected
           });
+          this.isConnecting = false; // ✅ Reset du flag
           this.reconnectAttempts = 0;
           this.notifyConnectionChange(true);
           
@@ -209,6 +226,7 @@ export class ChatStreamService {
             reason,
             socketId: this.socket?.id
           });
+          this.isConnecting = false; // ✅ Reset du flag
           this.notifyConnectionChange(false);
         });
 
@@ -218,6 +236,7 @@ export class ChatStreamService {
             name: error.name,
             stack: error.stack
           });
+          this.isConnecting = false; // ✅ Reset du flag
           this.notifyConnectionChange(false);
           if (this.reconnectAttempts === 0) {
             reject(error);
@@ -230,6 +249,7 @@ export class ChatStreamService {
         // Timeout de connexion
         setTimeout(() => {
           if (!this.socket?.connected) {
+            this.isConnecting = false; // ✅ Reset du flag
             reject(new Error('Timeout de connexion Socket.IO'));
           }
         }, 10000);
@@ -276,6 +296,22 @@ export class ChatStreamService {
     this.socket.on(SOCKET_EVENTS.STREAM_TOOL, (chunk: PortfolioStreamChunkEvent) => {
       console.log('[ChatStreamService] 🔧 STREAM_TOOL REÇU:', chunk);
       this.handleToolEvent(chunk);
+    });
+    
+    // ✅ NOUVEAU: Événement d'annulation (v2.4.0)
+    this.socket.on(SOCKET_EVENTS.STREAM_CANCELLED, (data: { conversationId: string; messageId: string; reason: string; cancelledAt: string }) => {
+      console.log('[ChatStreamService] 🛑 STREAM_CANCELLED REÇU:', data);
+      this.handleCancelled(data);
+    });
+    
+    // ✅ NOUVEAU: Heartbeat pour maintenir la connexion (v2.4.0 - toutes les 30s)
+    this.socket.on(SOCKET_EVENTS.STREAM_HEARTBEAT, () => {
+      console.log('[ChatStreamService] 💓 HEARTBEAT REÇU');
+      // Réinitialiser le timeout de connexion si nécessaire
+      this.streamingState = {
+        ...this.streamingState,
+        lastHeartbeat: Date.now()
+      };
     });
     
     // Écouter la confirmation d'abonnement du serveur (comme accounting)
@@ -504,6 +540,15 @@ export class ChatStreamService {
   }
 
   /**
+   * S'abonne aux annulations pour un message spécifique
+   * ✅ NOUVEAU v2.4.0
+   */
+  onCancelled(messageId: string, callback: CancelledCallback): () => void {
+    this.onCancelledCallbacks.set(messageId, callback);
+    return () => this.onCancelledCallbacks.delete(messageId);
+  }
+
+  /**
    * S'abonne aux changements de connexion
    */
   onConnectionChange(callback: ConnectionCallback): () => void {
@@ -533,6 +578,43 @@ export class ChatStreamService {
   }
 
   /**
+   * ✅ NOUVEAU v2.4.0: Annuler un stream en cours
+   * Envoie une demande d'annulation au serveur et nettoie l'état local
+   * @param conversationId ID de la conversation
+   * @param messageId ID du message (optionnel)
+   * @param reason Raison de l'annulation (optionnel)
+   */
+  cancelStream(conversationId: string, messageId?: string, reason: string = 'User requested cancellation'): void {
+    console.log('[ChatStreamService] 🛑 Annulation du stream:', { conversationId, messageId, reason });
+    
+    if (!this.socket?.connected) {
+      console.warn('[ChatStreamService] ⚠️ Socket non connecté, annulation locale uniquement');
+    } else {
+      // Émettre la demande d'annulation au serveur
+      this.socket.emit(SOCKET_EVENTS.CANCEL_STREAM, { 
+        conversationId, 
+        messageId: messageId || this.streamingState.messageId,
+        reason 
+      });
+    }
+    
+    // Nettoyer l'état local immédiatement
+    this.streamingState = {
+      messageId: null,
+      accumulatedContent: this.streamingState.accumulatedContent, // Garder le contenu partiel
+      lastChunkId: this.streamingState.lastChunkId,
+      isActive: false,
+      cancelled: true
+    };
+    
+    // Nettoyer les callbacks pour ce message
+    if (messageId || this.streamingState.messageId) {
+      const targetId = messageId || this.streamingState.messageId!;
+      this.cleanupMessageCallbacks(targetId);
+    }
+  }
+
+  /**
    * Vérifie si le service est connecté
    */
   isConnected(): boolean {
@@ -550,11 +632,17 @@ export class ChatStreamService {
    * Ferme la connexion Socket.IO
    */
   disconnect(): void {
+    console.log('[ChatStreamService] 🔌 disconnect() appelé');
+    
+    // ✅ Reset du flag de connexion
+    this.isConnecting = false;
+    
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
 
+    this.currentInstitutionId = null;
     this.streamingState = {
       messageId: null,
       accumulatedContent: '',
@@ -564,13 +652,16 @@ export class ChatStreamService {
 
     this.subscribedConversations.clear();
     
-    // ✅ NOUVEAU: Nettoyer pendingMessages et messageIdMapping
+    // Nettoyer pendingMessages et messageIdMapping
     this.pendingMessages.clear();
     this.messageIdMapping.clear();
 
     // Nettoyer tous les timeouts
     this.messageTimeouts.forEach(timeout => clearTimeout(timeout));
     this.messageTimeouts.clear();
+    
+    // Notifier la déconnexion
+    this.notifyConnectionChange(false);
   }
 
   /**
@@ -798,6 +889,47 @@ export class ChatStreamService {
   }
 
   /**
+   * ✅ NOUVEAU v2.4.0: Traite l'annulation d'un stream
+   */
+  private handleCancelled(data: { conversationId: string; messageId: string; reason: string; cancelledAt: string }): void {
+    const { messageId, reason } = data;
+    
+    console.log('[ChatStreamService] 🛑 Stream annulé par le serveur:', { messageId, reason });
+    
+    this.clearMessageTimeout(messageId);
+
+    // Mettre à jour l'état
+    this.streamingState = {
+      ...this.streamingState,
+      isActive: false,
+      cancelled: true
+    };
+
+    // Notifier le callback d'annulation
+    let callback = this.onCancelledCallbacks.get(messageId);
+    
+    // Essayer via le mapping si existe
+    if (!callback) {
+      const mappedId = this.messageIdMapping.get(messageId);
+      if (mappedId) {
+        callback = this.onCancelledCallbacks.get(mappedId);
+      }
+    }
+    
+    // Essayer via streamingState.messageId
+    if (!callback && this.streamingState.messageId) {
+      callback = this.onCancelledCallbacks.get(this.streamingState.messageId);
+    }
+    
+    if (callback) {
+      callback(reason);
+    }
+
+    // Nettoyer les callbacks
+    this.cleanupMessageCallbacks(messageId);
+  }
+
+  /**
    * Configure le timeout pour un message
    */
   private setupMessageTimeout(messageId: string): void {
@@ -841,6 +973,7 @@ export class ChatStreamService {
     this.onChunkCallbacks.delete(messageId);
     this.onErrorCallbacks.delete(messageId);
     this.onCompleteCallbacks.delete(messageId);
+    this.onCancelledCallbacks.delete(messageId); // ✅ NOUVEAU v2.4.0
     this.clearMessageTimeout(messageId);
   }
 

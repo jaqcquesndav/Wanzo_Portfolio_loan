@@ -53,6 +53,7 @@ interface ChatStore {
   connectWebSocket: (institutionId: string) => Promise<void>;
   disconnectWebSocket: () => void;
   updateStreamingContent: (messageId: string, content: string, isComplete?: boolean) => void;
+  cancelCurrentStream: () => void; // ✅ NOUVEAU: Annuler le stream en cours
   
   // Actions contexte
   setPortfolioType: (type: 'traditional' | 'leasing' | 'investment') => void;
@@ -234,6 +235,62 @@ export const useChatStore = create<ChatStore>()(
               : { ...state.streamingState, accumulatedContent: content }
           };
         });
+      },
+      
+      // ✅ NOUVEAU v2.4.0: Annuler le stream en cours
+      cancelCurrentStream: () => {
+        const store = get();
+        const currentStreamService = store.isWebSocketConnected ? getChatStreamService() : null;
+        
+        if (!store.streamingState.isActive) {
+          console.log('[ChatStore] ⚠️ Pas de stream actif à annuler');
+          return;
+        }
+        
+        const messageId = store.streamingState.messageId;
+        const conversationId = store.activeConversationId;
+        
+        console.log('[ChatStore] 🛑 Annulation du stream:', { messageId, conversationId });
+        
+        // Annuler via le service WebSocket
+        if (currentStreamService && conversationId) {
+          currentStreamService.cancelStream(conversationId, messageId || undefined, 'User cancelled');
+        }
+        
+        // Mettre à jour le message en cours pour montrer qu'il a été annulé
+        if (messageId) {
+          set(state => ({
+            conversations: state.conversations.map(conv => 
+              conv.id === state.activeConversationId
+                ? {
+                    ...conv,
+                    messages: conv.messages.map(msg =>
+                      msg.id === messageId 
+                        ? { 
+                            ...msg, 
+                            isStreaming: false,
+                            content: msg.content + '\n\n*[Génération interrompue]*'
+                          }
+                        : msg
+                    )
+                  }
+                : conv
+            ),
+            streamingState: {
+              messageId: null,
+              accumulatedContent: '',
+              lastChunkId: -1,
+              isActive: false,
+              cancelled: true
+            },
+            isTyping: false
+          }));
+        } else {
+          set({ 
+            streamingState: { messageId: null, accumulatedContent: '', lastChunkId: -1, isActive: false, cancelled: true },
+            isTyping: false 
+          });
+        }
       },
       
       // Actions contexte

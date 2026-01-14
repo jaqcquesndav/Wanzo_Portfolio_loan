@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   MessageSquare, 
   Maximize2, 
@@ -25,10 +25,13 @@ import {
   Columns,
   TrendingUp,
   FileText,
-  HelpCircle
+  HelpCircle,
+  Square,
+  Volume2
 } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
+import { useAudioChat } from '../../hooks/useAudioChat';
 import { useAuth } from '../../contexts/useAuth';
 import { useAppContextStore } from '../../stores/appContextStore';
 import { EmojiPicker } from './EmojiPicker';
@@ -74,7 +77,8 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     setActiveConversation,
     fetchConversations,
     connectWebSocket,
-    disconnectWebSocket
+    disconnectWebSocket,
+    cancelCurrentStream // ✅ NOUVEAU: Pour annuler le streaming
   } = useChatStore();
 
   const { secondaryPanel, toggleFullscreen, panelPosition, setPanelPosition } = usePanelContext();
@@ -82,6 +86,33 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   
   const adhaWriteMode = useAdhaWriteMode();
   const { user } = useAuth();
+
+  // 🎙️ Hook Audio pour le mode vocal - IMPORTANT: initialiser avant les états
+  const {
+    isRecording: isVoiceRecording,
+    isProcessing: isVoiceProcessing,
+    recordingDuration,
+    isSupported: isAudioSupported,
+    startRecording: startVoiceRecording,
+    stopAndTranscribe,
+    cancelRecording,
+    speakText,
+    isSpeaking,
+    stopSpeaking
+  } = useAudioChat({
+    language: 'fr',
+    defaultVoice: 'nova',
+    onTranscriptionComplete: (text) => {
+      // Ajouter le texte transcrit au message
+      setNewMessage(prev => prev ? `${prev} ${text}` : text);
+    },
+    onError: (error) => {
+      console.error('[ChatPanel] ❌ Erreur audio:', error);
+    }
+  });
+
+  // Ref pour tracker si le composant est monté (évite les mises à jour après démontage)
+  const isMountedRef = useRef(true);
 
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -103,6 +134,18 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     return '';
   };
 
+  // 🧹 Cleanup au démontage du composant
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      isMountedRef.current = false;
+      console.log('[ChatPanel] 🧹 Démontage du composant - nettoyage...');
+      // Note: On ne déconnecte PAS le WebSocket ici car il est partagé (singleton)
+      // La connexion WebSocket reste active pour d'autres composants
+    };
+  }, []);
+
   // Log unique quand le contexte est prêt
   useEffect(() => {
     if (isContextLoaded && globalInstitutionId) {
@@ -114,9 +157,11 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   // Charger les conversations au démarrage
   useEffect(() => {
-    if (!isInitialized) {
+    if (!isInitialized && isMountedRef.current) {
       fetchConversations().then(() => {
-        setIsInitialized(true);
+        if (isMountedRef.current) {
+          setIsInitialized(true);
+        }
       });
     }
   }, [isInitialized, fetchConversations]);
@@ -124,13 +169,8 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   // Connexion WebSocket pour le streaming
   // CRITIQUE: Attendre que isContextLoaded soit true ET que institutionId soit disponible
   useEffect(() => {
-    console.log('[ChatPanel] 🔍 useEffect WebSocket - État:', {
-      isContextLoaded,
-      isApiMode,
-      isStreamingEnabled,
-      globalInstitutionId,
-      isWebSocketConnected
-    });
+    // Ne rien faire si le composant est démonté
+    if (!isMountedRef.current) return;
     
     // Ne rien faire tant que le contexte n'est pas chargé
     if (!isContextLoaded) {
@@ -141,27 +181,18 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     // CRITIQUE: institutionId DOIT être disponible pour la connexion WebSocket
     if (!globalInstitutionId) {
       console.warn('[ChatPanel] ⚠️ institutionId non disponible! La connexion WebSocket ne peut pas être établie.');
-      console.warn('[ChatPanel] ℹ️ Assurez-vous que /users/me a retourné un institutionId valide.');
       return;
     }
     
     // Vérifier si on peut connecter le WebSocket
     const canConnect = isApiMode && isStreamingEnabled && !isWebSocketConnected;
     
-    console.log('[ChatPanel] 🔌 canConnect:', canConnect, {
-      isApiMode,
-      isStreamingEnabled,
-      institutionId: globalInstitutionId,
-      notAlreadyConnected: !isWebSocketConnected
-    });
-    
     if (canConnect) {
       console.log('[ChatPanel] 🚀 Connexion WebSocket avec institutionId:', globalInstitutionId);
       connectWebSocket(globalInstitutionId);
     }
     
-    // Note: pas de cleanup ici car on veut maintenir la connexion active
-    // La déconnexion se fait via disconnectWebSocket() explicitement
+    // Note: pas de cleanup de déconnexion ici car le WebSocket est un singleton partagé
   }, [isContextLoaded, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
@@ -617,21 +648,73 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                 className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none text-sm placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                 rows={1}
                 style={{ minHeight: '36px', maxHeight: '120px' }}
+                disabled={streamingState.isActive || isVoiceRecording}
               />
               
-              <button
-                onClick={handleSend}
-                disabled={!newMessage.trim()}
-                className={`
-                  p-2.5 rounded-lg transition-all flex-shrink-0
-                  ${newMessage.trim() 
-                    ? 'bg-primary text-white hover:bg-primary/90' 
-                    : 'bg-gray-100 dark:bg-gray-600 text-gray-400 cursor-not-allowed'
-                  }
-                `}
-              >
-                <Send className="h-4 w-4" />
-              </button>
+              {/* ✅ Bouton dynamique: Mic / Send / Stop */}
+              {streamingState.isActive ? (
+                // Bouton STOP pendant le streaming
+                <button
+                  onClick={cancelCurrentStream}
+                  className="p-2.5 rounded-lg transition-all flex-shrink-0 bg-red-500 hover:bg-red-600 text-white shadow-sm relative"
+                  title="Arrêter la génération"
+                >
+                  <Square className="h-4 w-4 fill-current" />
+                  <span className="absolute inset-0 rounded-lg bg-red-400 animate-ping opacity-30" />
+                </button>
+              ) : isVoiceRecording ? (
+                // Bouton STOP enregistrement vocal
+                <button
+                  onClick={async () => {
+                    try {
+                      await stopAndTranscribe();
+                    } catch (err) {
+                      console.error('[ChatPanel] Erreur transcription:', err);
+                    }
+                  }}
+                  className="p-2.5 rounded-lg transition-all flex-shrink-0 bg-red-500 hover:bg-red-600 text-white shadow-sm relative"
+                  title="Arrêter et transcrire"
+                >
+                  <Square className="h-4 w-4 fill-current" />
+                  <span className="absolute inset-0 rounded-lg bg-red-400 animate-ping opacity-30" />
+                </button>
+              ) : isVoiceProcessing ? (
+                // Traitement transcription en cours
+                <button
+                  disabled
+                  className="p-2.5 rounded-lg flex-shrink-0 bg-primary/20 text-primary"
+                  title="Transcription en cours..."
+                >
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </button>
+              ) : newMessage.trim() ? (
+                // Bouton SEND quand il y a du texte
+                <button
+                  onClick={handleSend}
+                  className="p-2.5 rounded-lg transition-all flex-shrink-0 bg-primary text-white hover:bg-primary/90 shadow-sm hover:scale-105"
+                  title="Envoyer (Entrée)"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              ) : isAudioSupported ? (
+                // Bouton MICRO par défaut (quand input vide)
+                <button
+                  onClick={startVoiceRecording}
+                  className="p-2.5 rounded-lg transition-all flex-shrink-0 bg-primary text-white hover:bg-primary/90 shadow-sm hover:scale-105"
+                  title="Message vocal"
+                >
+                  <Mic className="h-4 w-4" />
+                </button>
+              ) : (
+                // Fallback: bouton SEND désactivé si audio non supporté
+                <button
+                  disabled
+                  className="p-2.5 rounded-lg flex-shrink-0 bg-gray-100 dark:bg-gray-600 text-gray-400 cursor-not-allowed"
+                  title="Tapez un message"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              )}
             </div>
             
             {/* Actions secondaires */}
@@ -657,21 +740,38 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                 >
                   <Smile className="h-3.5 w-3.5" />
                 </button>
-                <button
-                  onMouseDown={() => setRecording(true)}
-                  onMouseUp={() => setRecording(false)}
-                  className={`p-1.5 rounded ${
-                    isRecording 
-                      ? 'bg-red-100 text-red-500' 
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400'
-                  }`}
-                  title="Vocal"
-                >
-                  <Mic className="h-3.5 w-3.5" />
-                </button>
+                
+                {/* 🎙️ Indicateur d'enregistrement audio */}
+                {isVoiceRecording && (
+                  <div className="flex items-center space-x-2 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg border border-red-200 dark:border-red-800 animate-pulse">
+                    <div className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                    </div>
+                    <span className="text-xs font-mono text-red-600 dark:text-red-400">
+                      {Math.floor(recordingDuration / 60).toString().padStart(2, '0')}:
+                      {(recordingDuration % 60).toString().padStart(2, '0')}
+                    </span>
+                    <button
+                      onClick={cancelRecording}
+                      className="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                      title="Annuler"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                
+                {/* Indicateur de traitement transcription */}
+                {isVoiceProcessing && (
+                  <div className="flex items-center space-x-1 bg-primary/10 px-2 py-1 rounded-lg">
+                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                    <span className="text-xs text-primary font-medium">Transcription...</span>
+                  </div>
+                )}
               </div>
               <span className="text-xs text-gray-400">
-                ↵ envoyer
+                {isVoiceRecording ? 'Tap pour transcrire' : '↵ envoyer'}
               </span>
             </div>
             
