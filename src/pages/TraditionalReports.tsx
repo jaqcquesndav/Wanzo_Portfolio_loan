@@ -203,10 +203,10 @@ export default function TraditionalReports() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Reporting Crédit & Financement</h1>
-          <p className="text-gray-500">Analyse détaillée des portefeuilles de crédit et financement</p>
+          <p className="text-gray-500 dark:text-gray-400">Analyse détaillée des portefeuilles de crédit et financement</p>
         </div>
         <div className="flex gap-2">
-          <select className="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white">
+          <select className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-200">
             <option>Tous les types de crédits</option>
             <option>Crédit PME</option>
             <option>Crédit Équipement</option>
@@ -214,7 +214,7 @@ export default function TraditionalReports() {
             <option>Crédit Immobilier</option>
             <option>Microcrédit</option>
           </select>
-          <select className="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white">
+          <select className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-200">
             <option>2025 (Actuel)</option>
             <option>2024</option>
             <option>2023</option>
@@ -275,7 +275,7 @@ export default function TraditionalReports() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center min-h-[400px]">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold">Répartition du portefeuille de crédit</h2>
-              <p className="text-gray-500">Visualisation par type de crédit et par région</p>
+              <p className="text-gray-500 dark:text-gray-400">Visualisation par type de crédit et par région</p>
             </div>
             <div className="text-gray-400 flex flex-col items-center">
               <PieChart className="h-16 w-16 mb-4" />
@@ -288,7 +288,7 @@ export default function TraditionalReports() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center min-h-[400px]">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold">Évolution des performances de crédit</h2>
-              <p className="text-gray-500">Tendances de remboursement et rendement sur la période</p>
+              <p className="text-gray-500 dark:text-gray-400">Tendances de remboursement et rendement sur la période</p>
             </div>
             <div className="text-gray-400 flex flex-col items-center">
               <LineChart className="h-16 w-16 mb-4" />
@@ -301,7 +301,7 @@ export default function TraditionalReports() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center min-h-[400px]">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold">Cartographie des crédits</h2>
-              <p className="text-gray-500">Répartition géographique des financements</p>
+              <p className="text-gray-500 dark:text-gray-400">Répartition géographique des financements</p>
             </div>
             <div className="text-gray-400 flex flex-col items-center">
               <MapIcon className="h-16 w-16 mb-4" />

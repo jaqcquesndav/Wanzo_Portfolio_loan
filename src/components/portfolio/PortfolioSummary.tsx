@@ -15,9 +15,9 @@ export function PortfolioSummary() {
   const { formatAmount } = useCurrencyContext();
   
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
       <div className="p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Résumé du portefeuille
         </h2>
         
@@ -25,22 +25,22 @@ export function PortfolioSummary() {
           <div>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Valeur totale</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Valeur totale</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {formatAmount(mockData.totalValue)}
                 </p>
               </div>
               
               <div>
-                <p className="text-sm text-gray-500">Capital investi</p>
-                <p className="text-xl font-medium text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Capital investi</p>
+                <p className="text-xl font-medium text-gray-900 dark:text-white">
                   {formatAmount(mockData.invested)}
                 </p>
               </div>
               
               <div>
-                <p className="text-sm text-gray-500">Disponible</p>
-                <p className="text-xl font-medium text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Disponible</p>
+                <p className="text-xl font-medium text-gray-900 dark:text-white">
                   {formatAmount(mockData.available)}
                 </p>
               </div>
@@ -49,10 +49,10 @@ export function PortfolioSummary() {
           
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <p className="text-sm text-gray-500 mb-2">Rendement total</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Rendement total</p>
               <div className="flex items-center justify-center space-x-2">
                 <DollarSign className="h-6 w-6 text-green-500" />
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {formatAmount(mockData.returns.total)}
                 </p>
               </div>

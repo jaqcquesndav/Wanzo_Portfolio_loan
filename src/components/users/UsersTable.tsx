@@ -210,7 +210,7 @@ export function UsersTable({
       {!loading && !error && users.length > 0 && (
         <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Affichage de {((pagination.page - 1) * pagination.limit) + 1} à{' '}
               {Math.min(pagination.page * pagination.limit, pagination.total)} sur{' '}
               {pagination.total} utilisateurs
@@ -232,7 +232,7 @@ export function UsersTable({
               Précédent
             </Button>
             
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Page {pagination.page} sur {pagination.totalPages}
             </span>
             

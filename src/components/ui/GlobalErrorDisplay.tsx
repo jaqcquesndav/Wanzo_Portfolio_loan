@@ -70,7 +70,7 @@ export function GlobalErrorDisplay() {
                   
                   <button
                     onClick={() => typeErrors.forEach(error => removeError(error.id))}
-                    className="ml-2 text-gray-400 hover:text-gray-600"
+                    className="ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -108,7 +108,7 @@ export function GlobalErrorDisplay() {
             size="sm"
             variant="ghost"
             onClick={clearErrors}
-            className="text-xs text-gray-500 hover:text-gray-700"
+            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
             Effacer toutes les erreurs
           </Button>

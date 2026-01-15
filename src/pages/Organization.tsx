@@ -117,13 +117,13 @@ export default function Organization() {
                 {denominationSociale || institution.name}
               </h2>
               {denominationSociale && denominationSociale !== institution.name && (
-                <p className="text-sm text-gray-500 mt-1">{institution.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{institution.name}</p>
               )}
               <p className="text-xs text-gray-400 mt-1 font-mono">ID: {institution.id}</p>
             </div>
             
             {/* Dates */}
-            <div className="text-sm text-gray-500 flex flex-col items-end gap-1">
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex flex-col items-end gap-1">
               {createdAt && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
@@ -224,13 +224,13 @@ export default function Organization() {
             <InformationSection title="Tokens" icon={Coins}>
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                 <div>
-                  <p className="text-xs text-gray-500">Solde de tokens</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Solde de tokens</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {tokenBalance ?? 0}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">Tokens utilisés</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Tokens utilisés</p>
                   <p className="text-lg font-semibold text-gray-600 dark:text-gray-300">
                     {tokensUsed ?? 0}
                   </p>
@@ -249,7 +249,7 @@ export default function Organization() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 italic mt-2">Aucun document disponible</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2">Aucun document disponible</p>
               )}
             </InformationSection>
           </div>
@@ -361,7 +361,7 @@ function DocumentCard({ document }: DocumentCardProps) {
           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {document.name}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {document.type}
           </p>
           {document.url && (

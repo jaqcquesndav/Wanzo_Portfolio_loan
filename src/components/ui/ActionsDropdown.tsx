@@ -58,7 +58,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ actions }) => 
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <MoreVertical className="h-5 w-5 text-gray-500" />
+        <MoreVertical className="h-5 w-5 text-gray-500 dark:text-gray-400" />
       </button>
       {open && typeof window !== 'undefined' && ReactDOM.createPortal(
         <div

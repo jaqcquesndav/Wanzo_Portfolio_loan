@@ -362,14 +362,14 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                             >
                               <div>
                                 <div className="font-medium">{company.name}</div>
-                                <div className="text-sm text-gray-500">ID: {company.id}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">ID: {company.id}</div>
                               </div>
-                              <div className="text-sm text-gray-600">{company.sector}</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">{company.sector}</div>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <div className="px-4 py-3 text-sm text-gray-500">
+                        <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                           Aucune entreprise trouvée
                         </div>
                       )}
@@ -377,18 +377,18 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                   )}
                   
                   {companyId && (
-                    <div className="mt-2 p-3 border border-gray-200 rounded-md bg-gray-50 flex items-center justify-between">
+                    <div className="mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
                       <div>
                         <div className="font-medium">
                           {getCompanyById(companyId)?.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           ID: {companyId} | Secteur: {getCompanyById(companyId)?.sector}
                         </div>
                       </div>
                       <button 
                         type="button"
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                         onClick={() => {
                           setCompanyId('');
                           setCompanySearchTerm('');

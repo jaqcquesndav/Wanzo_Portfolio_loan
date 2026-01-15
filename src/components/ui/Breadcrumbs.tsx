@@ -12,11 +12,11 @@ export const Breadcrumbs: React.FC<{ items: BreadcrumbItem[] }> = ({ items }) =>
       {items.map((item, idx) => (
         <li key={idx} className="flex items-center">
           {item.to ? (
-            <Link to={item.to} className="text-blue-600 hover:underline">
+            <Link to={item.to} className="text-blue-600 hover:underline dark:text-blue-400">
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-500">{item.label}</span>
+            <span className="text-gray-500 dark:text-gray-400">{item.label}</span>
           )}
           {idx < items.length - 1 && <span className="mx-2">/</span>}
         </li>

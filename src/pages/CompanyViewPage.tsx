@@ -288,7 +288,7 @@ export default function CompanyViewPage() {
       <div className="p-4 md:p-6">
         <div className="max-w-6xl mx-auto text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-          <p className="text-gray-600 mt-4">Chargement des informations...</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">Chargement des informations...</p>
         </div>
       </div>
     );
@@ -298,8 +298,8 @@ export default function CompanyViewPage() {
     return (
       <div className="p-4 md:p-6">
         <div className="max-w-6xl mx-auto text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Erreur de chargement</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <Button variant="outline" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
@@ -313,7 +313,7 @@ export default function CompanyViewPage() {
     return (
       <div className="p-4 md:p-6">
         <div className="max-w-6xl mx-auto text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Entreprise non trouvée</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Entreprise non trouvée</h2>
           <Button variant="outline" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
@@ -405,7 +405,7 @@ export default function CompanyViewPage() {
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-2">{company.sector || 'N/A'}</p>
                 {company.size && (
-                  <p className="text-sm text-gray-500 mt-1">Taille: {company.size}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Taille: {company.size}</p>
                 )}
               </div>
             </div>
@@ -714,7 +714,7 @@ export default function CompanyViewPage() {
             {/* Moyens techniques et capacités */}
             <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                <Settings className="w-5 h-5 text-gray-600" />
+                <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 Moyens techniques et capacités
               </h2>
               <div className="space-y-4">
@@ -785,7 +785,7 @@ export default function CompanyViewPage() {
               {company.dirigeants && company.dirigeants.length > 0 ? (
                 <DirigeantTable dirigeants={company.dirigeants} />
               ) : (
-                <p className="text-gray-500 italic">Aucun dirigeant enregistré</p>
+                <p className="text-gray-500 dark:text-gray-400 italic">Aucun dirigeant enregistré</p>
               )}
             </section>
 
@@ -798,7 +798,7 @@ export default function CompanyViewPage() {
               {company.actionnaires && company.actionnaires.length > 0 ? (
                 <ActionnaireTable actionnaires={company.actionnaires} />
               ) : (
-                <p className="text-gray-500 italic">Aucun actionnaire enregistré</p>
+                <p className="text-gray-500 dark:text-gray-400 italic">Aucun actionnaire enregistré</p>
               )}
             </section>
 
@@ -811,7 +811,7 @@ export default function CompanyViewPage() {
               {company.employes && company.employes.length > 0 ? (
                 <EmployeTable employes={company.employes} />
               ) : (
-                <p className="text-gray-500 italic">Aucun employé enregistré</p>
+                <p className="text-gray-500 dark:text-gray-400 italic">Aucun employé enregistré</p>
               )}
             </section>
           </TabsContent>
@@ -924,7 +924,7 @@ export default function CompanyViewPage() {
                 <Rocket className="w-5 h-5 text-violet-600" />
                 Levées de fonds
                 {company.typeEntreprise !== 'startup' && (
-                  <span className="text-xs font-normal text-gray-500 ml-2">(Startups uniquement)</span>
+                  <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-2">(Startups uniquement)</span>
                 )}
               </h2>
               {company.typeEntreprise === 'startup' ? (
@@ -1504,7 +1504,7 @@ function StocksTable({ stocks }: { stocks: Stock[] }): JSX.Element {
                       {stock.quantiteStock?.toLocaleString() || 'N/A'} {stock.unite || ''}
                     </span>
                     {stock.seuilMinimum && (
-                      <p className="text-xs text-gray-500">Min: {stock.seuilMinimum}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Min: {stock.seuilMinimum}</p>
                     )}
                   </div>
                 </td>
@@ -1791,14 +1791,14 @@ function DocumentsTable({ documents }: { documents?: CompanyDocuments }): JSX.El
                       Télécharger
                     </a>
                   ) : (
-                    <span className="text-xs italic text-gray-500">Non disponible</span>
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">Non disponible</span>
                   )}
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td className="px-4 py-6 text-gray-500 italic" colSpan={4}>
+              <td className="px-4 py-6 text-gray-500 dark:text-gray-400 italic" colSpan={4}>
                 Aucun document disponible
               </td>
             </tr>

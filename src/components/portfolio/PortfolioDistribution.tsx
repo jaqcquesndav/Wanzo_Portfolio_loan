@@ -12,8 +12,8 @@ const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#6366F1'];
 
 export function PortfolioDistribution() {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-medium text-gray-900 mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
         Répartition du portefeuille
       </h2>
       

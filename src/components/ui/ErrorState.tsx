@@ -88,7 +88,7 @@ export function ErrorState({
       
       {showDetails && (
         <details className="mb-4">
-          <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-600">
+          <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
             Détails techniques
           </summary>
           <p className="mt-2 text-xs text-gray-400 font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded">

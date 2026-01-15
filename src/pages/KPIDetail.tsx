@@ -68,7 +68,7 @@ const KPIDetail: React.FC = () => {
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold mb-1">Détail indicateur : <span className="capitalize">{params.indicator}</span></h1>
-          <div className="text-gray-500 text-sm">Portefeuille : {params.portfolioId}</div>
+          <div className="text-gray-500 dark:text-gray-400 text-sm">Portefeuille : {params.portfolioId}</div>
         </div>
         <div className="flex gap-2">
           <input

@@ -234,6 +234,44 @@ class Auth0Service {
     localStorage.removeItem(STORAGE_KEYS.STATE);
     localStorage.removeItem(STORAGE_KEYS.CODE_VERIFIER);
   }
+
+  /**
+   * Génère l'URL de déconnexion Auth0 pour une déconnexion complète
+   * Cette URL invalide la session Auth0 et redirige vers la page de connexion de l'application
+   */
+  getLogoutUrl(): string {
+    const domain = import.meta.env.VITE_AUTH0_DOMAIN;
+    const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+    // Rediriger vers la page de connexion de l'application (racine)
+    const returnTo = encodeURIComponent(window.location.origin + '/');
+    
+    if (!domain || !clientId) {
+      console.warn('[Auth0] Variables d\'environnement manquantes pour la déconnexion');
+      return '/';
+    }
+    
+    return `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${returnTo}`;
+  }
+
+  /**
+   * Effectue une déconnexion complète :
+   * 1. Nettoie toutes les données locales
+   * 2. Redirige vers Auth0 pour invalider la session
+   */
+  performFullLogout(): void {
+    console.log('🚪 Déconnexion complète Auth0 en cours...');
+    
+    // D'abord nettoyer toutes les données locales
+    this.clearAuth();
+    
+    // Obtenir l'URL de déconnexion Auth0
+    const logoutUrl = this.getLogoutUrl();
+    
+    console.log('🔗 Redirection vers Auth0 pour invalidation de session...');
+    
+    // Rediriger vers Auth0 pour invalider la session côté serveur
+    window.location.href = logoutUrl;
+  }
 }
 
 // Exporter une instance unique du service

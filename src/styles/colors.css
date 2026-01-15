@@ -4,49 +4,87 @@
   --color-primary-dark: #156088;
   --color-primary-light: #e6f3f8;
   --color-primary-hover: #1e90c3;
+  --color-primary-rgb: 25, 124, 168;
   
-  /* Background colors */
+  /* Background colors - Light mode */
   --color-background: #ffffff;
+  --color-background-secondary: #f3f4f6;
+  --color-background-tertiary: #e5e7eb;
   --color-surface: #ffffff;
+  --color-surface-hover: #f9fafb;
+  --color-surface-elevated: #ffffff;
   --color-overlay: rgba(0, 0, 0, 0.5);
   
-  /* Border colors */
+  /* Border colors - Light mode */
   --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
   
-  /* Text colors */
+  /* Text colors - Light mode */
   --color-text-primary: #111827;
   --color-text-secondary: #4b5563;
-  --color-text-tertiary: #6b7280;
+  --color-text-tertiary: #9ca3af;
   
   /* Status colors */
   --color-success: #015730;
   --color-success-light: #e6efe9;
+  --color-success-rgb: 1, 87, 48;
   --color-warning: #ee872b;
   --color-warning-light: #fdf3ea;
+  --color-warning-rgb: 238, 135, 43;
   --color-error: #dc2626;
   --color-error-light: #fee2e2;
+  --color-error-rgb: 220, 38, 38;
+  --color-info: #1e90c3;
+  --color-info-light: #e6f3f8;
+  --color-info-rgb: 30, 144, 195;
+  
+  /* Skeleton loading */
+  --skeleton-base: #e5e7eb;
+  --skeleton-highlight: #f3f4f6;
 }
 
-/* Dark mode adjustments */
+/* Dark mode - Cohérent et professionnel */
 .dark {
-  --color-background: #1a1a1a;
-  --color-surface: #2d2d2d;
+  /* Primary colors - Légèrement plus lumineux en dark */
+  --color-primary: #2089b7;
+  --color-primary-dark: #1b7aa3;
+  --color-primary-light: #2596c7;
+  --color-primary-hover: #2596c7;
+  --color-primary-rgb: 32, 137, 183;
+  
+  /* Background colors - Dark mode (hiérarchie claire) */
+  --color-background: #1a1b1e;           /* Niveau 0 - Fond de page */
+  --color-background-secondary: #25262b; /* Niveau 1 - Cartes, panneaux */
+  --color-background-tertiary: #2c2e33;  /* Niveau 2 - Sections */
+  --color-surface: #25262b;              /* Cartes et conteneurs */
+  --color-surface-hover: #2c2e33;        /* Surface au hover */
+  --color-surface-elevated: #3b3d42;     /* Éléments surélevés (dropdowns, modals) */
   --color-overlay: rgba(0, 0, 0, 0.75);
   
-  --color-border: #404040;
+  /* Border colors - Dark mode */
+  --color-border: #3b3d42;
+  --color-border-light: #4b4d52;
   
+  /* Text colors - Dark mode (contrastes WCAG) */
   --color-text-primary: #f3f4f6;
   --color-text-secondary: #d1d5db;
   --color-text-tertiary: #9ca3af;
   
-  --color-primary: #156088;
-  --color-primary-dark: #197ca8;
-  --color-primary-light: #1e90c3;
+  /* Status colors - Ajustés pour dark mode */
+  --color-success: #10b981;
+  --color-success-light: rgba(16, 185, 129, 0.15);
+  --color-success-rgb: 16, 185, 129;
+  --color-warning: #f59e0b;
+  --color-warning-light: rgba(245, 158, 11, 0.15);
+  --color-warning-rgb: 245, 158, 11;
+  --color-error: #ef4444;
+  --color-error-light: rgba(239, 68, 68, 0.15);
+  --color-error-rgb: 239, 68, 68;
+  --color-info: #3b82f6;
+  --color-info-light: rgba(59, 130, 246, 0.15);
+  --color-info-rgb: 59, 130, 246;
   
-  --color-success: #059669;
-  --color-success-light: #064e3b;
-  --color-warning: #d97706;
-  --color-warning-light: #78350f;
-  --color-error: #dc2626;
-  --color-error-light: #7f1d1d;
+  /* Skeleton loading - Dark mode */
+  --skeleton-base: #2c2e33;
+  --skeleton-highlight: #3b3d42;
 }

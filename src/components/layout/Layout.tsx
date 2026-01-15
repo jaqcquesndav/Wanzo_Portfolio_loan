@@ -3,6 +3,7 @@ import { Outlet, useParams, useNavigate } from 'react-router-dom';
 import { DynamicHeader } from './DynamicHeader';
 import { DynamicSidebar } from './DynamicSidebar';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
+import { useRoutePrefetch } from '../../hooks/useRoutePrefetch';
 
 // Default sidebar width, matching DynamicSidebar default
 const DEFAULT_SIDEBAR_WIDTH = 250; 
@@ -18,6 +19,9 @@ export default function Layout() {
     const savedWidth = localStorage.getItem('sidebarWidth');
     return savedWidth ? parseInt(savedWidth, 10) : DEFAULT_SIDEBAR_WIDTH;
   });
+
+  // Préchargement des routes en arrière-plan
+  useRoutePrefetch();
 
   // Redirection automatique si le portefeuille n'est pas sélectionné
   useEffect(() => {

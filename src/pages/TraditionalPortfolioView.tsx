@@ -45,7 +45,7 @@ export function TraditionalPortfolioView() {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold mb-2">Portefeuille non trouvé</h2>
-        <p className="text-gray-500 mb-4">Le portefeuille demandé n'existe pas ou a été supprimé.</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Le portefeuille demandé n'existe pas ou a été supprimé.</p>
         <Button variant="outline" onClick={() => navigate('/app/traditional')}>
           Retour
         </Button>

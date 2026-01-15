@@ -54,21 +54,21 @@ export default function InstitutionValidation() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <Building className="h-12 w-12 text-primary" />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
           Validation de l'institution
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
           Veuillez fournir les informations nécessaires pour valider votre institution
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <FormField label="Type d'institution" error={errors.institutionType?.message}>
               <Select {...register('institutionType')}>
@@ -92,14 +92,14 @@ export default function InstitutionValidation() {
             </FormField>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Documents requis
               </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
                 <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="flex text-sm text-gray-600">
-                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+                  <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                    <label className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-primary hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
                       <span>Télécharger des fichiers</span>
                       <input
                         type="file"
@@ -110,7 +110,7 @@ export default function InstitutionValidation() {
                       />
                     </label>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     PDF, JPG, PNG jusqu'à 10MB
                   </p>
                 </div>
@@ -118,7 +118,7 @@ export default function InstitutionValidation() {
               {documents.length > 0 && (
                 <ul className="mt-4 space-y-2">
                   {documents.map((file, index) => (
-                    <li key={index} className="text-sm text-gray-600">
+                    <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
                       {file.name}
                     </li>
                   ))}
@@ -127,14 +127,14 @@ export default function InstitutionValidation() {
             </div>
 
             {documents.length === 0 && (
-              <div className="rounded-md bg-yellow-50 p-4">
+              <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4">
                 <div className="flex">
                   <AlertCircle className="h-5 w-5 text-yellow-400" />
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">
+                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                       Documents requis
                     </h3>
-                    <p className="mt-2 text-sm text-yellow-700">
+                    <p className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
                       Veuillez télécharger les documents suivants :
                       <ul className="list-disc list-inside mt-1">
                         <li>Licence bancaire ou agrément</li>

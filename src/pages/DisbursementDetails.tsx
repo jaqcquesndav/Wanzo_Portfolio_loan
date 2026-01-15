@@ -8,6 +8,7 @@ import { useNotification } from '../contexts/useNotification';
 // TODO: Replace with real data fetching logic
 import { mockDisbursements } from '../data/mockDisbursements';
 import type { Disbursement } from '../types/disbursement';
+import { DetailsSkeleton } from '../components/ui/DetailsSkeleton';
 
 export default function DisbursementDetails({ id: propId }: { id?: string }) {
   const { disbursementId, portfolioId } = useParams();
@@ -15,17 +16,29 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [disbursement, setDisbursement] = useState<Disbursement | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    // Recherche stricte : id + portfolioId
-    const found = mockDisbursements.find((d) => d.id === id && d.portfolioId === portfolioId);
-    setDisbursement(found || null);
+    // Simuler un délai de chargement
+    setLoading(true);
+    const timer = setTimeout(() => {
+      // Recherche stricte : id + portfolioId
+      const found = mockDisbursements.find((d) => d.id === id && d.portfolioId === portfolioId);
+      setDisbursement(found || null);
+      setLoading(false);
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [id, portfolioId]);
+
+  if (loading) {
+    return <DetailsSkeleton showBreadcrumb={true} variant="default" infoSections={2} rowsPerSection={4} />;
+  }
 
   if (!disbursement) {
     return (
-      <div className="p-8 text-center text-gray-500">
+      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
         Décaissement introuvable.
         <Button className="ml-4" onClick={() => navigate(-1)}>Retour</Button>
       </div>
@@ -42,8 +55,8 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
       <h1 className="text-2xl font-bold mb-2">Détail du décaissement</h1>
       
       {/* Section principale */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border p-6 space-y-4">
-        <div className="flex justify-between items-center border-b pb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6 space-y-4">
+        <div className="flex justify-between items-center border-b dark:border-gray-700 pb-4">
           <div>
             <h2 className="text-lg font-semibold">{disbursement.company}</h2>
             <p className="text-gray-600 dark:text-gray-400">{disbursement.product}</p>
@@ -52,12 +65,12 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
             <p className="text-xl font-bold">{disbursement.amount.toLocaleString()} FCFA</p>
             <div className={`text-sm px-2 py-1 rounded-full inline-block ${
               disbursement.status === 'completed' 
-                ? 'bg-green-100 text-green-700' 
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
                 : disbursement.status === 'failed' || disbursement.status === 'rejected'
-                ? 'bg-red-100 text-red-700'
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                 : disbursement.status === 'approved' || disbursement.status === 'processing'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-yellow-100 text-yellow-700'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
             }`}>
               {disbursement.status === 'completed' ? 'Effectué' 
                 : disbursement.status === 'pending' ? 'En attente'

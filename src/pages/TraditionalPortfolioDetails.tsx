@@ -23,6 +23,7 @@ import { mockCompanyDetails } from '../data/mockCompanyDetails';
 import { useNotification } from '../contexts/useNotification';
 import { useCreditRequests } from '../hooks/useCreditRequests';
 import { useCreditContracts } from '../hooks/useCreditContracts';
+import { PortfolioDetailsSkeleton } from '../components/ui/PortfolioDetailsSkeleton';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
@@ -278,7 +279,7 @@ export default function TraditionalPortfolioDetails() {
   if (!id) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">ID de portefeuille manquant</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">ID de portefeuille manquant</h2>
         <Button
           variant="outline"
           onClick={() => navigate('/app/dashboard')}
@@ -292,8 +293,8 @@ export default function TraditionalPortfolioDetails() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" aria-label="Chargement..." />
+      <div className="container mx-auto p-4 sm:p-6">
+        <PortfolioDetailsSkeleton />
       </div>
     );
   }

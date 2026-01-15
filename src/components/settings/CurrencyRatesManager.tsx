@@ -59,7 +59,7 @@ export function CurrencyRatesManager() {
       <Card>
         <CardHeader>
           <CardTitle>Gestion des taux de change</CardTitle>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Dernière mise à jour: {formattedDate}
           </p>
         </CardHeader>
@@ -71,7 +71,7 @@ export function CurrencyRatesManager() {
                   <p className="font-medium">
                     {rate.from} → {rate.to}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Taux actuel: 1 {rate.from} = {rate.rate.toFixed(6)} {rate.to}
                   </p>
                 </div>

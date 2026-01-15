@@ -268,15 +268,15 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="flex justify-between items-center border-b pb-3 mb-4">
-                    <Dialog.Title as="h3" className="text-xl font-semibold leading-6 text-gray-900">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
+                <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="flex justify-between items-center border-b dark:border-gray-700 pb-3 mb-4">
+                    <Dialog.Title as="h3" className="text-xl font-semibold leading-6 text-gray-900 dark:text-white">
                       Ordre de Paiement {readOnly ? '(Lecture seule)' : ''}
                     </Dialog.Title>
                     <button
                       type="button"
-                      className="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                      className="rounded-md bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300"
                       onClick={onClose}
                     >
                       <span className="sr-only">Fermer</span>
@@ -284,13 +284,13 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     </button>
                   </div>
                   
-                  <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 border border-gray-200 rounded-md shadow-sm">
+                  <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm">
                     <div className="grid grid-cols-2 gap-6">
                       {/* Section Informations générales */}
                       <div className="space-y-3">
-                        <h4 className="text-md font-semibold text-gray-800 border-b pb-2">Informations générales</h4>
+                        <h4 className="text-md font-semibold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Informations générales</h4>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Numéro d'ordre</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro d'ordre</label>
                           <Input
                             type="text"
                             name="orderNumber"
@@ -302,7 +302,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Date</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
                           <Input
                             type="date"
                             name="date"
@@ -314,7 +314,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Portefeuille</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Portefeuille</label>
                           <Input
                             type="text"
                             value={formData.portfolioName}
@@ -324,7 +324,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Statut</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Statut</label>
                           <div className="mt-1 flex items-center">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                               ${formData.status === 'draft' ? 'bg-gray-100 text-gray-800' : ''}
@@ -344,8 +344,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       </div>
                       
                       {/* Section Méthode de paiement et Bénéficiaire */}
-                      <div className="space-y-3 border-l pl-4">
-                        <h4 className="text-md font-semibold text-gray-800 border-b pb-2">Méthode de paiement</h4>
+                      <div className="space-y-3 border-l dark:border-gray-700 pl-4">
+                        <h4 className="text-md font-semibold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-2">Méthode de paiement</h4>
                         
                         {/* Switch Banque / Mobile Money */}
                         <div className="flex space-x-2 mb-4">
@@ -355,8 +355,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                             disabled={readOnly}
                             className={`flex-1 flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all ${
                               paymentMethod === 'bank'
-                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
                             }`}
                           >
                             <BuildingLibraryIcon className="h-5 w-5 mr-2" />
@@ -369,8 +369,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                             disabled={readOnly}
                             className={`flex-1 flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all ${
                               paymentMethod === 'mobile_money'
-                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
                             }`}
                           >
                             <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
@@ -381,7 +381,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         {/* Sélection de compte prédéfini */}
                         {paymentMethod === 'bank' && availableBankAccounts.length > 0 && !readOnly && (
                           <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Comptes bancaires disponibles
                             </label>
                             <div className="space-y-2">
@@ -390,12 +390,12 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                                   key={index}
                                   type="button"
                                   onClick={() => handleAccountSelection(index)}
-                                  className="w-full text-left px-3 py-2 rounded border border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+                                  className="w-full text-left px-3 py-2 rounded border border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
                                 >
                                   <div className="flex items-center justify-between">
                                     <div>
-                                      <p className="text-sm font-medium text-gray-900">{account.bankName}</p>
-                                      <p className="text-xs text-gray-500 font-mono">{account.accountNumber}</p>
+                                      <p className="text-sm font-medium text-gray-900 dark:text-white">{account.bankName}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{account.accountNumber}</p>
                                     </div>
                                     {account.isPrimary && (
                                       <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">
@@ -411,7 +411,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
 
                         {paymentMethod === 'mobile_money' && availableMobileAccounts.length > 0 && !readOnly && (
                           <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Comptes Mobile Money disponibles
                             </label>
                             <div className="space-y-2">
@@ -420,12 +420,12 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                                   key={index}
                                   type="button"
                                   onClick={() => handleAccountSelection(index)}
-                                  className="w-full text-left px-3 py-2 rounded border border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+                                  className="w-full text-left px-3 py-2 rounded border border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
                                 >
                                   <div className="flex items-center justify-between">
                                     <div>
-                                      <p className="text-sm font-medium text-gray-900">{account.provider}</p>
-                                      <p className="text-xs text-gray-500 font-mono">{account.phoneNumber}</p>
+                                      <p className="text-sm font-medium text-gray-900 dark:text-white">{account.provider}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{account.phoneNumber}</p>
                                     </div>
                                     {account.isPrimary && (
                                       <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">
@@ -439,10 +439,10 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                           </div>
                         )}
                         
-                        <h5 className="text-sm font-semibold text-gray-700 mt-4 mb-2">Informations du bénéficiaire</h5>
+                        <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-2">Informations du bénéficiaire</h5>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Nom du bénéficiaire</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom du bénéficiaire</label>
                           <Input
                             type="text"
                             name="beneficiary.name"
@@ -461,7 +461,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         {paymentMethod === 'bank' ? (
                           <>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700">Numéro de compte</label>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de compte</label>
                               <Input
                                 type="text"
                                 name="beneficiary.accountNumber"
@@ -478,7 +478,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                             </div>
                             
                             <div>
-                              <label className="block text-sm font-medium text-gray-700">Banque</label>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Banque</label>
                               <Input
                                 type="text"
                                 name="beneficiary.bankName"
@@ -495,7 +495,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                             </div>
                             
                             <div>
-                              <label className="block text-sm font-medium text-gray-700">Code SWIFT (optionnel)</label>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Code SWIFT (optionnel)</label>
                               <Input
                                 type="text"
                                 name="beneficiary.swiftCode"
@@ -509,7 +509,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         ) : (
                           <>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700">Numéro de téléphone</label>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de téléphone</label>
                               <Input
                                 type="tel"
                                 name="beneficiary.phoneNumber"
@@ -527,7 +527,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                             </div>
                             
                             <div>
-                              <label className="block text-sm font-medium text-gray-700">Opérateur Mobile Money</label>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Opérateur Mobile Money</label>
                               <select
                                 name="beneficiary.provider"
                                 value={(formData.beneficiary as { provider?: string }).provider || ''}
@@ -556,9 +556,9 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     {/* Section Montant et Description */}
                     <div className="grid grid-cols-2 gap-6 mt-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Montant</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Montant</label>
                         <div className="mt-1 flex rounded-md shadow-sm">
-                          <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-gray-50 px-3 text-gray-500 font-medium">
+                          <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-gray-50 dark:bg-gray-700 px-3 text-gray-500 dark:text-gray-400 font-medium">
                             {currency}
                           </span>
                           <Input
@@ -579,7 +579,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Référence</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Référence</label>
                         <Input
                           type="text"
                           name="reference"
@@ -593,7 +593,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     
                     {/* Description */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Description / Motif du paiement</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description / Motif du paiement</label>
                       <Textarea
                         name="description"
                         value={formData.description}
@@ -611,8 +611,8 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     
                     {/* Montant en lettres (automatique) */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Montant en lettres</label>
-                      <div className="mt-1 p-3 bg-gray-50 rounded-md border border-gray-300 shadow-inner">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Montant en lettres</label>
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-300 dark:border-gray-600 shadow-inner">
                         <p className="text-base font-medium uppercase">
                           {formatCurrency(formData.amount, currency, true)}
                         </p>
@@ -620,7 +620,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     </div>
                     
                     {/* Actions */}
-                    <div className="mt-8 sm:mt-6 sm:flex sm:flex-row-reverse space-x-2 space-x-reverse border-t pt-4">
+                    <div className="mt-8 sm:mt-6 sm:flex sm:flex-row-reverse space-x-2 space-x-reverse border-t dark:border-gray-700 pt-4">
                       {!readOnly && (
                         <button
                           type="submit"
@@ -634,7 +634,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       <button
                         type="button"
                         onClick={handleExport}
-                        className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        className="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       >
                         <DocumentArrowDownIcon className="h-5 w-5 mr-2" />
                         Exporter PDF
@@ -643,7 +643,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                       <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        className="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       >
                         Fermer
                       </button>

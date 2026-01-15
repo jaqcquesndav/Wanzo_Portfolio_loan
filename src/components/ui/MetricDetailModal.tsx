@@ -18,9 +18,9 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({ open, onCl
   if (!open || !indicator) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg relative">
         <button
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           onClick={onClose}
           aria-label="Fermer le détail"
         >
@@ -30,7 +30,7 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({ open, onCl
           {indicator.label}
           {getTrendIcon(indicator.trend)}
         </h2>
-        <div className="mb-4 text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <div className="mb-4 text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           {indicator.value}
           {indicator.tag && (
             <span

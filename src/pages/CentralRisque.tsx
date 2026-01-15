@@ -131,7 +131,7 @@ export default function CentralRisque() {
     return (
       <div className="container mx-auto p-4 sm:p-6">
         <h1 className="text-2xl font-bold mb-6">Centrale de Risque</h1>
-        <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
           Une erreur est survenue lors du chargement des données: {String(error)}
           <button 
             className="ml-4 underline" 
@@ -207,7 +207,7 @@ export default function CentralRisque() {
         </TabsList>
 
         {/* Filtres et contrôles */}
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
           <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <input
@@ -215,7 +215,7 @@ export default function CentralRisque() {
                 placeholder="Rechercher par nom de société..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-200"
               />
             </div>
             
@@ -224,7 +224,7 @@ export default function CentralRisque() {
               <select
                 value={filters.institution || 'Tous'}
                 onChange={(e) => updateFilter('institution', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-200"
               >
                 {getUniqueOptions(
                   activeTab === 'credit' ? creditData : activeTab === 'leasing' ? leasingData : investmentData,

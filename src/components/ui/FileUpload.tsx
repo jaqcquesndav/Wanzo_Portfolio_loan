@@ -104,7 +104,7 @@ export function FileUpload({
   return (
     <div className="w-full">
       <div className="flex flex-col space-y-2 mb-2">
-        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+        {label && <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>}
         
         <div
           className={`border-2 border-dashed rounded-lg p-4 transition-colors duration-200 ${
@@ -124,9 +124,9 @@ export function FileUpload({
           <div className="flex flex-col items-center justify-center py-4 text-sm">
             {!file ? (
               <>
-                <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-gray-500">{description}</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500 mb-2" />
+                <p className="text-gray-500 dark:text-gray-400">{description}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                   Taille maximale: {maxSize}Mo
                 </p>
               </>
@@ -135,15 +135,15 @@ export function FileUpload({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div className="ml-3 truncate">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {file.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {(file.size / 1024).toFixed(2)} KB
                       </p>
                     </div>

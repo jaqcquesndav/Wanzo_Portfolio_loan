@@ -4,7 +4,7 @@ import { Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../contexts/useAuth';
 import { Button } from '../ui/Button';
-import { ConfirmModal } from '../ui/ConfirmModal';
+import { LogoutModal } from './LogoutModal';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
 import { auth0Service } from '../../services/api/auth/auth0Service';
 import { resetTokenExchangeFlag } from '../../pages/AuthCallback';
@@ -36,18 +36,20 @@ export function ProfileMenu() {
 
   const handleLogout = async () => {
     try {
-      console.log('🚪 Déconnexion en cours...');
+      console.log('🚪 Déconnexion complète en cours...');
       
-      // Utiliser la fonction logout du contexte pour nettoyer complètement
+      // Utiliser la fonction logout du contexte pour nettoyer l'état React
       contextLogout();
       
       // Réinitialiser le flag d'échange de token
       resetTokenExchangeFlag();
       
-      // Rediriger vers la page de connexion
-      navigate('/');
+      // Effectuer une déconnexion complète via Auth0 (nettoie le storage + redirige vers Auth0)
+      auth0Service.performFullLogout();
     } catch (error) {
       console.error('Logout failed:', error);
+      // En cas d'erreur, au moins rediriger vers la page d'accueil
+      navigate('/');
     }
   };
 
@@ -133,13 +135,8 @@ export function ProfileMenu() {
       )}
 
       {/* Modal de confirmation de déconnexion */}
-      <ConfirmModal
+      <LogoutModal
         open={showLogoutModal}
-        title="Déconnexion"
-        message="Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte."
-        confirmLabel="Se déconnecter"
-        cancelLabel="Annuler"
-        variant="danger"
         onConfirm={() => {
           setShowLogoutModal(false);
           handleLogout();

@@ -7,6 +7,7 @@ import { useNotification } from '../contexts/useNotification';
 import { guaranteeStorageService } from '../services/storage/guaranteeStorage';
 import type { Guarantee } from '../types/guarantee';
 import { logGuaranteeEvent, ensureG001Exists } from '../scripts/guaranteeInitializer';
+import { DetailsSkeleton } from '../components/ui/DetailsSkeleton';
 
 export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?: () => void }) {
   // The route can come in multiple formats:
@@ -47,11 +48,13 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
   }, [id, portfolioId, params.id]);
   
   const [guarantee, setGuarantee] = useState<Guarantee | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showRelease, setShowRelease] = useState(false);
   const [showSeize, setShowSeize] = useState(false);
 
   useEffect(() => {
     const fetchGuarantee = async () => {
+      setLoading(true);
       console.log('Searching guarantee with params:', { 
         id, 
         portfolioId, 
@@ -124,11 +127,17 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
       } catch (error) {
         console.error('Erreur lors de la récupération de la garantie:', error);
         showNotification('Erreur lors de la récupération de la garantie', 'error');
+      } finally {
+        setLoading(false);
       }
     };
     
     fetchGuarantee();
   }, [id, portfolioId, params, showNotification]);
+
+  if (loading) {
+    return <DetailsSkeleton showBreadcrumb={true} variant="full" infoSections={2} rowsPerSection={4} />;
+  }
 
   if (!guarantee) {
     return (

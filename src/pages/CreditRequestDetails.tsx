@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/Button';
+import { DetailsSkeleton } from '../components/ui/DetailsSkeleton';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 // import { HistoryTimeline } from '../components/common/HistoryTimeline';
 import { useNotification } from '../contexts/useNotification';
@@ -37,17 +38,12 @@ export default function CreditRequestDetails({ id: propId }: { id?: string, onCl
   }, [id, portfolioId, showNotification]);
 
   if (loading) {
-    return (
-      <div className="p-8 text-center">
-        <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-primary rounded-full mx-auto"></div>
-        <p className="mt-2 text-gray-500">Chargement de la demande...</p>
-      </div>
-    );
+    return <DetailsSkeleton showBreadcrumb={false} variant="default" infoSections={2} rowsPerSection={5} />;
   }
 
   if (!request) {
     return (
-      <div className="p-8 text-center text-gray-500">
+      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
         Demande introuvable.
         <Button className="ml-4" onClick={() => navigate(-1)}>Retour</Button>
       </div>
@@ -57,7 +53,7 @@ export default function CreditRequestDetails({ id: propId }: { id?: string, onCl
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold mb-2">Détail de la demande de crédit PME</h1>
-      <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 space-y-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-4 space-y-2">
         <div><b>ID du membre :</b> {request.memberId}</div>
         <div><b>Produit ID :</b> {request.productId}</div>
         <div><b>Montant :</b> {request.requestAmount.toLocaleString()} FCFA</div>

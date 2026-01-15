@@ -7,6 +7,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { NotificationsPopover } from '../notifications/NotificationsPopover';
 import { CurrencyDisplay } from './CurrencyDisplay';
 import { useChatPanel } from '../../contexts/PanelContext';
+import { NetworkQualityIndicator } from '../common/NetworkQualityIndicator';
 
 interface DynamicHeaderProps {
   onMenuClick: () => void;
@@ -55,6 +56,9 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
 
           {/* Actions rapides */}
           <div className="flex items-center space-x-4">
+            {/* Indicateur de qualité réseau */}
+            <NetworkQualityIndicator compact showLabel={false} />
+            
             {/* Affichage de la devise et du taux de change */}
             <CurrencyDisplay />
             

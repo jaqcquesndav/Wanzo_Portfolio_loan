@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 export default function PortfolioNotFound() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-16">
-      <h1 className="text-3xl font-bold mb-4 text-red-600">Portefeuille introuvable</h1>
-      <p className="mb-6 text-gray-600">Le portefeuille demandé n'existe pas ou a été supprimé.</p>
+      <h1 className="text-3xl font-bold mb-4 text-red-600 dark:text-red-400">Portefeuille introuvable</h1>
+      <p className="mb-6 text-gray-600 dark:text-gray-400">Le portefeuille demandé n'existe pas ou a été supprimé.</p>
       <Link to="/app/traditional" className="text-primary underline">Retour à la liste des portefeuilles</Link>
     </div>
   );

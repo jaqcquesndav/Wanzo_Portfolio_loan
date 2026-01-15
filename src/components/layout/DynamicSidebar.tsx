@@ -4,6 +4,7 @@ import { SidebarPortfolios } from './SidebarPortfolios';
 import { Button } from '../ui/Button';
 import { navigation } from '../../config/navigation';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
+import { usePrefetchOnHover } from '../../hooks/useRoutePrefetch';
 
 interface DynamicSidebarProps {
   onClose?: () => void;
@@ -73,6 +74,9 @@ export function DynamicSidebar({ onClose, collapsed = false }: DynamicSidebarPro
     });
   };
 
+  // Hook pour précharger les pages au survol
+  const prefetchOnHover = usePrefetchOnHover();
+
   // Composant NavItem réutilisable
   const NavItem = ({ item, to, isActive }: { 
     item: typeof navigation.main.items[0]; 
@@ -85,6 +89,7 @@ export function DynamicSidebar({ onClose, collapsed = false }: DynamicSidebarPro
         if (currentPortfolio) localStorage.setItem('portfolioType', currentPortfolio);
         onClose?.();
       }}
+      onMouseEnter={() => prefetchOnHover(to)}
       title={collapsed ? item.name : undefined}
       className={`
         flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} 
