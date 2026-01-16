@@ -26,3 +26,10 @@ export {
 export { useAppContext } from './useAppContext';
 export type { UseAppContextResult } from './useAppContext';
 export { usePermissions } from './usePermissions';
+
+// Institution ID Management - Garantit la disponibilité de institutionId avec retry automatique
+export { 
+  useInstitutionId, 
+  useIsInstitutionReady, 
+  useWaitForInstitutionId 
+} from './useInstitutionId';

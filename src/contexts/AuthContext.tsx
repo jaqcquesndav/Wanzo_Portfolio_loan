@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { Institution, InstitutionLite } from '../types/institution';
+import { Institution, InstitutionLite, InstitutionProfile } from '../types/institution';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { UserRole, UserType } from '../types/users';
 import { userApi } from '../services/api/shared/user.api';
@@ -39,6 +39,7 @@ export type UserContextStatus =
 interface AuthContextType {
   user: User | null;
   institution: Institution | InstitutionLite | null;
+  institutionProfile: InstitutionProfile | null;  // Profil détaillé de l'institution
   institutionId: string | null;  // ID de l'institution pour les autres endpoints
   auth0Id: string | null;        // ID Auth0 pour référence
   permissions: string[];          // Permissions de l'utilisateur
@@ -58,6 +59,7 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   institution: null,
+  institutionProfile: null,
   institutionId: null,
   auth0Id: null,
   permissions: [],
@@ -82,6 +84,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [institution, setInstitution] = useState<Institution | InstitutionLite | null>(null);
+  const [institutionProfile, setInstitutionProfile] = useState<InstitutionProfile | null>(null);
   const [institutionId, setInstitutionId] = useState<string | null>(null);
   const [auth0Id, setAuth0Id] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -109,20 +112,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('📦 Réponse brute /users/me:', response);
       
       // Gérer les deux formats possibles de réponse :
-      // Format 1: { user, institution, auth0Id, role, permissions } (déjà extrait par base.api.ts)
-      // Format 2: { data: { user, institution, auth0Id, role, permissions } } (non extrait)
+      // Format 1: { user, institution, institutionProfile, auth0Id, role, permissions } (déjà extrait par base.api.ts)
+      // Format 2: { data: { user, institution, institutionProfile, auth0Id, role, permissions } } (non extrait)
       const responseData = (response as { data?: unknown }).data || response;
       
       // Extraire les données de la réponse
       const { 
         user: userData, 
-        institution: institutionData, 
+        institution: institutionData,
+        institutionProfile: profileData,
         auth0Id: authId, 
         role, 
         permissions: userPermissions 
       } = responseData as {
         user: User & { institutionId?: string; firstName?: string; lastName?: string; givenName?: string; familyName?: string };
         institution: InstitutionLite | null;
+        institutionProfile?: InstitutionProfile | null;
         auth0Id: string;
         role: string;
         permissions: string[];
@@ -141,6 +146,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         lastName: userData?.lastName,
         email: userData?.email,
         institutionId: userData?.institutionId
+      });
+      
+      console.log('🏢 Profil institution extrait:', {
+        denominationSociale: profileData?.denominationSociale,
+        typeInstitution: profileData?.typeInstitution,
+        servicesCount: profileData?.servicesCredit?.length || 0
       });
       
       // Construire l'objet utilisateur complet
@@ -163,6 +174,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(fullUser);
       setAuth0Id(authId || '');
       setPermissions(userPermissions || []);
+      
+      // Stocker le profil de l'institution s'il existe
+      if (profileData) {
+        setInstitutionProfile(profileData);
+      }
       
       // Vérifier si l'utilisateur a une institution associée
       // L'institution peut être fournie directement OU via userData.institutionId
@@ -200,6 +216,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       useAppContextStore.getState().setContext({
         user: fullUser,
         institution: fullInstitution,
+        institutionProfile: profileData || null,
         institutionId: effectiveInstitutionId,  // EXPLICITE: pour que le store ait l'ID même si institution est null
         auth0Id: authId,
         permissions: userPermissions || []
@@ -210,6 +227,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         userName: fullName,
         institutionId: effectiveInstitutionId,
         institutionName: fullInstitution?.name || 'N/A',
+        hasProfile: !!profileData,
         role,
         permissionsCount: userPermissions?.length || 0
       });
@@ -495,6 +513,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     user,
     institution,
+    institutionProfile,
     institutionId,
     auth0Id,
     permissions,

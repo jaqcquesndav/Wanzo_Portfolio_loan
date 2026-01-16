@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Bot, Copy, ThumbsUp, ThumbsDown, Check, Pencil, FileText, Image, Download } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { User, Bot, Copy, ThumbsUp, ThumbsDown, Check, Pencil, FileText, Image, Download, Sparkles } from 'lucide-react';
 import { MessageContent } from './MessageContent';
 import type { Message, Contact } from '../../types/chat';
 
@@ -10,6 +10,20 @@ interface ChatMessageProps {
   onEdit?: (messageId: string, content: string) => void;
   onLike?: (messageId: string) => void;
   onDislike?: (messageId: string) => void;
+  onCopy?: (content: string) => void;
+}
+
+/**
+ * Utilitaire pour s'assurer que le contenu est une chaîne valide
+ * Gère les cas de données corrompues (arrays dans localStorage, null, etc.)
+ */
+function getSafeContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content.filter((item): item is string => typeof item === 'string').join('');
+  }
+  if (content === null || content === undefined) return '';
+  return String(content);
 }
 
 export function ChatMessage({ 
@@ -18,7 +32,8 @@ export function ChatMessage({
   isStreaming = false,
   onEdit,
   onLike,
-  onDislike 
+  onDislike,
+  onCopy
 }: ChatMessageProps) {
   const contact = contacts.find(c => c.id === message.sender);
   const isUser = message.sender === 'user';
@@ -27,12 +42,27 @@ export function ChatMessage({
   const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(message.content);
+  
+  // ✅ Utiliser safeContent pour gérer les contenus corrompus
+  const safeContent = useMemo(() => getSafeContent(message.content), [message.content]);
+  const [editContent, setEditContent] = useState(safeContent);
+  
+  // ✅ Synchroniser editContent quand le contenu change (important pour le streaming)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditContent(safeContent);
+    }
+  }, [safeContent, isEditing]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(message.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(safeContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      onCopy?.(safeContent);
+    } catch (error) {
+      console.error('Échec de la copie:', error);
+    }
   };
 
   const handleSaveEdit = () => {
@@ -43,20 +73,23 @@ export function ChatMessage({
   };
 
   const handleCancelEdit = () => {
-    setEditContent(message.content);
+    setEditContent(safeContent);
     setIsEditing(false);
   };
 
   return (
     <div 
-      className="group relative w-full"
+      className={`group relative w-full ${isStreaming ? 'animate-fade-in' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => !isEditing && setShowActions(false)}
     >
-      <div className="flex items-start space-x-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-        {/* Avatar toujours à gauche - Style Notion */}
+      <div className={`
+        flex items-start space-x-3 py-2.5 px-3 -mx-3 rounded-xl transition-colors
+        ${isStreaming ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}
+      `}>
+        {/* Avatar avec indicateur de streaming - Style Notion/Gemini */}
         <div className={`
-          w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5
+          w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 relative
           ${isUser 
             ? 'bg-primary/10' 
             : 'bg-gradient-to-br from-primary/20 to-primary/10'
@@ -66,6 +99,13 @@ export function ChatMessage({
             <User className="h-4 w-4 text-primary" />
           ) : (
             <Bot className="h-4 w-4 text-primary" />
+          )}
+          {/* Indicateur de streaming actif sur l'avatar */}
+          {isStreaming && isBot && (
+            <>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-ping-slow" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full" />
+            </>
           )}
         </div>
 
@@ -82,10 +122,11 @@ export function ChatMessage({
                 minute: '2-digit'
               })}
             </span>
+            {/* Indicateur de streaming amélioré */}
             {isStreaming && (
-              <span className="text-xs text-primary animate-pulse flex items-center">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full mr-1 animate-pulse" />
-                En cours...
+              <span className="inline-flex items-center space-x-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                <Sparkles className="h-3 w-3 animate-sparkle" />
+                <span className="animate-pulse-subtle">En cours...</span>
               </span>
             )}
           </div>
@@ -139,7 +180,7 @@ export function ChatMessage({
           ) : (
             <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
               <MessageContent 
-                content={message.content}
+                content={safeContent}
                 isStreaming={isStreaming && isBot}
                 onEdit={isBot && onEdit ? (newContent) => onEdit(message.id, newContent) : undefined}
               />
@@ -182,7 +223,7 @@ export function ChatMessage({
           )}
         </div>
 
-        {/* Actions au hover */}
+        {/* Actions au hover - style Notion flottant */}
         <div className={`
           flex items-center space-x-0.5 transition-opacity duration-150
           ${showActions && !isStreaming && !isEditing ? 'opacity-100' : 'opacity-0'}

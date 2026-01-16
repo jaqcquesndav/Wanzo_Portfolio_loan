@@ -15,7 +15,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { InstitutionLite } from '../types/institution';
+import { InstitutionLite, InstitutionProfile } from '../types/institution';
 import { User } from '../types/user';
 
 // Interface du contexte global de l'application
@@ -25,6 +25,9 @@ export interface AppContextState {
   
   // Données de l'institution (version lite pour optimisation)
   institution: InstitutionLite | null;
+  
+  // Profil détaillé de l'institution (services, segments cibles, etc.)
+  institutionProfile: InstitutionProfile | null;
   
   // ID de l'institution - CRITIQUE pour tous les appels API
   institutionId: string | null;
@@ -51,6 +54,7 @@ export interface AppContextActions {
   setContext: (context: {
     user: User;
     institution: InstitutionLite | null;  // Peut être null pour les nouveaux utilisateurs
+    institutionProfile?: InstitutionProfile | null;  // Profil détaillé optionnel
     institutionId?: string | null;  // EXPLICITE: peut venir de user.institutionId même si institution est null
     auth0Id: string;
     permissions: string[];
@@ -62,6 +66,9 @@ export interface AppContextActions {
   
   // Mettre à jour uniquement l'institution
   setInstitution: (institution: InstitutionLite | null) => void;
+  
+  // Mettre à jour le profil de l'institution
+  setInstitutionProfile: (profile: InstitutionProfile | null) => void;
   
   // Mettre à jour les permissions
   setPermissions: (permissions: string[]) => void;
@@ -80,6 +87,7 @@ export interface AppContextActions {
 const initialState: AppContextState = {
   user: null,
   institution: null,
+  institutionProfile: null,
   institutionId: null,
   auth0Id: null,
   permissions: [],
@@ -100,7 +108,7 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
     (set, get) => ({
       ...initialState,
       
-      setContext: ({ user, institution, institutionId: explicitInstitutionId, auth0Id, permissions, isDemoMode = false }) => {
+      setContext: ({ user, institution, institutionProfile, institutionId: explicitInstitutionId, auth0Id, permissions, isDemoMode = false }) => {
         // L'institutionId peut venir de:
         // 1. Paramètre explicite (prioritaire) - utilisé quand institution est null mais user.institutionId existe
         // 2. institution.id si institution est présente
@@ -111,6 +119,7 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
           userId: user?.id,
           institutionName: institution?.name,
           institutionId: effectiveInstitutionId,
+          hasProfile: !!institutionProfile,
           explicitInstitutionId,
           'institution?.id': institution?.id,
           isDemoMode
@@ -119,6 +128,7 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
         set({
           user,
           institution: institution || null,
+          institutionProfile: institutionProfile || null,
           institutionId: effectiveInstitutionId,
           auth0Id,
           permissions,
@@ -132,7 +142,8 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
         console.log('📦 [AppContext] État après setContext:', {
           isContextLoaded: newState.isContextLoaded,
           institutionId: newState.institutionId,
-          hasUser: !!newState.user
+          hasUser: !!newState.user,
+          hasProfile: !!newState.institutionProfile
         });
       },
       
@@ -145,6 +156,10 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
           institution,
           institutionId: institution?.id || null,
         });
+      },
+      
+      setInstitutionProfile: (institutionProfile) => {
+        set({ institutionProfile });
       },
       
       setPermissions: (permissions) => {

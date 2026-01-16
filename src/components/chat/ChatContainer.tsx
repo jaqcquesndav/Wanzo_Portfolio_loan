@@ -4,7 +4,7 @@ import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
 import { useAudioChat } from '../../hooks/useAudioChat';
 import { useAuth } from '../../contexts/useAuth';
-import { useAppContextStore } from '../../stores/appContextStore';
+import { useInstitutionId } from '../../hooks/useInstitutionId';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageContent } from './MessageContent';
 import { SourceSelector } from './SourceSelector';
@@ -18,9 +18,16 @@ interface ChatContainerProps {
 }
 
 export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProps) {
-  // Récupérer l'institutionId ET isContextLoaded depuis le store global (mis à jour après /me)
-  const globalInstitutionId = useAppContextStore(state => state.institutionId);
-  const isContextLoaded = useAppContextStore(state => state.isContextLoaded);
+  // ✅ NOUVEAU: Utiliser le hook robuste pour l'institutionId avec refresh automatique
+  const { 
+    institutionId: globalInstitutionId, 
+    isContextLoaded, 
+    isReady: isInstitutionReady,
+    isRefreshing: isRefreshingContext,
+    retryCount
+  } = useInstitutionId({
+    autoRefresh: true
+  });
   
   const {
     conversations,
@@ -121,40 +128,35 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     }
   }, [isInitialized, fetchConversations]);
 
-  // Connexion WebSocket pour le streaming quand l'institution est connue
+  // Connexion WebSocket pour le streaming quand l'institution est prête
+  // ✅ AMÉLIORÉ: Utilise isInstitutionReady qui gère automatiquement les retries
   useEffect(() => {
     // Ne rien faire si le composant est démonté
     if (!isMountedRef.current) return;
     
-    // Log de l'état actuel pour le diagnostic
-    console.log('[ChatContainer] 🔄 useEffect WebSocket - État actuel:', {
-      isContextLoaded,
-      globalInstitutionId,
-      isApiMode,
-      isStreamingEnabled,
-      isWebSocketConnected
-    });
-    
-    // CRITIQUE: Attendre que le contexte soit chargé depuis /users/me
-    if (!isContextLoaded) {
-      console.log('[ChatContainer] ⏳ Contexte non chargé, en attente de /users/me...');
+    // ✅ Attendre que l'institution soit complètement prête (inclut les retries)
+    if (!isInstitutionReady) {
+      if (isRefreshingContext) {
+        console.log(`[ChatContainer] 🔄 Refresh du contexte (tentative ${retryCount})...`);
+      } else if (!isContextLoaded) {
+        console.log('[ChatContainer] ⏳ Attente du contexte initial (/users/me)...');
+      }
       return;
     }
     
-    // CRITIQUE: institutionId DOIT être disponible pour la connexion WebSocket
+    // CRITIQUE: Double vérification - institutionId DOIT être présent
     if (!globalInstitutionId) {
-      console.warn('[ChatContainer] ⚠️ Contexte chargé mais institutionId non disponible!');
-      console.warn('[ChatContainer] 💡 L\'utilisateur doit avoir une institution associée');
+      console.error('[ChatContainer] ❌ isInstitutionReady=true mais institutionId null!');
       return;
     }
     
     if (isApiMode && isStreamingEnabled && !isWebSocketConnected) {
-      console.log('[ChatContainer] 🔌 Tentative de connexion WebSocket avec institutionId:', globalInstitutionId);
+      console.log('[ChatContainer] 🔌 Connexion WebSocket avec institutionId:', globalInstitutionId);
       connectWebSocket(globalInstitutionId);
     }
     
     // Note: pas de cleanup de déconnexion car le WebSocket est un singleton partagé
-  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket, isContextLoaded]);
+  }, [isInstitutionReady, isContextLoaded, isRefreshingContext, retryCount, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
@@ -312,8 +314,8 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
         
         {/* Contenu principal */}
         <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-white dark:bg-gray-800">
-          {/* Zone des messages - scrollable */}
-          <div className={`flex-1 overflow-y-auto ${mode === 'fullscreen' ? 'px-0' : ''}`}>
+          {/* Zone des messages - scrollable avec scrollbar personnalisée */}
+          <div className={`flex-1 overflow-y-auto chat-scrollbar ${mode === 'fullscreen' ? 'px-0' : ''}`}>
             <div className={`${mode === 'fullscreen' ? 'max-w-3xl mx-auto w-full' : ''} px-4 py-6 space-y-1`}>
               {messages.length === 0 ? (
                 /* Écran d'accueil style ChatGPT/Claude/Gemini */
@@ -443,12 +445,9 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                             })}
                           </span>
                           {message.isStreaming && (
-                            <span className="text-xs text-primary flex items-center bg-primary/10 px-2 py-0.5 rounded-full">
-                              <span className="relative flex h-2 w-2 mr-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                              </span>
-                              Génération...
+                            <span className="inline-flex items-center space-x-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                              <Sparkles className="h-3 w-3 animate-sparkle" />
+                              <span className="animate-pulse-subtle">Génération...</span>
                             </span>
                           )}
                         </div>
@@ -473,23 +472,26 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                           <div className="flex items-center space-x-3 text-gray-500 dark:text-gray-400 py-3">
                             {/* Animation wave style Gemini */}
                             <div className="flex items-center space-x-1">
-                              <div className="w-1 h-3 bg-gradient-to-t from-primary/30 to-primary rounded-full animate-pulse" style={{ animationDelay: '0ms', animationDuration: '1s' }} />
-                              <div className="w-1 h-5 bg-gradient-to-t from-primary/40 to-primary rounded-full animate-pulse" style={{ animationDelay: '150ms', animationDuration: '1s' }} />
-                              <div className="w-1 h-4 bg-gradient-to-t from-primary/50 to-primary rounded-full animate-pulse" style={{ animationDelay: '300ms', animationDuration: '1s' }} />
-                              <div className="w-1 h-6 bg-gradient-to-t from-primary/40 to-primary rounded-full animate-pulse" style={{ animationDelay: '450ms', animationDuration: '1s' }} />
-                              <div className="w-1 h-3 bg-gradient-to-t from-primary/30 to-primary rounded-full animate-pulse" style={{ animationDelay: '600ms', animationDuration: '1s' }} />
+                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '0ms' }} />
+                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '300ms' }} />
                             </div>
-                            <span className="text-sm font-medium bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                            {/* Barre de progression subtile */}
+                            <div className="flex-1 max-w-[80px] h-0.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                              <div className="h-full w-1/3 bg-primary/40 rounded-full animate-progress-indeterminate" />
+                            </div>
+                            <span className="text-sm font-medium text-primary animate-pulse-subtle">
                               ADHA réfléchit...
                             </span>
                           </div>
                         )}
 
-                        {/* Contenu du message */}
+                        {/* Contenu du message - ✅ CORRIGÉ: passer isStreaming pour le curseur */}
                         {message.content && (
                           <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
                             <MessageContent 
                               content={message.content}
+                              isStreaming={message.isStreaming}
                               onEdit={message.sender === 'bot' && !message.isStreaming ? (newContent) => 
                                 updateMessage(message.id, { content: newContent })
                               : undefined}

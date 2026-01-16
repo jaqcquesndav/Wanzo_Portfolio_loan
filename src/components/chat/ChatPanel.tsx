@@ -22,7 +22,6 @@ import {
   BarChart3,
   PanelRightClose,
   PanelRight,
-  Columns,
   TrendingUp,
   FileText,
   HelpCircle,
@@ -33,7 +32,7 @@ import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
 import { useAudioChat } from '../../hooks/useAudioChat';
 import { useAuth } from '../../contexts/useAuth';
-import { useAppContextStore } from '../../stores/appContextStore';
+import { useInstitutionId } from '../../hooks/useInstitutionId';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageContent } from './MessageContent';
 import { SourceSelector } from './SourceSelector';
@@ -46,11 +45,24 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ onClose }: ChatPanelProps) {
-  // Récupérer l'institutionId ET le flag isContextLoaded depuis le store global
-  // CRITIQUE: On attend que /users/me soit terminé avant toute connexion
-  // Note: Sélectionner les valeurs séparément pour éviter les re-renders infinis
-  const globalInstitutionId = useAppContextStore(state => state.institutionId);
-  const isContextLoaded = useAppContextStore(state => state.isContextLoaded);
+  // ✅ NOUVEAU: Utiliser le hook robuste pour l'institutionId avec refresh automatique
+  // Ce hook gère automatiquement les retries si institutionId n'est pas disponible
+  const { 
+    institutionId: globalInstitutionId, 
+    isContextLoaded, 
+    isReady: isInstitutionReady,
+    isRefreshing: isRefreshingContext,
+    retryCount,
+    error: contextError
+  } = useInstitutionId({
+    autoRefresh: true, // Refresh automatique si institutionId manquant
+    onAvailable: (id) => {
+      console.log('[ChatPanel] ✅ institutionId disponible via hook:', id);
+    },
+    onUnavailable: () => {
+      console.warn('[ChatPanel] ⚠️ institutionId indisponible après toutes les tentatives');
+    }
+  });
   
   const {
     conversations,
@@ -81,7 +93,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     cancelCurrentStream // ✅ NOUVEAU: Pour annuler le streaming
   } = useChatStore();
 
-  const { secondaryPanel, toggleFullscreen, panelPosition, setPanelPosition } = usePanelContext();
+  const { secondaryPanel, toggleFullscreen } = usePanelContext();
   const isFullscreen = secondaryPanel.isFullscreen;
   
   const adhaWriteMode = useAdhaWriteMode();
@@ -146,14 +158,20 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     };
   }, []);
 
-  // Log unique quand le contexte est prêt
+  // Log quand l'état du contexte change (avec info sur les retries)
   useEffect(() => {
-    if (isContextLoaded && globalInstitutionId) {
-      console.log('[ChatPanel] ✅ Contexte prêt - institutionId:', globalInstitutionId);
+    if (isInstitutionReady) {
+      console.log('[ChatPanel] ✅ Institution prête - institutionId:', globalInstitutionId);
     } else if (isContextLoaded && !globalInstitutionId) {
-      console.warn('[ChatPanel] ⚠️ Contexte chargé mais institutionId manquant!');
+      if (isRefreshingContext) {
+        console.log(`[ChatPanel] 🔄 Refresh en cours (tentative ${retryCount})...`);
+      } else if (contextError) {
+        console.error('[ChatPanel] ❌ Erreur contexte:', contextError);
+      } else {
+        console.warn('[ChatPanel] ⚠️ Contexte chargé mais institutionId manquant, retry automatique...');
+      }
     }
-  }, [isContextLoaded, globalInstitutionId]);
+  }, [isInstitutionReady, isContextLoaded, globalInstitutionId, isRefreshingContext, retryCount, contextError]);
 
   // Charger les conversations au démarrage
   useEffect(() => {
@@ -167,20 +185,24 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   }, [isInitialized, fetchConversations]);
 
   // Connexion WebSocket pour le streaming
-  // CRITIQUE: Attendre que isContextLoaded soit true ET que institutionId soit disponible
+  // ✅ AMÉLIORÉ: Utilise isInstitutionReady qui gère automatiquement les retries
   useEffect(() => {
     // Ne rien faire si le composant est démonté
     if (!isMountedRef.current) return;
     
-    // Ne rien faire tant que le contexte n'est pas chargé
-    if (!isContextLoaded) {
-      console.log('[ChatPanel] ⏳ Attente du contexte (/users/me)...');
+    // ✅ Attendre que l'institution soit complètement prête (inclut les retries)
+    if (!isInstitutionReady) {
+      if (isRefreshingContext) {
+        console.log('[ChatPanel] ⏳ Refresh du contexte en cours...');
+      } else if (!isContextLoaded) {
+        console.log('[ChatPanel] ⏳ Attente du contexte initial (/users/me)...');
+      }
       return;
     }
     
-    // CRITIQUE: institutionId DOIT être disponible pour la connexion WebSocket
+    // CRITIQUE: Double vérification - institutionId DOIT être présent
     if (!globalInstitutionId) {
-      console.warn('[ChatPanel] ⚠️ institutionId non disponible! La connexion WebSocket ne peut pas être établie.');
+      console.error('[ChatPanel] ❌ isInstitutionReady=true mais institutionId null! État incohérent.');
       return;
     }
     
@@ -193,7 +215,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     }
     
     // Note: pas de cleanup de déconnexion ici car le WebSocket est un singleton partagé
-  }, [isContextLoaded, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
+  }, [isInstitutionReady, isContextLoaded, isRefreshingContext, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {
@@ -306,15 +328,6 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
             
             {/* Actions header */}
             <div className="flex items-center space-x-0.5 flex-shrink-0">
-              {/* Position toggle */}
-              <button
-                onClick={() => setPanelPosition(panelPosition === 'right' ? 'bottom' : 'right')}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                title={panelPosition === 'right' ? 'Placer en bas' : 'Placer à droite'}
-              >
-                <Columns className="h-4 w-4" />
-              </button>
-              
               {/* Fullscreen toggle */}
               <button
                 onClick={toggleFullscreen}
@@ -500,22 +513,24 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
                           </div>
                         )}
 
-                        {/* Streaming indicator */}
+                        {/* Streaming indicator - style Gemini amélioré */}
                         {message.isStreaming && !message.content && (
-                          <div className="flex items-center space-x-1 text-gray-500 py-1">
-                            <div className="flex space-x-0.5">
-                              <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                              <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                              <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          <div className="flex items-center space-x-2 text-gray-500 py-2">
+                            <div className="flex space-x-1">
+                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '0ms' }} />
+                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '300ms' }} />
                             </div>
+                            <span className="text-xs text-primary animate-pulse-subtle">ADHA réfléchit...</span>
                           </div>
                         )}
 
-                        {/* Contenu du message */}
+                        {/* Contenu du message - ✅ CORRIGÉ: passer isStreaming */}
                         {message.content && (
                           <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
                             <MessageContent 
                               content={message.content}
+                              isStreaming={message.isStreaming}
                               onEdit={message.sender === 'bot' && !message.isStreaming ? (newContent) => 
                                 updateMessage(message.id, { content: newContent })
                               : undefined}

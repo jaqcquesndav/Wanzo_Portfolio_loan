@@ -5,6 +5,7 @@ import { AI_MODELS } from '../types/chat';
 import { chatApi } from '../services/api/chat.api';
 import { getChatStreamService, ChatStreamService } from '../services/streaming';
 import { getInstitutionId } from '../stores/appContextStore';
+import { formatMessageWithContext } from '../utils/chatContextFormatter';
 
 // Définition du type Task
 export interface Task {
@@ -643,10 +644,30 @@ export const useChatStore = create<ChatStore>()(
             await new Promise(resolve => setTimeout(resolve, 200));
             console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ✅ Délai terminé`);
 
-            // ÉTAPE 2: Envoyer le message via l'API REST /chat/stream avec l'ID BACKEND
-            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 2: POST /chat/stream avec contextId:`, backendConversationId);
+            // ÉTAPE 2: Enrichir le message avec le contexte conversationnel
+            // Récupérer les messages précédents de la conversation (exclure le message pending actuel)
+            const currentConvForContext = get().conversations.find(c => c.id === get().activeConversationId);
+            const previousMessages = currentConvForContext?.messages.filter(
+              m => m.id !== pendingMessage.id && !m.pending && !m.isStreaming && !m.error
+            ) || [];
+            
+            // Formater le message avec l'historique des échanges précédents
+            const enrichedContent = formatMessageWithContext(content, previousMessages, {
+              maxPreviousMessages: 10,
+              maxHistoryLength: 4000
+            });
+            
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] 📝 Message enrichi avec contexte:`, {
+              originalLength: content.length,
+              enrichedLength: enrichedContent.length,
+              previousMessagesCount: previousMessages.length,
+              hasContext: enrichedContent !== content
+            });
+
+            // ÉTAPE 3: Envoyer le message via l'API REST /chat/stream avec l'ID BACKEND
+            console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 3: POST /chat/stream avec contextId:`, backendConversationId);
             const streamResponse = await chatApi.sendStreamingMessage({
-              content,
+              content: enrichedContent,
               contextId: backendConversationId,
               metadata
             });
@@ -655,10 +676,10 @@ export const useChatStore = create<ChatStore>()(
             const messageId = streamResponse.data.messageId;
             const conversationId = streamResponse.data.conversationId;
             
-            // ÉTAPE 3: Si le backend retourne encore un ID différent (cas rare), s'abonner aussi
+            // ÉTAPE 4: Si le backend retourne encore un ID différent (cas rare), s'abonner aussi
             if (conversationId && conversationId !== backendConversationId) {
               console.warn(`[ChatStore] [${Date.now() - workflowStart}ms] ⚠️ Backend a retourné un ID différent! Attendu: ${backendConversationId}, Reçu: ${conversationId}`);
-              console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 3: Abonnement au nouvel ID:`, conversationId);
+              console.log(`[ChatStore] [${Date.now() - workflowStart}ms] ÉTAPE 4: Abonnement au nouvel ID:`, conversationId);
               await currentStreamService.subscribeToConversationAsync(conversationId, 2000);
               
               // Mettre à jour le store avec ce nouvel ID
@@ -909,9 +930,29 @@ export const useChatStore = create<ChatStore>()(
           }));
           
           try {
-            // Envoyer le message via l'API (sans mode - non supporté par le backend)
+            // Enrichir le message avec le contexte conversationnel
+            // Récupérer les messages précédents (exclure le message pending actuel)
+            const currentConvForContext = get().conversations.find(c => c.id === get().activeConversationId);
+            const previousMessages = currentConvForContext?.messages.filter(
+              m => m.id !== pendingMessage.id && !m.pending && !m.isStreaming && !m.error
+            ) || [];
+            
+            // Formater le message avec l'historique des échanges précédents
+            const enrichedContent = formatMessageWithContext(content, previousMessages, {
+              maxPreviousMessages: 10,
+              maxHistoryLength: 4000
+            });
+            
+            console.log('[ChatStore] 📝 Message enrichi (mode sync):', {
+              originalLength: content.length,
+              enrichedLength: enrichedContent.length,
+              previousMessagesCount: previousMessages.length,
+              hasContext: enrichedContent !== content
+            });
+            
+            // Envoyer le message via l'API avec le contexte enrichi
             const apiResponse = await chatApi.sendMessage({
-              content,
+              content: enrichedContent,
               contextId: activeConversation.id,
               attachment
             });
@@ -919,10 +960,11 @@ export const useChatStore = create<ChatStore>()(
             console.log('[ChatStore] Réponse API sendMessage:', apiResponse);
             
             // Remplacer le message en attente par le message utilisateur réel
+            // Note: On stocke le contenu ORIGINAL (sans enrichissement) pour l'affichage
             const userMessage: Message = {
               id: apiResponse.id,
               sender: 'user',
-              content: apiResponse.content,
+              content: content, // Contenu original pour l'affichage
               timestamp: apiResponse.timestamp,
               likes: 0,
               dislikes: 0,

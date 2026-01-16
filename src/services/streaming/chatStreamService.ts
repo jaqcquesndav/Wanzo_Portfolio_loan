@@ -715,33 +715,51 @@ export class ChatStreamService {
     };
 
     // Notifier le callback avec le contenu accumulé
-    // ✅ AMÉLIORÉ: Essayer plusieurs clés pour trouver le callback
+    // ✅ CORRIGÉ v2.4.1: Plus de fallback dangereux!
+    // Un callback DOIT correspondre exactement au requestMessageId ou au messageId du streamingState
     let callback = this.onChunkCallbacks.get(requestMessageId);
+    let matchedId = requestMessageId;
     
-    // Si pas trouvé par requestMessageId, essayer avec le messageId du streamingState
-    if (!callback && this.streamingState.messageId) {
+    // Si pas trouvé par requestMessageId, essayer via le mapping (si un mapping explicite existe)
+    if (!callback) {
+      const mappedId = this.messageIdMapping.get(requestMessageId);
+      if (mappedId) {
+        callback = this.onChunkCallbacks.get(mappedId);
+        if (callback) {
+          matchedId = mappedId;
+          console.log('[ChatStreamService] ✅ Callback trouvé via mapping:', mappedId);
+        }
+      }
+    }
+    
+    // Si pas trouvé et que le streamingState a un messageId actif pour CE message
+    // (vérifier que le requestMessageId correspond au messageId attendu)
+    if (!callback && this.streamingState.messageId && this.streamingState.isActive) {
+      // Créer un mapping explicite si c'est le premier chunk pour ce stream
+      if (!this.messageIdMapping.has(requestMessageId)) {
+        this.messageIdMapping.set(requestMessageId, this.streamingState.messageId);
+        console.log('[ChatStreamService] 🔗 Mapping créé:', requestMessageId, '->', this.streamingState.messageId);
+      }
       callback = this.onChunkCallbacks.get(this.streamingState.messageId);
       if (callback) {
-        console.log('[ChatStreamService] ✅ Callback trouvé via streamingState.messageId:', this.streamingState.messageId);
+        matchedId = this.streamingState.messageId;
+        console.log('[ChatStreamService] ✅ Callback trouvé via streamingState.messageId:', matchedId);
       }
     }
     
-    // Si toujours pas trouvé, chercher le premier callback disponible (fallback)
-    if (!callback && this.onChunkCallbacks.size > 0) {
-      const firstKey = Array.from(this.onChunkCallbacks.keys())[0];
-      callback = this.onChunkCallbacks.get(firstKey);
-      if (callback) {
-        console.log('[ChatStreamService] ⚠️ Callback trouvé via fallback (première clé):', firstKey);
-        // Ajouter un mapping pour les prochains chunks
-        this.messageIdMapping.set(requestMessageId, firstKey);
-      }
-    }
-    
+    // ⛔ PAS DE FALLBACK! Si pas de callback trouvé, c'est une réponse tardive pour un message
+    // qui a déjà timeout - on l'ignore pour éviter de polluer un autre message
     if (callback) {
       callback(chunkWithAccumulatedContent);
     } else {
-      console.warn('[ChatStreamService] ⚠️ Pas de callback pour requestMessageId:', requestMessageId, 
-        'Callbacks disponibles:', Array.from(this.onChunkCallbacks.keys()));
+      console.warn('[ChatStreamService] ⚠️ Chunk ignoré (réponse tardive ou message inconnu):', {
+        requestMessageId,
+        streamingMessageId: this.streamingState.messageId,
+        streamingActive: this.streamingState.isActive,
+        availableCallbacks: Array.from(this.onChunkCallbacks.keys())
+      });
+      // Nettoyer ce pending message car il ne sera jamais utilisé
+      this.pendingMessages.delete(requestMessageId);
     }
 
     // Réinitialiser le timeout
@@ -777,42 +795,30 @@ export class ChatStreamService {
     this.pendingMessages.delete(requestMessageId);
 
     // Notifier le callback de complétion
-    // ✅ AMÉLIORÉ: Essayer plusieurs clés pour trouver le callback
+    // ✅ CORRIGÉ v2.4.1: Plus de fallback dangereux!
     let callback = this.onCompleteCallbacks.get(requestMessageId);
+    let matchedId = requestMessageId;
     
-    // Essayer via le mapping si existe
+    // Essayer via le mapping si existe (mapping créé lors du premier chunk)
     if (!callback) {
       const mappedId = this.messageIdMapping.get(requestMessageId);
       if (mappedId) {
         callback = this.onCompleteCallbacks.get(mappedId);
         if (callback) {
+          matchedId = mappedId;
           console.log('[ChatStreamService] ✅ Callback onComplete trouvé via mapping:', mappedId);
         }
       }
     }
     
-    // Essayer via streamingState.messageId
-    if (!callback && this.streamingState.messageId) {
-      callback = this.onCompleteCallbacks.get(this.streamingState.messageId);
-      if (callback) {
-        console.log('[ChatStreamService] ✅ Callback onComplete trouvé via streamingState.messageId:', this.streamingState.messageId);
-      }
-    }
-    
-    // Fallback: premier callback disponible
-    if (!callback && this.onCompleteCallbacks.size > 0) {
-      const firstKey = Array.from(this.onCompleteCallbacks.keys())[0];
-      callback = this.onCompleteCallbacks.get(firstKey);
-      if (callback) {
-        console.log('[ChatStreamService] ⚠️ Callback onComplete trouvé via fallback:', firstKey);
-      }
-    }
-    
+    // ⛔ PAS DE FALLBACK! Si pas de callback, c'est une complétion tardive - on l'ignore
     if (callback) {
       callback(finalContent, chunk.suggestedActions);
     } else {
-      console.warn('[ChatStreamService] ⚠️ Pas de callback onComplete pour requestMessageId:', requestMessageId,
-        'Callbacks disponibles:', Array.from(this.onCompleteCallbacks.keys()));
+      console.warn('[ChatStreamService] ⚠️ Stream end ignoré (réponse tardive ou message inconnu):', {
+        requestMessageId,
+        availableCallbacks: Array.from(this.onCompleteCallbacks.keys())
+      });
     }
 
     // Nettoyer les callbacks pour ce message (utiliser le mapping si nécessaire)
@@ -847,30 +853,26 @@ export class ChatStreamService {
     const error = new Error(chunk.content || 'Erreur de streaming');
     
     // Notifier le callback d'erreur
-    // ✅ AMÉLIORÉ: Essayer plusieurs clés pour trouver le callback
+    // ✅ CORRIGÉ v2.4.1: Plus de fallback dangereux!
     let callback = this.onErrorCallbacks.get(requestMessageId);
     
-    // Essayer via le mapping si existe
+    // Essayer via le mapping si existe (mapping créé lors du premier chunk)
     if (!callback) {
       const mappedId = this.messageIdMapping.get(requestMessageId);
       if (mappedId) {
         callback = this.onErrorCallbacks.get(mappedId);
+        console.log('[ChatStreamService] ✅ Callback onError trouvé via mapping:', mappedId);
       }
     }
     
-    // Essayer via streamingState.messageId
-    if (!callback && this.streamingState.messageId) {
-      callback = this.onErrorCallbacks.get(this.streamingState.messageId);
-    }
-    
-    // Fallback: premier callback disponible
-    if (!callback && this.onErrorCallbacks.size > 0) {
-      const firstKey = Array.from(this.onErrorCallbacks.keys())[0];
-      callback = this.onErrorCallbacks.get(firstKey);
-    }
-    
+    // ⛔ PAS DE FALLBACK! Si pas de callback, c'est une erreur tardive - on l'ignore
     if (callback) {
       callback(error);
+    } else {
+      console.warn('[ChatStreamService] ⚠️ Erreur ignorée (réponse tardive ou message inconnu):', {
+        requestMessageId,
+        errorContent: chunk.content
+      });
     }
 
     // Nettoyer les callbacks pour ce message
@@ -943,6 +945,7 @@ export class ChatStreamService {
 
   /**
    * Configure le timeout pour un message
+   * ✅ v2.4.1: Amélioration pour éviter les confusions entre messages
    */
   private setupMessageTimeout(messageId: string): void {
     this.clearMessageTimeout(messageId);
@@ -956,9 +959,22 @@ export class ChatStreamService {
         callback(error);
       }
 
+      // ✅ Marquer le streaming comme inactif pour CE message spécifiquement
       if (this.streamingState.messageId === messageId) {
         this.streamingState.isActive = false;
+        // ✅ Nettoyer aussi le messageId pour éviter que les réponses tardives
+        // soient associées via streamingState
+        this.streamingState.messageId = null;
       }
+      
+      // ✅ Nettoyer les mappings qui pointent vers ce messageId
+      // pour éviter que les réponses tardives utilisent un ancien mapping
+      this.messageIdMapping.forEach((value, key) => {
+        if (value === messageId) {
+          console.log('[ChatStreamService] 🗑️ Nettoyage mapping timeout:', key, '->', messageId);
+          this.messageIdMapping.delete(key);
+        }
+      });
       
       this.cleanupMessageCallbacks(messageId);
 

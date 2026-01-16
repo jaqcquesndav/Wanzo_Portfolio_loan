@@ -15,6 +15,7 @@ import {
 function loadPanelState(): Partial<PanelState> {
   try {
     const saved = localStorage.getItem(PANEL_STATE_KEY);
+    
     if (saved) {
       const parsed = JSON.parse(saved);
       const constraints = getPanelConstraints();
@@ -24,7 +25,8 @@ function loadPanelState(): Partial<PanelState> {
       const height = Math.min(Math.max(parsed.panelHeight || defaultPanelConfig.height, constraints.minHeight), constraints.maxHeight);
       
       return {
-        panelPosition: parsed.panelPosition || 'right',
+        // IMPORTANT: Toujours forcer 'right' - ne jamais restaurer 'bottom' depuis localStorage
+        panelPosition: 'right',
         isSidebarCollapsed: parsed.isSidebarCollapsed || false,
         secondaryPanel: {
           ...defaultPanelConfig,
@@ -58,13 +60,17 @@ export function PanelProvider({ children }: { children: React.ReactNode }) {
   // Charger l'état initial depuis localStorage avec contraintes dynamiques
   const initialState = useMemo(() => {
     const constraints = getPanelConstraints();
+    const loadedState = loadPanelState();
+    
     return {
       ...defaultPanelState,
       secondaryPanel: {
         ...defaultPanelState.secondaryPanel,
         ...constraints,
       },
-      ...loadPanelState(),
+      ...loadedState,
+      // IMPORTANT: Toujours forcer 'right' au démarrage
+      panelPosition: 'right' as const,
     };
   }, []);
 

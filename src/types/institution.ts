@@ -50,6 +50,7 @@ export interface Institution {
   phone?: string;
   email?: string;
   website?: string | null;
+  fax?: string | null;
   legal_representative?: string | null;
   tax_id?: string | null;
   regulatory_status?: string;
@@ -91,11 +92,24 @@ export interface InstitutionLite {
   phone?: string;
   email?: string;
   website?: string | null;
+  fax?: string | null;
   logo?: string;
   active?: boolean;
   documents?: InstitutionDocument[];
   settings?: InstitutionSettings;
   metadata?: InstitutionMetadata;
+  // Regulatory fields
+  license_number?: string | null;
+  license_type?: string | null;
+  tax_id?: string | null;
+  legal_representative?: string | null;
+  regulatory_status?: string;
+  // Subscription/tokens fields from API
+  subscriptionPlan?: string | null;
+  subscriptionStatus?: string | null;
+  subscriptionEndDate?: string | null;
+  tokenBalance?: number;
+  tokensUsed?: number;
   // Support both camelCase and snake_case from API
   createdAt?: string;
   updatedAt?: string;
@@ -110,4 +124,30 @@ export interface InstitutionManager {
   user_id: string;
   role: 'admin' | 'manager';
   created_at: string;
+}
+
+/**
+ * Profil de l'institution retourné par /users/me
+ * Contient les informations détaillées de l'institution financière
+ */
+export interface InstitutionProfile {
+  denominationSociale?: string;
+  typeInstitution?: InstitutionType;
+  numeroAgrement?: string | null;
+  numeroNIF?: string | null;
+  telephonePrincipal?: string | null;
+  emailPrincipal?: string | null;
+  siteWeb?: string | null;
+  siegeSocial?: string | null;
+  // Services offerts par l'institution
+  servicesCredit?: string[];
+  servicesInvestissement?: string[];
+  servicesGarantie?: string[];
+  servicesTransactionnels?: string[];
+  servicesConseil?: string[];
+  servicesPrioritaires?: string[];
+  // Ciblage métier
+  segmentsClienteleCibles?: string[];
+  secteursActivitePrivilegies?: string[];
+  zonesGeographiquesPrioritaires?: string[];
 }

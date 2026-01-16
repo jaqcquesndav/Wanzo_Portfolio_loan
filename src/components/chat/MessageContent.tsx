@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useRef, useCallback, useEffect } from 'react';
+import { useState, lazy, Suspense, useRef, useCallback, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -14,7 +14,7 @@ import { Button } from '../ui/Button';
 const Plot = lazy(() => import('react-plotly.js'));
 
 interface MessageContentProps {
-  content: string;
+  content: string | string[] | null | undefined;
   onEdit?: (content: string) => void;
   isStreaming?: boolean;
 }
@@ -24,9 +24,42 @@ interface ChartData {
   data: Record<string, unknown>;
 }
 
+/**
+ * Composant de curseur de streaming clignotant
+ */
+function StreamingCursor() {
+  return (
+    <span className="inline-block w-2 h-4 bg-primary ml-0.5 align-middle animate-blink-cursor" />
+  );
+}
+
+/**
+ * Utilitaire pour s'assurer que le contenu est une chaîne valide
+ * Gère les cas de données corrompues (arrays dans localStorage, null, etc.)
+ */
+function getSafeContent(content: string | string[] | null | undefined): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content.filter((item): item is string => typeof item === 'string').join('');
+  }
+  if (content === null || content === undefined) return '';
+  return String(content);
+}
+
 export function MessageContent({ content, onEdit, isStreaming = false }: MessageContentProps) {
+  // ✅ Utiliser safeContent pour gérer tous les cas de contenu
+  const safeContent = useMemo(() => getSafeContent(content), [content]);
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(content);
+  const [editedContent, setEditedContent] = useState(safeContent);
+  
+  // ✅ Mettre à jour editedContent quand le contenu change (streaming)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedContent(safeContent);
+    }
+  }, [safeContent, isEditing]);
+  
   const [selectedChartType, setSelectedChartType] = useState<'bar' | 'line' | 'pie'>('bar');
   const [isZoomed, setIsZoomed] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -368,18 +401,23 @@ export function MessageContent({ content, onEdit, isStreaming = false }: Message
             em: ({ children }) => <em className="italic">{children}</em>
           }}
         >
-          {content}
+          {safeContent}
         </ReactMarkdown>
         
-        {/* Indicateur de streaming */}
-        {isStreaming && content && (
-          <div className="flex items-center space-x-2 mt-2 pt-2">
+        {/* ✅ Curseur de streaming clignotant - style terminal/IDE */}
+        {isStreaming && safeContent && (
+          <StreamingCursor />
+        )}
+        
+        {/* Indicateur visuel que le streaming est en cours (sans contenu encore) */}
+        {isStreaming && !safeContent && (
+          <div className="flex items-center space-x-2 py-2">
             <div className="flex space-x-1">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '300ms' }} />
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Génération en cours...</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 animate-pulse-subtle">Génération en cours...</span>
           </div>
         )}
       </div>
