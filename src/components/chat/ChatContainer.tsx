@@ -18,8 +18,9 @@ interface ChatContainerProps {
 }
 
 export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProps) {
-  // Récupérer l'institutionId depuis le store global (mis à jour après /me)
+  // Récupérer l'institutionId ET isContextLoaded depuis le store global (mis à jour après /me)
   const globalInstitutionId = useAppContextStore(state => state.institutionId);
+  const isContextLoaded = useAppContextStore(state => state.isContextLoaded);
   
   const {
     conversations,
@@ -125,9 +126,25 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     // Ne rien faire si le composant est démonté
     if (!isMountedRef.current) return;
     
+    // Log de l'état actuel pour le diagnostic
+    console.log('[ChatContainer] 🔄 useEffect WebSocket - État actuel:', {
+      isContextLoaded,
+      globalInstitutionId,
+      isApiMode,
+      isStreamingEnabled,
+      isWebSocketConnected
+    });
+    
+    // CRITIQUE: Attendre que le contexte soit chargé depuis /users/me
+    if (!isContextLoaded) {
+      console.log('[ChatContainer] ⏳ Contexte non chargé, en attente de /users/me...');
+      return;
+    }
+    
     // CRITIQUE: institutionId DOIT être disponible pour la connexion WebSocket
     if (!globalInstitutionId) {
-      console.warn('[ChatContainer] ⚠️ institutionId non disponible! Connexion WebSocket impossible.');
+      console.warn('[ChatContainer] ⚠️ Contexte chargé mais institutionId non disponible!');
+      console.warn('[ChatContainer] 💡 L\'utilisateur doit avoir une institution associée');
       return;
     }
     
@@ -137,7 +154,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     }
     
     // Note: pas de cleanup de déconnexion car le WebSocket est un singleton partagé
-  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
+  }, [isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket, isContextLoaded]);
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {

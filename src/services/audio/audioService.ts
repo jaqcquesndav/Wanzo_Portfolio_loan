@@ -3,15 +3,21 @@
  * 
  * Gère la transcription vocale et la synthèse audio selon la documentation v2.4.0
  * 
- * Endpoints API:
- * - POST /adha-ai/audio/transcribe/ → Speech-to-Text
+ * Endpoints API (via API Gateway vers ADHA AI Service):
+ * - POST /adha-ai/audio/transcribe/ → Speech-to-Text (Whisper)
  * - POST /adha-ai/audio/synthesize/ → Text-to-Speech
  * - WS /adha-ai/audio/duplex/ → Mode bidirectionnel temps réel
+ * 
+ * @see API DOCUMENTATION/chat/README.md - Section "Mode Audio Duplex (v2.4.0)"
+ * 
+ * Architecture:
+ * Frontend → API Gateway (/adha-ai/...) → ADHA AI Service (AudioService)
  * 
  * @version 2.4.0
  */
 
 import { API_CONFIG } from '../../config/api';
+import { getAccessToken } from '../api/authHeaders';
 
 // ============================================================================
 // TYPES
@@ -111,12 +117,13 @@ class AudioService {
     }
 
     try {
+      const token = await this.getAuthToken();
       const response = await fetch(
-        `${API_CONFIG.baseUrl}${AUDIO_ENDPOINTS.TRANSCRIBE}`,
+        `${API_CONFIG.gatewayUrl}${AUDIO_ENDPOINTS.TRANSCRIBE}`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
+            'Authorization': `Bearer ${token}`
           },
           body: formData
         }
@@ -154,12 +161,13 @@ class AudioService {
     } = options;
 
     try {
+      const token = await this.getAuthToken();
       const response = await fetch(
-        `${API_CONFIG.baseUrl}${AUDIO_ENDPOINTS.SYNTHESIZE}`,
+        `${API_CONFIG.gatewayUrl}${AUDIO_ENDPOINTS.SYNTHESIZE}`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -298,16 +306,17 @@ class AudioService {
   ): Promise<void> {
     const { institutionId, conversationId, voice = DEFAULT_VOICE, language = 'fr' } = config;
 
-    // Construire l'URL WebSocket
+    // Construire l'URL WebSocket (via API Gateway vers ADHA AI Service)
+    const token = await this.getAuthToken();
     const wsUrl = new URL(
       AUDIO_ENDPOINTS.DUPLEX,
-      API_CONFIG.baseUrl.replace('http', 'ws')
+      API_CONFIG.gatewayUrl.replace('http', 'ws')
     );
     wsUrl.searchParams.set('institution_id', institutionId);
     if (conversationId) wsUrl.searchParams.set('conversation_id', conversationId);
     wsUrl.searchParams.set('voice', voice);
     wsUrl.searchParams.set('language', language);
-    wsUrl.searchParams.set('token', this.getAuthToken());
+    wsUrl.searchParams.set('token', token);
 
     try {
       this.duplexSocket = new WebSocket(wsUrl.toString());
@@ -439,11 +448,18 @@ class AudioService {
 
   /**
    * Récupère le token d'authentification
+   * Utilise la même méthode que les autres services API (Auth0)
    */
-  private getAuthToken(): string {
-    // Récupérer depuis le localStorage ou le store
-    const token = localStorage.getItem('auth_token') || '';
-    return token;
+  private async getAuthToken(): Promise<string> {
+    try {
+      // Utiliser getAccessToken qui gère Auth0 et le cache
+      const token = await getAccessToken();
+      return token || '';
+    } catch (error) {
+      console.error('[AudioService] ❌ Erreur récupération token:', error);
+      // Fallback vers localStorage si getAccessToken échoue
+      return localStorage.getItem('auth_token') || '';
+    }
   }
 }
 

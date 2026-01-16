@@ -15,6 +15,7 @@ import type {
   StreamingConfig
 } from '../../types/chat';
 import { getAccessToken } from '../api/authHeaders';
+import { API_CONFIG } from '../../config/api';
 
 /**
  * Configuration WebSocket selon l'environnement
@@ -43,10 +44,10 @@ const getWebSocketConfig = () => {
     };
   }
   
-  // Par défaut: via API Gateway avec path de service (comme accounting)
-  // Le proxy API Gateway route /portfolio/chat vers le service portfolio
+  // Utiliser gatewayUrl de la configuration centralisée si défini
+  // Sinon, fallback vers API Gateway par défaut
   return {
-    url: 'http://localhost:8000',
+    url: API_CONFIG.gatewayUrl || 'http://localhost:8000',
     path: '/portfolio/chat'
   };
 };
@@ -162,6 +163,17 @@ export class ChatStreamService {
     
     // Récupérer le token JWT
     const token = this.getAuthToken();
+    
+    // Log détaillé de l'authentification
+    console.log('[ChatStreamService] 🔑 État de l\'authentification:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'ABSENT'
+    });
+    
+    if (!token) {
+      console.error('[ChatStreamService] ❌ Token JWT non disponible! La connexion va échouer.');
+    }
 
     return new Promise((resolve, reject) => {
       try {

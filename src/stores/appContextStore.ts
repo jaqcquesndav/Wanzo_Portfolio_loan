@@ -107,7 +107,14 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
         // 3. null si aucun des deux n'est disponible
         const effectiveInstitutionId = explicitInstitutionId || institution?.id || null;
         
-        console.log('📦 [AppContext] setContext - institutionId:', effectiveInstitutionId, '| user:', user?.id);
+        console.log('📦 [AppContext] setContext appelé:', {
+          userId: user?.id,
+          institutionName: institution?.name,
+          institutionId: effectiveInstitutionId,
+          explicitInstitutionId,
+          'institution?.id': institution?.id,
+          isDemoMode
+        });
         
         set({
           user,
@@ -118,6 +125,14 @@ export const useAppContextStore = create<AppContextState & AppContextActions>()(
           isContextLoaded: true,
           isDemoMode,
           lastLoadedAt: Date.now(),
+        });
+        
+        // Vérifier que le state a bien été mis à jour
+        const newState = get();
+        console.log('📦 [AppContext] État après setContext:', {
+          isContextLoaded: newState.isContextLoaded,
+          institutionId: newState.institutionId,
+          hasUser: !!newState.user
         });
       },
       
