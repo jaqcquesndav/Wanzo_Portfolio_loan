@@ -134,12 +134,26 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     // Ne rien faire si le composant est démonté
     if (!isMountedRef.current) return;
     
+    // Log détaillé de l'état pour debug
+    console.log('[ChatContainer] 🔍 État WebSocket:', {
+      isInstitutionReady,
+      globalInstitutionId,
+      isContextLoaded,
+      isRefreshingContext,
+      retryCount,
+      isApiMode,
+      isStreamingEnabled,
+      isWebSocketConnected
+    });
+    
     // ✅ Attendre que l'institution soit complètement prête (inclut les retries)
     if (!isInstitutionReady) {
       if (isRefreshingContext) {
         console.log(`[ChatContainer] 🔄 Refresh du contexte (tentative ${retryCount})...`);
       } else if (!isContextLoaded) {
         console.log('[ChatContainer] ⏳ Attente du contexte initial (/users/me)...');
+      } else {
+        console.log('[ChatContainer] ⏳ Attente que isInstitutionReady devienne true...');
       }
       return;
     }
@@ -153,10 +167,17 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     if (isApiMode && isStreamingEnabled && !isWebSocketConnected) {
       console.log('[ChatContainer] 🔌 Connexion WebSocket avec institutionId:', globalInstitutionId);
       connectWebSocket(globalInstitutionId);
+    } else if (!isApiMode) {
+      console.log('[ChatContainer] ℹ️ Mode mock activé, WebSocket non requis');
+    } else if (!isStreamingEnabled) {
+      console.log('[ChatContainer] ℹ️ Streaming désactivé, WebSocket non requis');
+    } else if (isWebSocketConnected) {
+      console.log('[ChatContainer] ✅ WebSocket déjà connecté');
     }
     
     // Note: pas de cleanup de déconnexion car le WebSocket est un singleton partagé
   }, [isInstitutionReady, isContextLoaded, isRefreshingContext, retryCount, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
+
 
   // Défiler vers le bas à chaque nouveau message
   useEffect(() => {

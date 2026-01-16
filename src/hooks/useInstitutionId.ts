@@ -202,11 +202,29 @@ export function useInstitutionId(options: UseInstitutionIdOptions = {}): UseInst
     };
   }, []);
   
+  // ✅ IMPORTANT: isReady doit vérifier que:
+  // 1. institutionId existe
+  // 2. Le contexte a été chargé depuis l'API (pas juste persisté)
+  // 3. Le contextStatus n'est PAS 'loading' (API /users/me en cours)
+  // Sans cette vérification, les valeurs persistées peuvent être utilisées avant
+  // que l'API /users/me ait validé/mis à jour le contexte
+  const isReady = !!institutionId && isContextLoaded && contextStatus !== 'loading';
+  
+  // Log pour debug
+  if (!isReady && institutionId) {
+    console.log('[useInstitutionId] ⏳ institutionId présent mais pas encore prêt:', {
+      institutionId,
+      isContextLoaded,
+      contextStatus,
+      isAuthenticated
+    });
+  }
+  
   return {
     institutionId,
     isContextLoaded,
     isRefreshing,
-    isReady: !!institutionId && isContextLoaded,
+    isReady,
     refresh,
     retryCount,
     error
@@ -216,11 +234,15 @@ export function useInstitutionId(options: UseInstitutionIdOptions = {}): UseInst
 /**
  * Hook simplifié pour juste vérifier si institutionId est prêt
  * Utile pour les conditions de rendu
+ * ✅ IMPORTANT: Utilise aussi contextStatus pour éviter les faux positifs
  */
 export function useIsInstitutionReady(): boolean {
   const institutionId = useAppContextStore(state => state.institutionId);
   const isContextLoaded = useAppContextStore(state => state.isContextLoaded);
-  return !!institutionId && isContextLoaded;
+  const { contextStatus } = useAuth();
+  
+  // On doit s'assurer que le contexte n'est pas en train de charger
+  return !!institutionId && isContextLoaded && contextStatus !== 'loading';
 }
 
 /**
