@@ -312,11 +312,11 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
           </aside>
         )}
         
-        {/* Contenu principal */}
+        {/* Contenu principal - style ChatGPT/Gemini: fond neutre */}
         <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-white dark:bg-gray-800">
-          {/* Zone des messages - scrollable avec scrollbar personnalisée */}
+          {/* Zone des messages - scrollable */}
           <div className={`flex-1 overflow-y-auto chat-scrollbar ${mode === 'fullscreen' ? 'px-0' : ''}`}>
-            <div className={`${mode === 'fullscreen' ? 'max-w-3xl mx-auto w-full' : ''} px-4 py-6 space-y-1`}>
+            <div className={`${mode === 'fullscreen' ? 'max-w-3xl mx-auto w-full' : ''} px-4 py-4 space-y-4`}>
               {messages.length === 0 ? (
                 /* Écran d'accueil style ChatGPT/Claude/Gemini */
                 <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
@@ -409,33 +409,33 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                     className={`group relative w-full ${message.sender === 'user' ? 'flex justify-end' : ''}`}
                   >
                     <div className={`
-                      flex items-start space-x-3 py-2.5 px-3 rounded-xl 
-                      hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors
-                      ${message.sender === 'user' ? 'max-w-[85%] bg-primary/5 dark:bg-primary/10' : '-mx-3'}
-                      ${message.error ? 'bg-red-50/50 dark:bg-red-900/10' : ''}
+                      flex items-start py-4
+                      ${message.sender === 'user' 
+                        ? 'flex-row-reverse space-x-reverse space-x-3 max-w-[85%]' 
+                        : 'space-x-3 w-full'
+                      }
                       ${message.pending ? 'opacity-70' : ''}
-                      ${message.isStreaming ? 'bg-primary/5' : ''}
                     `}>
-                      {/* Avatar - Style Notion */}
+                      {/* Avatar - Style ChatGPT/Gemini minimaliste */}
                       <div className={`
-                        w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5
+                        w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
                         ${message.sender === 'user' 
-                          ? 'bg-primary/10' 
-                          : 'bg-gradient-to-br from-primary/20 to-primary/10'
+                          ? 'bg-primary text-white' 
+                          : 'bg-gradient-to-br from-emerald-400 to-teal-500 text-white'
                         }
                       `}>
                         {message.sender === 'user' ? (
-                          <User className="h-4 w-4 text-primary" />
+                          <User className="h-4 w-4" />
                         ) : (
-                          <Bot className="h-4 w-4 text-primary" />
+                          <Bot className="h-4 w-4" />
                         )}
                       </div>
 
                       {/* Contenu */}
-                      <div className="flex-1 min-w-0">
+                      <div className={`flex-1 min-w-0 ${message.sender === 'user' ? 'text-right' : ''}`}>
                         {/* Header avec nom et timestamp */}
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <div className={`flex items-center space-x-2 mb-1 ${message.sender === 'user' ? 'justify-end' : ''}`}>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {message.sender === 'user' ? 'Vous' : 'ADHA'}
                           </span>
                           <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -445,7 +445,7 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                             })}
                           </span>
                           {message.isStreaming && (
-                            <span className="inline-flex items-center space-x-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center space-x-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                               <Sparkles className="h-3 w-3 animate-sparkle" />
                               <span className="animate-pulse-subtle">Génération...</span>
                             </span>
@@ -467,28 +467,23 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                           </div>
                         )}
 
-                        {/* ✅ Indicateur de streaming amélioré - style Gemini */}
+                        {/* ✅ Indicateur de streaming - style ChatGPT/Gemini épuré */}
                         {message.isStreaming && !message.content && (
-                          <div className="flex items-center space-x-3 text-gray-500 dark:text-gray-400 py-3">
-                            {/* Animation wave style Gemini */}
+                          <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400 py-2">
+                            {/* Animation dots style ChatGPT */}
                             <div className="flex items-center space-x-1">
-                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '0ms' }} />
-                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '150ms' }} />
-                              <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-wave" style={{ animationDelay: '300ms' }} />
+                              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
-                            {/* Barre de progression subtile */}
-                            <div className="flex-1 max-w-[80px] h-0.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <div className="h-full w-1/3 bg-primary/40 rounded-full animate-progress-indeterminate" />
-                            </div>
-                            <span className="text-sm font-medium text-primary animate-pulse-subtle">
-                              ADHA réfléchit...
-                            </span>
                           </div>
                         )}
 
-                        {/* Contenu du message - ✅ CORRIGÉ: passer isStreaming pour le curseur */}
+                        {/* Contenu du message - style texte simple sans background */}
                         {message.content && (
-                          <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+                          <div className={`text-[15px] text-gray-800 dark:text-gray-200 leading-relaxed ${
+                            message.sender === 'user' ? 'text-right' : 'text-left'
+                          }`}>
                             <MessageContent 
                               content={message.content}
                               isStreaming={message.isStreaming}
@@ -501,7 +496,9 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
                         
                         {/* Pièce jointe */}
                         {message.attachment && (
-                          <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg inline-flex items-center space-x-2">
+                          <div className={`mt-2 p-2 bg-gray-100 dark:bg-gray-700/50 rounded-lg inline-flex items-center space-x-2 ${
+                            message.sender === 'user' ? 'ml-auto' : ''
+                          }`}>
                             <Paperclip className="h-3.5 w-3.5 text-gray-500" />
                             <span className="text-xs text-gray-600 dark:text-gray-300">{message.attachment.name}</span>
                           </div>
