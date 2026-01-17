@@ -33,3 +33,34 @@ export {
   useIsInstitutionReady, 
   useWaitForInstitutionId 
 } from './useInstitutionId';
+
+// Centrale de Risque Hooks
+export {
+  useCreditRisk,
+  useLeasingRisk,
+  useInvestmentRisk,
+  useSubmitRiskEntry,
+  useRiskStatistics,
+  useCompanyRiskProfile,
+  useRiskSummary,
+  useCentraleRisqueComplete,
+  useRiskEntries,
+  useIncidents,
+  useAlerts,
+  useCentraleRisqueStats,
+  useEntityRiskSummary,
+  useCentraleRisqueV2Page
+} from './useCentraleRisqueApi';
+
+// Risk Statistics Hooks (OHADA/BCC)
+export {
+  usePortfolioRiskStats,
+  useContractDaysOverdue,
+  useUpdateContractClassification,
+  useUpdateAllClassifications,
+  useRegulatoryThresholds,
+  useActiveRiskAlerts,
+  useRiskStatisticsPage,
+  getRiskClassFromDaysOverdue,
+  getProvisionRate
+} from './useRiskStatistics';

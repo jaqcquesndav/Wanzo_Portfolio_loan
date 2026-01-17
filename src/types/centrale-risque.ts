@@ -169,25 +169,46 @@ export interface RiskSearchResponse {
 }
 
 /**
- * Types d'alertes de risque - Conformes à la documentation API
+ * Types d'alertes de risque - Conformes à la documentation API (8 valeurs)
+ * Voir: API DOCUMENTATION/centrale-risque/README.md
  */
+export type AlertType = 
+  | 'credit_score_drop'      // Baisse du score de crédit
+  | 'payment_delay'          // Retard de paiement
+  | 'exposure_limit'         // Limite d'exposition atteinte
+  | 'new_incident'           // Nouvel incident de paiement
+  | 'risk_increase'          // Augmentation du niveau de risque
+  | 'classification_change'  // Changement de classification OHADA/BCC
+  | 'payment_missed'         // Échéance manquée
+  | 'provisioning_required'; // Provisionnement requis
+
+/**
+ * Statuts d'alerte - Conformes à la documentation API
+ */
+export type AlertStatus = 'active' | 'acknowledged' | 'resolved' | 'dismissed';
+
 export interface RiskAlert {
   id: string;
   companyId: string;
   companyName?: string;
-  type: 'credit_score_drop' | 'payment_delay' | 'exposure_limit' | 'new_incident' | 
-        'score_deterioration' | 'high_exposure' | 'multiple_defaults' | 'new_default';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: AlertType;
+  severity: Severity;
   message: string;
+  status?: AlertStatus;
   triggeredAt: string;
   acknowledgedAt?: string;
   acknowledgedBy?: string;
   isAcknowledged?: boolean;
+  riskEntryId?: string;
   metadata?: {
-    previousValue?: number;
-    currentValue?: number;
+    previousValue?: number | string;
+    currentValue?: number | string;
     threshold?: number;
     details?: Record<string, unknown>;
+    resolution?: string;
+    daysOverdue?: number;
+    amount?: number;
+    currency?: string;
   };
   recommendations?: string[];
 }
@@ -304,17 +325,29 @@ export interface Alert {
   id: string;
   companyId: string;
   companyName: string;
-  type: string;
+  type: AlertType;
   severity: Severity;
   title: string;
   message: string;
+  status?: AlertStatus;
   isAcknowledged: boolean;
   acknowledgedAt?: string;
   acknowledgedBy?: string;
   acknowledgedNotes?: string;
+  riskEntryId?: string;
   recommendations?: string[];
   triggeredAt: string;
   createdAt: string;
+  metadata?: {
+    previousValue?: number | string;
+    currentValue?: number | string;
+    threshold?: number;
+    details?: Record<string, unknown>;
+    resolution?: string;
+    daysOverdue?: number;
+    amount?: number;
+    currency?: string;
+  };
 }
 
 /**

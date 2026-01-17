@@ -68,28 +68,38 @@ interface CreditContract {
 ### Enums et Types
 
 ```typescript
-// Statuts du contrat (9 valeurs - incluant legacy)
+// Statuts du contrat (10 valeurs - incluant legacy)
 type ContractStatus = 
-  | 'active'        // Contrat actif en cours
-  | 'completed'     // Contrat terminé normalement
-  | 'defaulted'     // Contrat en défaut de paiement
-  | 'restructured'  // Contrat restructuré
-  | 'suspended'     // Contrat suspendu temporairement
-  | 'written_off'   // Contrat passé en perte
+  | 'active'         // Contrat actif en cours
+  | 'completed'      // Contrat terminé normalement
+  | 'defaulted'      // Contrat en défaut de paiement
+  | 'restructured'   // Contrat restructuré
+  | 'in_litigation'  // Contrat en contentieux
+  | 'suspended'      // Contrat suspendu temporairement
+  | 'written_off'    // Contrat passé en perte (radié)
   // Legacy values
-  | 'draft'         // Brouillon (avant activation)
-  | 'litigation'    // Alias de in_litigation
-  | 'canceled';     // Annulé avant activation
+  | 'draft'          // Brouillon (avant activation)
+  | 'litigation'     // Alias de in_litigation
+  | 'canceled';      // Annulé avant activation
 
-// Méthode d'amortissement (7 valeurs - incluant legacy)
+// Méthode d'amortissement (8 valeurs - Terminologie crédit B2B OHADA)
+// 
+// GUIDE B2B:
+// - ANNUITY: Le plus courant en crédit B2B - échéances mensuelles égales
+// - LINEAR: Pour les entreprises préférant des intérêts dégressifs
+// - BALLOON: Pour les projets avec cashflow final important (immobilier, import)
+// - PROGRESSIVE: Pour les entreprises en phase de croissance
+// - DEGRESSIVE: Rarement utilisé, pour des situations spécifiques
+//
 type AmortizationMethod = 
-  | 'linear'       // Amortissement linéaire (échéances constantes)
-  | 'degressive'   // Amortissement dégressif
-  | 'in_fine'      // Remboursement in fine (capital à l'échéance)
-  | 'annuity'      // Annuité constante
+  | 'annuity'      // Annuité constante - Échéances totales égales (STANDARD B2B)
+  | 'linear'       // Linéaire - Capital constant + intérêts dégressifs
+  | 'degressive'   // Dégressif - Échéances décroissantes
+  | 'progressive'  // Progressif - Échéances croissantes (cashflows croissants)
+  | 'balloon'      // In fine (Bullet) - Capital à l'échéance finale
   // Legacy values
   | 'constant'     // Alias de linear
-  | 'bullet'       // Alias de in_fine
+  | 'bullet'       // Alias de balloon
   | 'custom';      // Personnalisé
 
 // Classification du risque (5 valeurs - normes OHADA/BCC)
@@ -165,6 +175,55 @@ interface ContractDocument {
   created_at: string;
 }
 ```
+
+## Guide des Méthodes d'Amortissement B2B
+
+### Tableau comparatif
+
+| Méthode | Échéances | Capital | Intérêts | Cas d'usage B2B |
+|---------|-----------|---------|----------|-----------------|
+| **annuity** | Constantes | Croissant | Décroissant | Standard PME/ETI - Facilité de gestion budgétaire |
+| **linear** | Décroissantes | Constant | Décroissant | Entreprises avec trésorerie forte au début |
+| **progressive** | Croissantes | Croissant | Variable | Startups, projets avec revenus différés |
+| **degressive** | Décroissantes | Décroissant | Décroissant | Équipements à rendement initial élevé |
+| **balloon** | Intérêts seuls + capital final | Final | Périodiques | Import-export, immobilier, projets d'investissement |
+
+### Formules de calcul
+
+#### Annuité constante (annuity)
+$$
+E = P \times \frac{r(1+r)^n}{(1+r)^n - 1}
+$$
+- $E$ = Échéance mensuelle
+- $P$ = Principal (montant emprunté)
+- $r$ = Taux d'intérêt périodique
+- $n$ = Nombre total d'échéances
+
+#### Amortissement linéaire (linear)
+$$
+\text{Capital mensuel} = \frac{P}{n}
+$$
+$$
+\text{Intérêts mois } k = (P - \text{Capital remboursé}) \times r
+$$
+
+#### In fine / Balloon (balloon)
+$$
+\text{Échéance intérêts} = P \times r
+$$
+$$
+\text{Dernière échéance} = P + (P \times r)
+$$
+
+### Recommandations par secteur
+
+| Secteur | Méthode recommandée | Justification |
+|---------|---------------------|---------------|
+| Commerce | `annuity` | Flux de trésorerie réguliers |
+| Industrie | `linear` ou `annuity` | Investissements productifs |
+| Immobilier | `balloon` | Revente ou refinancement à terme |
+| Agriculture | `progressive` | Revenus saisonniers croissants |
+| Import-Export | `balloon` | Délais de paiement clients |
 
 ## Points d'accès
 

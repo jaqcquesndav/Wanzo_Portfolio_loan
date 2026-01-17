@@ -471,11 +471,22 @@ type IncidentType = 'cheque' | 'effet' | 'retard' | 'autre';
 // Statuts d'incident
 type IncidentStatus = 'pending' | 'resolved' | 'escalated';
 
-// Types d'alerte
-type AlertType = 'credit_score_drop' | 'payment_delay' | 'exposure_limit' | 'new_incident' | 'default_risk';
+// Types d'alerte (8 valeurs)
+type AlertType = 
+  | 'credit_score_drop'      // Baisse du score de crédit
+  | 'payment_delay'          // Retard de paiement
+  | 'exposure_limit'         // Limite d'exposition atteinte
+  | 'new_incident'           // Nouvel incident de paiement
+  | 'risk_increase'          // Augmentation du niveau de risque
+  | 'classification_change'  // Changement de classification OHADA/BCC
+  | 'payment_missed'         // Échéance manquée
+  | 'provisioning_required'; // Provisionnement requis
 
 // Sévérités
 type Severity = 'low' | 'medium' | 'high' | 'critical';
+
+// Statuts d'alerte
+type AlertStatus = 'active' | 'acknowledged' | 'resolved' | 'dismissed';
 
 // Catégories de risque
 type RiskCategory = 'low' | 'medium' | 'high' | 'very_high';

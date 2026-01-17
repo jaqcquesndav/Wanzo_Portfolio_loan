@@ -134,7 +134,8 @@ export const useContractActions = (portfolioId: string) => {
     }
     
     try {
-      await creditContractApi.completeContract(contract.portfolioId, contract.id, completionDetails);
+      // Correction: completeContract prend contractId et completionDetails (pas portfolioId)
+      await creditContractApi.completeContract(contract.id, completionDetails);
       showNotification(`Contrat ${contract.contract_number} clôturé avec succès`, 'success');
       return true;
     } catch (error) {

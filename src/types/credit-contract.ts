@@ -16,17 +16,22 @@ export type ContractStatus =
   | 'litigation'    // Alias de in_litigation
   | 'canceled';     // Annulé avant activation
 
-// Méthode d'amortissement (8 valeurs - conformes à la documentation API)
+// Méthode d'amortissement (8 valeurs - Terminologie crédit B2B OHADA)
+// GUIDE B2B:
+// - ANNUITY: Le plus courant en crédit B2B - échéances mensuelles égales
+// - LINEAR: Pour les entreprises préférant des intérêts dégressifs
+// - BALLOON: Pour les projets avec cashflow final important (immobilier, import)
+// - PROGRESSIVE: Pour les entreprises en phase de croissance
+// - DEGRESSIVE: Rarement utilisé, pour des situations spécifiques
 export type AmortizationMethod = 
-  | 'linear'       // Amortissement linéaire (échéances constantes)
-  | 'degressive'   // Amortissement dégressif
-  | 'progressive'  // Amortissement progressif
-  | 'in_fine'      // Remboursement in fine (capital à l'échéance)
-  | 'annuity'      // Annuité constante
+  | 'annuity'      // Annuité constante - Échéances totales égales (STANDARD B2B)
+  | 'linear'       // Linéaire - Capital constant + intérêts dégressifs
+  | 'degressive'   // Dégressif - Échéances décroissantes
+  | 'progressive'  // Progressif - Échéances croissantes (cashflows croissants)
+  | 'balloon'      // In fine (Bullet) - Capital à l'échéance finale
   // Legacy values (compatibilité)
   | 'constant'     // Alias de linear
-  | 'balloon'      // Alias de in_fine
-  | 'bullet'       // Alias de in_fine
+  | 'bullet'       // Alias de balloon
   | 'custom';      // Personnalisé
 
 // Classification du risque (5 valeurs - normes OHADA/BCC)
