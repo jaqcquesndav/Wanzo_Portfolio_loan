@@ -1,10 +1,12 @@
 // src/services/api/traditional/portfolio.api.ts
+// Mode production: API backend uniquement, pas de fallback
+
 import { apiClient } from '../base.api';
 import type { TraditionalPortfolio } from '../../../types/traditional-portfolio';
-import { traditionalDataService } from './dataService';
 
 /**
  * API pour les portefeuilles traditionnels
+ * Mode production: toutes les opérations passent par le backend
  */
 export const traditionalPortfolioApi = {
   /**
@@ -16,161 +18,64 @@ export const traditionalPortfolioApi = {
     minAmount?: number;
     sector?: string;
   }) => {
-    try {
-      // Version API
-      const params = new URLSearchParams();
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.riskProfile) params.append('riskProfile', filters.riskProfile);
-      if (filters?.minAmount) params.append('minAmount', filters.minAmount.toString());
-      if (filters?.sector) params.append('sector', filters.sector);
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.riskProfile) params.append('riskProfile', filters.riskProfile);
+    if (filters?.minAmount) params.append('minAmount', filters.minAmount.toString());
+    if (filters?.sector) params.append('sector', filters.sector);
 
-      return await apiClient.get<TraditionalPortfolio[]>(`/portfolios/traditional?${params.toString()}`);
-    } catch (error) {
-      // Fallback sur les données en localStorage si l'API échoue
-      console.warn('Fallback to localStorage for traditional portfolios', error);
-      let portfolios = traditionalDataService.getTraditionalPortfolios();
-      
-      // Appliquer les filtres
-      if (filters?.status) {
-        portfolios = portfolios.filter(p => p.status === filters.status);
-      }
-      if (filters?.riskProfile) {
-        portfolios = portfolios.filter(p => p.risk_profile === filters.riskProfile);
-      }
-      if (filters?.minAmount !== undefined) {
-        const minAmount = filters.minAmount;
-        portfolios = portfolios.filter(p => p.target_amount >= minAmount);
-      }
-      if (filters?.sector !== undefined) {
-        const sector = filters.sector;
-        portfolios = portfolios.filter(p => p.target_sectors?.some(s => s === sector));
-      }
-      
-      return portfolios;
-    }
+    return await apiClient.get<TraditionalPortfolio[]>(`/portfolios/traditional?${params.toString()}`);
   },
 
   /**
    * Récupère un portefeuille traditionnel par son ID
    */
   getPortfolioById: async (id: string) => {
-    try {
-      return await apiClient.get<TraditionalPortfolio>(`/portfolios/traditional/${id}`);
-    } catch (error) {
-      // Fallback sur les données en localStorage si l'API échoue
-      console.warn(`Fallback to localStorage for traditional portfolio ${id}`, error);
-      const portfolio = traditionalDataService.getTraditionalPortfolioById(id);
-      if (!portfolio) {
-        throw new Error(`Portfolio with ID ${id} not found`);
-      }
-      return portfolio;
-    }
+    return await apiClient.get<TraditionalPortfolio>(`/portfolios/traditional/${id}`);
   },
 
   /**
    * Crée un nouveau portefeuille traditionnel
-   * NOTE: Cette méthode ne fait PAS de fallback - elle propage l'erreur
-   * Le fallback est géré par le hook useTraditionalPortfolios
    */
   createPortfolio: async (portfolio: Omit<TraditionalPortfolio, 'id' | 'created_at' | 'updated_at'>) => {
     console.log('📡 API: POST /portfolios/traditional', portfolio);
-    try {
-      const response = await apiClient.post<TraditionalPortfolio>('/portfolios/traditional', portfolio);
-      console.log('✅ API: Portefeuille créé avec succès', response);
-      return response;
-    } catch (error) {
-      // Ne PAS faire de fallback ici - propager l'erreur pour que le hook gère le fallback
-      console.error('❌ API: Erreur création portefeuille', error);
-      throw error;
-    }
+    const response = await apiClient.post<TraditionalPortfolio>('/portfolios/traditional', portfolio);
+    console.log('✅ API: Portefeuille créé avec succès', response);
+    return response;
   },
 
   /**
    * Met à jour un portefeuille traditionnel
    */
   updatePortfolio: async (id: string, updates: Partial<TraditionalPortfolio>) => {
-    try {
-      return await apiClient.put<TraditionalPortfolio>(`/portfolios/traditional/${id}`, updates);
-    } catch (error) {
-      // Fallback sur les données en localStorage si l'API échoue
-      console.warn(`Fallback to localStorage for updating traditional portfolio ${id}`, error);
-      const portfolio = traditionalDataService.getTraditionalPortfolioById(id);
-      if (!portfolio) {
-        throw new Error(`Portfolio with ID ${id} not found`);
-      }
-      
-      const updatedPortfolio = {
-        ...portfolio,
-        ...updates,
-        updated_at: new Date().toISOString()
-      };
-      
-      traditionalDataService.updateTraditionalPortfolio(updatedPortfolio);
-      return updatedPortfolio;
-    }
+    return await apiClient.put<TraditionalPortfolio>(`/portfolios/traditional/${id}`, updates);
   },
 
   /**
    * Change le statut d'un portefeuille traditionnel
    */
   changeStatus: async (id: string, status: 'active' | 'inactive' | 'pending' | 'archived') => {
-    try {
-      return await apiClient.post<TraditionalPortfolio>(`/portfolios/traditional/${id}/status`, { status });
-    } catch (error) {
-      // Fallback sur les données en localStorage si l'API échoue
-      console.warn(`Fallback to localStorage for changing status of traditional portfolio ${id}`, error);
-      const portfolio = traditionalDataService.getTraditionalPortfolioById(id);
-      if (!portfolio) {
-        throw new Error(`Portfolio with ID ${id} not found`);
-      }
-      
-      const updatedPortfolio = {
-        ...portfolio,
-        status,
-        updated_at: new Date().toISOString()
-      };
-      
-      traditionalDataService.updateTraditionalPortfolio(updatedPortfolio);
-      return updatedPortfolio;
-    }
+    return await apiClient.post<TraditionalPortfolio>(`/portfolios/traditional/${id}/status`, { status });
   },
 
   /**
    * Supprime un portefeuille traditionnel
    */
   deletePortfolio: async (id: string) => {
-    try {
-      return await apiClient.delete(`/portfolios/traditional/${id}`);
-    } catch (error) {
-      // Pas de fallback pour la suppression
-      console.error(`Error deleting traditional portfolio ${id}`, error);
-      throw error;
-    }
+    return await apiClient.delete(`/portfolios/traditional/${id}`);
   },
 
   /**
    * Récupère les performances d'un portefeuille traditionnel
    */
   getPortfolioPerformance: async (id: string, period: 'monthly' | 'quarterly' | 'yearly') => {
-    try {
-      return await apiClient.get(`/portfolios/traditional/${id}/performance?period=${period}`);
-    } catch (error) {
-      // Pas de fallback pour les performances
-      console.error(`Error getting performance for traditional portfolio ${id}`, error);
-      throw error;
-    }
+    return await apiClient.get(`/portfolios/traditional/${id}/performance?period=${period}`);
   },
 
   /**
    * Récupère l'historique des activités d'un portefeuille traditionnel
    */
   getActivityHistory: async (id: string, page = 1, limit = 10) => {
-    try {
-      return await apiClient.get(`/portfolios/traditional/${id}/activities?page=${page}&limit=${limit}`);
-    } catch (error) {
-      // Pas de fallback pour l'historique
-      console.error(`Error getting activity history for traditional portfolio ${id}`, error);
-      throw error;
-    }
+    return await apiClient.get(`/portfolios/traditional/${id}/activities?page=${page}&limit=${limit}`);
   }
 };

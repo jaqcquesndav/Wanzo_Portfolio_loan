@@ -56,16 +56,16 @@ export function CompanyCard({
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Score Crédit
             </p>
-            <p className={`text-lg font-semibold ${getCreditScoreColor(company.financial_metrics.credit_score)}`}>
-              {company.financial_metrics.credit_score}/100
+            <p className={`text-lg font-semibold ${getCreditScoreColor(company.financial_metrics?.credit_score ?? 0)}`}>
+              {company.financial_metrics?.credit_score ?? 0}/100
             </p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Note Financière
             </p>
-            <p className={`text-lg font-semibold ${getRatingColor(company.financial_metrics.financial_rating)}`}>
-              {company.financial_metrics.financial_rating}
+            <p className={`text-lg font-semibold ${getRatingColor(company.financial_metrics?.financial_rating as 'A' | 'B' | 'C' | 'D')}`}>
+              {company.financial_metrics?.financial_rating ?? 'NR'}
             </p>
           </div>
         </div>
@@ -93,15 +93,15 @@ export function CompanyCard({
           {/* Métriques financières */}
           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
             <TrendingUp className="h-4 w-4 mr-2" />
-            CA: {formatCurrency(company.annual_revenue, undefined, 'USD')}
+            CA: {formatCurrency(company.annual_revenue ?? 0, undefined, 'USD')}
             <span className="mx-2">•</span>
-            Croissance: {company.financial_metrics.revenue_growth}%
+            Croissance: {company.financial_metrics?.revenue_growth ?? 0}%
           </div>
 
           {/* Employés */}
           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
             <Users className="h-4 w-4 mr-2" />
-            {company.employee_count} employés
+            {company.employee_count ?? 0} employés
           </div>
 
           {/* Empreinte carbone */}
@@ -110,13 +110,13 @@ export function CompanyCard({
             <span>Note ESG: </span>
             <div className="ml-2 flex space-x-2">
               <Badge variant="success">
-                E: {company.esg_metrics.environmental_rating}
+                E: {company.esg_metrics?.environmental_rating ?? 'NR'}
               </Badge>
               <Badge variant="primary">
-                S: {company.esg_metrics.social_rating}
+                S: {company.esg_metrics?.social_rating ?? 'NR'}
               </Badge>
               <Badge variant="warning">
-                G: {company.esg_metrics.governance_rating}
+                G: {company.esg_metrics?.governance_rating ?? 'NR'}
               </Badge>
             </div>
           </div>

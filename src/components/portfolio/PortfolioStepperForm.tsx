@@ -142,7 +142,12 @@ export function PortfolioStepperForm({ onSubmit, onCancel }: PortfolioStepperFor
   
   const prev = () => setStep((s) => s - 1);
 
-  const handleFinalSubmit = methods.handleSubmit(onSubmit);
+  // Handler d'erreur pour le debug
+  const onError = (errors: Record<string, unknown>) => {
+    console.error('Erreurs de validation du formulaire:', errors);
+  };
+
+  const handleFinalSubmit = methods.handleSubmit(onSubmit, onError);
 
   return (
     <FormProvider {...methods}>

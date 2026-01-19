@@ -42,14 +42,63 @@ export default function TraditionalPortfolio() {
   
   /**
    * Handler pour la création de portefeuille avec le nouveau format
+   * Le backend requiert manager_id et institution_id comme UUIDs valides
    */
   const handleCreatePortfolio = async (data: PortfolioModalData) => {
+    // Fonction pour vérifier si c'est un UUID valide (pas un Auth0 ID)
+    const isValidUUID = (id: string | null | undefined): boolean => {
+      if (!id) return false;
+      // Auth0 IDs contiennent généralement '|' ou 'auth0'
+      if (id.includes('|') || id.includes('auth0') || id.includes('google-oauth2')) {
+        return false;
+      }
+      // UUID format basique ou autre format backend (ex: user-123, inst-456)
+      return id.length > 0 && !id.includes('default');
+    };
+
+    // Vérifier que les IDs requis sont présents
+    if (!user?.id) {
+      showNotification('Erreur: utilisateur non connecté', 'error');
+      console.error('❌ Création impossible: user.id manquant');
+      return;
+    }
+    if (!institutionId) {
+      showNotification('Erreur: institution non configurée', 'error');
+      console.error('❌ Création impossible: institutionId manquant');
+      return;
+    }
+
+    // Log détaillé des IDs disponibles
+    console.log('🔍 Contexte utilisateur complet:', {
+      'user.id': user.id,
+      'user.institutionId': user.institutionId,
+      'institutionId (store)': institutionId,
+      'isAuth0Id(user.id)': user.id?.includes('|') || user.id?.includes('auth0'),
+    });
+
+    // Vérifier que ce ne sont pas des Auth0 IDs
+    if (!isValidUUID(user.id)) {
+      showNotification('Erreur: ID utilisateur invalide (Auth0 ID détecté au lieu d\'UUID)', 'error');
+      console.error('❌ Création impossible: user.id est un Auth0 ID, pas un UUID:', user.id);
+      console.error('💡 Le backend /users/me doit retourner un UUID dans user.id, pas l\'Auth0 ID');
+      return;
+    }
+    if (!isValidUUID(institutionId)) {
+      showNotification('Erreur: ID institution invalide', 'error');
+      console.error('❌ Création impossible: institutionId invalide:', institutionId);
+      return;
+    }
+
     try {
-      // Utiliser les vraies valeurs du contexte
+      console.log('📋 Création avec manager_id:', user.id, 'institution_id:', institutionId);
+      
+      // Utiliser les vraies valeurs du contexte (UUIDs)
       const newPortfolio = await createPortfolio({
         ...data,
-        manager_id: user?.id || 'default-manager',
-        institution_id: institutionId || 'default-institution',
+        manager_id: user.id,
+        institution_id: institutionId,
+        // risk_profile par défaut si non fourni dans le formulaire
+        risk_profile: (data as { risk_profile?: string }).risk_profile || 'moderate',
       });
       showNotification('Portefeuille créé avec succès', 'success');
       setShowCreateModal(false);

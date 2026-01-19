@@ -1,13 +1,11 @@
 // src/hooks/useTraditionalPortfolios.ts
-// Hook pour gérer les portefeuilles traditionnels avec API backend + fallback localStorage
+// Hook pour gérer les portefeuilles traditionnels avec API backend (mode production)
 
 import { useState, useMemo, useCallback } from 'react';
 import { usePortfolios } from './usePortfolios';
 import { traditionalPortfolioApi } from '../services/api/traditional/portfolio.api';
-import { portfolioStorageService } from '../services/storage/localStorage';
 import { portfolioAccountsApi } from '../services/api/shared';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
-import type { PortfolioWithType } from '../types/portfolioWithType';
 import type { BankAccount } from '../types/bankAccount';
 import type { MobileMoneyAccount } from '../types/mobileMoneyAccount';
 import { validateTraditionalPortfolio } from '../utils/validation';
@@ -72,52 +70,45 @@ export function useTraditionalPortfolios() {
       throw new Error(`Données de portefeuille invalides: ${JSON.stringify(validation.errors)}`);
     }
 
-    // Préparer les données pour l'API (sans les comptes qui seront ajoutés séparément)
-    const portfolioData = {
-      ...portfolioBaseData,
-      type: 'traditional' as const,
-      status: 'active' as const,
-      products: [],
-      metrics: {
-        net_value: portfolioBaseData.initial_capital || portfolioBaseData.target_amount || 0,
-        average_return: 0,
-        risk_portfolio: 0,
-        sharpe_ratio: 0,
-        volatility: 0,
-        alpha: 0,
-        beta: 0,
-        asset_allocation: []
-      }
+    // Préparer les données pour l'API backend - format conforme au CreatePortfolioDto
+    // Champs obligatoires: name, manager_id (UUID), institution_id (UUID), target_amount, risk_profile
+    // Champs optionnels: description, type, reference, target_return, target_sectors, currency, clientId, settings
+    const portfolioDataForApi: Record<string, unknown> = {
+      // Champs obligatoires
+      name: portfolioBaseData.name,
+      manager_id: portfolioBaseData.manager_id,
+      institution_id: portfolioBaseData.institution_id,
+      target_amount: Number(portfolioBaseData.initial_capital || portfolioBaseData.target_amount || 0),
+      risk_profile: portfolioBaseData.risk_profile || 'moderate',
+      
+      // Champs optionnels
+      description: portfolioBaseData.description || `Portefeuille ${portfolioBaseData.name}`,
+      currency: portfolioBaseData.currency || 'USD',
     };
+
+    // Ajouter les champs optionnels seulement s'ils sont définis
+    if (portfolioBaseData.target_return) {
+      portfolioDataForApi.target_return = Number(portfolioBaseData.target_return);
+    }
+    if (portfolioBaseData.target_sectors && portfolioBaseData.target_sectors.length > 0) {
+      portfolioDataForApi.target_sectors = portfolioBaseData.target_sectors;
+    }
+
+    // Log pour debug
+    console.log('📋 Données préparées pour l\'API (CreatePortfolioDto):', JSON.stringify(portfolioDataForApi, null, 2));
 
     let newPortfolio: TraditionalPortfolio;
 
-    try {
-      // Essayer de créer via l'API backend
-      console.log('📡 Création du portefeuille via le backend...');
-      const response = await traditionalPortfolioApi.createPortfolio(portfolioData);
-      
-      // La réponse peut être le portfolio directement ou avoir une structure { data: portfolio }
-      newPortfolio = (response && typeof response === 'object' && 'id' in response) 
-        ? response as TraditionalPortfolio
-        : (response as unknown as { data: TraditionalPortfolio }).data;
-      
-      console.log('✅ Portefeuille créé avec succès:', newPortfolio.id);
-      
-    } catch (err) {
-      console.error('❌ Erreur lors de la création via le backend:', err);
-      console.log('📦 Fallback: création locale du portefeuille...');
-      
-      // Fallback: créer localement
-      newPortfolio = {
-        ...portfolioData,
-        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as TraditionalPortfolio;
-      
-      console.log('✅ Portefeuille créé localement:', newPortfolio.id);
-    }
+    // Créer via l'API backend - pas de fallback en mode production
+    console.log('📡 Création du portefeuille via le backend...');
+    const response = await traditionalPortfolioApi.createPortfolio(portfolioDataForApi);
+    
+    // La réponse peut être le portfolio directement ou avoir une structure { data: portfolio }
+    newPortfolio = (response && typeof response === 'object' && 'id' in response) 
+      ? response as TraditionalPortfolio
+      : (response as unknown as { data: TraditionalPortfolio }).data;
+    
+    console.log('✅ Portefeuille créé avec succès:', newPortfolio.id);
 
     // Créer les comptes associés
     const portfolioId = newPortfolio.id;
@@ -129,15 +120,20 @@ export function useTraditionalPortfolios() {
     if (bankAccountToCreate && bankAccountToCreate.bank_name) {
       try {
         console.log('📡 Création du compte bancaire associé...');
+        // Nettoyer les données - le backend génère id, balance, created_at, updated_at, portfolio_id
         const bankAccountData = {
-          ...bankAccountToCreate,
-          portfolio_id: portfolioId,
+          bank_name: bankAccountToCreate.bank_name,
+          account_number: bankAccountToCreate.account_number || '',
+          account_name: bankAccountToCreate.account_name || '',
+          swift_code: bankAccountToCreate.swift_code,
+          iban: bankAccountToCreate.iban,
           is_primary: true,
           is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as Omit<BankAccount, 'id' | 'created_at' | 'updated_at'>;
+          currency: bankAccountToCreate.currency,
+          purpose: bankAccountToCreate.purpose || 'general',
+        };
         
+        console.log('📋 Données compte bancaire pour API:', bankAccountData);
         const createdBankAccount = await portfolioAccountsApi.addBankAccount(portfolioId, bankAccountData);
         createdBankAccounts.push(createdBankAccount);
         
@@ -155,15 +151,18 @@ export function useTraditionalPortfolios() {
     if (mobileAccountToCreate && mobileAccountToCreate.provider) {
       try {
         console.log('📡 Création du compte Mobile Money associé...');
+        // Nettoyer les données - le backend génère id, balance, account_status, created_at, updated_at, portfolio_id
         const mobileAccountData = {
-          ...mobileAccountToCreate,
-          portfolio_id: portfolioId,
+          provider: mobileAccountToCreate.provider,
+          phone_number: mobileAccountToCreate.phone_number || '',
+          account_name: mobileAccountToCreate.account_name || '',
           is_primary: true,
           is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as Omit<MobileMoneyAccount, 'id' | 'created_at' | 'updated_at'>;
+          currency: mobileAccountToCreate.currency,
+          purpose: mobileAccountToCreate.purpose || 'general',
+        };
         
+        console.log('📋 Données compte Mobile Money pour API:', mobileAccountData);
         const createdMobileAccount = await portfolioAccountsApi.addMobileMoneyAccount(portfolioId, mobileAccountData);
         createdMobileMoneyAccounts.push(createdMobileAccount);
         
@@ -179,12 +178,6 @@ export function useTraditionalPortfolios() {
     // Ajouter les comptes au portfolio pour le stockage
     newPortfolio.bank_accounts = createdBankAccounts;
     newPortfolio.mobile_money_accounts = createdMobileMoneyAccounts;
-
-    // Sauvegarder dans le localStorage
-    await portfolioStorageService.addOrUpdatePortfolio({
-      ...newPortfolio,
-      _pendingSync: !navigator.onLine // Flag pour indiquer qu'il faut synchroniser plus tard si offline
-    } as unknown as PortfolioWithType);
     
     // Rafraîchir la liste
     refresh();
@@ -225,60 +218,27 @@ export function useTraditionalPortfolios() {
       
     } catch (err) {
       console.error('❌ Erreur lors de la mise à jour via le backend:', err);
-      console.log('📦 Fallback: mise à jour locale du portefeuille...');
-      
-      // Fallback: trouver et mettre à jour localement
-      const existingPortfolio = portfolios.find(p => p.id === id);
-      if (!existingPortfolio) {
-        throw new Error(`Portefeuille ${id} non trouvé`);
-      }
-      
-      const localUpdatedPortfolio: TraditionalPortfolio = {
-        ...existingPortfolio,
-        ...updates,
-        updated_at: new Date().toISOString()
-      };
-      
-      await portfolioStorageService.addOrUpdatePortfolio({
-        ...localUpdatedPortfolio,
-        _pendingSync: true
-      } as unknown as PortfolioWithType);
-      
-      console.log('✅ Portefeuille mis à jour localement:', localUpdatedPortfolio.id);
-      
-      refresh();
-      
-      return localUpdatedPortfolio;
+      // En mode production, propager l'erreur au lieu de fallback
+      throw err;
     }
-  }, [portfolios, refresh]);
+  }, [refresh]);
 
   /**
    * Supprime un portefeuille traditionnel via l'API backend
-   * En cas d'échec du backend, supprime localement
    * 
    * @param {string} id Identifiant du portefeuille à supprimer
    * @returns {Promise<void>}
    */
   const deletePortfolio = useCallback(async (id: string): Promise<void> => {
-    try {
-      // Essayer de supprimer via l'API backend
-      console.log('📡 Suppression du portefeuille via le backend...');
-      await traditionalPortfolioApi.deletePortfolio(id);
-      console.log('✅ Portefeuille supprimé avec succès:', id);
-      
-      // Supprimer aussi du localStorage
-      await portfolioStorageService.deletePortfolio(id);
-      
-    } catch (err) {
-      console.error('❌ Erreur lors de la suppression via le backend:', err);
-      console.log('📦 Fallback: suppression locale du portefeuille...');
-      
-      // Fallback: supprimer localement
-      await portfolioStorageService.deletePortfolio(id);
-      console.log('✅ Portefeuille supprimé localement:', id);
-    }
+    // Supprimer via l'API backend
+    console.log('📡 Suppression du portefeuille via le backend...');
+    await traditionalPortfolioApi.deletePortfolio(id);
+    console.log('✅ Portefeuille supprimé avec succès:', id);
     
-    // Rafraîchir la liste dans tous les cas
+    // Supprimer aussi du localStorage (cache local)
+    await portfolioStorageService.deletePortfolio(id);
+    
+    // Rafraîchir la liste
     refresh();
   }, [refresh]);
 

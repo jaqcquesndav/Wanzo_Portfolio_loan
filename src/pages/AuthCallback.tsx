@@ -157,9 +157,20 @@ export default function AuthCallback() {
           
           try {
             const meResponse = await userApi.getCurrentUserWithInstitution();
-            console.log('📦 Réponse /users/me:', meResponse);
+            console.log('📦 Réponse brute /users/me:', meResponse);
             
-            const { user: userData, institution: institutionData, auth0Id, role, permissions } = meResponse;
+            // Gérer la double-enveloppe: le backend peut retourner { data: { user, institution, ... } }
+            // ou directement { user, institution, ... } selon la configuration de l'API
+            const responseData = (meResponse as { data?: unknown }).data || meResponse;
+            const { user: userData, institution: institutionData, auth0Id, role, permissions } = responseData as {
+              user: typeof meResponse.user;
+              institution: typeof meResponse.institution;
+              auth0Id: string;
+              role: string;
+              permissions: string[];
+            };
+            
+            console.log('📦 Données extraites après parsing:', { userData, institutionData, auth0Id });
             
             // Log détaillé pour le debugging
             console.log('👤 Données utilisateur:', {

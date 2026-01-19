@@ -117,15 +117,29 @@ export function useProspection(initialCompanies: Company[] = []) {
         
         try {
           // Tenter de charger des données supplémentaires depuis l'API si disponible
-          const apiData = await companyApi.getAllCompanies();
+          const response = await companyApi.getAllCompanies();
           
           // Reset du backoff en cas de succès
           handleApiSuccess();
           
+          // Gérer la double enveloppe: { data: { data: [...], meta: {...} } }
+          let apiCompanies: Company[] = [];
+          
+          if (response && typeof response === 'object' && 'data' in response) {
+            const innerData = (response as { data: unknown }).data;
+            if (innerData && typeof innerData === 'object' && 'data' in innerData && Array.isArray((innerData as { data: unknown[] }).data)) {
+              apiCompanies = (innerData as { data: Company[] }).data;
+            } else if (Array.isArray(innerData)) {
+              apiCompanies = innerData as Company[];
+            }
+          } else if (Array.isArray(response)) {
+            apiCompanies = response;
+          }
+          
           // Combine les données d'API avec les données de base, en évitant les doublons par ID
-          const apiIds = new Set(apiData.map((company: Company) => company.id));
+          const apiIds = new Set(apiCompanies.map((company: Company) => company.id));
           const uniqueBaseCompanies = allCompanies.filter(company => !apiIds.has(company.id));
-          allCompanies = [...apiData, ...uniqueBaseCompanies];
+          allCompanies = [...apiCompanies, ...uniqueBaseCompanies];
           
         } catch (error: unknown) {
           // Gestion spécifique des erreurs 429

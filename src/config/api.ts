@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '../services/api/endpoints';
  * - baseUrl: URL de base complète de l'API Portfolio (depuis les variables d'environnement ou valeur par défaut)
  * - headers: En-têtes HTTP par défaut pour toutes les requêtes
  * - endpoints: Points d'entrée de l'API (importés depuis endpoints.ts)
+ * - isProduction: Mode production (désactive les fallbacks et données mockées)
  * 
  * @see API DOCUMENTATION/chat/README.md - Section Architecture
  * 
@@ -30,5 +31,18 @@ export const API_CONFIG = {
   },
   
   // Points d'entrée de l'API
-  endpoints: API_ENDPOINTS
+  endpoints: API_ENDPOINTS,
+  
+  /**
+   * Mode production - désactive les fallbacks et données mockées
+   * En production: les erreurs sont propagées au lieu de créer des données locales
+   * Activé par défaut pour préparer la mise en production
+   */
+  isProduction: import.meta.env.VITE_PRODUCTION_MODE === 'true' || import.meta.env.PROD || true,
+  
+  /**
+   * Autoriser les fallbacks localStorage pour le mode offline
+   * Désactivé par défaut en production
+   */
+  allowOfflineFallback: import.meta.env.VITE_ALLOW_OFFLINE_FALLBACK === 'true' || false,
 };

@@ -56,10 +56,10 @@ export function CompanyListPaginated({
     const totalCompanies = companies.length;
     const provinces = new Set(companies.map(c => c.sector || 'Divers')).size;
     const countries = 1;
-    const marketSize = companies.reduce((sum, c) => sum + c.annual_revenue, 0);
-    const totalEmployees = companies.reduce((sum, c) => sum + c.employee_count, 0);
+    const marketSize = companies.reduce((sum, c) => sum + (c.annual_revenue ?? 0), 0);
+    const totalEmployees = companies.reduce((sum, c) => sum + (c.employee_count ?? 0), 0);
     const averageGrowth = companies.length > 0 
-      ? companies.reduce((sum, c) => sum + c.financial_metrics.revenue_growth, 0) / companies.length 
+      ? companies.reduce((sum, c) => sum + (c.financial_metrics?.revenue_growth ?? 0), 0) / companies.length 
       : 0;
     
     const totalMale = companies.reduce((sum, c) => {
@@ -116,7 +116,7 @@ export function CompanyListPaginated({
     },
     {
       header: 'Employés',
-      accessor: (c: Company) => c.employee_count.toString()
+      accessor: (c: Company) => (c.employee_count ?? 0).toString()
     },
     {
       header: 'Valeur (CA)',
@@ -124,7 +124,7 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {formatAmount(c.annual_revenue)}
+            {formatAmount(c.annual_revenue ?? 0)}
             {getTrendIcon(trend)}
           </span>
         );
@@ -132,7 +132,7 @@ export function CompanyListPaginated({
     },
     {
       header: `Croissance`,
-      accessor: (c: Company) => `${c.financial_metrics.revenue_growth}%`
+      accessor: (c: Company) => `${c.financial_metrics?.revenue_growth ?? 0}%`
     },
     {
       header: 'MBE (EBITDA)',
@@ -140,7 +140,7 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {c.financial_metrics.ebitda ? formatAmount(c.financial_metrics.ebitda) : '-'}
+            {c.financial_metrics?.ebitda ? formatAmount(c.financial_metrics.ebitda) : '-'}
             {getTrendIcon(trend)}
           </span>
         );
@@ -152,7 +152,7 @@ export function CompanyListPaginated({
         const trend = getRandomTrend();
         return (
           <span className="flex items-center">
-            {c.financial_metrics.credit_score}
+            {c.financial_metrics?.credit_score ?? 0}
             {getTrendIcon(trend)}
           </span>
         );

@@ -31,6 +31,8 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
    * Transforme les données du formulaire en structure Portfolio
    */
   const handleFormSubmit = async (formData: PortfolioStepperFormData) => {
+    console.log('📝 handleFormSubmit appelé avec:', formData);
+    
     // Créer l'objet Portfolio
     const portfolioData: PortfolioModalData = {
       id: uuidv4(),
@@ -126,6 +128,7 @@ export function CreatePortfolioModal({ onClose, onSubmit }: CreatePortfolioModal
       portfolioData.mobile_money_accounts = [mobileMoneyAccount];
     }
     
+    console.log('📤 Données du portefeuille à envoyer:', portfolioData);
     return onSubmit(portfolioData);
   };
 

@@ -21,8 +21,27 @@ export function useCompaniesApi(filters?: ProspectionFilters) {
       setLoading(true);
       setError(null);
       const response = await companyApi.getAllCompanies(customFilters || filters);
-      setCompanies(response.data);
-      setMeta(response.meta);
+      
+      // Gérer la double enveloppe: { data: { data: [...], meta: {...} } }
+      let companiesArray: Company[] = [];
+      let metaData: PaginatedResponse<Company>['meta'] | null = null;
+      
+      if (response && typeof response === 'object' && 'data' in response) {
+        const innerData = (response as { data: unknown }).data;
+        if (innerData && typeof innerData === 'object' && 'data' in innerData) {
+          // Double enveloppe
+          const paginatedData = innerData as { data: Company[]; meta?: PaginatedResponse<Company>['meta'] };
+          companiesArray = Array.isArray(paginatedData.data) ? paginatedData.data : [];
+          metaData = paginatedData.meta || null;
+        } else if (Array.isArray(innerData)) {
+          // Simple enveloppe avec data comme tableau
+          companiesArray = innerData as Company[];
+          metaData = (response as { meta?: PaginatedResponse<Company>['meta'] }).meta || null;
+        }
+      }
+      
+      setCompanies(companiesArray);
+      setMeta(metaData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des entreprises';
       setError(errorMessage);
@@ -139,8 +158,25 @@ export function useCompanyManagement() {
     try {
       setLoading(true);
       setError(null);
-      const data = await companyApi.getAllCompanies();
-      setCompanies(data);
+      const response = await companyApi.getAllCompanies();
+      
+      // Gérer la double enveloppe: { data: { data: [...], meta: {...} } }
+      let companiesArray: Company[] = [];
+      
+      if (response && typeof response === 'object' && 'data' in response) {
+        const innerData = (response as { data: unknown }).data;
+        if (innerData && typeof innerData === 'object' && 'data' in innerData && Array.isArray((innerData as { data: unknown[] }).data)) {
+          companiesArray = (innerData as { data: Company[] }).data;
+        } else if (Array.isArray(innerData)) {
+          companiesArray = innerData as Company[];
+        }
+      } else if (Array.isArray(response)) {
+        companiesArray = response;
+      } else {
+        console.warn('Format de réponse inattendu pour getAllCompanies:', response);
+      }
+      
+      setCompanies(companiesArray);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des entreprises';
       setError(errorMessage);
