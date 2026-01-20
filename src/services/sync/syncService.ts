@@ -60,8 +60,11 @@ class SyncService {
   private syncInterval: number = 5 * 60 * 1000; // 5 minutes
   private intervalId?: number;
   private isSyncing: boolean = false;
-  private retryTimeout: number = 30 * 1000; // 30 seconds
-  // private maxRetries: number = 3;
+  private retryTimeout: number = 60 * 1000; // 60 seconds (augmenté)
+  private consecutiveErrors: number = 0;
+  private maxConsecutiveErrors: number = 3; // Arrêter après 3 erreurs consécutives
+  private syncDisabledUntil: number = 0; // Timestamp jusqu'auquel la sync est désactivée
+  private readonly SYNC_PAUSE_DURATION = 2 * 60 * 1000; // 2 minutes de pause après erreurs répétées
 
   async checkSyncStatus(): Promise<{ canSync: boolean; message?: string }> {
     try {
@@ -100,19 +103,37 @@ class SyncService {
 
     // Arrêter toute synchronisation existante
     this.stopSync();
+    
+    // Réinitialiser les compteurs d'erreurs
+    this.consecutiveErrors = 0;
+    this.syncDisabledUntil = 0;
 
-    // Démarrer la nouvelle synchronisation
+    // Démarrer la nouvelle synchronisation avec un intervalle plus long
     this.intervalId = window.setInterval(() => {
+      // Vérifier si la sync n'est pas désactivée temporairement
+      if (Date.now() < this.syncDisabledUntil) {
+        console.log(`⏸️ Sync désactivée temporairement (${Math.ceil((this.syncDisabledUntil - Date.now()) / 1000)}s restantes)`);
+        return;
+      }
       void this.sync();
     }, this.syncInterval);
 
-    // Écouter les changements de connectivité
+    // Écouter les changements de connectivité (avec debounce)
+    let onlineTimeout: number | undefined;
     networkService.addListener('online', () => {
-      void this.sync();
+      // Debounce pour éviter les appels multiples
+      if (onlineTimeout) window.clearTimeout(onlineTimeout);
+      onlineTimeout = window.setTimeout(() => {
+        if (Date.now() >= this.syncDisabledUntil) {
+          void this.sync();
+        }
+      }, 5000); // Attendre 5s après reconnexion
     });
 
-    // Synchronisation initiale
-    void this.sync();
+    // Synchronisation initiale différée (attendre que l'app soit prête)
+    setTimeout(() => {
+      void this.sync();
+    }, 10000); // 10s après démarrage
   }
 
   stopSync(): void {
@@ -123,7 +144,19 @@ class SyncService {
   }
 
   private async sync(): Promise<void> {
-    if (this.isSyncing || !networkService.isOnline()) {
+    // Protection contre les appels multiples
+    if (this.isSyncing) {
+      console.log('⏳ Sync déjà en cours, ignoré');
+      return;
+    }
+    
+    // Vérifier si la sync est désactivée
+    if (Date.now() < this.syncDisabledUntil) {
+      return;
+    }
+    
+    // Vérifier la connectivité sans faire de requête HTTP
+    if (!networkService.isOnline()) {
       return;
     }
 
@@ -134,24 +167,31 @@ class SyncService {
       const { SYNC_ENABLED } = await import('../../config/sync');
       if (!SYNC_ENABLED) {
         console.info('Synchronisation réseau désactivée (mode offline)');
+        this.isSyncing = false;
         return;
       }
 
-      // Vérifier la connectivité et l'authentification
+      // Vérifier la connectivité (utilise le cache si disponible)
       const isConnected = await networkService.checkConnectivity();
       if (!isConnected) {
-        throw new Error('No network connection');
+        // Ne pas compter comme erreur, juste skip
+        this.isSyncing = false;
+        return;
       }
 
       const token = getAccessToken();
       if (!token) {
-        throw new Error('No authentication token');
+        this.isSyncing = false;
+        return;
       }
 
       // Vérifier l'état de la synchronisation
       const syncStatus = await this.checkSyncStatus();
       if (!syncStatus.canSync) {
         console.log('Sync not needed:', syncStatus.message);
+        // Succès, réinitialiser le compteur d'erreurs
+        this.consecutiveErrors = 0;
+        this.isSyncing = false;
         return;
       }
 
@@ -160,8 +200,6 @@ class SyncService {
       // Appliquer les modifications du serveur (si tableau)
       if (Array.isArray(serverChanges)) {
         await this.applyServerChanges(serverChanges);
-      } else {
-        console.warn('Server changes is not an array:', serverChanges);
       }
 
       // Récupérer les modifications locales
@@ -174,32 +212,33 @@ class SyncService {
         // Vider la file de synchronisation
         localStorageDB.clearStore('sync_queue');
       }
+      
+      // Succès, réinitialiser le compteur d'erreurs
+      this.consecutiveErrors = 0;
+      
     } catch (error) {
-      console.error('Sync error:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
-
-      // Store failed sync attempt in localStorage for retry
-      try {
-        localStorageDB.add('sync_queue', {
-          id: crypto.randomUUID(),
-          action: 'update',
-          entity: 'sync_error',
-          data: { error: error instanceof Error ? error.message : 'Unknown error' },
-          timestamp: Date.now(),
-          retries: 0,
-          priority: 0
+      this.consecutiveErrors++;
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Ne loguer que si c'est une vraie erreur (pas juste "no network")
+      if (!errorMessage.includes('network') && !errorMessage.includes('No network')) {
+        console.error('Sync error:', {
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+          consecutiveErrors: this.consecutiveErrors
         });
-      } catch (e) {
-        console.error('Failed to log sync error:', e);
       }
 
-      // Retry logic for network errors
-      if (error instanceof Error && 
-         (error.message.includes('network') || error.message.includes('timeout'))) {
-        setTimeout(() => void this.sync(), this.retryTimeout);
+      // Si trop d'erreurs consécutives, désactiver temporairement la sync
+      if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+        this.syncDisabledUntil = Date.now() + this.SYNC_PAUSE_DURATION;
+        console.warn(`⚠️ Sync désactivée pour ${this.SYNC_PAUSE_DURATION / 1000}s après ${this.consecutiveErrors} erreurs consécutives`);
+        this.consecutiveErrors = 0; // Reset pour permettre un nouveau cycle après la pause
       }
+
+      // Ne PAS retry automatiquement - laisser l'intervalle normal gérer ça
+      // Cela évite les boucles de retry qui causent le rate limiting
     } finally {
       this.isSyncing = false;
     }

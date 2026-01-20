@@ -1,5 +1,5 @@
 // src/pages/TraditionalPortfolio.tsx
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -9,7 +9,8 @@ import { CreatePortfolioModal, type PortfolioModalData } from '../components/por
 import { PortfolioFilters } from '../components/portfolio/traditional/PortfolioFilters';
 import { Pagination } from '../components/ui/Pagination';
 import { useNotification } from '../contexts/useNotification';
-import { useTraditionalPortfolios } from '../hooks/useTraditionalPortfolios';
+// ✅ Utilisation des hooks React Query professionnels
+import { useTraditionalPortfoliosQuery, useCreatePortfolioMutation } from '../hooks/queries';
 import { ConnectionError } from '../components/common/ConnectionError';
 import { WelcomeNewUser } from '../components/common/WelcomeNewUser';
 import { PortfoliosSkeleton } from '../components/ui/PortfoliosSkeleton';
@@ -24,21 +25,34 @@ export default function TraditionalPortfolio() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState<Record<string, string>>({});
 
   // Récupérer les informations du contexte utilisateur
   const { institutionId, user } = useAppContextStore();
 
-  const {
-    portfolios,
-    filters,
-    setFilters,
-    filteredPortfolios,
-    createPortfolio,
-    loading,
+  // ✅ Utilisation de React Query - cache intelligent et pas de requêtes en boucle
+  const { 
+    data: portfolioData, 
+    isLoading: loading, 
     error,
-    backendFailed,
-    refresh
-  } = useTraditionalPortfolios();
+    refetch: refresh 
+  } = useTraditionalPortfoliosQuery();
+  
+  // Mutation pour créer un portefeuille
+  const createPortfolioMutation = useCreatePortfolioMutation();
+  
+  // Extraire les portfolios de la réponse
+  const portfolios = portfolioData?.data || [];
+  const backendFailed = !!error;
+  
+  // Filtrer les portefeuilles (mémorisé pour éviter les recalculs)
+  const filteredPortfolios = useMemo(() => {
+    return portfolios.filter(portfolio => {
+      if (filters.status && portfolio.status !== filters.status) return false;
+      if (filters.riskProfile && portfolio.risk_profile !== filters.riskProfile) return false;
+      return true;
+    });
+  }, [portfolios, filters]);
   
   /**
    * Handler pour la création de portefeuille avec le nouveau format
@@ -92,8 +106,8 @@ export default function TraditionalPortfolio() {
     try {
       console.log('📋 Création avec manager_id:', user.id, 'institution_id:', institutionId);
       
-      // Utiliser les vraies valeurs du contexte (UUIDs)
-      const newPortfolio = await createPortfolio({
+      // ✅ Utilisation de la mutation React Query
+      const newPortfolio = await createPortfolioMutation.mutateAsync({
         ...data,
         manager_id: user.id,
         institution_id: institutionId,

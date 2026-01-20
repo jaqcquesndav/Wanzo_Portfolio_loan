@@ -2,22 +2,27 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { useNotification } from '../contexts/useNotification';
-import { useTraditionalPortfolios } from '../hooks/useTraditionalPortfolios';
+// ✅ Utilisation des hooks React Query professionnels
+import { useCreatePortfolioMutation } from '../hooks/queries';
 import { CreatePortfolioModal, type PortfolioModalData } from '../components/portfolio/CreatePortfolioModal';
+import { useAppContextStore } from '../stores/appContextStore';
 
 export default function WelcomeNewUser() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { createPortfolio } = useTraditionalPortfolios();
+  const { institutionId, user } = useAppContextStore();
+  
+  // ✅ Mutation React Query avec invalidation automatique du cache
+  const createPortfolioMutation = useCreatePortfolioMutation();
 
   const handleCreatePortfolio = async (data: PortfolioModalData) => {
     try {
-      // Ajoute les champs requis manquants pour TraditionalPortfolio
-      const newPortfolio = await createPortfolio({
+      // ✅ Utilisation de la mutation React Query
+      const newPortfolio = await createPortfolioMutation.mutateAsync({
         ...data,
-        manager_id: 'default-manager',
-        institution_id: 'default-institution',
+        manager_id: user?.id || 'default-manager',
+        institution_id: institutionId || 'default-institution',
       });
       showNotification('Portefeuille créé avec succès', 'success');
       setShowCreateModal(false);

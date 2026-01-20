@@ -10,7 +10,8 @@ import { Badge } from '../components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { formatDate } from '../utils/formatters';
-import { useInstitutionApi } from '../hooks/useInstitutionApi';
+// ✅ Utilisation du hook React Query professionnel
+import { useCurrentUserQuery } from '../hooks/queries';
 import { OrganizationSkeleton } from '../components/ui/OrganizationSkeleton';
 
 // Constante pour afficher quand une donnée est manquante
@@ -21,7 +22,10 @@ const NA = 'N/A';
  * pour les gestionnaires de portefeuille de crédit
  */
 export default function Organization() {
-  const { institution, institutionProfile, loading, error, refetch } = useInstitutionApi();
+  // ✅ Utilisation de React Query avec cache intelligent
+  const { data, isLoading: loading, error, refetch } = useCurrentUserQuery();
+  const institution = data?.institution;
+  const institutionProfile = data?.institutionProfile;
 
   if (loading) {
     return <OrganizationSkeleton />;
@@ -34,7 +38,7 @@ export default function Organization() {
         <EmptyState
           icon={Building2}
           title="Erreur de chargement"
-          description={error}
+          description={error.message || 'Une erreur est survenue'}
           action={{ label: "Réessayer", onClick: () => refetch() }}
           size="lg"
         />

@@ -11,7 +11,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { Task } from '../../hooks/useChatStore';
-import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
+import { useTraditionalPortfoliosQuery } from '../../hooks/queries';
 
 // Définition des types de portefeuille
 type PortfolioType = 'traditional';
@@ -141,8 +141,9 @@ export function SourceSelector({
   const [activeCategory, setActiveCategory] = useState<SourceCategory>('portfolio');
   const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(selectedPortfolioId || null);
 
-  // Charger les données des portefeuilles
-  const { portfolios: traditionalPortfolios, loading } = useTraditionalPortfolios();
+  // ✅ Charger les données avec React Query (cache intelligent)
+  const { data: portfolioData, isLoading: loading } = useTraditionalPortfoliosQuery();
+  const traditionalPortfolios = portfolioData?.data || [];
 
   // Mémoriser les IDs des portefeuilles pour une comparaison stable
   const portfolioIds = useMemo(() => 

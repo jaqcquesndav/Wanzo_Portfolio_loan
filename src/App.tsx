@@ -17,6 +17,7 @@ import { LoadingScreen } from './components/ui/LoadingScreen';
 import { auth0Service } from './services/api/auth/auth0Service';
 import { ConnectivityProvider } from './contexts/ConnectivityContext';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './services/api/reactQueryConfig';
 import { storageManager } from './utils/storageManager';
 import { PanelProvider } from './contexts/PanelContext';
@@ -141,6 +142,8 @@ export default function App() {
           </ConnectivityProvider>
         </AuthProvider>
       </PerformanceProvider>
+      {/* React Query DevTools - visible uniquement en développement */}
+      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
     </QueryClientProvider>
   );
 }

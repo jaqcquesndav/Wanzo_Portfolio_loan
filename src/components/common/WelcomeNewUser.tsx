@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
+// ✅ Utilisation des hooks React Query professionnels
+import { useCreatePortfolioMutation } from '../../hooks/queries';
 import { useNotification } from '../../contexts/useNotification';
 import { useAppContextStore } from '../../stores/appContextStore';
 import { Button } from '../ui/Button';
@@ -8,7 +9,8 @@ import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 
 export const WelcomeNewUser: React.FC = () => {
-  const { createPortfolio } = useTraditionalPortfolios();
+  // ✅ Mutation React Query avec invalidation automatique du cache
+  const createPortfolioMutation = useCreatePortfolioMutation();
   const { showNotification } = useNotification();
   const { institutionId, user } = useAppContextStore();
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,8 @@ export const WelcomeNewUser: React.FC = () => {
     
     try {
       setLoading(true);
-      await createPortfolio(formData);
+      // ✅ Utilisation de la mutation React Query
+      await createPortfolioMutation.mutateAsync(formData);
       showNotification('Votre premier portefeuille a été créé avec succès!', 'success');
     } catch (error) {
       console.error('Erreur lors de la création du portefeuille:', error);

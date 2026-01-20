@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
+import { useTraditionalPortfoliosQuery } from '../../hooks/queries';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import { useDashboardApi, useDashboardRiskMetrics } from '../../hooks/useDashboardApi';
 import { useDashboardCustomization } from '../../hooks/dashboard/useDashboardCustomization';
@@ -22,7 +22,9 @@ import { CalendarIcon, ChevronDownIcon, TrendingUpIcon, AlertCircleIcon, CheckCi
  */
 export const ProfessionalCreditDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { portfolios, loading: portfoliosLoading } = useTraditionalPortfolios();
+  // ✅ Utilisation de React Query pour éviter les requêtes en boucle
+  const { data: portfolioData, isLoading: portfoliosLoading } = useTraditionalPortfoliosQuery();
+  const portfolios = portfolioData?.data || [];
   const { formatCurrency } = useFormatCurrency();
   
   // Forcer l'initialisation des données mock au chargement

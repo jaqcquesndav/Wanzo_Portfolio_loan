@@ -1,12 +1,18 @@
 // src/hooks/useInstitutionApi.ts
 // Hook pour accéder à l'institution depuis le store global
+// Avec protection contre les appels multiples
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import type { Institution, InstitutionProfile } from '../types/institution';
 import { useNotification } from '../contexts/useNotification';
 import { useAppContextStore } from '../stores/appContextStore';
 import { userApi } from '../services/api/shared/user.api';
 import { auth0Service } from '../services/api/auth/auth0Service';
+
+// Cache global pour éviter les appels multiples
+let globalLoadPromise: Promise<void> | null = null;
+let globalLoadTimestamp: number = 0;
+const LOAD_CACHE_TTL = 60000; // 60 secondes
 
 /**
  * Hook principal pour la gestion de l'institution courante
@@ -15,6 +21,8 @@ import { auth0Service } from '../services/api/auth/auth0Service';
  * 1. D'abord, il vérifie si les données sont dans le store Zustand
  * 2. Si non (après rechargement de page), il les charge depuis /users/me
  * 3. Les données sont ensuite disponibles pour l'affichage
+ * 
+ * Protection contre les appels multiples avec cache global
  */
 export function useInstitutionApi() {
   const { showNotification } = useNotification();
@@ -31,17 +39,14 @@ export function useInstitutionApi() {
   // Initialiser isLoading à true si pas de données
   const [isLoading, setIsLoading] = useState(!institution);
   const [loadError, setLoadError] = useState<string | null>(null);
+  
+  // Ref pour éviter les appels multiples dans le même composant
+  const hasTriedLoading = useRef(false);
 
-  // DEBUG: Log pour vérifier ce que retourne le store
-  console.log('🔍 useInstitutionApi - données du store Zustand:', {
-    hasInstitution: !!institution,
-    hasProfile: !!institutionProfile,
-    institutionId,
-    isContextLoaded,
-    isLoading,
-    institutionName: institution?.name,
-    institutionType: institution?.type
-  });
+  // DEBUG: Log conditionnel (seulement si pas de données)
+  if (!institution && !hasTriedLoading.current) {
+    console.log('🔍 useInstitutionApi - pas de données dans le store, chargement nécessaire');
+  }
 
   // Charger les données depuis /users/me si nécessaire
   const loadData = useCallback(async () => {
@@ -51,87 +56,99 @@ export function useInstitutionApi() {
       console.log('⚠️ useInstitutionApi: Pas de token, skip du chargement');
       return;
     }
+    
+    // Vérifier si un chargement global est déjà en cours ou récent
+    if (globalLoadPromise && Date.now() - globalLoadTimestamp < LOAD_CACHE_TTL) {
+      console.log('⏳ useInstitutionApi: Chargement déjà en cours, réutilisation...');
+      await globalLoadPromise;
+      return;
+    }
 
     setIsLoading(true);
     setLoadError(null);
     
-    try {
-      console.log('🔄 useInstitutionApi: Chargement des données depuis /users/me...');
-      const response = await userApi.getCurrentUserWithInstitution();
-      
-      // Gérer les deux formats possibles de réponse
-      const responseData = (response as { data?: unknown }).data || response;
-      const { 
-        user: userData, 
-        institution: institutionData,
-        institutionProfile: profileData,
-        auth0Id, 
-        permissions 
-      } = responseData as {
-        user: { id?: string; firstName?: string; institutionId?: string; [key: string]: unknown };
-        institution: { id?: string; name?: string; [key: string]: unknown } | null;
-        institutionProfile?: InstitutionProfile | null;
-        auth0Id: string;
-        permissions: string[];
-      };
-      
-      console.log('✅ useInstitutionApi: Données chargées:', {
-        userName: userData?.firstName,
-        institutionName: institutionData?.name,
-        institutionId: institutionData?.id || userData?.institutionId,
-        hasProfile: !!profileData
-      });
-      
-      // Mettre à jour le store avec les données
-      if (userData) {
-        setContext({
-          user: userData as Parameters<typeof setContext>[0]['user'],
-          institution: institutionData as Parameters<typeof setContext>[0]['institution'],
-          institutionProfile: profileData || null,
+    // Créer une nouvelle promesse de chargement global
+    globalLoadTimestamp = Date.now();
+    globalLoadPromise = (async () => {
+      try {
+        console.log('🔄 useInstitutionApi: Chargement des données depuis /users/me...');
+        const response = await userApi.getCurrentUserWithInstitution();
+        
+        // Gérer les deux formats possibles de réponse
+        const responseData = (response as { data?: unknown }).data || response;
+        const { 
+          user: userData, 
+          institution: institutionData,
+          institutionProfile: profileData,
+          auth0Id, 
+          permissions 
+        } = responseData as {
+          user: { id?: string; firstName?: string; institutionId?: string; [key: string]: unknown };
+          institution: { id?: string; name?: string; [key: string]: unknown } | null;
+          institutionProfile?: InstitutionProfile | null;
+          auth0Id: string;
+          permissions: string[];
+        };
+        
+        console.log('✅ useInstitutionApi: Données chargées:', {
+          userName: userData?.firstName,
+          institutionName: institutionData?.name,
           institutionId: institutionData?.id || userData?.institutionId,
-          auth0Id: auth0Id || '',
-          permissions: permissions || []
+          hasProfile: !!profileData
         });
+        
+        // Mettre à jour le store avec les données
+        if (userData) {
+          setContext({
+            user: userData as Parameters<typeof setContext>[0]['user'],
+            institution: institutionData as Parameters<typeof setContext>[0]['institution'],
+            institutionProfile: profileData || null,
+            institutionId: institutionData?.id || userData?.institutionId,
+            auth0Id: auth0Id || '',
+            permissions: permissions || []
+          });
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
+        setLoadError(errorMessage);
+        console.error('❌ useInstitutionApi: Erreur chargement:', err);
+        throw err; // Re-throw pour que la promesse globale soit rejetée
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
-      setLoadError(errorMessage);
-      console.error('❌ useInstitutionApi: Erreur chargement:', err);
-    } finally {
-      setIsLoading(false);
+    })();
+    
+    try {
+      await globalLoadPromise;
+    } catch {
+      // Erreur déjà gérée dans le bloc ci-dessus
     }
   }, [setContext]);
-
-  // Flag pour éviter les appels multiples
-  const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
   // Effet pour charger les données si elles ne sont pas dans le store
   useEffect(() => {
     // Si on a déjà l'institution dans le store, pas besoin de charger
     if (institution) {
-      console.log('✅ useInstitutionApi: Institution déjà dans le store:', institution.name);
       setIsLoading(false);
       return;
     }
     
-    // Ne pas charger si déjà essayé
-    if (hasTriedLoading) {
+    // Ne pas charger si déjà essayé dans cette instance
+    if (hasTriedLoading.current) {
       return;
     }
     
     // Ne pas charger si pas de token (utilisateur non connecté)
     const token = auth0Service.getAccessToken();
     if (!token) {
-      console.log('⚠️ useInstitutionApi: Pas de token, skip du chargement');
       setIsLoading(false);
       return;
     }
     
-    // Charger les données depuis l'API
-    console.log('🔄 useInstitutionApi: Chargement des données...');
-    setHasTriedLoading(true);
+    // Marquer comme essayé et charger
+    hasTriedLoading.current = true;
     loadData();
-  }, [institution, hasTriedLoading, loadData]);
+  }, [institution, loadData]);
 
   // Fonction de rafraîchissement manuel
   const refetch = useCallback(async () => {

@@ -252,12 +252,26 @@ export const apiClient = {
       : endpoint;
     
     // Utiliser le coordinateur pour les appels GET (lecture)
+    // Avec cache de 30s par défaut pour éviter les requêtes en double
     const callId = `GET:${url}`;
+    
+    // Déterminer le TTL du cache en fonction de l'endpoint
+    // - /users/me : 60s (données utilisateur changent peu)
+    // - /portfolios : 30s (liste peut changer)
+    // - /health : 30s
+    let cacheTTL = 30000; // 30s par défaut
+    if (url.includes('/users/me')) {
+      cacheTTL = 60000; // 60s pour les données utilisateur
+    } else if (url.includes('/health')) {
+      cacheTTL = 30000;
+    }
+    
     return apiCoordinator.scheduleApiCall(
       callId,
       () => this.request<T>(url, { url, method: 'GET' }),
       'medium', // Priorité normale pour les GET
-      2 // Max 2 tentatives pour les GET
+      2, // Max 2 tentatives pour les GET
+      cacheTTL
     );
   },
 

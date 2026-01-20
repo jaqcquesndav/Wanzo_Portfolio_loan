@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useTraditionalPortfolios } from './useTraditionalPortfolios';
+// ✅ Utilisation des hooks React Query professionnels
+import { useTraditionalPortfoliosQuery } from './queries';
 
 // Métriques professionnelles pour un portefeuille de crédit
 export interface CreditPortfolioMetrics {
@@ -46,7 +47,10 @@ export interface MarketBenchmarks {
 }
 
 export function useCreditPortfolioMetrics() {
-  const { portfolios, loading: portfoliosLoading } = useTraditionalPortfolios();
+  // ✅ Utilisation de React Query - données extraites du cache
+  const { data: portfolioData, isLoading: portfoliosLoading } = useTraditionalPortfoliosQuery();
+  const portfolios = portfolioData?.data || [];
+  
   const [portfolioMetrics, setPortfolioMetrics] = useState<CreditPortfolioMetrics[]>([]);
   const [benchmarks, setBenchmarks] = useState<MarketBenchmarks | null>(null);
   const [loading, setLoading] = useState(true);

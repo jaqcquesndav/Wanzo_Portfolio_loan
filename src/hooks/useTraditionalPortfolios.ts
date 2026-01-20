@@ -2,13 +2,14 @@
 // Hook pour gérer les portefeuilles traditionnels avec API backend (mode production)
 
 import { useState, useMemo, useCallback } from 'react';
-import { usePortfolios } from './usePortfolios';
+import { usePortfolios, invalidatePortfolioCache } from './usePortfolios';
 import { traditionalPortfolioApi } from '../services/api/traditional/portfolio.api';
 import { portfolioAccountsApi } from '../services/api/shared';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { BankAccount } from '../types/bankAccount';
 import type { MobileMoneyAccount } from '../types/mobileMoneyAccount';
 import { validateTraditionalPortfolio } from '../utils/validation';
+import { apiCoordinator } from '../services/api/apiCoordinator';
 
 interface Filters {
   status: string;
@@ -179,7 +180,9 @@ export function useTraditionalPortfolios() {
     newPortfolio.bank_accounts = createdBankAccounts;
     newPortfolio.mobile_money_accounts = createdMobileMoneyAccounts;
     
-    // Rafraîchir la liste
+    // Invalider le cache et les caches API, puis rafraîchir
+    invalidatePortfolioCache('traditional');
+    apiCoordinator.invalidateCache('portfolios');
     refresh();
     
     return newPortfolio;
@@ -211,7 +214,9 @@ export function useTraditionalPortfolios() {
       // Synchroniser avec le localStorage
       await portfolioStorageService.addOrUpdatePortfolio(updatedPortfolio as unknown as PortfolioWithType);
       
-      // Rafraîchir la liste
+      // Invalider le cache et rafraîchir
+      invalidatePortfolioCache('traditional');
+      apiCoordinator.invalidateCache('portfolios');
       refresh();
       
       return updatedPortfolio;
@@ -238,7 +243,9 @@ export function useTraditionalPortfolios() {
     // Supprimer aussi du localStorage (cache local)
     await portfolioStorageService.deletePortfolio(id);
     
-    // Rafraîchir la liste
+    // Invalider le cache et rafraîchir
+    invalidatePortfolioCache('traditional');
+    apiCoordinator.invalidateCache('portfolios');
     refresh();
   }, [refresh]);
 

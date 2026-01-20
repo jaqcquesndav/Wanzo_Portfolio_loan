@@ -2,10 +2,15 @@
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { ChevronDown, ChevronRight, Folder, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder, Plus, Loader2 } from 'lucide-react';
 import { PortfolioActionsDropdown } from '../portfolio/PortfolioActionsDropdown';
 import { CreatePortfolioModal } from '../portfolio/CreatePortfolioModal';
-import { useTraditionalPortfolios } from '../../hooks/useTraditionalPortfolios';
+// Utilisation des hooks React Query professionnels
+import { 
+  useTraditionalPortfoliosQuery, 
+  useCreatePortfolioMutation,
+  useDeletePortfolioMutation 
+} from '../../hooks/queries';
 import { usePortfolioContext } from '../../contexts/usePortfolioContext';
 import { useAppContextStore } from '../../stores/appContextStore';
 import type { TraditionalPortfolio } from '../../types/traditional-portfolio';
@@ -21,13 +26,21 @@ export function SidebarPortfolios() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
-  // Appel des hooks pour le type traditionnel
-  const traditional = useTraditionalPortfolios();
+  // ✅ Utilisation de React Query - cache intelligent et pas de requêtes en boucle
+  const { 
+    data: traditionalData, 
+    isLoading: isLoadingTraditional,
+    error: traditionalError 
+  } = useTraditionalPortfoliosQuery();
+  
+  // Mutations avec invalidation automatique du cache
+  const createPortfolioMutation = useCreatePortfolioMutation();
+  const deletePortfolioMutation = useDeletePortfolioMutation();
 
   // Sélection du bon tableau selon le type
   let portfolios: TraditionalPortfolio[] = [];
   if (portfolioType === 'traditional') {
-    portfolios = traditional.portfolios;
+    portfolios = traditionalData?.data || [];
   }
 
   const filteredPortfolios = portfolioType
@@ -47,14 +60,15 @@ export function SidebarPortfolios() {
     if (!portfolioType) {
       return;
     }
-    if (portfolioType === 'traditional' && traditional.createPortfolio) {
+    if (portfolioType === 'traditional') {
       try {
         const toCreate = {
           ...data,
           manager_id: user?.id || 'default-manager',
           institution_id: institutionId || 'default-institution',
         };
-        const newPortfolio = await traditional.createPortfolio(toCreate);
+        // ✅ Utilisation de la mutation React Query
+        const newPortfolio = await createPortfolioMutation.mutateAsync(toCreate);
         setShowCreateModal(false);
         // Naviguer vers le nouveau portfolio créé
         navigate(`/app/${portfolioType}/${portfolioType}/${newPortfolio.id}`);
@@ -84,13 +98,32 @@ export function SidebarPortfolios() {
 
   const confirmAction = async () => {
     if (confirm.action === 'delete' && confirm.portfolio) {
-      // Supprimer le portefeuille
-      if (portfolioType === 'traditional' && traditional.deletePortfolio) {
-        await traditional.deletePortfolio(confirm.portfolio.id);
+      // ✅ Utilisation de la mutation React Query avec invalidation automatique
+      if (portfolioType === 'traditional') {
+        await deletePortfolioMutation.mutateAsync(confirm.portfolio.id);
       }
     }
     setConfirm({ open: false });
   };
+
+  // Gestion du chargement
+  if (isLoadingTraditional && portfolioType === 'traditional') {
+    return (
+      <div className="my-4 flex items-center justify-center py-4">
+        <Loader2 className="w-5 h-5 animate-spin text-primary-light" />
+        <span className="ml-2 text-sm text-primary-light">Chargement...</span>
+      </div>
+    );
+  }
+
+  // Gestion des erreurs
+  if (traditionalError && portfolioType === 'traditional') {
+    return (
+      <div className="my-4 p-3 bg-red-500/10 rounded-md">
+        <p className="text-sm text-red-400">Erreur de chargement</p>
+      </div>
+    );
+  }
 
   return (
     <>
