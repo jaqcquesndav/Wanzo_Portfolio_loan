@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageSquare, Maximize2, Minimize2, X, Send, Smile, Paperclip, Mic, MicOff, Copy, ThumbsUp, ThumbsDown, Sparkles, AlignJustify, AlertCircle, Loader2, Zap, User, Bot, RefreshCw, MessagesSquare, BarChart3, TrendingUp, FileText, HelpCircle, Square, Volume2 } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';
@@ -94,7 +94,14 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
   const [showSourceSelector, setShowSourceSelector] = useState(false);
   const [showSidebar, setShowSidebar] = useState(mode === 'fullscreen');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 🎯 Auto-scroll intelligent - État et refs
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const userScrolledRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
+  const AUTO_SCROLL_THRESHOLD = 150; // px du bas pour réactiver l'auto-scroll
   const [isInitialized, setIsInitialized] = useState(false);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
@@ -179,10 +186,51 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
   }, [isInstitutionReady, isContextLoaded, isRefreshingContext, retryCount, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
 
-  // Défiler vers le bas à chaque nouveau message
+  // 🎯 Auto-scroll intelligent - Scroll vers le bas si autorisé
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    if (!messagesContainerRef.current) return;
+    
+    if (force || shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [shouldAutoScroll]);
+
+  // 🎯 Auto-scroll intelligent - Détection du scroll utilisateur
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    
+    // Détection scroll vers le haut par l'utilisateur
+    if (scrollTop < lastScrollTopRef.current && distanceFromBottom > AUTO_SCROLL_THRESHOLD) {
+      // L'utilisateur a scrollé vers le haut → désactiver l'auto-scroll
+      userScrolledRef.current = true;
+      setShouldAutoScroll(false);
+    }
+    
+    // Réactivation automatique quand l'utilisateur revient proche du bas
+    if (distanceFromBottom < AUTO_SCROLL_THRESHOLD) {
+      userScrolledRef.current = false;
+      setShouldAutoScroll(true);
+    }
+    
+    lastScrollTopRef.current = scrollTop;
+  }, []);
+
+  // 🎯 Auto-scroll pendant le streaming
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (streamingState.isActive && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [streamingState.isActive, streamingState.currentChunk, shouldAutoScroll, scrollToBottom]);
+
+  // 🎯 Auto-scroll à chaque nouveau message (si autorisé)
+  useEffect(() => {
+    if (shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, shouldAutoScroll, scrollToBottom]);
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
@@ -200,9 +248,16 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
       await connectWebSocket(globalInstitutionId);
     }
     
+    // 🎯 Forcer l'auto-scroll et le réactiver à l'envoi d'un message
+    userScrolledRef.current = false;
+    setShouldAutoScroll(true);
+    
     // Ajout du mode dans le contexte lors de l'envoi
     await addMessage(newMessage, 'user', undefined, adhaWriteMode.isActive ? 'analyse' : 'chat');
     setNewMessage('');
+    
+    // Scroll immédiat après envoi
+    setTimeout(() => scrollToBottom(true), 50);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -335,8 +390,12 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
         
         {/* Contenu principal - style ChatGPT/Gemini: fond neutre */}
         <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-white dark:bg-gray-800">
-          {/* Zone des messages - scrollable */}
-          <div className={`flex-1 overflow-y-auto chat-scrollbar ${mode === 'fullscreen' ? 'px-0' : ''}`}>
+          {/* Zone des messages - scrollable avec auto-scroll intelligent */}
+          <div 
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            className={`flex-1 overflow-y-auto chat-scrollbar ${mode === 'fullscreen' ? 'px-0' : ''}`}
+          >
             <div className={`${mode === 'fullscreen' ? 'max-w-3xl mx-auto w-full' : ''} px-4 py-4 space-y-4`}>
               {messages.length === 0 ? (
                 /* Écran d'accueil style ChatGPT/Claude/Gemini */

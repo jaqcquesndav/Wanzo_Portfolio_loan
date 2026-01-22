@@ -131,7 +131,14 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const [showSourceSelector, setShowSourceSelector] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 🎯 Auto-scroll intelligent - État et refs
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const userScrolledRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
+  const AUTO_SCROLL_THRESHOLD = 150; // px du bas pour réactiver l'auto-scroll
   const [isInitialized, setIsInitialized] = useState(false);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
@@ -217,10 +224,51 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     // Note: pas de cleanup de déconnexion ici car le WebSocket est un singleton partagé
   }, [isInstitutionReady, isContextLoaded, isRefreshingContext, isApiMode, isStreamingEnabled, globalInstitutionId, isWebSocketConnected, connectWebSocket]);
 
-  // Défiler vers le bas à chaque nouveau message
+  // 🎯 Auto-scroll intelligent - Scroll vers le bas si autorisé
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    if (!messagesContainerRef.current) return;
+    
+    if (force || shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [shouldAutoScroll]);
+
+  // 🎯 Auto-scroll intelligent - Détection du scroll utilisateur
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    
+    // Détection scroll vers le haut par l'utilisateur
+    if (scrollTop < lastScrollTopRef.current && distanceFromBottom > AUTO_SCROLL_THRESHOLD) {
+      // L'utilisateur a scrollé vers le haut → désactiver l'auto-scroll
+      userScrolledRef.current = true;
+      setShouldAutoScroll(false);
+    }
+    
+    // Réactivation automatique quand l'utilisateur revient proche du bas
+    if (distanceFromBottom < AUTO_SCROLL_THRESHOLD) {
+      userScrolledRef.current = false;
+      setShouldAutoScroll(true);
+    }
+    
+    lastScrollTopRef.current = scrollTop;
+  }, []);
+
+  // 🎯 Auto-scroll pendant le streaming
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (streamingState.isActive && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [streamingState.isActive, streamingState.currentChunk, shouldAutoScroll, scrollToBottom]);
+
+  // 🎯 Auto-scroll à chaque nouveau message (si autorisé)
+  useEffect(() => {
+    if (shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, shouldAutoScroll, scrollToBottom]);
 
   // Afficher sidebar en fullscreen
   useEffect(() => {
@@ -247,8 +295,15 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
       }
     }
     
+    // 🎯 Forcer l'auto-scroll et le réactiver à l'envoi d'un message
+    userScrolledRef.current = false;
+    setShouldAutoScroll(true);
+    
     await addMessage(newMessage, 'user', undefined, adhaWriteMode.isActive ? 'analyse' : 'chat');
     setNewMessage('');
+    
+    // Scroll immédiat après envoi
+    setTimeout(() => scrollToBottom(true), 50);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -372,8 +427,13 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
         
         {/* Contenu principal du chat */}
         <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ contain: 'layout' }}>
-          {/* Zone des messages */}
-          <div className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+          {/* Zone des messages avec auto-scroll intelligent */}
+          <div 
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto" 
+            style={{ overscrollBehavior: 'contain' }}
+          >
             <div className={`px-3 py-4 space-y-1 ${isFullscreen ? 'max-w-4xl mx-auto' : ''}`}>
               {messages.length === 0 ? (
                 /* Écran d'accueil style ChatGPT/Claude/Gemini */
