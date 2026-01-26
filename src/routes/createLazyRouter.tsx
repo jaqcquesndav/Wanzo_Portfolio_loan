@@ -81,8 +81,9 @@ export function createLazyRouter() {
       element: <components.Layout />,
       children: [
         { path: '', element: <components.Dashboard /> },
+        // Direct portfolio details route - handles /app/traditional/{portfolioId}
+        { path: ':id', element: React.createElement(withSuspense(components.TraditionalPortfolioDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         // Traditional Portfolio
-        { path: 'traditional/traditional/:id', element: React.createElement(withSuspense(components.TraditionalPortfolioView)) },
         { path: 'traditional', element: React.createElement(withSuspense(components.TraditionalPortfolio)) },
         { path: 'traditional/:id', element: React.createElement(withSuspense(components.TraditionalPortfolioDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },
         { path: 'traditional/trad-1/guarantees/G001', element: React.createElement(withSuspense(components.GuaranteeDetails)), errorElement: React.createElement(withSuspense(components.PortfolioErrorBoundary)) },

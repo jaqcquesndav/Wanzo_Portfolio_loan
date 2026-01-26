@@ -71,7 +71,7 @@ export function SidebarPortfolios() {
         const newPortfolio = await createPortfolioMutation.mutateAsync(toCreate);
         setShowCreateModal(false);
         // Naviguer vers le nouveau portfolio créé
-        navigate(`/app/${portfolioType}/${portfolioType}/${newPortfolio.id}`);
+        navigate(`/app/${portfolioType}/${newPortfolio.id}`);
       } catch (error) {
         console.error('Erreur lors de la création du portefeuille:', error);
       }
@@ -88,7 +88,7 @@ export function SidebarPortfolios() {
 
     if (action === 'view') {
       if (portfolioType === 'traditional') {
-        navigate(`/app/${portfolioType}/${portfolioType}/${portfolio.id}`);
+        navigate(`/app/${portfolioType}/${portfolio.id}`);
       }
     } else if (action === 'edit') {
       // Navigation vers la route d'édition du portefeuille - utilise traditional/:id
@@ -175,7 +175,7 @@ export function SidebarPortfolios() {
                             className={`flex justify-between items-center py-2.5 px-4 rounded-md text-primary-light dark:text-gray-300 hover:bg-primary-dark dark:hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-150 ${
                               currentPortfolioId === portfolio.id ? 'bg-primary-dark dark:bg-gray-700 text-white shadow-sm' : 'bg-transparent'
                             }`}
-                            onClick={() => navigate(`/app/${portfolioType}/${portfolioType}/${portfolio.id}`)}
+                            onClick={() => navigate(`/app/${portfolioType}/${portfolio.id}`)}
                           >
                             <div className="truncate flex items-center">
                               <Folder className="w-4 h-4 mr-2 flex-shrink-0" />

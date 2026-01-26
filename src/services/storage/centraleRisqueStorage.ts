@@ -1,12 +1,13 @@
 // src/services/storage/centraleRisqueStorage.ts
-import { 
-  mockCreditRiskData, 
-  mockLeasingRiskData, 
-  mockInvestmentRiskData, 
+import { isProduction, allowMockData } from '../../config/environment';
+import type { 
   CreditRiskEntry,
   LeasingRiskEntry,
   InvestmentRiskEntry
 } from '../../data/mockCentraleRisque';
+
+// Re-export types for consumers
+export type { CreditRiskEntry, LeasingRiskEntry, InvestmentRiskEntry };
 
 // Clés de stockage pour la centrale de risque
 export const CENTRALE_RISQUE_KEYS = {
@@ -15,36 +16,67 @@ export const CENTRALE_RISQUE_KEYS = {
   INVESTMENTS: 'wanzo_centrale_risque_investments'
 };
 
+// Import dynamique des mocks (uniquement en développement)
+const getMockRiskData = async () => {
+  if (isProduction || !allowMockData) {
+    return { credits: [], leasing: [], investments: [] };
+  }
+  const { 
+    mockCreditRiskData, 
+    mockLeasingRiskData, 
+    mockInvestmentRiskData 
+  } = await import('../../data/mockCentraleRisque');
+  return {
+    credits: mockCreditRiskData,
+    leasing: mockLeasingRiskData,
+    investments: mockInvestmentRiskData
+  };
+};
+
 /**
  * Service pour la gestion des données de la centrale de risque dans le localStorage
+ * 
+ * ⚠️ En PRODUCTION:
+ * - Les données viennent exclusivement du backend via l'API
+ * - Le localStorage sert uniquement de cache temporaire
+ * - Les mocks ne sont JAMAIS utilisés
  */
 class CentraleRisqueStorageService {
   /**
    * Initialise les données par défaut de la centrale de risque
+   * ⚠️ En production, cette méthode ne fait rien
    */
   async initializeDefaultData(): Promise<void> {
+    // En production, ne pas initialiser de données mock
+    if (isProduction || !allowMockData) {
+      console.log('[PROD] CentraleRisqueStorageService.initializeDefaultData() - utilisation du backend uniquement');
+      return;
+    }
+    
     try {
+      const mockData = await getMockRiskData();
+      
       // Vérifier si les données existent déjà
       const creditData = localStorage.getItem(CENTRALE_RISQUE_KEYS.CREDITS);
       const leasingData = localStorage.getItem(CENTRALE_RISQUE_KEYS.LEASING);
       const investmentData = localStorage.getItem(CENTRALE_RISQUE_KEYS.INVESTMENTS);
       
       // Initialiser les données de risque crédit si nécessaire
-      if (!creditData) {
-        localStorage.setItem(CENTRALE_RISQUE_KEYS.CREDITS, JSON.stringify(mockCreditRiskData));
-        console.log('✅ Données de risque crédit initialisées');
+      if (!creditData && mockData.credits.length > 0) {
+        localStorage.setItem(CENTRALE_RISQUE_KEYS.CREDITS, JSON.stringify(mockData.credits));
+        console.log('[DEV] ✅ Données de risque crédit initialisées');
       }
       
       // Initialiser les données de risque leasing si nécessaire
-      if (!leasingData) {
-        localStorage.setItem(CENTRALE_RISQUE_KEYS.LEASING, JSON.stringify(mockLeasingRiskData));
-        console.log('✅ Données de risque leasing initialisées');
+      if (!leasingData && mockData.leasing.length > 0) {
+        localStorage.setItem(CENTRALE_RISQUE_KEYS.LEASING, JSON.stringify(mockData.leasing));
+        console.log('[DEV] ✅ Données de risque leasing initialisées');
       }
       
       // Initialiser les données de risque investissement si nécessaire
-      if (!investmentData) {
-        localStorage.setItem(CENTRALE_RISQUE_KEYS.INVESTMENTS, JSON.stringify(mockInvestmentRiskData));
-        console.log('✅ Données de risque investissement initialisées');
+      if (!investmentData && mockData.investments.length > 0) {
+        localStorage.setItem(CENTRALE_RISQUE_KEYS.INVESTMENTS, JSON.stringify(mockData.investments));
+        console.log('[DEV] ✅ Données de risque investissement initialisées');
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation des données de la centrale de risque:', error);

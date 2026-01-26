@@ -1,22 +1,49 @@
 // src/services/storage/creditContractsStorage.ts
 import { CreditContract } from '../../types/credit-contract';
-import { mockCreditContracts as initialMockData } from '../../data/mockCreditContractsNew';
+import { isProduction, allowMockData } from '../../config/environment';
 
 const STORAGE_KEYS = {
   CREDIT_CONTRACTS: 'credit_contracts'
 };
 
+// Import dynamique des mocks (uniquement en développement)
+const getMockCreditContracts = async (): Promise<CreditContract[]> => {
+  if (isProduction || !allowMockData) {
+    return [];
+  }
+  const { mockCreditContracts } = await import('../../data/mockCreditContractsNew');
+  return mockCreditContracts;
+};
+
 /**
  * Service de gestion des contrats de crédit dans le localStorage
+ * 
+ * ⚠️ En PRODUCTION:
+ * - Les données viennent exclusivement du backend via l'API
+ * - Le localStorage sert uniquement de cache temporaire
+ * - Les mocks ne sont JAMAIS utilisés
  */
 export const creditContractsStorageService = {
   /**
    * Initialise les données dans le localStorage si elles n'existent pas déjà
+   * ⚠️ En production, cette méthode ne fait rien
    */
-  init(): void {
+  async init(): Promise<void> {
+    // En production, ne pas initialiser de données mock
+    if (isProduction || !allowMockData) {
+      console.log('[PROD] creditContractsStorageService.init() - utilisation du backend uniquement');
+      return;
+    }
+    
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.CREDIT_CONTRACTS);
       if (!stored) {
+        const initialMockData = await getMockCreditContracts();
+        if (initialMockData.length === 0) {
+          console.log('[DEV] Pas de données mock disponibles pour les contrats');
+          return;
+        }
+        
         // Récupérer tous les portfolios traditionnels du localStorage
         const storedPortfolios = localStorage.getItem('portfolios');
         const portfolios = storedPortfolios ? JSON.parse(storedPortfolios) : [];
@@ -27,10 +54,10 @@ export const creditContractsStorageService = {
         const portfolioIdMatch = currentUrl.match(/\/portfolio\/traditional\/([^/]+)/);
         const currentPortfolioId = portfolioIdMatch ? portfolioIdMatch[1] : 'qf3081zdd';
         
-        console.log('[DEBUG] Initializing credit contracts');
-        console.log('[DEBUG] Available traditional portfolios:', traditionalPortfolios.map((p: { id: string }) => p.id));
+        console.log('[DEV] Initializing credit contracts');
+        console.log('[DEV] Available traditional portfolios:', traditionalPortfolios.map((p: { id: string }) => p.id));
         
-        let updatedMockData = [];
+        let updatedMockData: CreditContract[] = [];
         
         if (traditionalPortfolios.length > 0) {
           // Répartir les contrats entre les portfolios
@@ -51,7 +78,7 @@ export const creditContractsStorageService = {
             }
           }
           
-          console.log(`[DEBUG] Created ${updatedMockData.length} contracts distributed across ${traditionalPortfolios.length} portfolios`);
+          console.log(`[DEV] Created ${updatedMockData.length} contracts distributed across ${traditionalPortfolios.length} portfolios`);
         } else {
           // Si aucun portfolio traditionnel n'existe, utiliser l'ID de l'URL actuelle
           updatedMockData = initialMockData.map(contract => ({
@@ -59,13 +86,13 @@ export const creditContractsStorageService = {
             portfolioId: currentPortfolioId
           }));
           
-          console.log(`[DEBUG] Created ${updatedMockData.length} contracts for portfolioId: ${currentPortfolioId}`);
+          console.log(`[DEV] Created ${updatedMockData.length} contracts for portfolioId: ${currentPortfolioId}`);
         }
         
         localStorage.setItem(STORAGE_KEYS.CREDIT_CONTRACTS, JSON.stringify(updatedMockData));
-        console.log('[DEBUG] Credit contracts initialized in localStorage with', updatedMockData.length, 'items');
+        console.log('[DEV] Credit contracts initialized in localStorage with', updatedMockData.length, 'items');
       } else {
-        console.log('[DEBUG] Credit contracts already exist in localStorage');
+        console.log('[DEV] Credit contracts already exist in localStorage');
       }
     } catch (error) {
       console.error('Error initializing credit contracts in localStorage:', error);
@@ -77,7 +104,7 @@ export const creditContractsStorageService = {
    */
   async getAllContracts(): Promise<CreditContract[]> {
     try {
-      this.init(); // S'assurer que les données sont initialisées
+      await this.init(); // S'assurer que les données sont initialisées (en DEV)
       const stored = localStorage.getItem(STORAGE_KEYS.CREDIT_CONTRACTS);
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
@@ -156,25 +183,38 @@ export const creditContractsStorageService = {
 
   /**
    * Réinitialise les données de contrats de crédit aux valeurs initiales
+   * ⚠️ En production, cette méthode ne fait rien
    */
   async resetToMockData(): Promise<void> {
+    // En production, ne jamais reset avec des données mock
+    if (isProduction || !allowMockData) {
+      console.warn('[PROD] resetToMockData() ignoré en production');
+      return;
+    }
+    
     try {
+      const initialMockData = await getMockCreditContracts();
+      if (initialMockData.length === 0) {
+        console.log('[DEV] Pas de données mock disponibles pour le reset');
+        return;
+      }
+      
       // Obtenons l'ID du portfolio actuel depuis l'URL
       const currentUrl = window.location.pathname;
       const portfolioIdMatch = currentUrl.match(/\/portfolio\/traditional\/([^/]+)/);
       const currentPortfolioId = portfolioIdMatch ? portfolioIdMatch[1] : 'qf3081zdd';
       
-      console.log('[DEBUG] Resetting credit contracts with portfolioId:', currentPortfolioId);
+      console.log('[DEV] Resetting credit contracts with portfolioId:', currentPortfolioId);
       
       // Récupérer tous les portfolios traditionnels du localStorage
       const storedPortfolios = localStorage.getItem('portfolios');
       const portfolios = storedPortfolios ? JSON.parse(storedPortfolios) : [];
       const traditionalPortfolios = portfolios.filter((p: { type: string }) => p.type === 'traditional');
       
-      console.log('[DEBUG] Available traditional portfolios:', traditionalPortfolios.map((p: { id: string }) => p.id));
+      console.log('[DEV] Available traditional portfolios:', traditionalPortfolios.map((p: { id: string }) => p.id));
       
       // Créer une répartition des contrats pour chaque portfolio
-      const updatedMockData = [];
+      const updatedMockData: CreditContract[] = [];
       
       if (traditionalPortfolios.length > 0) {
         // Répartir les contrats entre les portfolios
@@ -195,7 +235,7 @@ export const creditContractsStorageService = {
           }
         }
         
-        console.log(`[DEBUG] Created ${updatedMockData.length} contracts distributed across ${traditionalPortfolios.length} portfolios`);
+        console.log(`[DEV] Created ${updatedMockData.length} contracts distributed across ${traditionalPortfolios.length} portfolios`);
       } else {
         // Si aucun portfolio traditionnel n'existe, utiliser l'ID de l'URL actuelle
         updatedMockData.push(...initialMockData.map(contract => ({
@@ -203,11 +243,11 @@ export const creditContractsStorageService = {
           portfolioId: currentPortfolioId
         })));
         
-        console.log(`[DEBUG] Created ${updatedMockData.length} contracts for portfolioId: ${currentPortfolioId}`);
+        console.log(`[DEV] Created ${updatedMockData.length} contracts for portfolioId: ${currentPortfolioId}`);
       }
       
       localStorage.setItem(STORAGE_KEYS.CREDIT_CONTRACTS, JSON.stringify(updatedMockData));
-      console.log('Reset completed with', updatedMockData.length, 'contracts');
+      console.log('[DEV] Reset completed with', updatedMockData.length, 'contracts');
     } catch (error) {
       console.error('Error resetting credit contracts to mock data:', error);
       throw error;

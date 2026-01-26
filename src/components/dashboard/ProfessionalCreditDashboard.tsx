@@ -15,6 +15,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { CalendarIcon, ChevronDownIcon, TrendingUpIcon, AlertCircleIcon, CheckCircleIcon, BarChart3Icon, DollarSignIcon, UsersIcon, PieChartIcon, RefreshCwIcon } from 'lucide-react';
+import { OnboardingWelcome } from '../onboarding/OnboardingWelcome';
+import { useAppContextStore } from '../../stores/appContextStore';
 
 /**
  * Dashboard Crédit OHADA
@@ -26,6 +28,12 @@ export const ProfessionalCreditDashboard: React.FC = () => {
   const { data: portfolioData, isLoading: portfoliosLoading } = useTraditionalPortfoliosQuery();
   const portfolios = portfolioData?.data || [];
   const { formatCurrency } = useFormatCurrency();
+  
+  // Récupérer le contexte utilisateur pour personnaliser l'onboarding
+  const { user } = useAppContextStore();
+  
+  // Déterminer si c'est un nouvel utilisateur sans portefeuille
+  const isNewUser = !portfoliosLoading && portfolios.length === 0;
   
   // Forcer l'initialisation des données mock au chargement
   React.useEffect(() => {
@@ -210,6 +218,24 @@ export const ProfessionalCreditDashboard: React.FC = () => {
   console.log('Recent operations:', recentOperations);
   console.log('Operations loading:', operationsLoading);
   console.log('Operations error:', operationsError);
+  console.log('Is new user (no portfolios):', isNewUser);
+
+  // =====================================================
+  // ONBOARDING: Afficher l'écran de bienvenue pour les nouveaux utilisateurs
+  // =====================================================
+  if (isNewUser && !loading) {
+    return (
+      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-950">
+        <OnboardingWelcome 
+          userName={user?.givenName || user?.name?.split(' ')[0]}
+          onPortfolioCreated={(portfolioId) => {
+            console.log('Premier portefeuille créé:', portfolioId);
+            // La navigation est gérée dans OnboardingWelcome
+          }}
+        />
+      </div>
+    );
+  }
 
   // Fonction pour rendre le contenu selon l'état
   function renderDashboardContent() {

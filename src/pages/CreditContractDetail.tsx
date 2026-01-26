@@ -20,12 +20,7 @@ export default function CreditContractDetail() {
   
   // Construire l'URL de retour correcte en fonction de l'URL actuelle
   const getPortfolioUrl = () => {
-    // Vérifier si l'URL actuelle contient "traditional/traditional" (format ancien)
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('/app/traditional/traditional/')) {
-      return `/app/traditional/traditional/${portfolioId || 'default'}?tab=contracts`;
-    }
-    // Sinon utiliser le format standard
+    // Utiliser le format standard
     return `/app/traditional/${portfolioId || 'default'}?tab=contracts`;
   };
 

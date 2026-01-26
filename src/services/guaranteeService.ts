@@ -1,31 +1,53 @@
 // src/services/guaranteeService.ts
 import { Guarantee } from '../types/guarantee';
 import { traditionalDataService } from './api/traditional/dataService';
-import { mockGuarantees } from '../data/mockGuarantees';
+import { isProduction, allowMockData } from '../config/environment';
 
 // Clé de stockage dans le localStorage
 const STORAGE_KEY = 'wanzo_guarantees';
+
+// Import dynamique des mocks (uniquement en développement)
+const getMockGuarantees = async (): Promise<Guarantee[]> => {
+  if (isProduction || !allowMockData) {
+    return [];
+  }
+  const { mockGuarantees } = await import('../data/mockGuarantees');
+  return mockGuarantees;
+};
 
 /**
  * Service unifié pour la gestion des garanties
  * 
  * Ce service sert de point d'entrée unique pour toutes les opérations liées aux garanties.
- * Il coordonne les interactions entre le localStorage et le traditionalDataService pour
- * assurer la cohérence des données.
+ * 
+ * ⚠️ En PRODUCTION: 
+ * - Les données viennent exclusivement du backend via l'API
+ * - Le localStorage sert uniquement de cache temporaire
+ * - Les mocks ne sont JAMAIS utilisés
  */
 class GuaranteeService {
   /**
    * Initialise les données par défaut si nécessaire
+   * ⚠️ En production, cette méthode ne fait rien (données du backend)
    */
   async initialize(): Promise<void> {
+    // En production, ne pas initialiser de données locales
+    if (isProduction) {
+      console.log('[PROD] GuaranteeService.initialize() - utilisation du backend uniquement');
+      return;
+    }
+    
     try {
       // Vérifier si les données existent déjà dans le localStorage
       const storedData = localStorage.getItem(STORAGE_KEY);
       
-      if (!storedData) {
-        // Initialiser avec les données mockées
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(mockGuarantees));
-        console.log('✅ Données de garanties initialisées dans le localStorage');
+      if (!storedData && allowMockData) {
+        // Initialiser avec les données mockées (DEV uniquement)
+        const mockGuarantees = await getMockGuarantees();
+        if (mockGuarantees.length > 0) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(mockGuarantees));
+          console.log('[DEV] ✅ Données de garanties initialisées dans le localStorage');
+        }
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation des données de garanties:', error);
@@ -35,12 +57,25 @@ class GuaranteeService {
   
   /**
    * Initialise les données par défaut
+   * ⚠️ En production, cette méthode ne fait rien
    * @returns {Promise<boolean>} true si l'initialisation a réussi, false sinon
    */
   async initializeDefaultData(): Promise<boolean> {
+    // En production, ne pas initialiser de données mock
+    if (isProduction || !allowMockData) {
+      console.log('[PROD] initializeDefaultData() ignoré en production');
+      return true;
+    }
+    
     try {
+      const mockGuarantees = await getMockGuarantees();
+      if (mockGuarantees.length === 0) {
+        console.log('[DEV] Pas de données mock disponibles');
+        return true;
+      }
+      
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mockGuarantees));
-      console.log('✅ Données de garanties initialisées avec les données par défaut');
+      console.log('[DEV] ✅ Données de garanties initialisées avec les données par défaut');
       
       // Assurer que les garanties sont également associées aux contrats appropriés
       const guaranteesByContract = new Map<string, Guarantee[]>();
@@ -72,9 +107,14 @@ class GuaranteeService {
   
   /**
    * Réinitialise les données avec les données mock
+   * ⚠️ En production, cette méthode ne fait rien
    * @returns {Promise<boolean>} true si la réinitialisation a réussi, false sinon
    */
   async resetToMockData(): Promise<boolean> {
+    if (isProduction || !allowMockData) {
+      console.warn('[PROD] resetToMockData() ignoré en production');
+      return false;
+    }
     return this.initializeDefaultData();
   }
   

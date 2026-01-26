@@ -81,9 +81,9 @@ export const lazyRouter = createBrowserRouter([
     element: <Layout />, 
     children: [
       { path: '', element: <Dashboard /> },
+      // Direct portfolio details route - handles /app/traditional/{portfolioId}
+      { path: ':id', element: <LazySuspendedComponents.TraditionalPortfolioDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
       // Traditional
-      // Gérer le cas où "traditional" est répété dans l'URL (doit être avant les autres routes)
-      { path: 'traditional/traditional/:id', element: <LazySuspendedComponents.TraditionalPortfolioView /> },
       { path: 'traditional', element: <LazySuspendedComponents.TraditionalPortfolio /> },
       { path: 'traditional/:id', element: <LazySuspendedComponents.TraditionalPortfolioDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },
       { path: 'traditional/trad-1/guarantees/G001', element: <LazySuspendedComponents.GuaranteeDetails />, errorElement: <LazySuspendedComponents.PortfolioErrorBoundary /> },

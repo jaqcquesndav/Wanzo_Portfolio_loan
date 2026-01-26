@@ -66,6 +66,12 @@ export function createOptimizedRouter() {
         { path: 'company/:id/view', element: <components.CompanyViewPage /> },
         
         // ==========================================
+        // DIRECT PORTFOLIO DETAILS ROUTE
+        // Handles /app/traditional/{portfolioId} navigation from sidebar
+        // ==========================================
+        { path: ':id', element: <components.TraditionalPortfolioDetails />, errorElement: <components.PortfolioErrorBoundary /> },
+        
+        // ==========================================
         // TRADITIONAL PORTFOLIO ROUTES
         // Order matters: specific routes BEFORE generic catch-all routes
         // ==========================================
@@ -74,7 +80,6 @@ export function createOptimizedRouter() {
         { path: 'traditional/trad-1/guarantees/G001', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },
         
         // Routes with multiple segments (medium priority)
-        { path: 'traditional/traditional/:id', element: <components.TraditionalPortfolioView /> },
         { path: 'traditional/view/:id', element: <components.TraditionalPortfolioView /> },
         { path: 'traditional/:id/view', element: <components.TraditionalPortfolioView /> },
         { path: 'traditional/:id/guarantees/:guaranteeId', element: <components.GuaranteeDetails />, errorElement: <components.PortfolioErrorBoundary /> },

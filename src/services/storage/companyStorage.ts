@@ -1,5 +1,5 @@
 // src/services/storage/companyStorage.ts
-import { mockCompanies } from '../../data/companies';
+import { isProduction, allowMockData } from '../../config/environment';
 import type { CompanyData } from '../../data/companies/index';
 
 // Clés de stockage pour les entreprises
@@ -7,20 +7,47 @@ export const COMPANY_STORAGE_KEYS = {
   COMPANIES: 'wanzo_companies'
 };
 
+// Import dynamique des mocks (uniquement en développement)
+const getMockCompanies = async (): Promise<CompanyData[]> => {
+  if (isProduction || !allowMockData) {
+    return [];
+  }
+  const { mockCompanies } = await import('../../data/companies');
+  return mockCompanies;
+};
+
 /**
  * Service pour la gestion des données d'entreprises dans le localStorage
+ * 
+ * ⚠️ En PRODUCTION:
+ * - Les données viennent exclusivement du backend via l'API
+ * - Le localStorage sert uniquement de cache temporaire
+ * - Les mocks ne sont JAMAIS utilisés
  */
 class CompanyStorageService {
   /**
    * Initialise les données par défaut des entreprises
+   * ⚠️ En production, cette méthode ne fait rien
    */
   async initializeDefaultData(): Promise<void> {
+    // En production, ne pas initialiser de données mock
+    if (isProduction || !allowMockData) {
+      console.log('[PROD] CompanyStorageService.initializeDefaultData() - utilisation du backend uniquement');
+      return;
+    }
+    
     try {
       // Vérifier si les données existent déjà
       const companyData = localStorage.getItem(COMPANY_STORAGE_KEYS.COMPANIES);
       
       // Initialiser les données d'entreprises si nécessaire
       if (!companyData) {
+        const mockCompanies = await getMockCompanies();
+        if (mockCompanies.length === 0) {
+          console.log('[DEV] Pas de données mock disponibles');
+          return;
+        }
+        
         // Adapter les données mockées pour inclure les propriétés manquantes
         const adaptedCompanies = mockCompanies.map(company => ({
           ...company,
@@ -29,7 +56,7 @@ class CompanyStorageService {
         }));
         
         localStorage.setItem(COMPANY_STORAGE_KEYS.COMPANIES, JSON.stringify(adaptedCompanies));
-        console.log('✅ Données d\'entreprises initialisées');
+        console.log('[DEV] ✅ Données d\'entreprises initialisées');
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation des données d\'entreprises:', error);

@@ -70,8 +70,16 @@ export const WelcomeNewUser: React.FC = () => {
     try {
       setLoading(true);
       // ✅ Utilisation de la mutation React Query
-      await createPortfolioMutation.mutateAsync(formData);
-      showNotification('Votre premier portefeuille a été créé avec succès!', 'success');
+      const newPortfolio = await createPortfolioMutation.mutateAsync(formData);
+      showNotification('🎉 Votre premier portefeuille a été créé avec succès!', 'success');
+      
+      // Rediriger vers le nouveau portefeuille pour l'onboarding
+      if (newPortfolio && newPortfolio.id) {
+        // Petit délai pour laisser le cache se mettre à jour
+        setTimeout(() => {
+          window.location.href = `/app/traditional/${newPortfolio.id}`;
+        }, 500);
+      }
     } catch (error) {
       console.error('Erreur lors de la création du portefeuille:', error);
       showNotification('La création du portefeuille a échoué', 'error');

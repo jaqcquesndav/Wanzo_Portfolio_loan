@@ -6,6 +6,7 @@
  * - Télécharge les données du backend vers IndexedDB (sync down)
  * - Envoie les modifications locales vers le backend (sync up)
  * - Gère les conflits et les retries
+ * - Affiche des notifications toast pour informer l'utilisateur
  */
 
 import { 
@@ -19,6 +20,12 @@ import { companyStore } from './companyStore';
 import { creditRequestStore, creditContractStore } from './creditStore';
 import { guaranteeStore } from './guaranteeStore';
 import { STORES, SyncQueueItem, StoreName } from './database';
+import { traditionalPortfolioApi } from '../../api/traditional/portfolio.api';
+import { creditRequestApi } from '../../api/traditional/credit-request.api';
+import { creditContractApi } from '../../api/traditional/credit-contract.api';
+import { guaranteeApi } from '../../api/traditional/guarantee.api';
+import { productionErrorHandler, ErrorType } from '../../api/productionErrorHandler';
+import { isProduction } from '../../../config/environment';
 
 const MAX_RETRY_COUNT = 3;
 const SYNC_INTERVAL = 30000; // 30 secondes
@@ -37,37 +44,113 @@ interface SyncHandler {
 
 /**
  * Configuration des handlers de synchronisation par store
- * À personnaliser avec les vraies API
+ * Ces handlers appellent les vraies API en production
  */
 const syncHandlers: Partial<Record<StoreName, SyncHandler>> = {
   [STORES.PORTFOLIOS]: {
     create: async (data) => {
-      // Appeler l'API de création de portefeuille
-      console.log('🔄 [Sync] Création portefeuille:', (data as { id: string }).id);
-      // const response = await traditionalPortfolioApi.createPortfolio(data);
-      // await portfolioStore.save(response);
+      const portfolio = data as { id: string; name: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Création portefeuille:', portfolio.id);
+      
+      if (isProduction) {
+        // En production, appeler l'API réelle
+        const response = await traditionalPortfolioApi.createPortfolio(portfolio as Parameters<typeof traditionalPortfolioApi.createPortfolio>[0]);
+        // Mettre à jour le store IndexedDB avec la réponse du serveur
+        await portfolioStore.save(response);
+      }
     },
     update: async (data) => {
-      console.log('🔄 [Sync] Mise à jour portefeuille:', (data as { id: string }).id);
-      // await traditionalPortfolioApi.updatePortfolio(data.id, data);
+      const portfolio = data as { id: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Mise à jour portefeuille:', portfolio.id);
+      
+      if (isProduction) {
+        await traditionalPortfolioApi.updatePortfolio(portfolio.id, portfolio);
+      }
     },
     delete: async (data) => {
       console.log('🔄 [Sync] Suppression portefeuille:', data.id);
-      // await traditionalPortfolioApi.deletePortfolio(data.id);
+      
+      if (isProduction) {
+        await traditionalPortfolioApi.deletePortfolio(data.id);
+      }
     },
   },
   [STORES.CREDIT_REQUESTS]: {
     create: async (data) => {
-      console.log('🔄 [Sync] Création demande de crédit:', (data as { id: string }).id);
+      const request = data as { id: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Création demande de crédit:', request.id);
+      
+      if (isProduction) {
+        const response = await creditRequestApi.createRequest(request as Parameters<typeof creditRequestApi.createRequest>[0]);
+        await creditRequestStore.save(response);
+      }
     },
     update: async (data) => {
-      console.log('🔄 [Sync] Mise à jour demande de crédit:', (data as { id: string }).id);
+      const request = data as { id: string; status?: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Mise à jour demande de crédit:', request.id);
+      
+      if (isProduction && request.status) {
+        await creditRequestApi.updateRequestStatus(request.id, request.status as Parameters<typeof creditRequestApi.updateRequestStatus>[1]);
+      }
     },
     delete: async (data) => {
       console.log('🔄 [Sync] Suppression demande de crédit:', data.id);
+      // Note: L'API peut ne pas supporter la suppression directe
     },
   },
-  // Ajouter d'autres handlers selon les besoins
+  [STORES.CREDIT_CONTRACTS]: {
+    create: async (data) => {
+      const contract = data as { id: string; portfolioId?: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Création contrat de crédit:', contract.id);
+      
+      if (isProduction && contract.portfolioId) {
+        const response = await creditContractApi.createContract(contract.portfolioId, contract as Parameters<typeof creditContractApi.createContract>[1]);
+        await creditContractStore.save(response);
+      }
+    },
+    update: async (data) => {
+      const contract = data as { id: string; portfolioId?: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Mise à jour contrat de crédit:', contract.id);
+      
+      if (isProduction && contract.portfolioId) {
+        await creditContractApi.updateContract(contract.portfolioId, contract.id, contract);
+      }
+    },
+    delete: async (data) => {
+      console.log('🔄 [Sync] Suppression contrat de crédit:', data.id);
+    },
+  },
+  [STORES.GUARANTEES]: {
+    create: async (data) => {
+      const guarantee = data as { id: string; portfolioId?: string; contractId?: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Création garantie:', guarantee.id);
+      
+      if (isProduction && guarantee.portfolioId && guarantee.contractId) {
+        const response = await guaranteeApi.createGuarantee(
+          guarantee.portfolioId, 
+          guarantee.contractId, 
+          guarantee as Parameters<typeof guaranteeApi.createGuarantee>[2]
+        );
+        await guaranteeStore.save(response);
+      }
+    },
+    update: async (data) => {
+      const guarantee = data as { id: string; portfolioId?: string; contractId?: string; [key: string]: unknown };
+      console.log('🔄 [Sync] Mise à jour garantie:', guarantee.id);
+      
+      if (isProduction && guarantee.portfolioId && guarantee.contractId) {
+        await guaranteeApi.updateGuarantee(
+          guarantee.portfolioId, 
+          guarantee.contractId, 
+          guarantee.id, 
+          guarantee
+        );
+      }
+    },
+    delete: async (data) => {
+      console.log('🔄 [Sync] Suppression garantie:', data.id);
+    },
+  },
 };
 
 /**
@@ -119,10 +202,16 @@ async function processSyncQueue(): Promise<{ success: number; failed: number }> 
   const itemsToSync = items.filter(item => item.retryCount < MAX_RETRY_COUNT);
   const expiredItems = items.filter(item => item.retryCount >= MAX_RETRY_COUNT);
   
-  // Supprimer les éléments expirés
+  // Notifier l'utilisateur des éléments expirés
   for (const item of expiredItems) {
     await markAsSynced(item.id);
     console.warn(`⚠️ [Sync] Élément abandonné après ${MAX_RETRY_COUNT} tentatives:`, item.id);
+    
+    // Notifier l'utilisateur que certaines modifications n'ont pas pu être synchronisées
+    productionErrorHandler.showWarning(
+      `Une modification n'a pas pu être synchronisée après ${MAX_RETRY_COUNT} tentatives.`,
+      { duration: 5000 }
+    );
   }
   
   let success = 0;
@@ -197,7 +286,19 @@ export function stopAutoSync(): void {
  */
 function handleOnline(): void {
   console.log('🌐 [Sync] Connexion rétablie, synchronisation...');
-  sync().catch(console.error);
+  
+  // Notifier l'utilisateur
+  productionErrorHandler.showInfo('Connexion rétablie. Synchronisation en cours...', { duration: 3000 });
+  
+  // Lancer la synchronisation
+  sync().then(result => {
+    if (result.success > 0) {
+      productionErrorHandler.showSuccess(
+        `${result.success} modification(s) synchronisée(s) avec succès.`,
+        { duration: 3000 }
+      );
+    }
+  }).catch(console.error);
 }
 
 /**
@@ -205,6 +306,12 @@ function handleOnline(): void {
  */
 function handleOffline(): void {
   console.log('📴 [Sync] Connexion perdue, mode offline activé');
+  
+  // Notifier l'utilisateur
+  productionErrorHandler.showWarning(
+    'Connexion perdue. Vos modifications seront synchronisées lors de la reconnexion.',
+    { duration: 5000 }
+  );
 }
 
 /**

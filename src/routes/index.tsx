@@ -94,6 +94,12 @@ export const router = createBrowserRouter([
       { path: 'company/:id/view', element: <CompanyViewPage /> },
       
       // ==========================================
+      // DIRECT PORTFOLIO DETAILS ROUTE
+      // Handles /app/traditional/{portfolioId} navigation from sidebar
+      // ==========================================
+      { path: ':id', element: <TraditionalPortfolioDetails />, errorElement: <PortfolioErrorBoundary /> },
+      
+      // ==========================================
       // TRADITIONAL PORTFOLIO ROUTES
       // Order matters: specific routes BEFORE generic catch-all routes
       // ==========================================
@@ -102,7 +108,6 @@ export const router = createBrowserRouter([
       { path: 'traditional/trad-1/guarantees/G001', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },
       
       // Routes with multiple segments (medium priority)
-      { path: 'traditional/traditional/:id', element: <TraditionalPortfolioView /> },
       { path: 'traditional/view/:id', element: <TraditionalPortfolioView /> },
       { path: 'traditional/:id/view', element: <TraditionalPortfolioView /> },
       { path: 'traditional/:id/guarantees/:guaranteeId', element: <GuaranteeDetails />, errorElement: <PortfolioErrorBoundary /> },

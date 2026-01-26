@@ -24,6 +24,7 @@ import { useNotification } from '../contexts/useNotification';
 import { useCreditRequests } from '../hooks/useCreditRequests';
 import { useCreditContracts } from '../hooks/useCreditContracts';
 import { PortfolioDetailsSkeleton } from '../components/ui/PortfolioDetailsSkeleton';
+import { OnboardingBanner } from '../components/onboarding/OnboardingBanner';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
 import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
@@ -311,8 +312,21 @@ export default function TraditionalPortfolioDetails() {
   // Utilisation de la config centralisée pour les tabs (préparation multi-portefeuille)
   const config = portfolioTypeConfig[portfolioType as keyof typeof portfolioTypeConfig] || portfolioTypeConfig['traditional'];
 
+  // Déterminer si le portefeuille est "vide" (nouvel utilisateur qui vient de créer son premier portefeuille)
+  const hasNoRequests = requests.length === 0;
+  const hasNoProducts = isTraditionalPortfolio(portfolio) && portfolio.products.length === 0;
+  const isEmptyPortfolio = hasNoRequests && hasNoProducts;
+
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Bannière d'onboarding pour les portefeuilles vides */}
+      {isEmptyPortfolio && (
+        <OnboardingBanner 
+          type="empty_portfolio" 
+          portfolioId={id}
+        />
+      )}
+
       {/* Breadcrumb sécurisé */}
       <Breadcrumb
         items={[

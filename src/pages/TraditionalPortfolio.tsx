@@ -218,7 +218,7 @@ export default function TraditionalPortfolio() {
               <PortfolioCard
                 key={portfolio.id}
                 portfolio={portfolio}
-                onView={() => navigate(`/app/traditional/traditional/${portfolio.id}`)}
+                onView={() => navigate(`/app/traditional/${portfolio.id}`)}
               />
             ))}
           </div>

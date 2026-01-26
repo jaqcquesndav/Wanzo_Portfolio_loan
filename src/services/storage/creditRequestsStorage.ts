@@ -1,24 +1,48 @@
 // src/services/storage/creditRequestsStorage.ts
 import { CreditRequest, CreditRequestStatus } from '../../types/credit';
-import { mockCreditRequests as initialMockData } from '../../data';
+import { isProduction, allowMockData } from '../../config/environment';
 
 const STORAGE_KEYS = {
   CREDIT_REQUESTS: 'credit_requests'
 };
 
+// Import dynamique des mocks (uniquement en développement)
+const getMockCreditRequests = async (): Promise<CreditRequest[]> => {
+  if (isProduction || !allowMockData) {
+    return [];
+  }
+  const { mockCreditRequests } = await import('../../data');
+  return mockCreditRequests;
+};
+
 /**
  * Service de gestion des demandes de crédit dans le localStorage
+ * 
+ * ⚠️ En PRODUCTION:
+ * - Les données viennent exclusivement du backend via l'API
+ * - Le localStorage sert uniquement de cache temporaire
+ * - Les mocks ne sont JAMAIS utilisés
  */
 export const creditRequestsStorageService = {
   /**
    * Initialise les données dans le localStorage si elles n'existent pas déjà
+   * ⚠️ En production, cette méthode ne fait rien
    */
-  init(): void {
+  async init(): Promise<void> {
+    // En production, ne pas initialiser de données mock
+    if (isProduction || !allowMockData) {
+      console.log('[PROD] creditRequestsStorageService.init() - utilisation du backend uniquement');
+      return;
+    }
+    
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.CREDIT_REQUESTS);
       if (!stored) {
-        localStorage.setItem(STORAGE_KEYS.CREDIT_REQUESTS, JSON.stringify(initialMockData));
-        console.log('[DEBUG] Credit requests initialized in localStorage');
+        const mockData = await getMockCreditRequests();
+        if (mockData.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.CREDIT_REQUESTS, JSON.stringify(mockData));
+          console.log('[DEV] Credit requests initialized in localStorage');
+        }
       }
     } catch (error) {
       console.error('Error initializing credit requests in localStorage:', error);
@@ -30,7 +54,7 @@ export const creditRequestsStorageService = {
    */
   async getAllRequests(): Promise<CreditRequest[]> {
     try {
-      this.init(); // S'assurer que les données sont initialisées
+      await this.init(); // S'assurer que les données sont initialisées (en DEV)
       const stored = localStorage.getItem(STORAGE_KEYS.CREDIT_REQUESTS);
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
@@ -116,11 +140,19 @@ export const creditRequestsStorageService = {
 
   /**
    * Réinitialise les données de demandes de crédit aux valeurs initiales
+   * ⚠️ En production, cette méthode ne fait rien
    */
   async resetToMockData(): Promise<CreditRequest[]> {
+    // En production, ne jamais reset avec des données mock
+    if (isProduction || !allowMockData) {
+      console.warn('[PROD] resetToMockData() ignoré en production');
+      return [];
+    }
+    
     try {
-      localStorage.setItem(STORAGE_KEYS.CREDIT_REQUESTS, JSON.stringify(initialMockData));
-      return initialMockData;
+      const mockData = await getMockCreditRequests();
+      localStorage.setItem(STORAGE_KEYS.CREDIT_REQUESTS, JSON.stringify(mockData));
+      return mockData;
     } catch (error) {
       console.error('Error resetting credit requests to mock data:', error);
       throw error;

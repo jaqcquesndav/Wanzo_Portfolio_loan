@@ -4,6 +4,7 @@ import {
   DefaultOptions,
   QueryObserverOptions
 } from '@tanstack/react-query';
+import { productionErrorHandler, ErrorType } from './productionErrorHandler';
 
 /**
  * ============================================================
@@ -196,9 +197,34 @@ export const realtimeDataOptions: Partial<QueryObserverOptions> = {
 
 /**
  * Instance du client React Query avec la configuration par défaut
+ * Inclut la gestion d'erreurs globale avec notifications toast
  */
 export const queryClient = new QueryClient({
-  defaultOptions: defaultQueryOptions,
+  defaultOptions: {
+    ...defaultQueryOptions,
+    queries: {
+      ...defaultQueryOptions.queries,
+    },
+    mutations: {
+      ...defaultQueryOptions.mutations,
+      // Gestion d'erreurs globale pour les mutations
+      onError: (error: unknown) => {
+        const parsedError = productionErrorHandler.parseError(error);
+        
+        // Certaines erreurs sont gérées silencieusement
+        if (parsedError.type === ErrorType.AUTHENTICATION) {
+          // L'authentification est gérée par apiClient (redirection)
+          return;
+        }
+        
+        // Afficher la notification d'erreur
+        productionErrorHandler.handleError(error, { 
+          showNotification: true,
+          duration: 5000 
+        });
+      },
+    },
+  },
 });
 
 /**
