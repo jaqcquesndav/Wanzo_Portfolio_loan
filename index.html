@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.auth0.com https://*.auth0.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      img-src 'self' data: blob: https: http:;
+      connect-src 'self' 
+        https://api.wanzzo.com 
+        https://*.wanzzo.com 
+        https://*.auth0.com 
+        https://dev-tezmln0tk0g1gouf.eu.auth0.com 
+        https://res.cloudinary.com 
+        https://api.cloudinary.com
+        wss://api.wanzzo.com
+        ws://localhost:*
+        http://localhost:*;
+      frame-src 'self' https://*.auth0.com;
+      object-src 'none';
+      base-uri 'self';
+    ">
     <title>Wanzo Portefeuilles</title>
   </head>
   <body>
