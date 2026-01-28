@@ -2,8 +2,12 @@
  * Configuration des endpoints API pour le dashboard
  */
 
-// URL de base de l'API
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.wanzo-portfolio.com';
+// URL de base de l'API (doit être définie dans les variables d'environnement)
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+if (!apiBaseUrl && import.meta.env.PROD) {
+  console.error('⚠️ VITE_API_BASE_URL non définie en production');
+}
+export const API_BASE_URL = apiBaseUrl || '';
 
 // Timeout pour les requêtes API (en ms)
 export const API_TIMEOUT = 15000;

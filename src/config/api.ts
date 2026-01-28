@@ -17,12 +17,23 @@ import { API_ENDPOINTS } from '../services/api/endpoints';
  * - ADHA AI Audio: {gatewayUrl}/adha-ai/audio/... (service séparé)
  * - WebSocket: {gatewayUrl} avec path '/portfolio/chat'
  */
+// Vérification des variables d'environnement requises en production
+const gatewayUrl = import.meta.env.VITE_GATEWAY_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
+
+if (import.meta.env.PROD) {
+  if (!gatewayUrl) console.error('⚠️ VITE_GATEWAY_URL non définie en production');
+  if (!apiUrl) console.error('⚠️ VITE_API_URL non définie en production');
+}
+
 export const API_CONFIG = {
   // URL de l'API Gateway (pour WebSocket et ADHA AI Service)
-  gatewayUrl: import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8000',
+  // En dev: localhost:8000, En prod: https://api.wanzo.com
+  gatewayUrl: gatewayUrl || '',
   
   // URL de base de l'API Portfolio (inclut /portfolio/api/v1)
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000/portfolio/api/v1',
+  // En dev: http://localhost:8000/portfolio/api/v1, En prod: https://api.wanzo.com/portfolio/api/v1
+  baseUrl: apiUrl || '',
   
   // En-têtes HTTP par défaut
   headers: {
