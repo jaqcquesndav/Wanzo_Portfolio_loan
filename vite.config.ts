@@ -85,53 +85,11 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        // 🛡️ Chunking sécurisé avec fonction pour éviter les erreurs createContext undefined
-        manualChunks(id) {
-          // React et ses dépendances DOIVENT rester ensemble pour éviter createContext undefined
-          if (id.includes('node_modules')) {
-            if (
-              id.includes('react/') ||
-              id.includes('react-dom') ||
-              id.includes('react-router') ||
-              id.includes('scheduler') ||
-              id.includes('react-is') ||
-              id.includes('@tanstack/react-query')
-            ) {
-              return 'vendor-react';
-            }
-            // Bibliothèques de visualisation (charts)
-            if (
-              id.includes('recharts') ||
-              id.includes('chart.js') ||
-              id.includes('react-chartjs-2') ||
-              id.includes('d3')
-            ) {
-              return 'vendor-charts';
-            }
-            // Plotly séparé car très volumineux
-            if (id.includes('plotly')) {
-              return 'vendor-plotly';
-            }
-            // Icônes et UI
-            if (
-              id.includes('lucide-react') ||
-              id.includes('@heroicons') ||
-              id.includes('@headlessui') ||
-              id.includes('@radix-ui')
-            ) {
-              return 'vendor-ui';
-            }
-            // i18n
-            if (id.includes('i18next') || id.includes('react-i18next')) {
-              return 'vendor-i18n';
-            }
-            // Autres node_modules
-            return 'vendor';
-          }
-        }
+        // 🛡️ Laisser Vite gérer automatiquement les chunks pour éviter les problèmes de dépendances
+        // Le chunking manuel peut causer des erreurs comme "Cannot set properties of undefined (setting 'exports')"
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000, // Augmenté pour éviter les warnings
     // Mise en cache optimisée
     sourcemap: false, // Désactiver pour la production
     reportCompressedSize: false, // Améliore la vitesse de build
