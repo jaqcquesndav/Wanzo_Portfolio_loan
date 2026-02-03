@@ -85,8 +85,9 @@ if (!rootElement) {
   throw new Error('Failed to find the root element');
 }
 
-// Initialise les mockdata dans localStorage avant de lancer l'app
-initializeMockData().finally(() => {
+// 🚀 Fonction pour démarrer l'application React
+const startApp = () => {
+  console.log('🎯 [Portfolio] Démarrage du rendu React...');
   const root = createRoot(rootElement);
   root.render(
     <StrictMode>
@@ -95,4 +96,25 @@ initializeMockData().finally(() => {
       </AppErrorBoundary>
     </StrictMode>
   );
-});
+  console.log('✅ [Portfolio] Application montée avec succès');
+};
+
+// 🛡️ Initialise les mockdata avec timeout de sécurité
+const INIT_TIMEOUT = 5000; // 5 secondes max pour l'initialisation
+
+const initWithTimeout = Promise.race([
+  initializeMockData().then(() => {
+    console.log('✅ [Portfolio] Données mock initialisées');
+  }).catch((err) => {
+    console.warn('⚠️ [Portfolio] Erreur initialisation mock (ignorée):', err);
+  }),
+  new Promise<void>((resolve) => {
+    setTimeout(() => {
+      console.warn('⚠️ [Portfolio] Timeout initialisation mock - démarrage forcé');
+      resolve();
+    }, INIT_TIMEOUT);
+  })
+]);
+
+// Démarre l'app après initialisation ou timeout
+initWithTimeout.finally(startApp);
