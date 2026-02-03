@@ -46,7 +46,6 @@
     "profile": "Profil",
     "logout": "Déconnexion",
     "login": "Connexion",
-    "register": "S'inscrire",
     "dashboard": "Tableau de bord",
     "portfolio": "Portefeuille",
     "payments": "Paiements",
@@ -80,13 +79,9 @@
     "rememberMe": "Se souvenir de moi",
     "forgotPassword": "Mot de passe oublié ?",
     "signIn": "Se connecter",
-    "signUp": "S'inscrire",
-    "createAccount": "Créer un compte",
-    "firstName": "Prénom",
-    "lastName": "Nom",
-    "confirmPassword": "Confirmer le mot de passe",
-    "terms": "J'accepte les conditions d'utilisation",
-    "privacy": "J'accepte la politique de confidentialité"
+    "continueWithAuth0": "Continuer avec Auth0",
+    "sessionExpired": "Session expirée",
+    "loginRequired": "Connexion requise"
   },
   "dashboard": {
     "title": "Tableau de bord",

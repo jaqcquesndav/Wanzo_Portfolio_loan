@@ -46,7 +46,6 @@
     "profile": "Profile",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register",
     "dashboard": "Dashboard",
     "portfolio": "Portfolio",
     "payments": "Payments",
@@ -80,13 +79,9 @@
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot password?",
     "signIn": "Sign in",
-    "signUp": "Sign up",
-    "createAccount": "Create account",
-    "firstName": "First name",
-    "lastName": "Last name",
-    "confirmPassword": "Confirm password",
-    "terms": "I accept the terms of use",
-    "privacy": "I accept the privacy policy"
+    "continueWithAuth0": "Continue with Auth0",
+    "sessionExpired": "Session expired",
+    "loginRequired": "Login required"
   },
   "dashboard": {
     "title": "Dashboard",
