@@ -25,6 +25,9 @@ export * from './credit-contract';
 export * from './portfolio';
 export * from './traditional-portfolio';
 
+// Subscription/Quota types
+export * from './subscription-errors';
+
 // Other existing types (add as needed)
 // export * from './user';
 // export * from './notification';

@@ -10,6 +10,7 @@ import { MessageContent } from './MessageContent';
 import { SourceSelector } from './SourceSelector';
 import { ConversationList } from './ConversationList';
 import { TypingIndicator } from './TypingIndicator';
+import { SubscriptionErrorBanner } from '../common/SubscriptionErrorBanner';
 
 interface ChatContainerProps {
   mode: 'floating' | 'fullscreen';
@@ -55,7 +56,9 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
     setActiveConversation,
     fetchConversations,
     connectWebSocket,
-    cancelCurrentStream // ✅ NOUVEAU: Annuler le stream
+    cancelCurrentStream, // ✅ NOUVEAU: Annuler le stream
+    subscriptionError,
+    clearSubscriptionError
     // Note: disconnectWebSocket retiré - la connexion est maintenue pendant toute la session
   } = useChatStore();
   
@@ -372,6 +375,17 @@ export function ChatContainer({ mode, onClose, onModeChange }: ChatContainerProp
           </button>
         </div>
       </div>
+
+      {/* Bannière d'erreur d'abonnement/quota */}
+      {subscriptionError.hasError && (
+        <div className="px-4 pb-2">
+          <SubscriptionErrorBanner 
+            error={subscriptionError}
+            onDismiss={clearSubscriptionError}
+            showDismiss={true}
+          />
+        </div>
+      )}
 
       {/* Structure principale avec sidebar et contenu */}
       <div className="flex flex-1 min-h-0 overflow-hidden">

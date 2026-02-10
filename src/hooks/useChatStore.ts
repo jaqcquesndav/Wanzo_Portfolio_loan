@@ -3,9 +3,11 @@ import { persist } from 'zustand/middleware';
 import type { Message, Conversation, AIModel, StreamingState, PortfolioStreamChunkEvent, ChatMetadata } from '../types/chat';
 import { AI_MODELS } from '../types/chat';
 import { chatApi } from '../services/api/chat.api';
-import { getChatStreamService, ChatStreamService } from '../services/streaming';
+import { getChatStreamService, ChatStreamService, StreamingError } from '../services/streaming';
 import { getInstitutionId } from '../stores/appContextStore';
 import { formatMessageWithContext } from '../utils/chatContextFormatter';
+import type { SubscriptionErrorState } from '../types/subscription-errors';
+import { parseSubscriptionError } from '../types/subscription-errors';
 
 // Définition du type Task
 export interface Task {
@@ -76,6 +78,13 @@ interface ChatStore {
   toggleLike: (messageId: string) => void;
   toggleDislike: (messageId: string) => void;
   
+  // État erreur d'abonnement
+  subscriptionError: SubscriptionErrorState;
+  
+  // Actions erreur d'abonnement
+  setSubscriptionError: (error: SubscriptionErrorState) => void;
+  clearSubscriptionError: () => void;
+  
   // Simulation réponse bot
   simulateBotResponse: () => Promise<void>;
 }
@@ -116,6 +125,17 @@ export const useChatStore = create<ChatStore>()(
       // Conversations initialisées vide - seront chargées depuis l'API ou créées localement au besoin
       conversations: [],
       activeConversationId: null,
+      
+      // État erreur d'abonnement
+      subscriptionError: {
+        hasError: false,
+        errorType: null,
+        message: '',
+        renewalUrl: null,
+        requiresAction: false,
+        quotaResetDate: null,
+        gracePeriodDaysRemaining: null,
+      },
 
       // Actions UI
       setFloating: (floating) => set({ isFloating: floating }),
@@ -846,8 +866,20 @@ export const useChatStore = create<ChatStore>()(
               }));
             });
             
-            currentStreamService.onError(streamingMessageId, (error: Error) => {
+            currentStreamService.onError(streamingMessageId, (error) => {
               console.error('[ChatStore] ❌ Erreur de streaming:', error);
+              
+              // ✅ Parser les métadonnées d'erreur d'abonnement/quota si présentes
+              let subscriptionErrorState = parseSubscriptionError(undefined);
+              if (error instanceof StreamingError && error.metadata) {
+                console.log('[ChatStore] 📝 Metadata d\'erreur reçue:', error.metadata);
+                subscriptionErrorState = parseSubscriptionError(error.metadata as Record<string, unknown>);
+              }
+              
+              // Déterminer le message d'erreur à afficher
+              const errorMessage = subscriptionErrorState.hasError 
+                ? subscriptionErrorState.message
+                : `Erreur: ${error.message || 'Erreur lors de la réception de la réponse. Veuillez réessayer.'}`;
               
               // Marquer le message comme erreur dans la bonne conversation avec l'ID FIXE
               set(state => ({
@@ -859,7 +891,7 @@ export const useChatStore = create<ChatStore>()(
                         msg.id === streamingBotMessageId 
                           ? { 
                               ...msg, 
-                              content: `Erreur: ${error.message || 'Erreur lors de la réception de la réponse. Veuillez réessayer.'}`,
+                              content: errorMessage,
                               error: true,
                               isStreaming: false,
                               pending: false
@@ -876,7 +908,9 @@ export const useChatStore = create<ChatStore>()(
                   lastChunkId: -1,
                   isActive: false
                 },
-                isTyping: false
+                isTyping: false,
+                // ✅ Mettre à jour l'état d'erreur d'abonnement
+                subscriptionError: subscriptionErrorState,
               }));
             });
             
@@ -1192,6 +1226,20 @@ export const useChatStore = create<ChatStore>()(
           )
         }));
       },
+
+      // Actions erreur d'abonnement
+      setSubscriptionError: (error: SubscriptionErrorState) => set({ subscriptionError: error }),
+      clearSubscriptionError: () => set({ 
+        subscriptionError: {
+          hasError: false,
+          errorType: null,
+          message: '',
+          renewalUrl: null,
+          requiresAction: false,
+          quotaResetDate: null,
+          gracePeriodDaysRemaining: null,
+        }
+      }),
 
       // Simulation réponse bot
       simulateBotResponse: async () => {

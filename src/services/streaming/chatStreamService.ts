@@ -9,6 +9,7 @@
  */
 
 import { io, Socket } from 'socket.io-client';
+import type { SubscriptionErrorMetadata } from '../../types/subscription-errors';
 import type { 
   PortfolioStreamChunkEvent, 
   StreamingState, 
@@ -78,10 +79,32 @@ const SOCKET_EVENTS = {
 
 // Types pour les callbacks
 type ChunkCallback = (chunk: PortfolioStreamChunkEvent) => void;
-type ErrorCallback = (error: Error) => void;
+type ErrorCallback = (error: StreamingError) => void;
 type CompleteCallback = (content: string, suggestedActions?: Array<string | { type: string; payload: unknown }>) => void;
 type ConnectionCallback = (connected: boolean) => void;
 type CancelledCallback = (reason: string) => void; // ✅ NOUVEAU
+
+/**
+ * Classe d'erreur enrichie pour le streaming
+ * Inclut les métadonnées d'abonnement/quota du backend
+ */
+export class StreamingError extends Error {
+  /** Métadonnées d'erreur (abonnement, quota, etc.) */
+  public readonly metadata?: SubscriptionErrorMetadata & Record<string, unknown>;
+  
+  /** Contenu brut de l'erreur */
+  public readonly content: string;
+
+  constructor(message: string, metadata?: Record<string, unknown>) {
+    super(message);
+    this.name = 'StreamingError';
+    this.content = message;
+    this.metadata = metadata as SubscriptionErrorMetadata & Record<string, unknown>;
+    
+    // Nécessaire pour que instanceof fonctionne correctement avec TypeScript
+    Object.setPrototypeOf(this, StreamingError.prototype);
+  }
+}
 
 /**
  * Classe de gestion du streaming des réponses IA via Socket.IO
@@ -839,9 +862,10 @@ export class ChatStreamService {
 
   /**
    * Traite une erreur de streaming
+   * Crée une StreamingError enrichie avec les métadonnées du backend
    */
   private handleError(chunk: PortfolioStreamChunkEvent): void {
-    const { requestMessageId } = chunk;
+    const { requestMessageId, metadata } = chunk;
     
     this.clearMessageTimeout(requestMessageId);
 
@@ -850,7 +874,11 @@ export class ChatStreamService {
       this.streamingState.error = chunk.content;
     }
 
-    const error = new Error(chunk.content || 'Erreur de streaming');
+    // ✅ Créer une erreur enrichie avec les métadonnées (abonnement, quota, etc.)
+    const error = new StreamingError(
+      chunk.content || 'Erreur de streaming',
+      metadata as Record<string, unknown>
+    );
     
     // Notifier le callback d'erreur
     // ✅ CORRIGÉ v2.4.1: Plus de fallback dangereux!

@@ -6,7 +6,8 @@
 export { 
   ChatStreamService, 
   getChatStreamService, 
-  resetChatStreamService 
+  resetChatStreamService,
+  StreamingError
 } from './chatStreamService';
 
 export type {
