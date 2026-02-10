@@ -15,7 +15,7 @@ dist-ssr
 # Environment files
 .env
 .env.local
-.env.production
+# Note: .env.production is NOT ignored - it contains public production URLs
 
 # Editor directories and files
 .vscode/*

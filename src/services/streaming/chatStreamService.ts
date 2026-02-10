@@ -45,10 +45,14 @@ const getWebSocketConfig = () => {
     };
   }
   
-  // Utiliser gatewayUrl de la configuration centralisée si défini
-  // Sinon, fallback vers API Gateway par défaut
+  // Utiliser gatewayUrl de la configuration centralisée
+  // En production, la variable VITE_GATEWAY_URL doit être définie dans .env.production
+  const gatewayUrl = API_CONFIG.gatewayUrl;
+  if (!gatewayUrl && import.meta.env.PROD) {
+    console.error('⚠️ VITE_GATEWAY_URL non définie en production - WebSocket désactivé');
+  }
   return {
-    url: API_CONFIG.gatewayUrl || 'http://localhost:8000',
+    url: gatewayUrl || 'http://localhost:8000', // Fallback dev uniquement
     path: '/portfolio/chat'
   };
 };
