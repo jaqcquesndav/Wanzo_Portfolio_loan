@@ -185,6 +185,72 @@ export const userApi = {
     }>('/users/me/preferences', { settings });
   },
 
+  // ===== VÉRIFICATION D'IDENTITÉ =====
+
+  /**
+   * Soumet les documents de vérification d'identité
+   * Les URLs doivent être des URLs Cloudinary valides
+   */
+  submitVerification: (data: {
+    idType: 'passport' | 'national_id' | 'driver_license' | 'voter_card' | 'other';
+    idNumber: string;
+    idDocument: string;  // URL Cloudinary du recto
+    idDocumentBack?: string;  // URL Cloudinary du verso (optionnel)
+  }) => {
+    return apiClient.post<{
+      id: string;
+      idStatus: 'pending' | 'verified' | 'rejected';
+      verificationSubmittedAt: string;
+      message: string;
+    }>('/users/me/verification', data);
+  },
+
+  /**
+   * Approuve ou rejette une vérification d'identité (admin uniquement)
+   */
+  reviewVerification: (userId: string, data: {
+    action: 'approve' | 'reject';
+    rejectionReason?: string;
+    verifiedBy: string;  // ID de l'admin
+  }) => {
+    return apiClient.post<{
+      id: string;
+      idStatus: 'verified' | 'rejected';
+      verificationReviewedAt: string;
+      verificationReviewedBy: string;
+      rejectionReason?: string;
+    }>(`/users/${userId}/verification/review`, data);
+  },
+
+  /**
+   * Récupère le statut de vérification d'un utilisateur
+   */
+  getVerificationStatus: (userId: string) => {
+    return apiClient.get<{
+      idType?: string;
+      idNumber?: string;
+      idStatus: 'pending' | 'verified' | 'rejected' | null;
+      idDocument?: string;
+      idDocumentBack?: string;
+      verificationSubmittedAt?: string;
+      verificationReviewedAt?: string;
+      verificationReviewedBy?: string;
+      rejectionReason?: string;
+    }>(`/users/${userId}/verification`);
+  },
+
+  /**
+   * Met à jour la photo de profil de l'utilisateur
+   * L'URL doit être une URL Cloudinary valide
+   */
+  updateProfilePicture: (pictureUrl: string) => {
+    return apiClient.put<{
+      id: string;
+      picture: string;
+      updatedAt: string;
+    }>('/users/me/picture', { picture: pictureUrl });
+  },
+
   /**
    * Récupère les rôles disponibles
    */

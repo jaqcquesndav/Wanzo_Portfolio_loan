@@ -64,3 +64,11 @@ export {
   getRiskClassFromDaysOverdue,
   getProvisionRate
 } from './useRiskStatistics';
+
+// Document Upload Hook (Cloudinary integration)
+export { useDocumentUpload } from './useDocumentUpload';
+export type { 
+  UploadResult, 
+  UseDocumentUploadOptions, 
+  UseDocumentUploadReturn 
+} from './useDocumentUpload';

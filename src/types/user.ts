@@ -50,13 +50,23 @@ export interface User {
   name?: string;
   givenName?: string;
   familyName?: string;
-  picture?: string;
+  picture?: string;  // URL de photo de profil (Cloudinary)
+  profilePicture?: string;  // URL de photo profil (legacy, Cloudinary)
   phone?: string;
   phoneVerified?: boolean;
   address?: string;
+  
+  // Documents d'identité et vérification
   idNumber?: string;
   idType?: IdType;
   idStatus?: IdStatus;
+  idDocument?: string;  // URL du recto du document d'identité (Cloudinary)
+  idDocumentBack?: string;  // URL du verso du document d'identité (Cloudinary)
+  verificationSubmittedAt?: string;  // Date de soumission de la vérification
+  verificationReviewedAt?: string;  // Date de revue de la vérification
+  verificationReviewedBy?: string;  // ID de l'administrateur ayant vérifié
+  rejectionReason?: string;  // Raison du rejet si idStatus === 'rejected'
+  
   role?: UserRole;
   birthdate?: string;
   bio?: string;
@@ -80,7 +90,7 @@ export interface User {
   // Champ optionnel pour l'ID de l'institution associée
   institutionId?: string;
   // Champ optionnel pour le statut de l'utilisateur
-  status?: 'active' | 'inactive' | 'suspended';
+  status?: 'active' | 'inactive' | 'suspended' | 'pending_verification';
   // Département de l'utilisateur (optionnel)
   department?: string;
 }
@@ -193,12 +203,19 @@ export const userSchema = z.object({
   givenName: z.string().optional(),
   familyName: z.string().optional(),
   picture: z.string().url("URL invalide").optional(),
+  profilePicture: z.string().url("URL invalide").optional(),
   phone: z.string().optional(),
   phoneVerified: z.boolean().optional(),
   address: z.string().optional(),
   idNumber: z.string().optional(),
-  idType: z.enum(['passport', 'national_id', 'driver_license', 'other']).optional(),
+  idType: z.enum(['passport', 'national_id', 'driver_license', 'voter_card', 'other']).optional(),
   idStatus: z.enum(['pending', 'verified', 'rejected']).optional(),
+  idDocument: z.string().url("URL invalide").optional(),
+  idDocumentBack: z.string().url("URL invalide").optional(),
+  verificationSubmittedAt: z.string().optional(),
+  verificationReviewedAt: z.string().optional(),
+  verificationReviewedBy: z.string().optional(),
+  rejectionReason: z.string().optional(),
   role: z.enum(['Admin', 'Portfolio_Manager', 'Auditor', 'User']).optional().default('User'),
   birthdate: z.string().optional(),
   bio: z.string().optional(),
@@ -214,4 +231,7 @@ export const userSchema = z.object({
   plan: z.string().optional(),
   tokenBalance: z.number().optional(),
   tokenTotal: z.number().optional(),
+  institutionId: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'suspended', 'pending_verification']).optional(),
+  department: z.string().optional(),
 });

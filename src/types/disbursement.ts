@@ -72,6 +72,9 @@ export interface Disbursement {
   paymentReference?: string;
   description?: string;  // Description ou motif du paiement
   
+  // Pièce justificative (URL Cloudinary)
+  supportingDocumentUrl?: string;  // URL de la pièce justificative du virement
+  
   // Informations spécifiques selon le type de portefeuille
   investmentType?: 'prise de participation' | 'complément' | 'dividende' | 'cession';
   leasingEquipmentDetails?: {
