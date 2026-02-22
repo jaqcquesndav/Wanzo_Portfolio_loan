@@ -5,9 +5,15 @@
 import { Building2, LogOut, RefreshCw, ExternalLink } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/useAuth';
+import { auth0Service } from '../services/api/auth/auth0Service';
 
 export default function NoInstitutionPage() {
   const { logout, refreshContext, isLoading } = useAuth();
+
+  const handleLogout = () => {
+    logout(); // nettoie l'état React
+    auth0Service.performFullLogout(); // invalide la session Auth0 et revient sur /
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4">
@@ -62,7 +68,7 @@ export default function NoInstitutionPage() {
           <Button
             variant="ghost"
             className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-            onClick={logout}
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-2" />
             Se déconnecter

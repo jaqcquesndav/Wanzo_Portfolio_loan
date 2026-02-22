@@ -6,6 +6,7 @@ import AuthCallback from '../pages/AuthCallback';
 import AuthDebug from '../pages/AuthDebug';
 import InstitutionValidation from '../pages/InstitutionValidation';
 import NoInstitutionPage from '../pages/NoInstitutionPage';
+import NonAutorisePage from '../pages/NonAutorisePage';
 import Dashboard from '../pages/Dashboard';
 import Prospection from '../pages/Prospection';
 import TraditionalPortfolio from '../pages/TraditionalPortfolio';
@@ -73,6 +74,11 @@ export const router = createBrowserRouter([
     // Page dédiée aux comptes sans institution associée
     path: '/institution/required',
     element: <NoInstitutionPage />
+  },
+  {
+    // Page d'accès refusé (rôle insuffisant, permissions manquantes, etc.)
+    path: '/non-autorise',
+    element: <NonAutorisePage />
   },
   // Redirection dynamique pour /dashboard
   {

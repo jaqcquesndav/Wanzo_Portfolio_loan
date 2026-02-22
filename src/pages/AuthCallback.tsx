@@ -228,10 +228,10 @@ export default function AuthCallback() {
               navigate('/app/traditional');
               
             } else {
-              // Pas d'institution - l'utilisateur doit en créer une ou utiliser le mode démo
-              console.warn('⚠️ Utilisateur authentifié mais sans institution');
-              
-              // Stocker l'utilisateur quand même pour le mode démo
+              // Pas d'institution — accès refusé immédiatement, pas de mode démo silencieux
+              console.warn('⚠️ Utilisateur authentifié mais SANS institution — accès refusé');
+
+              // Stocker les infos utilisateur pour que NoInstitutionPage puisse afficher son nom/email
               if (userData) {
                 setGlobalContext({
                   user: mappedUser,
@@ -240,22 +240,22 @@ export default function AuthCallback() {
                   permissions: permissions || []
                 });
               }
-              
+
               auth0Service.clearAuthTemp();
               localStorage.setItem('wanzo_no_institution', 'true');
-              
-              // Rediriger vers l'app - le NoInstitutionAlert s'affichera
-              console.log('🚀 Redirection vers /app/traditional (onboarding requis)');
-              navigate('/app/traditional');
+
+              // Rediriger directement vers la page "institution requise" — ne jamais entrer dans l'app
+              console.log('🚫 Redirection vers /institution/required (pas d\'institution)');
+              navigate('/institution/required', { replace: true });
             }
-            
+
           } catch (meError) {
             console.error('❌ Erreur /users/me:', meError);
-            
-            // En cas d'erreur backend, créer un contexte minimal avec les données Auth0
+
+            // En cas d'erreur backend, on refuse l'accès plutôt que de laisser entrer silencieusement
             const auth0User = auth0Service.getUser();
             if (auth0User) {
-              console.log('🔄 Fallback: utilisation des données Auth0 locales');
+              console.log('🔄 Fallback: stockage des données Auth0 locales sans accès app');
               setGlobalContext({
                 user: auth0User,
                 institution: null,
@@ -263,14 +263,14 @@ export default function AuthCallback() {
                 permissions: auth0User.permissions || []
               });
             }
-            
-            // Marquer que l'utilisateur n'a pas d'institution (backend non disponible)
+
+            // Marquer le backend comme indisponible
             localStorage.setItem('wanzo_no_institution', 'true');
             localStorage.setItem('wanzo_backend_unavailable', 'true');
             
             auth0Service.clearAuthTemp();
-            console.log('🚀 Redirection vers /app/traditional (backend indisponible)');
-            navigate('/app/traditional');
+            console.log('� Redirection vers /institution/required (backend indisponible)');
+            navigate('/institution/required', { replace: true });
           }
           
         } else {

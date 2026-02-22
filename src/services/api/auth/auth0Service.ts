@@ -236,40 +236,50 @@ class Auth0Service {
   }
 
   /**
-   * Génère l'URL de déconnexion Auth0 pour une déconnexion complète
-   * Cette URL invalide la session Auth0 et redirige vers la page de connexion de l'application
+   * Génère l'URL de déconnexion Auth0 pour une déconnexion complète.
+   * Utilise VITE_AUTH0_ALLOWED_LOGOUT_URLS (défini dans .env / .env.production)
+   * comme URL de retour — cette valeur doit correspondre exactement à ce qui est
+   * enregistré dans "Allowed Logout URLs" du dashboard Auth0.
    */
   getLogoutUrl(): string {
     const domain = import.meta.env.VITE_AUTH0_DOMAIN;
     const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
-    // Rediriger vers la page de connexion de l'application (racine)
-    const returnTo = encodeURIComponent(window.location.origin + '/');
-    
+    // Utiliser l'URL déclarée dans .env pour garantir la correspondance avec Auth0 dashboard
+    const allowedLogoutUrl =
+      import.meta.env.VITE_AUTH0_ALLOWED_LOGOUT_URLS || window.location.origin + '/';
+    const returnTo = encodeURIComponent(allowedLogoutUrl);
+
     if (!domain || !clientId) {
       console.warn('[Auth0] Variables d\'environnement manquantes pour la déconnexion');
-      return '/';
+      return allowedLogoutUrl;
     }
-    
+
     return `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${returnTo}`;
   }
 
   /**
    * Effectue une déconnexion complète :
-   * 1. Nettoie toutes les données locales
-   * 2. Redirige vers Auth0 pour invalider la session
+   * 1. Nettoie toutes les données locales (tokens, flags, stores)
+   * 2. Redirige vers Auth0 /v2/logout qui invalide la session SSO,
+   *    puis renvoie l'utilisateur vers VITE_AUTH0_ALLOWED_LOGOUT_URLS (la page de login).
    */
   performFullLogout(): void {
     console.log('🚪 Déconnexion complète Auth0 en cours...');
-    
-    // D'abord nettoyer toutes les données locales
+
+    // Nettoyer toutes les données locales
     this.clearAuth();
-    
-    // Obtenir l'URL de déconnexion Auth0
+    this.clearAuthTemp();
+    localStorage.removeItem('wanzo_no_institution');
+    localStorage.removeItem('wanzo_backend_unavailable');
+    localStorage.removeItem('app-context-storage');
+    localStorage.removeItem('portfolioType');
+
+    // Obtenir l'URL de déconnexion Auth0 avec le bon returnTo
     const logoutUrl = this.getLogoutUrl();
-    
-    console.log('🔗 Redirection vers Auth0 pour invalidation de session...');
-    
-    // Rediriger vers Auth0 pour invalider la session côté serveur
+
+    console.log('🔗 Redirection vers Auth0 pour invalidation de session SSO...', logoutUrl);
+
+    // Rediriger vers Auth0 — Auth0 invalide la session puis renvoie sur la page de login
     window.location.href = logoutUrl;
   }
 }
