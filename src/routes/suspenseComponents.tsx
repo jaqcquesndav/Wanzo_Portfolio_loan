@@ -38,3 +38,8 @@ export const Prospection = withSuspense(lazyComponents.Prospection);
 
 // Company pages
 export const CompanyViewPage = withSuspense(lazyComponents.CompanyViewPage);
+
+// Auth / access pages
+export const NoInstitutionPage = withSuspense(lazyComponents.NoInstitutionPage);
+export const NonAutorisePage = withSuspense(lazyComponents.NonAutorisePage);
+export const AuthDebug = withSuspense(lazyComponents.AuthDebug);

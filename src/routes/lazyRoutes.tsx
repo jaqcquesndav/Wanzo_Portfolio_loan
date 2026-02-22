@@ -44,3 +44,10 @@ export const Prospection = lazy(() => import('../pages/Prospection'));
 
 // Company pages
 export const CompanyViewPage = lazy(() => import('../pages/CompanyViewPage'));
+
+// Auth / access pages
+export const NoInstitutionPage = lazy(() => import('../pages/NoInstitutionPage'));
+export const NonAutorisePage = lazy(() =>
+  import('../pages/NonAutorisePage').then(module => ({ default: module.NonAutorisePage }))
+);
+export const AuthDebug = lazy(() => import('../pages/AuthDebug'));

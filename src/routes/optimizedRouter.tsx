@@ -2,6 +2,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import * as components from './suspenseComponents';
 import Organization from '../pages/Organization';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
 // Création du routeur avec les composants optimisés (lazy loading avec Suspense)
 export function createOptimizedRouter() {
@@ -36,6 +37,20 @@ export function createOptimizedRouter() {
       element: <components.AuthCallback />
     },
     {
+      path: '/auth/debug',
+      element: <components.AuthDebug />
+    },
+    {
+      // Page dédiée aux comptes sans institution associée
+      path: '/institution/required',
+      element: <components.NoInstitutionPage />
+    },
+    {
+      // Page d'accès refusé (rôle insuffisant, permissions manquantes, pas d'institution)
+      path: '/non-autorise',
+      element: <components.NonAutorisePage />
+    },
+    {
       path: '/institution/validation',
       element: <components.InstitutionValidation />
     },
@@ -54,11 +69,13 @@ export function createOptimizedRouter() {
       path: '/central-risque',
       element: <Navigate to="/app/traditional/central-risque" replace />
     },
-    // Routes principales de l'application
+    // Routes principales de l'application — Guard: authentifié + institution requise
     {
       path: '/app/:portfolioType',
-      element: <components.Layout />,
-      children: [
+      element: <ProtectedRoute />,
+      children: [{
+        element: <components.Layout />,
+        children: [
         { path: '', element: <components.Dashboard /> },
         // ==========================================
         // COMPANY ROUTES - Must be FIRST
@@ -113,6 +130,7 @@ export function createOptimizedRouter() {
         { path: 'help', element: <components.Help /> },
         // ✅ FIX: Removed traditional/* catch-all that was blocking company/:id/view
       ]
+      }] // end ProtectedRoute children
     }
   ]);
 }
