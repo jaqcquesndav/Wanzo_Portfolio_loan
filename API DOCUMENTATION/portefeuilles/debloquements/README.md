@@ -148,6 +148,48 @@ interface LeasingEquipment {
 }
 ```
 
+## Architecture Wallet-First (Février 2026)
+
+> **Important pour le frontend** : Les déboursements de crédit utilisent désormais un flux **wallet-to-wallet asynchrone**. Le frontend n'a plus besoin de fournir les détails bancaires ou mobile money — le transfert est effectué automatiquement par le wallet engine.
+
+### Changements clés pour le frontend
+
+| Avant (ancien flux) | Maintenant (wallet-first) |
+|---------------------|--------------------------|
+| `disbursement_method` requis | Plus requis — transfert via wallet engine |
+| `bank_details` / `mobileMoneySource` requis | Plus requis — wallets résolus automatiquement |
+| `POST /confirm` avec `transactionReference` | Plus requis — `transactionId` fourni par callback |
+| Statut retourné = `completed` directement | Statut retourné = `processing` (asynchrone) |
+| Flux synchrone | Flux asynchrone via Kafka |
+
+### Flux frontend recommandé
+
+```
+1. POST /disbursements          → Crée un déboursement (DRAFT)
+2. POST /disbursements/{id}/approve → Approuve (APPROVED) — nécessite rôle admin
+3. POST /disbursements/{id}/process → Exécute (retourne PROCESSING)
+4. Polling GET /disbursements/{id}  → Attendre COMPLETED ou FAILED
+```
+
+### Ce qui se passe en backend après "process"
+
+```
+portfolio-institution-service
+  └─ DisbursementService.execute()
+       ├─ Status = PROCESSING
+       └─ Kafka: portfolio.disbursement.initiated
+            └─ payment-service (wallet engine)
+                 ├─ DEBIT wallet institution
+                 ├─ CREDIT wallet PME
+                 └─ Kafka callback
+                      ├─ portfolio.disbursement.completed → Status = COMPLETED
+                      └─ portfolio.disbursement.failed    → Status = FAILED
+```
+
+> **Note** : Les champs `transactionId`, `transactionDate` sont remplis automatiquement par le callback. Le frontend peut les lire après le passage en COMPLETED.
+
+---
+
 ## Points d'accès
 
 ### Liste des déboursements
@@ -234,11 +276,54 @@ interface LeasingEquipment {
 
 **Réponse réussie** (200 OK) : Retourne l'objet `Disbursement` complet.
 
+### Exécuter/Traiter un déboursement (Wallet-to-Wallet)
+
+**Endpoint** : `POST /portfolios/traditional/disbursements/{id}/process`
+
+> **Architecture wallet-first** : Cet endpoint déclenche un transfert wallet-to-wallet asynchrone. Le statut retourné est `processing`, pas `completed`. Le résultat final arrive via callback Kafka.
+
+**Conditions** : Le déboursement doit être en statut `approved`.
+
+**Réponse réussie** (200 OK) :
+```json
+{
+  "success": true,
+  "data": {
+    "id": "DISB-00001",
+    "status": "processing",
+    "message": "Décaissement en cours via wallet engine"
+  }
+}
+```
+
+**Erreurs** :
+| Code | Description |
+|------|-------------|
+| 400 | Déboursement pas en statut APPROVED |
+| 500 | Échec publication Kafka (statut revient à APPROVED, retry possible) |
+
 ### Créer un déboursement
+
+> **Note wallet-first** : Les champs `accountType`, `paymentMethod`, `debitAccount`, `mobileMoneySource`, `beneficiary.bankName/accountNumber` restent supportés pour l'enregistrement mais **ne sont plus utilisés pour le transfert effectif**. Le transfert passe par le wallet engine.
 
 **Endpoint** : `POST /portfolios/traditional/disbursements`
 
-**Corps de la requête (Virement bancaire)** :
+**Corps de la requête (simplifié — wallet-first)** :
+```json
+{
+  "portfolioId": "TP-00001",
+  "contractReference": "CTR-20250001",
+  "company": "Entreprise ABC",
+  "product": "Crédit PME",
+  "amount": 50000.00,
+  "currency": "CDF",
+  "description": "Déboursement crédit PME - Première tranche"
+}
+```
+
+**Corps de la requête (complet — avec détails bancaires pour traçabilité)** :
+
+**Virement bancaire** :
 ```json
 {
   "portfolioId": "TP-00001",
@@ -295,7 +380,9 @@ interface LeasingEquipment {
 }
 ```
 
-### Confirmer un déboursement
+### Confirmer un déboursement (⚠️ Obsolète)
+
+> **Déprécié** : Avec l'architecture wallet-first, la confirmation est automatique via le callback Kafka du wallet engine. Cet endpoint n'est plus nécessaire — le `transactionReference` et `executionDate` sont fournis automatiquement par le callback.
 
 **Endpoint** : `POST /portfolios/traditional/disbursements/{id}/confirm`
 
@@ -331,8 +418,10 @@ interface LeasingEquipment {
 
 ## Règles métier
 
-1. **Validation du compte source** : Le compte source doit avoir un solde suffisant
-2. **Mobile Money** : Les limites journalières/mensuelles doivent être respectées
-3. **Statuts autorisés pour confirmation** : `pending` ou `approved`
-4. **Statuts autorisés pour annulation** : `draft`, `pending`, `approved`
-5. **Traçabilité** : Chaque déboursement doit être lié à un contrat existant
+1. **Wallet-first** : Le transfert effectif passe par le wallet engine (wallet institution → wallet PME), pas par virement bancaire/mobile money direct
+2. **Asynchrone** : Après `process`, le statut est `processing`. Le frontend doit poller pour le résultat final
+3. **Idempotent** : Les callbacks vérifient le statut avant mise à jour (skip si déjà COMPLETED/FAILED)
+4. **Résilient** : Si Kafka échoue lors du process, le statut revient à `approved` pour permettre un retry
+5. **Activation contrat** : Le premier déboursement complété active automatiquement le contrat (DRAFT → ACTIVE)
+6. **Mobile Money** : Les limites journalières/mensuelles doivent être respectées (pour dépôts/retraits wallet uniquement)
+7. **Traçabilité** : Chaque déboursement doit être lié à un contrat existant

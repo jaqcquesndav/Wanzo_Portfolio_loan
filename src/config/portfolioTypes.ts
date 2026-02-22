@@ -5,6 +5,7 @@ import { DisbursementsTable } from '../components/portfolio/traditional/Disburse
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
+import { PortfolioWalletPanel } from '../components/portfolio/wallet/PortfolioWalletPanel';
 
 // Fonction utilitaire pour vérifier la validité d'un type de portefeuille
 export function isValidPortfolioType(type: string | null | undefined): boolean {
@@ -26,6 +27,7 @@ export const portfolioTypeConfig = {
       { key: 'requests', label: 'Demandes', component: CreditRequestsTable },
       { key: 'contracts', label: 'Contrats', component: CreditContractsList },
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
+      { key: 'wallet', label: 'Wallet', component: PortfolioWalletPanel },
       { key: 'repayments', label: 'Remboursements', component: RepaymentsTable },
       { key: 'guarantees', label: 'Garanties', component: GuaranteesList },
       { key: 'settings', label: 'Paramètres', component: PortfolioSettingsDisplay },

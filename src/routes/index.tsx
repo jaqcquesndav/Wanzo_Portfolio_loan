@@ -1,9 +1,11 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import PortfolioTypeSelector from '../pages/PortfolioTypeSelector';
 import AuthCallback from '../pages/AuthCallback';
 import AuthDebug from '../pages/AuthDebug';
 import InstitutionValidation from '../pages/InstitutionValidation';
+import NoInstitutionPage from '../pages/NoInstitutionPage';
 import Dashboard from '../pages/Dashboard';
 import Prospection from '../pages/Prospection';
 import TraditionalPortfolio from '../pages/TraditionalPortfolio';
@@ -67,6 +69,11 @@ export const router = createBrowserRouter([
     path: '/institution/validation',
     element: <InstitutionValidation />
   },
+  {
+    // Page dédiée aux comptes sans institution associée
+    path: '/institution/required',
+    element: <NoInstitutionPage />
+  },
   // Redirection dynamique pour /dashboard
   {
     path: '/dashboard',
@@ -83,9 +90,12 @@ export const router = createBrowserRouter([
     element: <Navigate to="/app/traditional/central-risque" replace />
   },
   {
+    // Guard: authentifié + institution requise
     path: '/app/:portfolioType',
-    element: <Layout />, 
-    children: [
+    element: <ProtectedRoute />,
+    children: [{
+      element: <Layout />,
+      children: [
       { path: '', element: <Dashboard /> },
       
       // ==========================================
@@ -143,5 +153,6 @@ export const router = createBrowserRouter([
       // ✅ FIX: Removed traditional/* catch-all route that was blocking company/:id/view
       // The specific routes above handle all traditional portfolio paths
     ]
+    }] // end ProtectedRoute children
   }
 ]);

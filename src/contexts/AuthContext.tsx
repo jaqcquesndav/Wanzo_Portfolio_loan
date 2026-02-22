@@ -360,9 +360,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 });
               }
             } else {
-              // Pas de données locales non plus - mode démo
-              console.log('🔐 AuthContext: Erreur API et pas de données locales, activation mode démo');
-              enableDemoMode();
+              // Pas de token local non plus - interdire l'accès, ne pas activer le mode démo
+              console.warn('🔐 AuthContext: Erreur API et pas de données locales → contextStatus = error');
+              setContextStatus('error');
+              setIsContextLoaded(true);
             }
           }
         } else {
@@ -454,17 +455,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await loadUserContext();
       
       if (result === 'error') {
-        // Fallback vers les données mockées si /users/me échoue (mode dev/demo)
-        console.warn('⚠️ /users/me non disponible, activation du mode DEMO automatique');
-        
-        // Stocker l'utilisateur mock
-        setUser(mockUser);
-        setPermissions(mockUser.permissions || []);
-        
-        // Activer automatiquement le mode démo
-        enableDemoMode();
-        
-        console.log('✅ Mode DEMO activé automatiquement après échec /users/me');
+        // /users/me inaccessible — ne pas accorder d'accès silencieusement
+        // L'utilisateur sera redirigé vers / par ProtectedRoute (contextStatus = 'error')
+        console.warn('⚠️ /users/me non disponible après login, accès refusé');
+        setError('Le service est temporairement indisponible. Veuillez réessayer.');
+        setContextStatus('error');
+        setIsContextLoaded(true);
       } else if (result === 'no_institution') {
         // L'utilisateur est authentifié mais n'a pas d'institution
         // Le contextStatus est déjà 'no_institution', on laisse l'UI décider

@@ -116,6 +116,14 @@ Gestion des ordres de paiement génériques
 - **Endpoint** : `/payments`
 - **Fonctionnalités** : Ordres de paiement pour tous types de portefeuilles
 
+### 💳 [Wallet Institution](./wallet/README.md) 🆕
+Portefeuille électronique de l'institution financière
+- **Endpoint** : `/wallet`
+- **Fonctionnalités** : Solde, dépôt/retrait mobile money, transactions, approbation
+- **Dépôt/Retrait** : Via SerdiPay (mobile money)
+- **Opérations crédit** : Wallet-à-wallet automatiques (via Kafka, sans SerdiPay)
+- **Rôles** : admin, manager, analyst
+
 ### ⚙️ [Paramètres](./parametres/README.md)
 Configuration système et paramètres
 - **Endpoint** : `/settings`
