@@ -104,7 +104,7 @@ export function NonAutorisePage() {
             {/* Lien Wanzo.io pour créer/rejoindre une institution */}
             {isNoInstitution && (
               <a
-                href="https://wanzo.io"
+                href="https://wanzzo.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors text-sm font-medium"

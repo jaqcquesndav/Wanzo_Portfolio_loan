@@ -44,7 +44,7 @@ export default function NoInstitutionPage() {
         <div className="space-y-3">
           {/* Lien vers wanzo.com pour créer/associer une institution */}
           <a
-            href="https://wanzo.io"
+            href="https://wanzzo.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full rounded-md bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
