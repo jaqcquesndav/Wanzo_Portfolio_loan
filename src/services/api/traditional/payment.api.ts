@@ -199,7 +199,7 @@ export const paymentApi = {
    */
   cancelPayment: async (id: string, reason: string) => {
     try {
-      return await apiClient.post<CreditPayment>(`/portfolios/traditional/repayments/${id}/cancel`, { reason });
+      return await apiClient.post<CreditPayment>(`/portfolios/traditional/repayments/${id}/cancel`, { cancellation_reason: reason });
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for cancelling payment ${id}`, error);
@@ -239,8 +239,8 @@ export const paymentApi = {
    */
   hasPaymentReceipt: async (id: string) => {
     try {
-      const response = await apiClient.get<{ has_receipt: boolean }>(`/portfolios/traditional/repayments/${id}/has-receipt`);
-      return response.has_receipt;
+      const response = await apiClient.get<{ hasReceipt: boolean }>(`/portfolios/traditional/repayments/${id}/has-receipt`);
+      return response.hasReceipt;
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for checking payment receipt ${id}`, error);

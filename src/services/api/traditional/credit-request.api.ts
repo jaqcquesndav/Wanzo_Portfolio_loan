@@ -94,7 +94,7 @@ export const creditRequestApi = {
    */
   updateRequestStatus: async (id: string, status: CreditRequestStatus): Promise<CreditRequest> => {
     try {
-      return await apiClient.patch<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/status`, { status });
+      return await apiClient.put<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/status`, { status });
     } catch (error) {
       console.warn(`Fallback to localStorage for updating credit request ${id} status`, error);
       const updatedRequest = await creditRequestsStorageService.updateRequestStatus(id, status);
@@ -110,7 +110,7 @@ export const creditRequestApi = {
    */
   updateRequest: async (id: string, updates: Partial<CreditRequest>): Promise<CreditRequest> => {
     try {
-      return await apiClient.patch<CreditRequest>(`/portfolios/traditional/credit-requests/${id}`, updates);
+      return await apiClient.put<CreditRequest>(`/portfolios/traditional/credit-requests/${id}`, updates);
     } catch (error) {
       console.warn(`Fallback to localStorage for updating credit request ${id}`, error);
       const updatedRequest = await creditRequestsStorageService.updateRequest(id, updates);
@@ -131,19 +131,6 @@ export const creditRequestApi = {
     } catch (error) {
       console.warn(`Fallback to localStorage for deleting credit request ${id}`, error);
       return await creditRequestsStorageService.deleteRequest(id);
-    }
-  },
-  
-  /**
-   * Réinitialise les données aux valeurs initiales (pour les tests)
-   */
-  resetToMockData: async (): Promise<CreditRequest[]> => {
-    try {
-      await apiClient.post('/portfolios/traditional/credit-requests/reset');
-      return await creditRequestApi.getAllRequests();
-    } catch (error) {
-      console.warn('Fallback to localStorage for resetting credit requests', error);
-      return await creditRequestsStorageService.resetToMockData();
     }
   },
   
@@ -236,29 +223,22 @@ export const creditRequestApi = {
    * Approuve une demande de crédit
    * Corps: { approvedAmount, approvedRate?, approvedDuration?, conditions?, approvedBy }
    */
-  approveRequest: async (id: string, approvalData: {
-    approvedAmount: number;
-    approvedRate?: number;
-    approvedDuration?: number;
-    conditions?: string;
-    approvedBy: string;
-  }): Promise<CreditRequest> => {
+  /**
+   * Approuve une demande de crédit
+   * POST /portfolios/traditional/credit-requests/:id/approve
+   * Payload: { notes?: string }
+   */
+  approveRequest: async (id: string, payload?: { notes?: string }): Promise<CreditRequest> => {
     try {
-      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/approve`, approvalData);
+      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/approve`, payload ?? {});
     } catch (error) {
       console.warn(`Fallback to localStorage for approving credit request ${id}`, error);
-      const request = await creditRequestsStorageService.getRequestById(id);
-      if (!request) {
-        throw new Error(`Credit request with ID ${id} not found`);
-      }
       const updatedRequest = await creditRequestsStorageService.updateRequest(id, {
         status: 'approved',
-        requestAmount: approvalData.approvedAmount,
-        interestRate: approvalData.approvedRate ?? request.interestRate,
         updatedAt: new Date().toISOString(),
       });
       if (!updatedRequest) {
-        throw new Error(`Failed to approve credit request ${id}`);
+        throw new Error(`Credit request with ID ${id} not found`);
       }
       return updatedRequest;
     }
@@ -268,17 +248,19 @@ export const creditRequestApi = {
    * Rejette une demande de crédit
    * Corps: { rejectionReason, rejectedBy }
    */
-  rejectRequest: async (id: string, rejectionData: {
-    rejectionReason: string;
-    rejectedBy: string;
-  }): Promise<CreditRequest> => {
+  /**
+   * Rejette une demande de crédit
+   * POST /portfolios/traditional/credit-requests/:id/reject
+   * Payload: { reason: string (REQUIS), notes?: string }
+   */
+  rejectRequest: async (id: string, payload: { reason: string; notes?: string }): Promise<CreditRequest> => {
     try {
-      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/reject`, rejectionData);
+      return await apiClient.post<CreditRequest>(`/portfolios/traditional/credit-requests/${id}/reject`, payload);
     } catch (error) {
       console.warn(`Fallback to localStorage for rejecting credit request ${id}`, error);
       const updatedRequest = await creditRequestsStorageService.updateRequest(id, {
         status: 'rejected',
-        rejectionReason: rejectionData.rejectionReason,
+        rejectionReason: payload.reason,
         updatedAt: new Date().toISOString(),
       });
       if (!updatedRequest) {

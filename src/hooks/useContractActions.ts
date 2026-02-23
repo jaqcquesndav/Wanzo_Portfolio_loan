@@ -99,7 +99,7 @@ export const useContractActions = (portfolioId: string) => {
     contract: CreditContract, 
     restructuringDetails: {
       new_terms: string;
-      new_rate?: number;
+      new_interest_rate: number;
       new_end_date: string;
       reason: string;
     }
@@ -121,21 +121,15 @@ export const useContractActions = (portfolioId: string) => {
   }, [showNotification]);
 
   // Fonction pour clôturer un contrat
-  const handleCompleteContract = useCallback(async (
-    contract: CreditContract, 
-    completionDetails: {
-      completion_date: string;
-      notes?: string;
-    }
-  ) => {
+  // POST /portfolios/traditional/credit-contracts/{id}/complete - pas de payload backend
+  const handleCompleteContract = useCallback(async (contract: CreditContract) => {
     if (!contract) {
       showNotification('Impossible de clôturer un contrat inexistant', 'error');
       return false;
     }
     
     try {
-      // Correction: completeContract prend contractId et completionDetails (pas portfolioId)
-      await creditContractApi.completeContract(contract.id, completionDetails);
+      await creditContractApi.completeContract(contract.id);
       showNotification(`Contrat ${contract.contract_number} clôturé avec succès`, 'success');
       return true;
     } catch (error) {

@@ -166,5 +166,5 @@ export interface WalletRejectTransactionPayload {
 
 export interface WalletStatusUpdatePayload {
   status: WalletStatus;
-  reason?: string;
+  reason: string; // REQUIS côté backend (@IsNotEmpty())
 }

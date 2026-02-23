@@ -28,6 +28,8 @@ import { traditionalDataService } from './dataService';
 import { disbursementApi } from './disbursement.api';
 import { paymentScheduleApi } from './payment-schedule.api';
 import { traditionalDocumentApi } from './document.api';
+import { unifiedPaymentApi } from './unified-payment.api';
+import { fundingRequestApi } from './funding-request.api';
 
 // Initialise les données mock locales si nécessaire (pour le développement)
 traditionalDataService.initData();
@@ -49,6 +51,8 @@ export const traditionalApi = {
   disbursements: disbursementApi,
   paymentSchedules: paymentScheduleApi,
   documents: traditionalDocumentApi,
+  unifiedPayments: unifiedPaymentApi,
+  fundingRequests: fundingRequestApi,
   dataService: traditionalDataService
 };
 
@@ -61,6 +65,8 @@ export {
   portfolioSettingsApi,
   disbursementApi,
   paymentScheduleApi,
+  unifiedPaymentApi,
+  fundingRequestApi,
   traditionalDocumentApi,
   traditionalDataService
 };

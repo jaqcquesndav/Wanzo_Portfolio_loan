@@ -123,19 +123,12 @@ export function useCreditRequests() {
   /**
    * Approuver une demande
    * POST /portfolios/traditional/credit-requests/{id}/approve
+   * Payload: { notes?: string }
    */
-  const approveRequest = useCallback(async (id: string, approvalData: {
-    approvedAmount: number;
-    approvedRate?: number;
-    approvedDuration?: number;
-    conditions?: string;
-    approvedBy: string;
-  }) => {
+  const approveRequest = useCallback(async (id: string, payload?: { notes?: string }) => {
     try {
       setLoading(true);
-      
-      const updatedRequest = await creditRequestApi.approveRequest(id, approvalData);
-      
+      const updatedRequest = await creditRequestApi.approveRequest(id, payload);
       setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
       return updatedRequest;
     } catch (err) {
@@ -150,16 +143,12 @@ export function useCreditRequests() {
   /**
    * Rejeter une demande
    * POST /portfolios/traditional/credit-requests/{id}/reject
+   * Payload: { reason: string (REQUIS), notes?: string }
    */
-  const rejectRequest = useCallback(async (id: string, rejectionData: {
-    rejectionReason: string;
-    rejectedBy: string;
-  }) => {
+  const rejectRequest = useCallback(async (id: string, payload: { reason: string; notes?: string }) => {
     try {
       setLoading(true);
-      
-      const updatedRequest = await creditRequestApi.rejectRequest(id, rejectionData);
-      
+      const updatedRequest = await creditRequestApi.rejectRequest(id, payload);
       setRequests(prev => prev.map(req => req.id === id ? updatedRequest : req));
       return updatedRequest;
     } catch (err) {
@@ -331,7 +320,6 @@ export function useCreditRequests() {
     syncFromCommercial,
     // Autres méthodes
     deleteRequest,
-    resetToMockData,
     getMemberName,
     getCreditProductName,
     getCreditManagerName

@@ -9,12 +9,14 @@ const usePaymentSchedule = () => {
   const [error, setError] = useState<string | null>(null);
 
   const generateSchedule = useCallback(async (contractId: string, parameters: {
-    total_amount: number;
-    installments_count: number;
-    frequency: 'monthly' | 'quarterly' | 'weekly' | 'biweekly';
-    interest_rate: number;
-    start_date: string;
-    grace_period_days?: number;
+    principal: number;
+    interestRate: number;
+    term: number;
+    startDate: string;
+    frequency?: 'monthly' | 'quarterly' | 'biannual' | 'annual';
+    amortizationType?: string;
+    gracePeriod?: number;
+    balloonPayment?: number;
   }): Promise<PaymentScheduleDetails | null> => {
     setLoading(true);
     setError(null);
@@ -152,6 +154,32 @@ const usePaymentSchedule = () => {
     
     // Actions
     generateSchedule,
+    simulateSchedule: useCallback(async (parameters: {
+      principal: number;
+      interestRate: number;
+      term: number;
+      startDate: string;
+      frequency?: 'monthly' | 'quarterly' | 'biannual' | 'annual';
+      amortizationType?: string;
+      gracePeriod?: number;
+      balloonPayment?: number;
+    }): Promise<PaymentScheduleDetails | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await callApi(
+          `simulateSchedule-${JSON.stringify(parameters)}`,
+          () => paymentScheduleApi.simulatePaymentSchedule(parameters),
+        );
+        return result;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+        setError(errorMessage);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    }, [callApi]),
     getSchedulesByContract,
     updateScheduleStatus,
     getScheduleById,

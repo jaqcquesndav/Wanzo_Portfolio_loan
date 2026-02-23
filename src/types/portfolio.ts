@@ -14,6 +14,7 @@ import type { MobileMoneyAccount } from './mobileMoneyAccount';
  * - for_sale: En vente (cession de portefeuille)
  * - sold: Vendu/Cédé
  * - archived: Archivé (clôturé définitivement)
+ * - closed: Fermé
  */
 export type PortfolioStatus = 
   | 'draft' 
@@ -24,9 +25,19 @@ export type PortfolioStatus =
   | 'closing' 
   | 'for_sale' 
   | 'sold' 
-  | 'archived';
+  | 'archived'
+  | 'closed';
 
-export type PortfolioType = 'traditional';
+export type PortfolioType = 
+  | 'traditional'
+  | 'leasing'
+  | 'investment'
+  | 'mixed'
+  | 'credit'
+  | 'savings'
+  | 'microfinance'
+  | 'treasury'
+  | 'other';
 
 /**
  * Devise supportée (espace OHADA - RDC)

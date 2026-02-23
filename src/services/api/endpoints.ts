@@ -91,13 +91,30 @@ export const API_ENDPOINTS = {
     create: '/portfolios/traditional',
     update: (id: string) => `/portfolios/traditional/${id}`,
     delete: (id: string) => `/portfolios/traditional/${id}`,
-    close: (id: string) => `/portfolios/traditional/${id}/close`,
+    metrics: (id: string) => `/portfolios/traditional/${id}/metrics`,
     products: (id: string) => `/portfolios/traditional/${id}/products`,
+    // Workflow portfolio
+    activate: (id: string) => `/portfolios/traditional/${id}/activate`,
+    suspend: (id: string) => `/portfolios/traditional/${id}/suspend`,
+    close: (id: string) => `/portfolios/traditional/${id}/close`,
+    listForSale: (id: string) => `/portfolios/traditional/${id}/list-for-sale`,
+    archive: (id: string) => `/portfolios/traditional/${id}/archive`,
+    updateStatus: (id: string) => `/portfolios/traditional/${id}/status`,
     contracts: {
       base: '/portfolios/traditional/credit-contracts',
       getAll: '/portfolios/traditional/credit-contracts',
       getById: (id: string) => `/portfolios/traditional/credit-contracts/${id}`,
       create: '/portfolios/traditional/credit-contracts/from-request',
+      update: (id: string) => `/portfolios/traditional/credit-contracts/${id}`,
+      // Workflow contrat
+      activate: (id: string) => `/portfolios/traditional/credit-contracts/${id}/activate`,
+      suspend: (id: string) => `/portfolios/traditional/credit-contracts/${id}/suspend`,
+      default: (id: string) => `/portfolios/traditional/credit-contracts/${id}/default`,
+      restructure: (id: string) => `/portfolios/traditional/credit-contracts/${id}/restructure`,
+      litigation: (id: string) => `/portfolios/traditional/credit-contracts/${id}/litigation`,
+      complete: (id: string) => `/portfolios/traditional/credit-contracts/${id}/complete`,
+      cancel: (id: string) => `/portfolios/traditional/credit-contracts/${id}/cancel`,
+      schedule: (id: string) => `/portfolios/traditional/credit-contracts/${id}/schedule`,
     },
     creditRequests: {
       base: '/portfolios/traditional/credit-requests',
@@ -105,33 +122,75 @@ export const API_ENDPOINTS = {
       getById: (id: string) => `/portfolios/traditional/credit-requests/${id}`,
       create: '/portfolios/traditional/credit-requests',
       update: (id: string) => `/portfolios/traditional/credit-requests/${id}`,
-      delete: (id: string) => `/portfolios/traditional/credit-requests/${id}`
+      updateStatus: (id: string) => `/portfolios/traditional/credit-requests/${id}/status`,
+      delete: (id: string) => `/portfolios/traditional/credit-requests/${id}`,
+      // Workflow demande de crédit
+      approve: (id: string) => `/portfolios/traditional/credit-requests/${id}/approve`,
+      reject: (id: string) => `/portfolios/traditional/credit-requests/${id}/reject`,
+      cancel: (id: string) => `/portfolios/traditional/credit-requests/${id}/cancel`,
+    },
+    fundingRequests: {
+      base: '/portfolios/traditional/funding-requests',
+      getAll: '/portfolios/traditional/funding-requests',
+      getById: (id: string) => `/portfolios/traditional/funding-requests/${id}`,
+      create: '/portfolios/traditional/funding-requests',
+      update: (id: string) => `/portfolios/traditional/funding-requests/${id}`,
+      updateStatus: (id: string) => `/portfolios/traditional/funding-requests/${id}/status`,
+      delete: (id: string) => `/portfolios/traditional/funding-requests/${id}`,
     },
     disbursements: {
       base: '/portfolios/traditional/disbursements',
       getAll: '/portfolios/traditional/disbursements',
       getById: (id: string) => `/portfolios/traditional/disbursements/${id}`,
       create: '/portfolios/traditional/disbursements',
+      update: (id: string) => `/portfolios/traditional/disbursements/${id}`,
+      // Workflow décaissement
+      confirm: (id: string) => `/portfolios/traditional/disbursements/${id}/confirm`,
+      approve: (id: string) => `/portfolios/traditional/disbursements/${id}/approve`,
+      reject: (id: string) => `/portfolios/traditional/disbursements/${id}/reject`,
+      process: (id: string) => `/portfolios/traditional/disbursements/${id}/process`,
+      cancel: (id: string) => `/portfolios/traditional/disbursements/${id}/cancel`,
     },
     repayments: {
       base: '/portfolios/traditional/repayments',
       getAll: '/portfolios/traditional/repayments',
       getById: (id: string) => `/portfolios/traditional/repayments/${id}`,
       create: '/portfolios/traditional/repayments',
+      update: (id: string) => `/portfolios/traditional/repayments/${id}`,
+      cancel: (id: string) => `/portfolios/traditional/repayments/${id}/cancel`,
+      generateReceipt: (id: string) => `/portfolios/traditional/repayments/${id}/generate-receipt`,
+      receipt: (id: string) => `/portfolios/traditional/repayments/${id}/receipt`,
+      receiptDownload: (id: string) => `/portfolios/traditional/repayments/${id}/receipt/download`,
+      hasReceipt: (id: string) => `/portfolios/traditional/repayments/${id}/has-receipt`,
+      supportingDocument: (id: string) => `/portfolios/traditional/repayments/${id}/supporting-document`,
     },
     paymentSchedules: {
       base: '/portfolios/traditional/payment-schedules',
       getAll: '/portfolios/traditional/payment-schedules',
       getById: (id: string) => `/portfolios/traditional/payment-schedules/${id}`,
-      byContract: (contractId: string) => `/portfolios/traditional/payment-schedules/by-contract/${contractId}`
+      create: '/portfolios/traditional/payment-schedules',
+      update: (id: string) => `/portfolios/traditional/payment-schedules/${id}`,
+      simulate: '/portfolios/traditional/payment-schedules/simulate',
+      // Le planning d'un contrat se récupère via: GET /payment-schedules?contractId=X
+      byContract: (contractId: string) => `/portfolios/traditional/payment-schedules?contractId=${contractId}`,
     },
     documents: {
       base: '/portfolios/traditional/documents',
       getAll: '/portfolios/traditional/documents',
       getById: (id: string) => `/portfolios/traditional/documents/${id}`,
       create: '/portfolios/traditional/documents',
-      delete: (id: string) => `/portfolios/traditional/documents/${id}`
-    }
+      delete: (id: string) => `/portfolios/traditional/documents/${id}`,
+    },
+  },
+
+  // Paiements unifiés (décaissements + remboursements)
+  unifiedPayments: {
+    base: '/unified-payments',
+    process: '/unified-payments/process',
+    disbursement: (contractId: string) => `/unified-payments/disbursement/${contractId}`,
+    repayment: (contractId: string) => `/unified-payments/repayment/${contractId}`,
+    paymentInfo: (contractId: string) => `/unified-payments/contract/${contractId}/payment-info`,
+    callback: (type: 'disbursement' | 'repayment') => `/unified-payments/callback/serdipay/${type}`,
   },
 
   // Prospection (includes companies access)

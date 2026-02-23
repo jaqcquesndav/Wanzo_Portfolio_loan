@@ -11,11 +11,14 @@ export const creditContractApi = {
    * Récupère tous les contrats de crédit
    */
   getAllContracts: async (portfolioId?: string, filters?: {
-    status?: 'active' | 'completed' | 'defaulted' | 'restructured';
+    status?: string;
     clientId?: string;
     productType?: string;
+    riskClass?: string;
     dateFrom?: string;
     dateTo?: string;
+    page?: number;
+    limit?: number;
   }) => {
     try {
       // Version API
@@ -24,8 +27,11 @@ export const creditContractApi = {
       if (filters?.status) params.append('status', filters.status);
       if (filters?.clientId) params.append('clientId', filters.clientId);
       if (filters?.productType) params.append('productType', filters.productType);
+      if (filters?.riskClass) params.append('riskClass', filters.riskClass);
       if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
       if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+      if (filters?.page) params.append('page', String(filters.page));
+      if (filters?.limit) params.append('limit', String(filters.limit));
 
       return await apiClient.get<CreditContract[]>(`/portfolios/traditional/credit-contracts?${params.toString()}`);
     } catch (error) {
@@ -171,7 +177,7 @@ export const creditContractApi = {
    */
   restructureContract: async (id: string, restructuringDetails: {
     new_terms: string;
-    new_rate?: number;
+    new_interest_rate: number;
     new_end_date: string;
     reason: string;
   }) => {
@@ -189,7 +195,7 @@ export const creditContractApi = {
         ...contract,
         status: 'restructured' as const,
         terms: restructuringDetails.new_terms,
-        interest_rate: restructuringDetails.new_rate || contract.interest_rate,
+        interest_rate: restructuringDetails.new_interest_rate,
         end_date: restructuringDetails.new_end_date,
         restructuring_history: [
           ...(contract.restructuring_history || []),
@@ -269,13 +275,11 @@ export const creditContractApi = {
   /**
    * Marque un contrat comme terminé/clôturé
    * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/complete
+   * Pas de payload requis côté backend
    */
-  completeContract: async (contractId: string, completionDetails: {
-    completion_date: string;
-    notes?: string;
-  }) => {
+  completeContract: async (contractId: string) => {
     try {
-      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/complete`, completionDetails);
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/complete`, {});
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for completing contract ${contractId}`, error);
@@ -287,7 +291,7 @@ export const creditContractApi = {
       const updatedContract = {
         ...contract,
         status: 'completed' as const,
-        completion_date: completionDetails.completion_date,
+        completion_date: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
@@ -299,14 +303,17 @@ export const creditContractApi = {
   /**
    * Met un contrat en contentieux
    * Conforme à la documentation: POST /portfolios/traditional/credit-contracts/{id}/litigation
+   * Payload LitigationContractDto: { litigation_date: string (REQUIS), litigation_reason: string (REQUIS) }
    */
   putInLitigation: async (contractId: string, litigationDetails: {
-    reason: string;
-    litigation_date?: string;
-    notes?: string;
+    litigation_reason: string;
+    litigation_date: string;
   }) => {
     try {
-      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/litigation`, litigationDetails);
+      return await apiClient.post<CreditContract>(`/portfolios/traditional/credit-contracts/${contractId}/litigation`, {
+        litigation_reason: litigationDetails.litigation_reason,
+        litigation_date: litigationDetails.litigation_date,
+      });
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for putting contract ${contractId} in litigation`, error);
@@ -319,7 +326,7 @@ export const creditContractApi = {
         ...contract,
         status: 'in_litigation' as const,
         litigation_date: litigationDetails.litigation_date || new Date().toISOString(),
-        litigation_reason: litigationDetails.reason,
+        litigation_reason: litigationDetails.litigation_reason,
         updated_at: new Date().toISOString()
       };
       

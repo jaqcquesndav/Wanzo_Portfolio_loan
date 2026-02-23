@@ -273,16 +273,14 @@ export function useCreditContracts(portfolioId: string) {
   /**
    * Clôturer un contrat (remboursement complet)
    * POST /portfolios/traditional/credit-contracts/{id}/complete
+   * Le backend ne prend aucun payload
    */
-  const completeContract = useCallback(async (id: string, completionDetails: {
-    completion_date: string;
-    notes?: string;
-  }) => {
+  const completeContract = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      const updatedContract = await creditContractApi.completeContract(id, completionDetails);
+      const updatedContract = await creditContractApi.completeContract(id);
       
       // Mettre à jour l'état local
       setContracts(prev => 
@@ -303,12 +301,12 @@ export function useCreditContracts(portfolioId: string) {
 
   /**
    * Mettre un contrat en contentieux
-   * POST /contracts/{id}/litigation
+   * POST /portfolios/traditional/credit-contracts/{id}/litigation
+   * Payload: { litigation_reason: string (REQUIS), litigation_date: string (REQUIS) }
    */
   const putInLitigation = useCallback(async (id: string, litigationDetails: {
-    reason: string;
-    litigation_date?: string;
-    notes?: string;
+    litigation_reason: string;
+    litigation_date: string;
   }) => {
     try {
       setLoading(true);

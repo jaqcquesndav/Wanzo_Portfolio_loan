@@ -172,37 +172,64 @@ export const disbursementApi = {
       await apiClient.post(`/portfolios/traditional/disbursements/${id}/cancel`, { reason });
       return true;
     } catch (error) {
-      // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for cancelling disbursement ${id}`, error);
       
-      // Supprimer le virement
-      const disbursements = traditionalDataService.getLocalData<Disbursement[]>('DISBURSEMENTS');
-      const filteredDisbursements = disbursements.filter(d => d.id !== id);
+      const result = await disbursementApi.updateDisbursement(id, {
+        status: 'canceled',
+        rejectionReason: reason,
+      } as Partial<Disbursement>);
       
-      if (filteredDisbursements.length === disbursements.length) {
-        console.error(`Disbursement with ID ${id} not found`);
-        return false;
-      }
-      
-      localStorage.setItem(traditionalDataService.STORAGE_KEYS.DISBURSEMENTS, JSON.stringify(filteredDisbursements));
-      
-      // Trouver le contrat associé
-      const disbursement = disbursements.find(d => d.id === id);
-      if (disbursement && disbursement.contractReference) {
-        const contractDisbursements = traditionalDataService.getContractRelatedData<Disbursement>(
-          disbursement.contractReference, 
-          'DISBURSEMENTS'
-        );
-        
-        const filteredContractDisbursements = contractDisbursements.filter(d => d.id !== id);
-        traditionalDataService.saveContractRelatedData(
-          disbursement.contractReference,
-          'DISBURSEMENTS',
-          filteredContractDisbursements
-        );
-      }
-      
-      return true;
+      return result !== null;
+    }
+  },
+
+  /**
+   * Approuve un décaissement (admin, manager)
+   * POST /portfolios/traditional/disbursements/:id/approve
+   * Payload: { approvalNotes?: string, prerequisitesVerified?: boolean }
+   */
+  approveDisbursement: async (id: string, payload?: { approvalNotes?: string; prerequisitesVerified?: boolean }): Promise<Disbursement | null> => {
+    try {
+      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements/${id}/approve`, payload ?? {});
+    } catch (error) {
+      console.warn(`Fallback to localStorage for approving disbursement ${id}`, error);
+      return disbursementApi.updateDisbursement(id, { status: 'approved' });
+    }
+  },
+
+  /**
+   * Rejette un décaissement (admin, manager)
+   * POST /portfolios/traditional/disbursements/:id/reject
+   * Payload: { reason: string (REQUIS), notes?: string }
+   */
+  rejectDisbursement: async (id: string, payload: { reason: string; notes?: string }): Promise<Disbursement | null> => {
+    try {
+      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements/${id}/reject`, payload);
+    } catch (error) {
+      console.warn(`Fallback to localStorage for rejecting disbursement ${id}`, error);
+      return disbursementApi.updateDisbursement(id, { status: 'rejected', rejectionReason: payload.reason } as Partial<Disbursement>);
+    }
+  },
+
+  /**
+   * Exécute / traite un décaissement (admin, manager)
+   * POST /portfolios/traditional/disbursements/:id/process
+   * Payload: { transactionId?, transactionDate?, executionNotes?, documents?: string[] }
+   */
+  processDisbursement: async (id: string, payload?: {
+    transactionId?: string;
+    transactionDate?: string;
+    executionNotes?: string;
+    documents?: string[];
+  }): Promise<Disbursement | null> => {
+    try {
+      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements/${id}/process`, payload ?? {});
+    } catch (error) {
+      console.warn(`Fallback to localStorage for processing disbursement ${id}`, error);
+      const updates: Partial<Disbursement> = { status: 'processing' };
+      if (payload?.transactionId) (updates as any).transactionReference = payload.transactionId;
+      if (payload?.transactionDate) (updates as any).executionDate = payload.transactionDate;
+      return disbursementApi.updateDisbursement(id, updates);
     }
   }
 };

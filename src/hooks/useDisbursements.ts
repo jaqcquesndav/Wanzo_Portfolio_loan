@@ -18,6 +18,9 @@ interface UseDisbursementsResult {
     valueDate?: string;
   }) => Promise<Disbursement | null>;
   cancelDisbursement: (id: string, reason: string) => Promise<boolean>;
+  approveDisbursement: (id: string, payload?: { approvalNotes?: string; prerequisitesVerified?: boolean }) => Promise<Disbursement | null>;
+  rejectDisbursement: (id: string, payload: { reason: string; notes?: string }) => Promise<Disbursement | null>;
+  processDisbursement: (id: string, payload?: { transactionId?: string; transactionDate?: string; executionNotes?: string; documents?: string[] }) => Promise<Disbursement | null>;
   refreshDisbursements: () => Promise<void>;
 }
 
@@ -137,7 +140,8 @@ export function useDisbursements(portfolioId: string): UseDisbursementsResult {
     try {
       const success = await disbursementApi.cancelDisbursement(id, reason);
       if (success) {
-        setDisbursements(prev => prev.filter(d => d.id !== id));
+        // Met à jour le statut local au lieu de supprimer l'élément
+        setDisbursements(prev => prev.map(d => d.id === id ? { ...d, status: 'canceled' as const } : d));
         showNotification('Virement annulé avec succès', 'success');
       }
       return success;
@@ -146,6 +150,63 @@ export function useDisbursements(portfolioId: string): UseDisbursementsResult {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       showNotification(`Erreur: ${errorMessage}`, 'error');
       return false;
+    }
+  }, [showNotification]);
+
+  // Approuve un décaissement
+  const approveDisbursement = useCallback(async (
+    id: string,
+    payload?: { approvalNotes?: string; prerequisitesVerified?: boolean },
+  ): Promise<Disbursement | null> => {
+    try {
+      const updated = await disbursementApi.approveDisbursement(id, payload);
+      if (updated) {
+        setDisbursements(prev => prev.map(d => d.id === id ? updated : d));
+        showNotification('Décaissement approuvé', 'success');
+      }
+      return updated;
+    } catch (err) {
+      console.error(`Erreur lors de l'approbation du décaissement ${id}:`, err);
+      showNotification('Erreur lors de l\'approbation', 'error');
+      return null;
+    }
+  }, [showNotification]);
+
+  // Rejette un décaissement
+  const rejectDisbursement = useCallback(async (
+    id: string,
+    payload: { reason: string; notes?: string },
+  ): Promise<Disbursement | null> => {
+    try {
+      const updated = await disbursementApi.rejectDisbursement(id, payload);
+      if (updated) {
+        setDisbursements(prev => prev.map(d => d.id === id ? updated : d));
+        showNotification('Décaissement rejeté', 'success');
+      }
+      return updated;
+    } catch (err) {
+      console.error(`Erreur lors du rejet du décaissement ${id}:`, err);
+      showNotification('Erreur lors du rejet', 'error');
+      return null;
+    }
+  }, [showNotification]);
+
+  // Traite (exécute) un décaissement
+  const processDisbursement = useCallback(async (
+    id: string,
+    payload?: { transactionId?: string; transactionDate?: string; executionNotes?: string; documents?: string[] },
+  ): Promise<Disbursement | null> => {
+    try {
+      const updated = await disbursementApi.processDisbursement(id, payload);
+      if (updated) {
+        setDisbursements(prev => prev.map(d => d.id === id ? updated : d));
+        showNotification('Décaissement en cours de traitement', 'success');
+      }
+      return updated;
+    } catch (err) {
+      console.error(`Erreur lors du traitement du décaissement ${id}:`, err);
+      showNotification('Erreur lors du traitement', 'error');
+      return null;
     }
   }, [showNotification]);
 
@@ -159,6 +220,9 @@ export function useDisbursements(portfolioId: string): UseDisbursementsResult {
     updateDisbursement,
     confirmDisbursement,
     cancelDisbursement,
+    approveDisbursement,
+    rejectDisbursement,
+    processDisbursement,
     refreshDisbursements: fetchDisbursements
   };
 }

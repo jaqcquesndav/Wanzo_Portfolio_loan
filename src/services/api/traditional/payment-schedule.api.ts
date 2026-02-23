@@ -98,10 +98,40 @@ export const paymentScheduleApi = {
 
   /**
    * Récupère l'échéancier de paiement d'un contrat
+   * Utilise le filtre contractId sur la liste des échéanciers
    */
   getPaymentScheduleByContract: async (contractId: string): Promise<PaymentScheduleDetails> => {
     try {
-      return await apiClient.get<PaymentScheduleDetails>(`/portfolios/traditional/payment-schedules/by-contract/${contractId}`);
+      const response = await apiClient.get<{
+        data: PaymentSchedule[];
+        meta: { total: number; page: number; limit: number; totalPages: number };
+      }>(`/portfolios/traditional/payment-schedules?contractId=${contractId}&limit=100`);
+
+      const schedules = response.data || [];
+      const totalAmount = schedules.reduce((sum, s) => sum + s.total_amount, 0);
+      const totalPaid = schedules.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.total_amount, 0);
+      const overdueSchedules = schedules.filter(s => s.status === 'overdue');
+      const nextPending = schedules.find(s => s.status === 'pending');
+
+      return {
+        contract_id: contractId,
+        contract_number: `CNT-${contractId}`,
+        client_name: '',
+        total_amount: totalAmount,
+        total_installments: schedules.length,
+        frequency: 'monthly',
+        start_date: schedules[0]?.due_date || '',
+        end_date: schedules[schedules.length - 1]?.due_date || '',
+        interest_rate: 0,
+        schedule: schedules,
+        summary: {
+          total_paid: totalPaid,
+          remaining_amount: totalAmount - totalPaid,
+          next_payment_date: nextPending?.due_date || '',
+          overdue_count: overdueSchedules.length,
+          overdue_amount: overdueSchedules.reduce((sum, s) => sum + s.total_amount + (s.late_fees || 0), 0),
+        },
+      };
     } catch (error) {
       // Fallback sur les données mockées si l'API échoue
       console.warn(`Fallback to mock data for payment schedule of contract ${contractId}`, error);
@@ -177,78 +207,104 @@ export const paymentScheduleApi = {
   },
 
   /**
-   * Génère un nouvel échéancier pour un contrat
+   * Crée un nouvel échéancier pour un contrat (persisté)
+   * POST /portfolios/traditional/payment-schedules
+   * Payload: CreatePaymentScheduleDto (contractId requis)
    */
   generatePaymentSchedule: async (contractId: string, parameters: {
-    total_amount: number;
-    installments_count: number;
-    frequency: 'monthly' | 'quarterly' | 'weekly' | 'biweekly';
-    interest_rate: number;
-    start_date: string;
-    grace_period_days?: number;
+    principal: number;
+    interestRate: number;
+    term: number;
+    startDate: string;
+    frequency?: 'monthly' | 'quarterly' | 'biannual' | 'annual';
+    amortizationType?: string;
+    gracePeriod?: number;
+    balloonPayment?: number;
   }): Promise<PaymentScheduleDetails> => {
     try {
-      return await apiClient.post<PaymentScheduleDetails>(`/portfolios/traditional/payment-schedules/generate`, {
-        contract_id: contractId,
-        ...parameters
+      return await apiClient.post<PaymentScheduleDetails>(`/portfolios/traditional/payment-schedules`, {
+        contractId,
+        ...parameters,
       });
     } catch (error) {
       // Fallback sur la génération locale si l'API échoue
       console.warn(`Fallback to local generation for payment schedule of contract ${contractId}`, error);
-      
-      const interestRate = parameters.interest_rate / 100 / 12; // Taux mensuel
-      
-      // Calcul avec intérêts composés
-      const monthlyPaymentWithInterest = (parameters.total_amount * interestRate * Math.pow(1 + interestRate, parameters.installments_count)) / 
-                                        (Math.pow(1 + interestRate, parameters.installments_count) - 1);
-      
-      let remainingBalance = parameters.total_amount;
+
+      const monthlyRate = parameters.interestRate / 100 / 12;
+      const n = parameters.term;
+      const P = parameters.principal;
+      const monthlyPayment = monthlyRate > 0
+        ? (P * monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1)
+        : P / n;
+
+      let remainingBalance = P;
       const schedule: PaymentSchedule[] = [];
-      
-      for (let i = 0; i < parameters.installments_count; i++) {
-        const interestAmount = remainingBalance * interestRate;
-        const principalAmount = monthlyPaymentWithInterest - interestAmount;
-        remainingBalance -= principalAmount;
-        
-        const daysToAdd = parameters.frequency === 'monthly' ? 30 * (i + 1) :
-                         parameters.frequency === 'quarterly' ? 90 * (i + 1) :
-                         parameters.frequency === 'weekly' ? 7 * (i + 1) :
-                         14 * (i + 1); // biweekly
-        
+      const freq = parameters.frequency || 'monthly';
+      const daysPerPeriod = freq === 'quarterly' ? 90 : freq === 'biannual' ? 180 : freq === 'annual' ? 365 : 30;
+
+      for (let i = 0; i < n; i++) {
+        const interestAmount = remainingBalance * monthlyRate;
+        const principalAmount = monthlyPayment - interestAmount;
+        remainingBalance = Math.max(0, remainingBalance - principalAmount);
+
         schedule.push({
           id: `gen-${contractId}-${i + 1}`,
           contract_id: contractId,
           installment_number: i + 1,
-          due_date: new Date(new Date(parameters.start_date).getTime() + daysToAdd * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          due_date: new Date(new Date(parameters.startDate).getTime() + daysPerPeriod * (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           principal_amount: principalAmount,
           interest_amount: interestAmount,
-          total_amount: monthlyPaymentWithInterest,
+          total_amount: monthlyPayment,
           status: 'pending',
-          remaining_balance: Math.max(0, remainingBalance),
+          remaining_balance: remainingBalance,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         });
       }
-      
+
       return {
         contract_id: contractId,
         contract_number: `CNT-${contractId}`,
-        client_name: 'Client Généré',
-        total_amount: parameters.total_amount,
-        total_installments: parameters.installments_count,
-        frequency: parameters.frequency,
-        start_date: parameters.start_date,
-        end_date: schedule[schedule.length - 1].due_date,
-        interest_rate: parameters.interest_rate,
+        client_name: '',
+        total_amount: P,
+        total_installments: n,
+        frequency: freq,
+        start_date: parameters.startDate,
+        end_date: schedule[schedule.length - 1]?.due_date || '',
+        interest_rate: parameters.interestRate,
         schedule,
         summary: {
           total_paid: 0,
-          remaining_amount: parameters.total_amount,
-          next_payment_date: schedule[0].due_date,
+          remaining_amount: P,
+          next_payment_date: schedule[0]?.due_date || '',
           overdue_count: 0,
-          overdue_amount: 0
-        }
+          overdue_amount: 0,
+        },
       };
     }
-  }
+  },
+
+  /**
+   * Simule un échéancier sans le persister (aucun contractId requis)
+   * POST /portfolios/traditional/payment-schedules/simulate
+   * Payload: SimulatePaymentScheduleDto (identique à CreatePaymentScheduleDto sans contractId)
+   */
+  simulatePaymentSchedule: async (parameters: {
+    principal: number;
+    interestRate: number;
+    term: number;
+    startDate: string;
+    frequency?: 'monthly' | 'quarterly' | 'biannual' | 'annual';
+    amortizationType?: string;
+    gracePeriod?: number;
+    balloonPayment?: number;
+  }): Promise<PaymentScheduleDetails> => {
+    try {
+      return await apiClient.post<PaymentScheduleDetails>(`/portfolios/traditional/payment-schedules/simulate`, parameters);
+    } catch (error) {
+      console.warn('Fallback to local simulation for payment schedule', error);
+      // Reuse generate logic without contractId
+      return paymentScheduleApi.generatePaymentSchedule('simulation', parameters);
+    }
+  },
 };
