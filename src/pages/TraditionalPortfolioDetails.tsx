@@ -13,7 +13,7 @@ import { DisbursementsTable } from '../components/portfolio/traditional/Disburse
 import { RepaymentsTable } from '../components/portfolio/traditional/RepaymentsTable';
 import { CreditContractsList } from '../components/portfolio/traditional/credit-contract/CreditContractsList';
 import { GuaranteesList } from '../components/portfolio/traditional/guarantee/GuaranteesList';
-import { PortfolioWalletPanel } from '../components/portfolio/wallet/PortfolioWalletPanel';
+import { PortfolioWalletPanel, providerToTelecom } from '../components/portfolio/wallet/PortfolioWalletPanel';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { mockCompanies } from '../data/mockCompanies';
@@ -97,6 +97,21 @@ export default function TraditionalPortfolioDetails() {
     if (!isTraditionalPortfolio(portfolio)) return [];
     const fp = (portfolio as TraditionalPortfolio).financial_products;
     return Array.isArray(fp) ? fp : [];
+  }, [portfolio]);
+
+  // Compte Mobile Money par défaut du portefeuille (autofill dépôt/retrait)
+  const defaultMobileAccount = useMemo(() => {
+    const mmAccounts = portfolio?.mobile_money_accounts;
+    if (!Array.isArray(mmAccounts) || mmAccounts.length === 0) return undefined;
+    const acc = mmAccounts.find((a) => (a as Record<string,unknown>).is_default || (a as Record<string,unknown>).is_primary)
+      ?? mmAccounts[0];
+    const raw = acc as Record<string, unknown>;
+    const phone    = raw.phone_number as string;
+    const provider = raw.provider as string;
+    const name     = (raw.account_name ?? raw.name) as string;
+    const currency = (raw.currency as string) ?? portfolio?.currency ?? 'CDF';
+    if (!phone || !provider) return undefined;
+    return { phone, telecom: providerToTelecom(provider), accountName: name, currency };
   }, [portfolio]);
 
   const {
@@ -533,7 +548,7 @@ export default function TraditionalPortfolioDetails() {
                 value={tabConfig.key}
                 currentValue={tab}
               >
-                <PortfolioWalletPanel portfolioId={id || ''} />
+                <PortfolioWalletPanel portfolioId={id || ''} defaultMobileAccount={defaultMobileAccount} />
               </TabsContent>
             );
           }

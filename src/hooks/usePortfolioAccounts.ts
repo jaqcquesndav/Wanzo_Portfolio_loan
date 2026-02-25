@@ -2,14 +2,81 @@
 import { useState, useCallback } from 'react';
 import { portfolioAccountsApi } from '../services/api/shared';
 import type { BankAccount } from '../types/bankAccount';
-import type { MobileMoneyAccount } from '../types/mobileMoneyAccount';
+import type { MobileMoneyAccount, MobileMoneyProvider } from '../types/mobileMoneyAccount';
+
+// ── Field normalizers ──────────────────────────────────────────────────────────
+// L'API retourne des champs légèrement différents du type front :
+//   name        → account_name
+//   is_default  → is_primary
+//   status      → is_active
+// Ces fonctions normalisent les deux formes.
+
+export function normalizeMobileMoneyAccount(raw: unknown): MobileMoneyAccount {
+  const r = raw as Record<string, unknown>;
+  return {
+    id:              r.id as string,
+    account_name:    ((r.account_name ?? r.name) as string) ?? '',
+    phone_number:    r.phone_number as string ?? '',
+    provider:        r.provider as MobileMoneyProvider,
+    currency:        (r.currency as string) ?? 'CDF',
+    is_primary:      ((r.is_primary ?? r.is_default ?? false) as boolean),
+    is_active:       r.is_active !== undefined
+                       ? (r.is_active as boolean)
+                       : r.status === 'active',
+    created_at:      (r.created_at as string) ?? new Date().toISOString(),
+    updated_at:      (r.updated_at as string) ?? new Date().toISOString(),
+    portfolio_id:    r.portfolio_id as string | undefined,
+    service_number:  r.service_number as string | undefined,
+    account_status:  r.account_status as 'verified' | 'pending' | 'suspended' | undefined,
+    balance:         r.balance as number | undefined,
+  };
+}
+
+export function normalizeBankAccount(raw: unknown): BankAccount {
+  const r = raw as Record<string, unknown>;
+  return {
+    id:             r.id as string,
+    account_number: r.account_number as string ?? '',
+    account_name:   r.account_name as string ?? '',
+    bank_name:      r.bank_name as string ?? '',
+    branch:         r.branch as string | undefined,
+    swift_code:     r.swift_code as string | undefined,
+    iban:           r.iban as string | undefined,
+    currency:       (r.currency as string) ?? 'CDF',
+    is_primary:     (r.is_primary ?? r.is_default ?? false) as boolean,
+    is_active:      r.is_active !== undefined ? (r.is_active as boolean) : r.status === 'active',
+    created_at:     (r.created_at as string) ?? new Date().toISOString(),
+    updated_at:     (r.updated_at as string) ?? new Date().toISOString(),
+    portfolio_id:   r.portfolio_id as string | undefined,
+    purpose:        r.purpose as BankAccount['purpose'] | undefined,
+  };
+}
 
 /**
- * Hook pour gérer les comptes d'un portefeuille (bancaires et Mobile Money)
+ * Hook pour gérer les comptes d'un portefeuille (bancaires et Mobile Money).
+ *
+ * @param portfolioId   ID du portefeuille
+ * @param embedded      Données embarquées dans la réponse portfolio (fallback quand l'API
+ *                      des comptes retourne vide) — champs API bruts acceptés, normalisés
+ *                      automatiquement.
  */
-export function usePortfolioAccounts(portfolioId: string) {
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-  const [mobileMoneyAccounts, setMobileMoneyAccounts] = useState<MobileMoneyAccount[]>([]);
+export function usePortfolioAccounts(
+  portfolioId: string,
+  embedded?: {
+    bankAccounts?:        unknown[] | null;
+    mobileMoneyAccounts?: unknown[] | null;
+  },
+) {
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(() =>
+    Array.isArray(embedded?.bankAccounts)
+      ? embedded!.bankAccounts!.map(normalizeBankAccount)
+      : [],
+  );
+  const [mobileMoneyAccounts, setMobileMoneyAccounts] = useState<MobileMoneyAccount[]>(() =>
+    Array.isArray(embedded?.mobileMoneyAccounts)
+      ? embedded!.mobileMoneyAccounts!.map(normalizeMobileMoneyAccount)
+      : [],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -51,13 +118,18 @@ export function usePortfolioAccounts(portfolioId: string) {
     setError(null);
     try {
       const raw = await portfolioAccountsApi.getBankAccounts(portfolioId);
-      setBankAccounts(toArray<BankAccount>(raw));
+      const result = toArray<unknown>(raw).map(normalizeBankAccount);
+      // Si l'API retourne vide, conserver les données embarquées du portfolio
+      if (result.length > 0) setBankAccounts(result);
+      else if (Array.isArray(embedded?.bankAccounts) && embedded!.bankAccounts!.length > 0) {
+        setBankAccounts(embedded!.bankAccounts!.map(normalizeBankAccount));
+      }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load bank accounts'));
     } finally {
       setLoading(false);
     }
-  }, [portfolioId]);
+  }, [portfolioId, embedded]);
 
   // Charger tous les comptes Mobile Money
   const loadMobileMoneyAccounts = useCallback(async () => {
@@ -65,13 +137,18 @@ export function usePortfolioAccounts(portfolioId: string) {
     setError(null);
     try {
       const raw = await portfolioAccountsApi.getMobileMoneyAccounts(portfolioId);
-      setMobileMoneyAccounts(toArray<MobileMoneyAccount>(raw));
+      const result = toArray<unknown>(raw).map(normalizeMobileMoneyAccount);
+      // Si l'API retourne vide, conserver les données embarquées du portfolio
+      if (result.length > 0) setMobileMoneyAccounts(result);
+      else if (Array.isArray(embedded?.mobileMoneyAccounts) && embedded!.mobileMoneyAccounts!.length > 0) {
+        setMobileMoneyAccounts(embedded!.mobileMoneyAccounts!.map(normalizeMobileMoneyAccount));
+      }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load mobile money accounts'));
     } finally {
       setLoading(false);
     }
-  }, [portfolioId]);
+  }, [portfolioId, embedded]);
 
   // Ajouter un compte bancaire
   const addBankAccount = useCallback(async (account: Omit<BankAccount, 'id' | 'created_at' | 'updated_at'>) => {

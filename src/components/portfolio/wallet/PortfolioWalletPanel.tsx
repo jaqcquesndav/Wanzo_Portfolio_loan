@@ -94,13 +94,22 @@ interface MobileMoneyModalProps {
   isSubmitting: boolean;
   onConfirm: (payload: WalletDepositPayload | WalletWithdrawalPayload) => Promise<void>;
   onClose: () => void;
+  /** Compte Mobile Money par défaut du portefeuille (autofill) */
+  defaultPhone?:       string;
+  defaultTelecom?:     MobileMoneyTelecom;
+  defaultAccountName?: string;
+  defaultCurrency?:    string;
 }
 
-function MobileMoneyModal({ mode, isSubmitting, onConfirm, onClose }: MobileMoneyModalProps) {
+function MobileMoneyModal({
+  mode, isSubmitting, onConfirm, onClose,
+  defaultPhone, defaultTelecom, defaultAccountName, defaultCurrency,
+}: MobileMoneyModalProps) {
   const [amount, setAmount]           = useState('');
-  const [phone, setPhone]             = useState('');
-  const [telecom, setTelecom]         = useState<MobileMoneyTelecom>('OM');
+  const [phone, setPhone]             = useState(defaultPhone ?? '');
+  const [telecom, setTelecom]         = useState<MobileMoneyTelecom>(defaultTelecom ?? 'OM');
   const [description, setDescription] = useState('');
+  const currency = defaultCurrency ?? 'CDF';
 
   const isDeposit = mode === 'deposit';
 
@@ -118,7 +127,7 @@ function MobileMoneyModal({ mode, isSubmitting, onConfirm, onClose }: MobileMone
       amount: Number(amount),
       clientPhone: phone,
       telecom,
-      currency: 'CDF',
+      currency,
       description: description || undefined,
     });
   };
@@ -144,11 +153,24 @@ function MobileMoneyModal({ mode, isSubmitting, onConfirm, onClose }: MobileMone
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* montant */}
           <div>
+            {defaultAccountName && (
+              <div className="flex items-center gap-2 rounded-xl bg-[#e6f3f8] dark:bg-[#197ca8]/20 border border-[#197ca8]/30 px-3 py-2">
+                <span className="text-xs font-medium text-[#197ca8] dark:text-[#1e90c3]">
+                  Compte par défaut :
+                </span>
+                <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold">
+                  {defaultAccountName}
+                </span>
+              </div>
+            )}
+
             <Label htmlFor="wallet-amount" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Montant <span className="text-gray-400 font-normal">(CDF)</span>
+              Montant <span className="text-gray-400 font-normal">({currency})</span>
             </Label>
             <div className="relative mt-1.5">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">FC</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">
+                {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : 'FC'}
+              </span>
               <Input
                 id="wallet-amount"
                 type="number"
@@ -304,11 +326,30 @@ function RejectModal({ isSubmitting, onConfirm, onClose }: RejectModalProps) {
 
 // ─── Composant principal ────────────────────────────────────────────────────────
 
-interface PortfolioWalletPanelProps {
-  portfolioId: string;
+/** Helpers: convertit le nom de l'opérateur API en code télécom du modal */
+export function providerToTelecom(provider: string): MobileMoneyTelecom {
+  const p = provider?.toLowerCase() ?? '';
+  if (p.includes('orange'))   return 'OM';
+  if (p.includes('mpesa') || p.includes('m-pesa') || p.includes('vodacom')) return 'MP';
+  if (p.includes('airtel'))   return 'AM';
+  if (p.includes('africell')) return 'AF';
+  return 'OM';
 }
 
-export function PortfolioWalletPanel({ portfolioId }: PortfolioWalletPanelProps) {
+interface DefaultMobileAccount {
+  phone:       string;
+  telecom:     MobileMoneyTelecom;
+  accountName: string;
+  currency:    string;
+}
+
+interface PortfolioWalletPanelProps {
+  portfolioId: string;
+  /** Compte Mobile Money par défaut du portefeuille (lu depuis portfolio.mobile_money_accounts) */
+  defaultMobileAccount?: DefaultMobileAccount;
+}
+
+export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: PortfolioWalletPanelProps) {
   const {
     wallet,
     balance,
@@ -778,6 +819,10 @@ export function PortfolioWalletPanel({ portfolioId }: PortfolioWalletPanelProps)
           isSubmitting={isSubmitting}
           onConfirm={handleMobileMoneyConfirm}
           onClose={() => setModalMode(null)}
+          defaultPhone={defaultMobileAccount?.phone}
+          defaultTelecom={defaultMobileAccount?.telecom}
+          defaultAccountName={defaultMobileAccount?.accountName}
+          defaultCurrency={defaultMobileAccount?.currency ?? wallet?.currency}
         />
       )}
       {rejectTargetId && (

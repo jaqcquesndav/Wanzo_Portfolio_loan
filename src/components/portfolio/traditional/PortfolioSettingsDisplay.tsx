@@ -47,6 +47,8 @@ export function PortfolioSettingsDisplay({
   const { formatAmount, currency: ctxCurrency } = useCurrencyContext();
   
   // Hook pour gérer les comptes du portefeuille
+  // Seed depuis les données embarquées du portfolio (évite un aller-retour API inutile
+  // et garantit l'affichage même si l'endpoint dédié retourne vide)
   const {
     bankAccounts,
     mobileMoneyAccounts,
@@ -59,7 +61,10 @@ export function PortfolioSettingsDisplay({
     deleteMobileMoneyAccount,
     loadBankAccounts,
     loadMobileMoneyAccounts,
-  } = usePortfolioAccounts(portfolio.id);
+  } = usePortfolioAccounts(portfolio.id, {
+    bankAccounts:        portfolio.bank_accounts        as unknown[] | null,
+    mobileMoneyAccounts: portfolio.mobile_money_accounts as unknown[] | null,
+  });
   
   // Charger les comptes au montage du composant
   useEffect(() => {
