@@ -69,7 +69,7 @@ export function useTraditionalPortfoliosQuery(filters?: PortfolioFilters) {
       
       console.log(`✅ [ReactQuery] ${data.length} portefeuilles chargés`);
 
-      // Persister chaque portefeuille dans localStorage + sanitiser products
+      // Persister chaque portefeuille dans localStorage + sanitiser products et financial_products
       const portfolios = (data as TraditionalPortfolio[]).map(p => ({
         ...p,
         // L'API peut retourner products: ["[]"] — on filtre les entrées non-objet
@@ -79,6 +79,13 @@ export function useTraditionalPortfoliosQuery(filters?: PortfolioFilters) {
                 typeof item === 'object' && item !== null && 'id' in item
             )
           : [],
+        // Préserver explicitement financial_products en filtrant les entrées invalides
+        financial_products: Array.isArray(p.financial_products)
+          ? p.financial_products.filter(
+              (item): item is import('../../types/traditional-portfolio').FinancialProduct =>
+                typeof item === 'object' && item !== null && 'id' in item
+            )
+          : null,
       }));
 
       for (const p of portfolios) {

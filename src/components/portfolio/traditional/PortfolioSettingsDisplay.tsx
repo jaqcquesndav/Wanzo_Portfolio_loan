@@ -9,22 +9,19 @@ import { AccountsPanel } from '../shared/AccountsPanel';
 import { usePortfolioAccounts } from '../../../hooks/usePortfolioAccounts';
 import { useToastStore } from '../../../stores/toastStore';
 import { ExportPortfolioData } from '../shared/ExportPortfolioData';
-import { ProductList } from './ProductList';
 import { PortfolioDocumentsSection } from '../shared/PortfolioDocumentsSection';
 import { BCCParametersPanel, BCCSurveillancePanel } from './bcc-components';
-import { Save, X, Edit3, Plus } from 'lucide-react';
+import { Save, X, Edit3 } from 'lucide-react';
 import type { Portfolio } from '../../../types/portfolio';
-import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
 
 interface PortfolioSettingsDisplayProps {
   portfolio: Portfolio;
   onEdit: (updatedPortfolio: Partial<Portfolio>) => void;
   onDelete: () => void;
-  onAddProduct?: () => void;
 }
 
-export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddProduct }: PortfolioSettingsDisplayProps) {
+export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: PortfolioSettingsDisplayProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [isEditing, setIsEditing] = useState(false);
@@ -87,21 +84,6 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
     // Implement actual export functionality here
   };
   
-  const handleProductEdit = (product: FinancialProduct) => {
-    console.log("éditer le produit:", product);
-    // Implémenter la fonction d'édition de produit
-  };
-  
-  const handleProductDelete = (productId: string) => {
-    console.log("Supprimer le produit:", productId);
-    // Implémenter la fonction de suppression de produit
-  };
-  
-  const handleProductView = (product: FinancialProduct) => {
-    console.log("Voir les dûtails du produit:", product);
-    // Implémenter la fonction de visualisation dûtaillée du produit
-  };
-  
   return (
     <div className="space-y-8">
       <div className="flex justify-end items-center mb-6">
@@ -130,7 +112,6 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Général</TabsTrigger>
-          <TabsTrigger value="products" currentValue={activeTab} onValueChange={setActiveTab}>Produits</TabsTrigger>
           <TabsTrigger value="accounts" currentValue={activeTab} onValueChange={setActiveTab}>Comptes</TabsTrigger>
           <TabsTrigger value="bcc-parameters" currentValue={activeTab} onValueChange={setActiveTab}>Paramètres BCC</TabsTrigger>
           <TabsTrigger value="bcc-surveillance" currentValue={activeTab} onValueChange={setActiveTab}>Surveillance BCC</TabsTrigger>
@@ -278,67 +259,6 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete, onAddPro
                 Supprimer dûfinitivement
               </Button>
             </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="products" currentValue={activeTab}>
-          <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold">Produits financiers</h3>
-              <Button 
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  if (isEditing) {
-                    // Gérer l'ajout de produit en mode édition
-                    if (onAddProduct) {
-                      onAddProduct();
-                    } else {
-                      console.log("Ajouter un nouveau produit financier");
-                    }
-                  } else {
-                    handleStartEdit();
-                  }
-                }}
-                disabled={!isEditing && !onAddProduct}
-              >
-                Ajouter un produit
-                <Plus className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-            
-            {portfolio.products && portfolio.products.length > 0 ? (
-              <ProductList 
-                products={portfolio.products} 
-                onEdit={handleProductEdit}
-                onDelete={handleProductDelete}
-                onView={handleProductView}
-              />
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <p>Aucun produit financier n'a encore été créé dans ce portefeuille.</p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    if (isEditing) {
-                      if (onAddProduct) {
-                        onAddProduct();
-                      } else {
-                        console.log("Créer un nouveau produit financier");
-                      }
-                    } else {
-                      handleStartEdit();
-                    }
-                  }}
-                  className="mt-4"
-                  disabled={!isEditing && !onAddProduct}
-                >
-                  Créer un produit
-                  <Plus className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-            )}
           </div>
         </TabsContent>
 

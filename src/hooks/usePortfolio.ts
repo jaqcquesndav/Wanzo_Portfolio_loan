@@ -21,7 +21,12 @@ export function usePortfolio(id: string | undefined, type: PortfolioType) {
 
       // 1) Essayer d'abord le localStorage
       const local = await portfolioStorageService.getPortfolio(id);
-      if (local && local.type === type) {
+      // Pour les portefeuilles traditionnels, ignorer le cache si financial_products est absent
+      // (données stockées avant l'ajout du champ) afin de forcer un rechargement depuis l'API
+      const missingFinancialProducts =
+        type === 'traditional' &&
+        !Array.isArray((local as TraditionalPortfolio)?.financial_products);
+      if (local && local.type === type && !missingFinancialProducts) {
         console.log(`Portfolio ${id} loaded from localStorage.`);
         setPortfolio(local);
         setLoading(false);
@@ -42,11 +47,23 @@ export function usePortfolio(id: string | undefined, type: PortfolioType) {
           const rawProducts = apiPortfolio.products as unknown[];
           const cleanProducts = Array.isArray(rawProducts)
             ? rawProducts.filter(
-                (p): p is import('../types/traditional-portfolio').FinancialProduct =>
-                  typeof p === 'object' && p !== null && 'id' in p
+                (fp): fp is import('../types/traditional-portfolio').FinancialProduct =>
+                  typeof fp === 'object' && fp !== null && 'id' in fp
               )
             : [];
-          const sanitized = { ...apiPortfolio, products: cleanProducts };
+          // Préserver explicitement financial_products (embedded dans la réponse portfolio)
+          const rawFinancialProducts = (apiPortfolio as TraditionalPortfolio).financial_products as unknown[];
+          const cleanFinancialProducts = Array.isArray(rawFinancialProducts)
+            ? rawFinancialProducts.filter(
+                (fp): fp is import('../types/traditional-portfolio').FinancialProduct =>
+                  typeof fp === 'object' && fp !== null && 'id' in fp
+              )
+            : null;
+          const sanitized = {
+            ...apiPortfolio,
+            products: cleanProducts,
+            financial_products: cleanFinancialProducts,
+          };
 
           // Persister dans localStorage pour les prochains accès
           await portfolioStorageService.addOrUpdatePortfolio({

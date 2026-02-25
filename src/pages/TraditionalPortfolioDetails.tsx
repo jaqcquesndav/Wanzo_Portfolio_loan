@@ -413,7 +413,6 @@ export default function TraditionalPortfolioDetails() {
                         showNotification('Erreur lors de la sauvegarde des paramètres', 'error');
                       }
                     }}
-                    onAddProduct={() => setShowProductForm(true)}
                     onDelete={async () => {
                       try {
                         // TODO: Appeler l'API de suppression
