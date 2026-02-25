@@ -284,7 +284,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       name: 'Utilisateur Démo',
       givenName: 'Utilisateur',
       familyName: 'Démo',
-      role: 'Admin',
+      role: 'admin',
       institutionId: mockInstitutionId,
       permissions: ['view_dashboard', 'view_reports', 'manage_portfolios']
     };
@@ -400,15 +400,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log(`🔐 Tentative de connexion pour: ${email}`);
       
       // Pour la démo, nous créons un utilisateur avec le rôle Admin par défaut
-      let role: UserRole = 'Admin';
+      let role: UserRole = 'admin';
       
       // Détermination du rôle basée sur l'email pour la démonstration
       if (email.toLowerCase().includes('portfolio')) {
-        role = 'Portfolio_Manager';
+        role = 'portfolio_manager';
       } else if (email.toLowerCase().includes('audit')) {
-        role = 'Auditor';
+        role = 'auditor';
       } else if (email.toLowerCase().includes('user')) {
-        role = 'User';
+        role = 'user';
       }
       
       // Générer un nom pour la démonstration
@@ -416,15 +416,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       let givenName = 'Joseph';
       let familyName = 'Kabila';
       
-      if (role === 'Portfolio_Manager') {
+      if (role === 'portfolio_manager') {
         fullName = 'Emmanuel Shadary';
         givenName = 'Emmanuel';
         familyName = 'Shadary';
-      } else if (role === 'Auditor') {
+      } else if (role === 'auditor') {
         fullName = 'Félix Tshisekedi';
         givenName = 'Félix';
         familyName = 'Tshisekedi';
-      } else if (role === 'User') {
+      } else if (role === 'user') {
         fullName = 'Patrice Lumumba';
         givenName = 'Patrice';
         familyName = 'Lumumba';
@@ -441,7 +441,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         institutionId: '123456',
         financialInstitutionId: 'fin-001',
         userType: 'financial_institution',
-        isCompanyOwner: role === 'Admin',
+        isCompanyOwner: role === 'admin',
         picture: '/avatars/profile.jpg',
         permissions: ['manage_users', 'view_reports', 'edit_settings'],
         language: 'fr'

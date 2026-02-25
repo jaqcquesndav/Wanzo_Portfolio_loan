@@ -14,7 +14,7 @@ const createUserSchema = z.object({
   givenName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
   familyName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide'),
-  role: z.enum(['Admin', 'Portfolio_Manager', 'Auditor', 'User']),
+  role: z.enum(['portfolio_manager', 'auditor', 'user', 'manager', 'analyst', 'viewer']),
   phone: z.string().optional(),
   address: z.string().optional(),
   idType: z.enum(['passport', 'national_id', 'driver_license', 'other']).optional(),
@@ -48,7 +48,7 @@ export function CreateUserModal({
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
-      role: 'User',
+      role: 'user',
       language: 'fr',
       isCompanyOwner: false,
       userType: 'financial_institution',
@@ -63,11 +63,11 @@ export function CreateUserModal({
         email: data.email,
         firstName: data.givenName,
         lastName: data.familyName,
-        role: data.role,
-        department: 'Default',
-        position: data.role,
+        role: data.role as import('../../types/users').UserRole,
         phone: data.phone,
-        sendInvitation: true
+        language: data.language,
+        userType: data.userType,
+        status: 'pending',
       });
       
       // Ici, nous pourrions faire un second appel API pour mettre à jour 
@@ -144,10 +144,12 @@ export function CreateUserModal({
             <>
               <FormField label="Rôle" error={errors.role?.message}>
                 <Select {...register('role')}>
-                  <option value="User">Utilisateur</option>
-                  <option value="Portfolio_Manager">Gestionnaire de Portefeuille</option>
-                  <option value="Auditor">Auditeur</option>
-                  <option value="Admin">Administrateur</option>
+                  <option value="user">Utilisateur</option>
+                  <option value="portfolio_manager">Gestionnaire de Portefeuille</option>
+                  <option value="auditor">Auditeur</option>
+                  <option value="manager">Manager</option>
+                  <option value="analyst">Analyste</option>
+                  <option value="viewer">Lecteur</option>
                 </Select>
               </FormField>
 

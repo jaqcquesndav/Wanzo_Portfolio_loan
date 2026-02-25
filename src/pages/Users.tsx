@@ -39,8 +39,8 @@ export default function Users() {
     deleteUser
   } = useUsersApi();
   
-  // Pendant le développement, considérons l'utilisateur connecté comme Admin
-  const currentUserIsAdmin = true;
+  // Droits admin : basé sur le rôle réel de l'utilisateur connecté
+  const currentUserIsAdmin = currentUser?.role === 'admin';
   const financialInstitutionId = 'fin-001';
 
   // Charger les utilisateurs avec filtres
@@ -172,7 +172,7 @@ export default function Users() {
           <div>
             <div className="text-sm text-gray-500 dark:text-gray-400">Administrateurs</div>
             <div className="text-2xl font-semibold">
-              {users.filter(u => u.role === 'Admin').length}
+              {users.filter(u => u.role === 'admin').length}
             </div>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function Users() {
           <div>
             <div className="text-sm text-gray-500 dark:text-gray-400">Gestionnaires de Portefeuille</div>
             <div className="text-2xl font-semibold">
-              {users.filter(u => u.role === 'Portfolio_Manager').length}
+              {users.filter(u => u.role === 'portfolio_manager').length}
             </div>
           </div>
         </div>

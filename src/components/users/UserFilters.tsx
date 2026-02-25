@@ -39,10 +39,13 @@ export function UserFilters({
             onChange={(e) => onRoleChange(e.target.value as UserRole | 'all')}
           >
             <option value="all">Tous les rôles</option>
-            <option value="Admin">Administrateur</option>
-            <option value="Portfolio_Manager">Gestionnaire de Portefeuille</option>
-            <option value="Auditor">Auditeur</option>
-            <option value="User">Utilisateur</option>
+            <option value="admin">Administrateur</option>
+            <option value="portfolio_manager">Gestionnaire de Portefeuille</option>
+            <option value="auditor">Auditeur</option>
+            <option value="user">Utilisateur</option>
+            <option value="manager">Manager</option>
+            <option value="analyst">Analyste</option>
+            <option value="viewer">Lecteur</option>
           </Select>
         </FormField>
       </div>

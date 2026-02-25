@@ -5,10 +5,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys, listDataOptions } from '../../services/api/reactQueryConfig';
 import { traditionalPortfolioApi } from '../../services/api/traditional/portfolio.api';
 import { portfolioAccountsApi } from '../../services/api/shared';
+import { portfolioStorageService } from '../../services/storage/localStorage';
 import type { TraditionalPortfolio } from '../../types/traditional-portfolio';
 import type { Portfolio } from '../../types/portfolio';
 import type { BankAccount } from '../../types/bankAccount';
 import type { MobileMoneyAccount } from '../../types/mobileMoneyAccount';
+import type { PortfolioWithType } from '../../types/portfolioWithType';
 
 // ============================================================================
 // TYPES
@@ -176,9 +178,26 @@ export function useCreatePortfolioMutation() {
       }
 
       console.log('✅ Portefeuille créé:', newPortfolio.id);
+
+      // Persister immédiatement dans le localStorage pour que usePortfolio puisse le trouver
+      try {
+        await portfolioStorageService.addOrUpdatePortfolio({
+          ...newPortfolio,
+          type: 'traditional',
+        } as PortfolioWithType);
+        console.log('✅ Portefeuille persisté dans localStorage:', newPortfolio.id);
+      } catch (storageErr) {
+        console.error('⚠️ Erreur persistance localStorage:', storageErr);
+      }
+
       return newPortfolio;
     },
-    onSuccess: () => {
+    onSuccess: (newPortfolio) => {
+      // Mettre à jour le cache React Query immédiatement (évite un refetch inutile)
+      queryClient.setQueryData(
+        queryKeys.portfolios.detail(newPortfolio.id),
+        newPortfolio
+      );
       // Invalider la liste pour forcer un refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.portfolios.lists() });
     },

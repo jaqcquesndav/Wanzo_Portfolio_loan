@@ -71,25 +71,29 @@ export interface UserRoleDetails {
  */
 export const userApi = {
   /**
-   * Récupère tous les utilisateurs
+   * Récupère tous les utilisateurs de l'institution (admin only)
+   * GET /admin/users
+   * institutionId injecté depuis le JWT, non envoyé dans la requête
    */
   getAllUsers: (filters?: {
     role?: UserRoleEnum;
     status?: string;
-    department?: string;
     search?: string;
+    createdAfter?: string;
+    createdBefore?: string;
     page?: number;
     limit?: number;
   }) => {
     const params = new URLSearchParams();
-    if (filters?.role) params.append('role', filters.role);
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.department) params.append('department', filters.department);
-    if (filters?.search) params.append('search', filters.search);
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.role)          params.append('role',          filters.role);
+    if (filters?.status)        params.append('status',        filters.status);
+    if (filters?.search)        params.append('search',        filters.search);
+    if (filters?.createdAfter)  params.append('createdAfter',  filters.createdAfter);
+    if (filters?.createdBefore) params.append('createdBefore', filters.createdBefore);
+    if (filters?.page)          params.append('page',          filters.page.toString());
+    if (filters?.limit)         params.append('limit',         filters.limit.toString());
 
-    return apiClient.get<FlexiblePaginatedResponse<User>>(`/users?${params.toString()}`);
+    return apiClient.get<FlexiblePaginatedResponse<User>>(`/admin/users?${params.toString()}`);
   },
 
   /**
@@ -100,21 +104,30 @@ export const userApi = {
   },
 
   /**
-   * Crée un nouvel utilisateur
+   * Crée un utilisateur pour l'institution de l'admin connecté (admin only)
+   * POST /admin/users
+   *
+   * Règles critiques du backend:
+   *  - institutionId est forcé depuis le JWT (non injectable via le body)
+   *  - Rôles interdits: 'admin', 'super_admin' → 400
+   *  - Envoie automatiquement un email reset-password via Auth0 après création
    */
   createUser: (user: {
     email: string;
-    name?: string;
-    givenName?: string;
-    familyName?: string;
-    picture?: string;
+    firstName?: string;
+    lastName?: string;
     phone?: string;
-    role?: UserRoleEnum;
+    role: UserRoleEnum;
+    status?: 'active' | 'inactive' | 'suspended' | 'pending';
+    department?: string;
+    language?: 'fr' | 'en';
     userType?: UserType;
+    bio?: string;
+    settings?: UserSettings;
     permissions?: string[];
-    sendInvitation?: boolean;
+    metadata?: Record<string, unknown>;
   }) => {
-    return apiClient.post<User & { invitationSent?: boolean }>('/users', user);
+    return apiClient.post<User>('/admin/users', user);
   },
 
   /**
@@ -125,10 +138,11 @@ export const userApi = {
   },
 
   /**
-   * Supprime un utilisateur
+   * Supprime un utilisateur de l'institution (admin only)
+   * DELETE /admin/users/:id
    */
   deleteUser: (id: string) => {
-    return apiClient.delete(`/users/${id}`);
+    return apiClient.delete(`/admin/users/${id}`);
   },
 
   /**
@@ -266,40 +280,56 @@ export const userApi = {
   },
 
   /**
-   * Récupère l'activité des utilisateurs
+   * Journal d'activités de TOUS les utilisateurs de l'institution (admin only)
+   * GET /admin/users/activities
+   * Réponse: { success, total, data: [{ id, type, description, ipAddress, userAgent, userId, createdAt, metadata }] }
    */
-  getUserActivity: (filters?: {
-    userId?: string;
-    action?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-  }) => {
+  getUserActivity: (filters?: { limit?: number }) => {
     const params = new URLSearchParams();
-    if (filters?.userId) params.append('userId', filters.userId);
-    if (filters?.action) params.append('action', filters.action);
-    if (filters?.startDate) params.append('startDate', filters.startDate);
-    if (filters?.endDate) params.append('endDate', filters.endDate);
-    if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
-
-    return apiClient.get<FlexiblePaginatedResponse<UserActivity>>(`/users/activity?${params.toString()}`);
+    return apiClient.get<FlexiblePaginatedResponse<UserActivity>>(`/admin/users/activities?${params.toString()}`);
   },
 
-  // ===== NOUVEAUX ENDPOINTS - Intégrité des données =====
+  // ===== NOUVEAUX ENDPOINTS =====
 
   /**
-   * Change le statut d'un utilisateur (active, inactive, suspended)
+   * Modifie le rôle d'un utilisateur (admin only) — même restriction anti-escalade
+   * PUT /users/:id/role
+   */
+  changeUserRole: (id: string, role: UserRoleEnum, permissions?: string[]) => {
+    return apiClient.put<{ id: string; role: UserRoleEnum; permissions: string[] }>(
+      `/users/${id}/role`,
+      { role, permissions }
+    );
+  },
+
+  /**
+   * Suspend un utilisateur (admin only)
+   * POST /users/:id/suspend
+   */
+  suspendUser: (id: string, reason: string, suspendedBy: string) => {
+    return apiClient.post<User>(`/users/${id}/suspend`, { reason, suspendedBy });
+  },
+
+  /**
+   * Réactive un utilisateur suspendu (admin only)
+   * POST /users/:id/reactivate
+   */
+  reactivateUser: (id: string) => {
+    return apiClient.post<User>(`/users/${id}/reactivate`);
+  },
+
+  /**
+   * Change le statut d'un utilisateur — synchronisé avec Auth0 (admin only)
+   * PATCH /admin/users/:id/status
+   * 'suspended' | 'inactive' → Auth0 blocked ; 'active' → Auth0 unblocked
    */
   changeUserStatus: (id: string, status: 'active' | 'inactive' | 'suspended', reason?: string) => {
     return apiClient.patch<{
       id: string;
-      name: string;
       status: 'active' | 'inactive' | 'suspended';
-      statusReason?: string;
       updatedAt: string;
-    }>(`/users/${id}/status`, { status, reason });
+    }>(`/admin/users/${id}/status`, { status, reason });
   },
 
   /**

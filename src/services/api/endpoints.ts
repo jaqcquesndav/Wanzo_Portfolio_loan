@@ -36,6 +36,14 @@ export const API_ENDPOINTS = {
     preferences: '/users/me/preferences',
     resetPassword: (id: string) => `/users/${id}/reset-password`,
     status: (id: string) => `/users/${id}/status`,
+    /** PUT /users/:id/role */
+    changeRole: (id: string) => `/users/${id}/role`,
+    /** POST /users/:id/suspend */
+    suspend: (id: string) => `/users/${id}/suspend`,
+    /** POST /users/:id/reactivate */
+    reactivate: (id: string) => `/users/${id}/reactivate`,
+    /** POST /users/:id/verify-identity */
+    submitVerification: (id: string) => `/users/${id}/verify-identity`,
     activities: (id: string) => `/users/${id}/activities`,
     userPreferences: {
       getAll: (id: string) => `/users/${id}/preferences`,
@@ -55,6 +63,17 @@ export const API_ENDPOINTS = {
     roles: '/users/roles',
     permissions: '/users/permissions',
     activity: '/users/activity'
+  },
+
+  // Admin user management (admin role only)
+  // institutionId is injected from JWT — never sent in body
+  adminUsers: {
+    base:            '/admin/users',
+    getAll:          '/admin/users',
+    create:          '/admin/users',
+    changeStatus:    (id: string) => `/admin/users/${id}/status`,
+    delete:          (id: string) => `/admin/users/${id}`,
+    activities:      '/admin/users/activities',
   },
 
   // Companies (read-only for prospection)
@@ -247,26 +266,30 @@ export const API_ENDPOINTS = {
 
   // Dashboard (with integrated risk management)
   dashboard: {
-    base: '/dashboard',
+    base:        '/dashboard',
+    traditional: '/dashboard/traditional',
     // Métriques centralisées
     metrics: {
-      ohada: '/metrics/ohada',
-      portfolio: (portfolioId: string) => `/metrics/portfolio/${portfolioId}`,
-      global: '/metrics/global'
+      ohada:     '/dashboard/metrics/ohada',
+      portfolio: (portfolioId: string) => `/dashboard/metrics/portfolio/${portfolioId}`,
+      global:    '/dashboard/metrics/global'
     },
-    // Conformité et risques intégrés
+    // Conformité et risques
     compliance: {
-      summary: '/compliance/summary'
+      summary: '/dashboard/compliance/summary'
     },
     risk: {
-      centralBank: '/risk/central-bank',
-      portfolioRisk: (id: string) => `/risk/portfolios/${id}`
+      centralBank:   '/dashboard/risk/central-bank',
+      portfolioRisk: (id: string) => `/dashboard/risk/portfolios/${id}`
+    },
+    widgets: {
+      available: '/dashboard/widgets/available'
     },
     // Préférences utilisateur
     preferences: {
-      get: (userId: string) => `/preferences/${userId}`,
-      updateWidget: (userId: string, widgetId: string) => `/preferences/${userId}/widget/${widgetId}`,
-      reset: (userId: string) => `/preferences/${userId}/reset`
+      get:          (userId: string) => `/dashboard/preferences/${userId}`,
+      updateWidget: (userId: string, widgetId: string) => `/dashboard/preferences/${userId}/widget/${widgetId}`,
+      reset:        (userId: string) => `/dashboard/preferences/${userId}/reset`
     }
   },
 

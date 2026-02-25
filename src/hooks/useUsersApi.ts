@@ -94,14 +94,18 @@ export function useUsersApi() {
   // Créer un nouvel utilisateur
   const createUser = useCallback(async (userData: {
     email: string;
-    name?: string;
-    givenName?: string;
-    familyName?: string;
+    firstName?: string;
+    lastName?: string;
     phone?: string;
-    role?: UserRole;
+    role: UserRole;
+    status?: 'active' | 'inactive' | 'suspended' | 'pending';
+    department?: string;
+    language?: 'fr' | 'en';
     userType?: UserType;
+    bio?: string;
+    settings?: UserSettings;
     permissions?: string[];
-    sendInvitation?: boolean;
+    metadata?: Record<string, unknown>;
   }) => {
     try {
       setLoading(true);

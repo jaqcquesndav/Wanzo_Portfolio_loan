@@ -17,7 +17,18 @@ export interface ContactPerson {
 }
 
 export type UserType = 'sme' | 'financial_institution';
-export type UserRole = 'Admin' | 'Portfolio_Manager' | 'Auditor' | 'User';
+/**
+ * Rôles en minuscules — format canonique du backend (portfolio-institution-service)
+ */
+export type UserRole =
+  | 'admin'
+  | 'portfolio_manager'
+  | 'auditor'
+  | 'user'
+  | 'manager'
+  | 'analyst'
+  | 'viewer';
+
 export type IdType = 'passport' | 'national_id' | 'driver_license' | 'other';
 export type IdStatus = 'pending' | 'verified' | 'rejected';
 export type Language = 'fr' | 'en';
@@ -47,52 +58,58 @@ export interface User {
   id: string;
   email: string;
   emailVerified?: boolean;
+  isEmailVerified?: boolean;   // champ backend
+  isTwoFactorEnabled?: boolean; // champ backend
+  // Prénom / nom — le backend renvoie firstName/lastName
+  firstName?: string;
+  lastName?: string;
+  // Alias Auth0 / legacy
   name?: string;
   givenName?: string;
   familyName?: string;
-  picture?: string;  // URL de photo de profil (Cloudinary)
-  profilePicture?: string;  // URL de photo profil (legacy, Cloudinary)
+  picture?: string;          // URL photo de profil (Cloudinary)
+  profilePicture?: string;   // alias legacy
   phone?: string;
   phoneVerified?: boolean;
   address?: string;
-  
-  // Documents d'identité et vérification
+  // Identité
   idNumber?: string;
   idType?: IdType;
   idStatus?: IdStatus;
-  idDocument?: string;  // URL du recto du document d'identité (Cloudinary)
-  idDocumentBack?: string;  // URL du verso du document d'identité (Cloudinary)
-  verificationSubmittedAt?: string;  // Date de soumission de la vérification
-  verificationReviewedAt?: string;  // Date de revue de la vérification
-  verificationReviewedBy?: string;  // ID de l'administrateur ayant vérifié
-  rejectionReason?: string;  // Raison du rejet si idStatus === 'rejected'
-  
+  idDocument?: string;
+  idDocumentBack?: string;
+  verificationSubmittedAt?: string;
+  verificationReviewedAt?: string;
+  verificationReviewedBy?: string;
+  rejectionReason?: string;
+  // Rôle et métadonnées
   role?: UserRole;
   birthdate?: string;
   bio?: string;
-  
-  // Type d'entité de l'utilisateur
+  department?: string;
+  language?: Language;
   userType?: UserType;
-
-  // Liens vers les entités associées
-  companyId?: string; 
+  // Liens entités
+  companyId?: string;
   financialInstitutionId?: string;
-
+  institutionId?: string;
   isCompanyOwner?: boolean;
+  // Identifiants back
+  kiotaId?: string;     // ex: "KT-USR-20260225-0001"
+  auth0Id?: string;     // ex: "auth0|64a1b2c3..."
+  // Dates
   createdAt: string;
   updatedAt?: string;
+  lastLogin?: string;
+  // Paramètres et accès
   settings?: UserSettings;
-  language?: Language;
   permissions?: string[];
+  // Abonnement / tokens
   plan?: string;
   tokenBalance?: number;
   tokenTotal?: number;
-  // Champ optionnel pour l'ID de l'institution associée
-  institutionId?: string;
-  // Champ optionnel pour le statut de l'utilisateur
-  status?: 'active' | 'inactive' | 'suspended' | 'pending_verification';
-  // Département de l'utilisateur (optionnel)
-  department?: string;
+  // Statut — aligné avec le backend (pas 'pending_verification')
+  status?: 'active' | 'inactive' | 'suspended' | 'pending';
 }
 
 /**
@@ -105,10 +122,10 @@ export interface User {
  */
 export interface UserWithInstitutionResponse {
   user: User & {
-    institutionId?: string;  // ID de l'institution même si institution est null
-    auth0Id?: string;        // Auth0 ID peut être présent directement dans user
-    firstName?: string;      // API peut renvoyer firstName au lieu de givenName
-    lastName?: string;       // API peut renvoyer lastName au lieu de familyName
+    institutionId?: string;
+    auth0Id?: string;
+    firstName?: string;
+    lastName?: string;
   };
   institution: {
     id: string;
@@ -122,17 +139,8 @@ export interface UserWithInstitutionResponse {
     email?: string;
     website?: string;
     logo?: string;
-    documents?: Array<{
-      id: string;
-      type: string;
-      name: string;
-      status?: string;
-    }>;
-    settings?: {
-      currency?: string;
-      timezone?: string;
-    };
-    // Champs supplémentaires de l'API réelle
+    documents?: Array<{ id: string; type: string; name: string; status?: string }>;
+    settings?: { currency?: string; timezone?: string };
     license_number?: string | null;
     license_type?: string | null;
     legal_representative?: string | null;
@@ -149,17 +157,35 @@ export interface UserWithInstitutionResponse {
     tokenBalance?: number;
     tokensUsed?: number;
     tokenUsageHistory?: unknown[];
-    metadata?: {
-      sigle?: string;
-      typeInstitution?: string;
-      denominationSociale?: string;
-      [key: string]: unknown;
-    };
+    metadata?: { sigle?: string; typeInstitution?: string; denominationSociale?: string; [key: string]: unknown };
     createdAt?: string;
     updatedAt?: string;
-    created_at?: string;  // API peut utiliser snake_case
-    updated_at?: string;  // API peut utiliser snake_case
-  } | null;  // IMPORTANT: peut être null, utiliser user.institutionId comme fallback
+    created_at?: string;
+    updated_at?: string;
+  } | null;
+  /**
+   * Profil enrichi depuis customer-service (70+ champs OHADA/BCC)
+   * Présent uniquement sur GET /users/me (peut être null)
+   */
+  institutionProfile?: {
+    denominationSociale?: string;
+    sigle?: string;
+    typeInstitution?: string;
+    sousCategorie?: string;
+    statutJuridique?: string;
+    autoriteSupervision?: string;
+    numeroAgrement?: string;
+    numeroNIF?: string;
+    capitalSocialActuel?: number;
+    nombreAgences?: number;
+    devise?: string;
+    servicesCredit?: string[];
+    secteursActivitePrivilegies?: string[];
+    zonesGeographiquesPrioritaires?: string[];
+    statutValidation?: string;
+    logo?: string;
+    [key: string]: unknown;
+  } | null;
   auth0Id: string;
   role: UserRole;
   permissions: string[];
@@ -216,7 +242,7 @@ export const userSchema = z.object({
   verificationReviewedAt: z.string().optional(),
   verificationReviewedBy: z.string().optional(),
   rejectionReason: z.string().optional(),
-  role: z.enum(['Admin', 'Portfolio_Manager', 'Auditor', 'User']).optional().default('User'),
+  role: z.enum(['admin', 'portfolio_manager', 'auditor', 'user', 'manager', 'analyst', 'viewer']).optional().default('user'),
   birthdate: z.string().optional(),
   bio: z.string().optional(),
   userType: z.enum(['sme', 'financial_institution']).optional(),
@@ -232,6 +258,13 @@ export const userSchema = z.object({
   tokenBalance: z.number().optional(),
   tokenTotal: z.number().optional(),
   institutionId: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'suspended', 'pending_verification']).optional(),
+  status: z.enum(['active', 'inactive', 'suspended', 'pending']).optional(),
   department: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  kiotaId: z.string().optional(),
+  auth0Id: z.string().optional(),
+  isEmailVerified: z.boolean().optional(),
+  isTwoFactorEnabled: z.boolean().optional(),
+  lastLogin: z.string().optional(),
 });
