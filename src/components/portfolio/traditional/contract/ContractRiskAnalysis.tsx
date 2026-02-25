@@ -4,10 +4,11 @@ import { Card } from '../../../ui/Card';
 import { CreditContract } from '../../../../types/credit-contract';
 
 // Fonction utilitaire pour le formatage des montants
-const formatAmount = (amount: number) => {
+// currency est passé en paramètre pour utiliser la devise réelle du contrat
+const formatAmount = (amount: number, currency = 'CDF') => {
   return new Intl.NumberFormat('fr-FR', { 
     style: 'currency', 
-    currency: 'XAF',
+    currency,
     maximumFractionDigits: 0
   }).format(amount);
 };
@@ -64,14 +65,14 @@ export function ContractRiskAnalysis({ contract }: ContractRiskAnalysisProps) {
             value: collateralCoverage,
             description: 'Ratio entre la valeur des garanties et le montant du prêt',
             status: collateralCoverage >= 100 ? 'good' : collateralCoverage >= 80 ? 'warning' : 'danger',
-            details: `${formatAmount(contract.guaranteesTotalValue || 0)} / ${formatAmount(contract.amount)}`
+            details: `${formatAmount(contract.guaranteesTotalValue || 0, contract.currency || 'CDF')} / ${formatAmount(parseFloat(String(contract.principal_amount || contract.amount || 0)), contract.currency || 'CDF')}`
           },
           {
             name: 'Progression du remboursement',
             value: repaymentRatio,
             description: 'Pourcentage du prêt dûjà remboursé',
             status: repaymentRatio >= 50 ? 'good' : repaymentRatio >= 20 ? 'warning' : 'danger',
-            details: `${formatAmount(contract.amount - (contract.remainingAmount || 0))} / ${formatAmount(contract.amount)}`
+            details: `${formatAmount(parseFloat(String(contract.principal_amount || contract.amount || 0)) - (contract.remainingAmount || 0), contract.currency || 'CDF')} / ${formatAmount(parseFloat(String(contract.principal_amount || contract.amount || 0)), contract.currency || 'CDF')}`
           },
           {
             name: 'Score cRédit',

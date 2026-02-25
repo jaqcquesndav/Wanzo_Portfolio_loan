@@ -567,7 +567,7 @@ export function CreditContractsList({
                             contract.company_name
                           )}
                         </TableCell>
-                        <TableCell>{formatAmount(contract.amount)}</TableCell>
+                        <TableCell>{formatAmount(parseFloat(String(contract.principal_amount || contract.amount || 0)), { currency: contract.currency || 'CDF' })}</TableCell>
                         <TableCell>
                           <Badge 
                             variant={statusConfig[contract.status]?.variant || "secondary"}

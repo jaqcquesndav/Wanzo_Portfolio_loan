@@ -517,7 +517,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                       <div>
                         <div className="font-medium">{guarantee.type.charAt(0).toUpperCase() + guarantee.type.slice(1).replace('_', ' ')}</div>
                         <div className="text-sm text-gray-500">
-                          Valeur: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(guarantee.value)}
+                          Valeur: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: contract.currency || 'CDF' }).format(guarantee.value)}
                           {guarantee.details?.contract_number && ` • Réf: ${guarantee.details.contract_number}`}
                         </div>
                       </div>
@@ -535,7 +535,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 </div>
                 <div className="mt-3 text-sm">
                   <div className="font-medium">Valeur totale des garanties:</div>
-                  <div className="text-gray-700 dark:text-gray-300">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(formData.guarantee_amount || 0)}</div>
+                  <div className="text-gray-700 dark:text-gray-300">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: contract.currency || 'CDF' }).format(formData.guarantee_amount || 0)}</div>
                 </div>
               </div>
             ) : (

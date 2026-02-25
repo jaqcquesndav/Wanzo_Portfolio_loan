@@ -170,6 +170,7 @@ export interface CreditContract {
   // ─── Alias camelCase (compat frontend hérité) ───────────────────────────────
   portfolioId?: string;   // alias → portfolio_id
   amount?: number;         // alias → principal_amount
+  currency?: string;       // devise du contrat (ex: 'CDF', 'USD')
   creditRequestId?: string;
   memberId?: string;
   memberName?: string;

@@ -7,7 +7,7 @@ export const formatAmount = (amount: number, options: {
   spaceBetweenAmountAndCurrency?: boolean;
 } = {}) => {
   const { 
-    currency = 'XOF', 
+    currency = 'CDF', 
     locale = 'fr-FR',
     showCurrency = true,
     showDecimals = false,
@@ -43,11 +43,18 @@ export const formatDate = (dateString: string | undefined) => {
 };
 
 export const statusConfig: Record<string, { label: string; variant: "success" | "secondary" | "danger" | "warning" }> = {
+  // Statuts de contrat
+  'draft': { label: 'Brouillon', variant: 'secondary' },
   'active': { label: 'Actif', variant: 'success' },
-  'closed': { label: 'Clôturé', variant: 'secondary' },
-  'defaulted': { label: 'En défaut', variant: 'danger' },
   'suspended': { label: 'Suspendu', variant: 'warning' },
+  'defaulted': { label: 'En défaut', variant: 'danger' },
+  'restructured': { label: 'Restructuré', variant: 'warning' },
+  'litigation': { label: 'En contentieux', variant: 'danger' },
   'in_litigation': { label: 'En contentieux', variant: 'danger' },
+  'completed': { label: 'Clôturé', variant: 'success' },
+  'closed': { label: 'Clôturé', variant: 'secondary' },
+  'canceled': { label: 'Annulé', variant: 'secondary' },
+  'written_off': { label: 'Passé en perte', variant: 'danger' },
   // Statuts d'échéancier
   'paid': { label: 'Payé', variant: 'success' },
   'partial': { label: 'Partiel', variant: 'warning' },

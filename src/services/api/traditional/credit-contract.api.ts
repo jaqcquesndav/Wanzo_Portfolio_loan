@@ -84,6 +84,7 @@ export function normalizeContract(raw: Record<string, any>): CreditContract {
     // Financials
     principal_amount: principalAmount,
     amount: principalAmount,
+    currency: (raw.currency ?? raw.devise ?? 'CDF') as string,
     interest_rate: toNumber(raw.interest_rate),
     outstanding_balance: toOptNumber(raw.outstanding_balance),
     disbursed_amount: toOptNumber(raw.disbursed_amount ?? raw.disbursedAmount),
