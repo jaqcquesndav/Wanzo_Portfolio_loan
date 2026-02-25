@@ -31,6 +31,7 @@ import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 import type { PortfolioType } from '../hooks/usePortfolio';
 import type { FinancialProduct } from '../types/traditional-portfolio';
 import type { ProductFormData } from '../components/portfolio/traditional/ProductForm';
+import { useFinancialProducts } from '../hooks/useFinancialProducts';
 import type { Company } from '../types/company';
 import type { CreditContract } from '../types/credit-contract';
 // import CreditRequestDetails from './CreditRequestDetails';
@@ -48,6 +49,8 @@ export default function TraditionalPortfolioDetails() {
   const { showNotification } = useNotification();
   const { setCurrentPortfolioId } = usePortfolioContext();
   const [showProductForm, setShowProductForm] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | undefined>(undefined);
+  const { products: financialProducts, createProduct, updateProduct, deleteProduct } = useFinancialProducts(id ?? '');
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'requests';
   const [tab, setTab] = useState(initialTab);
@@ -238,45 +241,51 @@ export default function TraditionalPortfolioDetails() {
     showNotification(`Détails de l'entreprise ${companyName} affichés`, 'info');
   };
 
-  const handleCreateProduct = useCallback(async (data: ProductFormData) => {
-    if (!data.name || !data.type) {
-      showNotification('Veuillez renseigner tous les champs obligatoires', 'error');
-      return;
-    }
-    if (!portfolio || !isTraditionalPortfolio(portfolio)) return;
+  /** Soumission du formulaire produit — gère création ET modification */
+  const handleProductFormSubmit = useCallback(async (data: ProductFormData) => {
+    if (!id) return;
     try {
-      const now = new Date().toISOString();
-      const newProduct: FinancialProduct = {
-        ...data,
-        id: crypto.randomUUID(),
-        status: 'active',
-        created_at: now,
-        updated_at: now,
-        type: data.type
-      };
-      const products: FinancialProduct[] = [...portfolio.products, newProduct];
-      await addOrUpdate({ products });
-      showNotification('Produit financier créé avec succès', 'success');
-      setShowProductForm(false);
-    } catch {
-      showNotification('Erreur lors de la création du produit', 'error');
-    }
-  }, [addOrUpdate, showNotification, portfolio]);
+      // Convertir required_documents: { value: string }[] → string[]
+      const requiredDocs = (data.required_documents ?? []).map((d) => d.value).filter(Boolean);
 
-  // const handleUpdateProduct = useCallback(async (updatedProduct: FinancialProduct) => {
-  //   if (!updatedProduct.id) {
-  //     showNotification('Produit invalide', 'error');
-  //     return;
-  //   }
-  //   if (!isTraditionalPortfolio(portfolio)) return;
-  //   try {
-  //     const products: FinancialProduct[] = portfolio.products.map((p) => p.id === updatedProduct.id ? updatedProduct : p);
-  //     await addOrUpdate({ products });
-  //     showNotification('Produit financier mis à jour avec succès', 'success');
-  //   } catch {
-  //     showNotification('Erreur lors de la mise à jour du produit', 'error');
-  //   }
-  // }, [addOrUpdate, showNotification, portfolio]);
+      if (selectedProduct) {
+        // Mode édition
+        await updateProduct(selectedProduct.id, {
+          ...data,
+          required_documents: requiredDocs,
+          portfolio_id: id,
+        });
+        showNotification('Produit financier mis à jour avec succès', 'success');
+      } else {
+        // Mode création
+        await createProduct({
+          ...data,
+          required_documents: requiredDocs,
+          portfolio_id: id,
+        });
+        showNotification('Produit financier créé avec succès', 'success');
+      }
+      setShowProductForm(false);
+      setSelectedProduct(undefined);
+    } catch {
+      showNotification('Erreur lors de l\'enregistrement du produit', 'error');
+    }
+  }, [id, selectedProduct, createProduct, updateProduct, showNotification]);
+
+  const handleEditProduct = useCallback((product: FinancialProduct) => {
+    setSelectedProduct(product);
+    setShowProductForm(true);
+  }, []);
+
+  const handleDeleteProduct = useCallback(async (product: FinancialProduct) => {
+    if (!window.confirm(`Désactiver le produit "${product.name}" ?`)) return;
+    try {
+      await deleteProduct(product.id);
+      showNotification('Produit désactivé', 'success');
+    } catch {
+      showNotification('Erreur lors de la désactivation', 'error');
+    }
+  }, [deleteProduct, showNotification]);
 
   // Sécurité: fallback si id absent ou non valide
   if (!id) {
@@ -316,7 +325,7 @@ export default function TraditionalPortfolioDetails() {
 
   // Déterminer si le portefeuille est "vide" (nouvel utilisateur qui vient de créer son premier portefeuille)
   const hasNoRequests = safeRequests.length === 0;
-  const hasNoProducts = isTraditionalPortfolio(portfolio) && portfolio.products.length === 0;
+  const hasNoProducts = financialProducts.length === 0;
   const isEmptyPortfolio = hasNoRequests && hasNoProducts;
 
   return (
@@ -407,8 +416,7 @@ export default function TraditionalPortfolioDetails() {
               </TabsContent>
             );
           }
-          if (tabConfig.key === 'products' && isTraditionalPortfolio(portfolio)) {
-            const products = portfolio.products;
+          if (tabConfig.key === 'products') {
             return (
               <TabsContent
                 key={tabConfig.key}
@@ -416,15 +424,18 @@ export default function TraditionalPortfolioDetails() {
                 currentValue={tab}
               >
                 <div className="flex justify-end mb-4">
-                  <Button onClick={() => setShowProductForm(true)} icon={<Plus className="h-5 w-5" aria-hidden="true" />}>Nouveau produit</Button>
+                  <Button
+                    onClick={() => { setSelectedProduct(undefined); setShowProductForm(true); }}
+                    icon={<Plus className="h-5 w-5" aria-hidden="true" />}
+                  >
+                    Nouveau produit
+                  </Button>
                 </div>
-                {products && products.length > 0 ? (
+                {financialProducts.length > 0 ? (
                   <FinancialProductsList
-                    products={products}
-                    onViewDetails={(product) => {
-                      showNotification(`Produit ${product.name} sélectionné`, 'info');
-                      // Navigation désactivée: navigate(`/app/${portfolioType}/portfolio/${id}/products/${product.id}`)
-                    }}
+                    products={financialProducts}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteProduct}
                   />
                 ) : (
                   <EmptyState
@@ -433,7 +444,7 @@ export default function TraditionalPortfolioDetails() {
                     description="Créez votre premier produit financier pour commencer à gérer vos offres de crédit."
                     action={{
                       label: "Créer un produit",
-                      onClick: () => setShowProductForm(true),
+                      onClick: () => { setSelectedProduct(undefined); setShowProductForm(true); },
                       variant: "primary"
                     }}
                   />
@@ -589,17 +600,25 @@ export default function TraditionalPortfolioDetails() {
 
       {/* Popups métier pour détails (UX professionnelle) */}
       {/* Plus de modales pour les détails métier, navigation uniquement */}
-      {/* Modal de création de produit */}
-      {showProductForm && isTraditionalPortfolio(portfolio) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Créer un produit financier">
+      {/* Modal création / édition de produit financier */}
+      {showProductForm && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedProduct ? 'Modifier un produit financier' : 'Créer un produit financier'}
+        >
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b dark:border-gray-700">
-              <h2 className="text-xl font-semibold">Nouveau produit financier</h2>
+              <h2 className="text-xl font-semibold">
+                {selectedProduct ? 'Modifier le produit financier' : 'Nouveau produit financier'}
+              </h2>
             </div>
             <div className="p-6">
               <ProductForm
-                onSubmit={handleCreateProduct}
-                onCancel={() => setShowProductForm(false)}
+                product={selectedProduct}
+                onSubmit={handleProductFormSubmit}
+                onCancel={() => { setShowProductForm(false); setSelectedProduct(undefined); }}
               />
             </div>
           </div>
