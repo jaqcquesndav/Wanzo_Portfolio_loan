@@ -109,26 +109,67 @@ export interface ContractDocument {
   created_at: string;
 }
 
-export interface CreditContract {
-  id: string;
+/**
+ * Payload pour créer un contrat depuis une demande approuvée
+ * POST /portfolios/traditional/credit-contracts/from-request
+ */
+export interface CreateContractPayload {
   portfolioId: string;
+  creditRequestId: string;
   client_id: string;
   company_name: string;
   product_type: string;
-  contract_number: string;
   amount: number;
   interest_rate: number;
   start_date: string;
   end_date: string;
-  status: ContractStatus;
-  amortization_method?: AmortizationMethod;
   terms: string;
+  amortization_method: AmortizationMethod;
+  grace_period?: number;
+  contract_number?: string;
+}
+
+export interface CreditContract {
+  id: string;
+
+  // ─── Champs API snake_case (source de vérité backend) ───────────────────────
+  portfolio_id?: string;          // API: portfolio_id
+  contract_number: string;
+  funding_request_id?: string;    // API: funding_request_id (= creditRequestId)
+  client_id: string;              // API: client_id (= memberId)
+  company_name: string;
+  product_type: string;           // API: product_type (= productId)
+  principal_amount?: number;      // API: principal_amount (string coercé → number)
+  interest_rate: number;          // API: interest_rate (string coercé → number)
+  start_date: string;
+  end_date: string;
+  status: ContractStatus;
+  amortization_type?: AmortizationMethod;   // API returns amortization_type
+  amortization_method?: AmortizationMethod; // Used in CREATE payload
+  payment_frequency?: string;     // API: payment_frequency (e.g. "monthly")
+  terms: string;
+  grace_period?: number;
+  riskClass?: RiskClass;
+  delinquencyDays?: number;
+  outstanding_balance?: number;   // API: outstanding_balance
+  disbursed_amount?: number;      // API: disbursed_amount
+  total_paid_amount?: number;     // API: total_paid_amount
+  total_interest_due?: number;    // API: total_interest_due
+  suspension_reason?: string;
+  suspension_date?: string;
+  default_date?: string;
+  default_reason?: string;
+  litigation_date?: string;
+  litigation_reason?: string;
+  completion_date?: string;
+  documentUrl?: string;
+  created_by?: string;
   created_at: string;
   updated_at: string;
-  funding_request_id?: string;
-  
-  // Additional properties from the legacy interface
-  reference?: string;
+
+  // ─── Alias camelCase (compat frontend hérité) ───────────────────────────────
+  portfolioId?: string;   // alias → portfolio_id
+  amount?: number;         // alias → principal_amount
   creditRequestId?: string;
   memberId?: string;
   memberName?: string;
@@ -136,42 +177,27 @@ export interface CreditContract {
   productName?: string;
   disbursedAmount?: number;
   remainingAmount?: number;
-  startDate?: string;  // Legacy field mapping to start_date
-  endDate?: string;    // Legacy field mapping to end_date
+  startDate?: string;
+  endDate?: string;
   lastPaymentDate?: string;
   nextPaymentDate?: string;
-  delinquencyDays?: number;
-  riskClass?: RiskClass;
   guaranteesTotalValue?: number;
   guaranteeId?: string;
   scheduleId?: string;
-  documentUrl?: string;
-  
+  reference?: string;
+
   // Consolidation
   consolidatedFrom?: string[];
   isConsolidated?: boolean;
   consolidatedTo?: string;
-  
+
   duration?: number;
-  grace_period?: number;
-  
-  // Additional properties for UI compatibility
-  risk_rating?: number;
-  days_past_due?: number;
-  guarantee_amount?: number;
-  term_months?: number;
-  
+
   // Relations imbriquées
   guarantees?: ContractGuarantee[];
   disbursements?: ContractDisbursement[];
-  payment_schedule?: PaymentScheduleItem[];
+  payment_schedules?: PaymentScheduleItem[];  // API returns payment_schedules (plural)
+  payment_schedule?: PaymentScheduleItem[];   // legacy singular — alias
   restructuring_history?: RestructuringEntry[];
   documents?: ContractDocument[];
-  
-  // Défaut et litige
-  default_date?: string;
-  default_reason?: string;
-  litigation_date?: string;
-  litigation_reason?: string;
-  completion_date?: string;
 }

@@ -17,11 +17,14 @@ export function useCreditContracts(portfolioId: string) {
    * GET /portfolios/traditional/credit-contracts
    */
   const fetchContracts = useCallback(async (filters?: {
-    status?: 'active' | 'completed' | 'defaulted' | 'restructured';
+    status?: 'active' | 'completed' | 'defaulted' | 'restructured' | 'suspended' | 'in_litigation' | 'litigation' | 'draft' | 'canceled' | 'written_off';
     clientId?: string;
     productType?: string;
+    riskClass?: string;
     dateFrom?: string;
     dateTo?: string;
+    page?: number;
+    limit?: number;
   }) => {
     try {
       setLoading(true);
@@ -123,16 +126,14 @@ export function useCreditContracts(portfolioId: string) {
   /**
    * Activer un contrat (DRAFT → ACTIVE)
    * POST /portfolios/traditional/credit-contracts/{id}/activate
+   * Body: {} (le backend ne prend aucun payload)
    */
-  const activateContract = useCallback(async (id: string, activationDetails?: {
-    activation_date?: string;
-    notes?: string;
-  }) => {
+  const activateContract = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      const updatedContract = await creditContractApi.activateContract(id, activationDetails);
+      const updatedContract = await creditContractApi.activateContract(id);
       
       // Mettre à jour l'état local
       setContracts(prev => 
@@ -154,17 +155,14 @@ export function useCreditContracts(portfolioId: string) {
   /**
    * Suspendre un contrat (ACTIVE → SUSPENDED)
    * POST /portfolios/traditional/credit-contracts/{id}/suspend
+   * Body: { reason: string }
    */
-  const suspendContract = useCallback(async (id: string, suspensionDetails: {
-    reason: string;
-    suspension_date?: string;
-    notes?: string;
-  }) => {
+  const suspendContract = useCallback(async (id: string, payload: { reason: string }) => {
     try {
       setLoading(true);
       setError(null);
       
-      const updatedContract = await creditContractApi.suspendContract(id, suspensionDetails);
+      const updatedContract = await creditContractApi.suspendContract(id, payload);
       
       // Mettre à jour l'état local
       setContracts(prev => 
@@ -184,19 +182,16 @@ export function useCreditContracts(portfolioId: string) {
   }, []);
 
   /**
-   * Annuler un contrat (DRAFT/ACTIVE → CANCELLED)
+   * Annuler un contrat (DRAFT → CANCELED uniquement selon la doc)
    * POST /portfolios/traditional/credit-contracts/{id}/cancel
+   * Body: { reason: string }
    */
-  const cancelContract = useCallback(async (id: string, cancellationDetails: {
-    reason: string;
-    cancellation_date?: string;
-    notes?: string;
-  }) => {
+  const cancelContract = useCallback(async (id: string, payload: { reason: string }) => {
     try {
       setLoading(true);
       setError(null);
       
-      const updatedContract = await creditContractApi.cancelContract(id, cancellationDetails);
+      const updatedContract = await creditContractApi.cancelContract(id, payload);
       
       // Mettre à jour l'état local
       setContracts(prev => 
@@ -244,12 +239,13 @@ export function useCreditContracts(portfolioId: string) {
   }, []);
 
   /**
-   * Restructurer un contrat
+   * Restructurer un contrat (active | defaulted → restructured)
    * POST /portfolios/traditional/credit-contracts/{id}/restructure
+   * Body: { new_terms, new_interest_rate, new_end_date, reason }
    */
-  const restructureContract = useCallback(async (id: string, restructuringDetails: {
+  const restructureContract = useCallback(async (id: string, payload: {
     new_terms: string;
-    new_rate?: number;
+    new_interest_rate: number;
     new_end_date: string;
     reason: string;
   }) => {
@@ -257,7 +253,7 @@ export function useCreditContracts(portfolioId: string) {
       setLoading(true);
       setError(null);
       
-      const updatedContract = await creditContractApi.restructureContract(id, restructuringDetails);
+      const updatedContract = await creditContractApi.restructureContract(id, payload);
       
       // Mettre à jour l'état local
       setContracts(prev => 

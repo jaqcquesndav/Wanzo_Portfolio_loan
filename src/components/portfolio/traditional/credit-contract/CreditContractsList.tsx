@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Filter, Search, Star, X } from 'lucide-react';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
+import { creditContractApi } from '../../../../services/api/traditional/credit-contract.api';
 import { Card } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
 import { Badge } from '../../../ui/Badge';
@@ -34,12 +35,11 @@ export function CreditContractsList({
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showConfirmStatusChange, setShowConfirmStatusChange] = useState(false);
   const [contractToAction, setContractToAction] = useState<CreditContract | null>(null);
-  const [newStatusToApply, setNewStatusToApply] = useState<'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation' | null>(null);
+  const [newStatusToApply, setNewStatusToApply] = useState<'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation' | 'canceled' | 'written_off' | null>(null);
   
   const {
     handleGeneratePDF,
     handleViewSchedule,
-    handleUpdateContract,
     handleDeleteContract
   } = useContractActions(portfolioId);
 
@@ -68,30 +68,55 @@ export function CreditContractsList({
   const portalRoot = typeof document !== 'undefined' ? document.body : null;
   
   // Fonction pour gérer le changement de statut
-  const handleStatusChange = useCallback((contract: CreditContract, newStatus: 'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation') => {
+  const handleStatusChange = useCallback((contract: CreditContract, newStatus: 'active' | 'completed' | 'defaulted' | 'suspended' | 'in_litigation' | 'canceled' | 'written_off') => {
     setContractToAction(contract);
     setNewStatusToApply(newStatus);
     setShowConfirmStatusChange(true);
     setOpenDropdown(null);
   }, []);
   
-  // Fonction pour confirmer le changement de statut
-  const confirmStatusChange = useCallback(() => {
+  // Fonction pour confirmer le changement de statut via les endpoints workflow
+  const confirmStatusChange = useCallback(async () => {
     if (!contractToAction || !newStatusToApply) return;
-    
-    handleUpdateContract(contractToAction.id, { status: newStatusToApply })
-      .then(() => {
-        showNotification(`Statut du contrat ${contractToAction.contract_number} changé en "${newStatusToApply}"`, 'success');
-      })
-      .catch(() => {
-        showNotification(`Erreur lors du changement de statut du contrat ${contractToAction.contract_number}`, 'error');
-      })
-      .finally(() => {
-        setContractToAction(null);
-        setNewStatusToApply(null);
-        setShowConfirmStatusChange(false);
-      });
-  }, [contractToAction, newStatusToApply, handleUpdateContract, showNotification]);
+    try {
+      const id = contractToAction.id;
+      switch (newStatusToApply) {
+        case 'active':
+          await creditContractApi.activateContract(id);
+          break;
+        case 'suspended':
+          await creditContractApi.suspendContract(id, { reason: 'Suspension depuis la liste' });
+          break;
+        case 'canceled':
+          await creditContractApi.cancelContract(id, { reason: 'Annulation depuis la liste' });
+          break;
+        case 'defaulted':
+          await creditContractApi.markAsDefaulted(id, 'Défaillance signalée depuis la liste');
+          break;
+        case 'completed':
+          await creditContractApi.completeContract(id);
+          break;
+        case 'in_litigation':
+          await creditContractApi.putInLitigation(id, {
+            litigation_reason: 'Mise en contentieux depuis la liste',
+            litigation_date: new Date().toISOString().slice(0, 10)
+          });
+          break;
+        default:
+          throw new Error(`Transition "${newStatusToApply}" non supportée depuis ce panel`);
+      }
+      showNotification(`Statut du contrat ${contractToAction.contract_number} changé en "${newStatusToApply}"`, 'success');
+    } catch (err) {
+      showNotification(
+        err instanceof Error ? err.message : `Erreur lors du changement de statut du contrat ${contractToAction?.contract_number}`,
+        'error'
+      );
+    } finally {
+      setContractToAction(null);
+      setNewStatusToApply(null);
+      setShowConfirmStatusChange(false);
+    }
+  }, [contractToAction, newStatusToApply, showNotification]);
   
   // Fonction pour ouvrir la confirmation de suppression
   const openDeleteConfirm = useCallback((contract: CreditContract) => {
@@ -387,11 +412,15 @@ export function CreditContractsList({
                         onChange={(e) => setStatusFilter(e.target.value)}
                       >
                         <option value="">Tous les statuts</option>
+                        <option value="draft">Brouillon</option>
                         <option value="active">Actif</option>
-                        <option value="completed">Fermé©</option>
-                        <option value="defaulted">En dû©faut</option>
                         <option value="suspended">Suspendu</option>
-                        <option value="in_litigation">En litige</option>
+                        <option value="completed">Clôturé</option>
+                        <option value="defaulted">En défaut</option>
+                        <option value="restructured">Restructuré</option>
+                        <option value="in_litigation">En contentieux</option>
+                        <option value="canceled">Annulé</option>
+                        <option value="written_off">Passé en pertes</option>
                       </Select>
                     </div>
                     
@@ -528,8 +557,8 @@ export function CreditContractsList({
                               className="cursor-pointer hover:text-blue-600 hover:underline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // ✅ FIX: Pass memberId (company ID) instead of company_name
-                                onViewCompany(contract.memberId || contract.company_name);
+                                // Pass the real company ID (client_id) to the parent
+                                onViewCompany(contract.client_id || '');
                               }}
                             >
                               {contract.company_name}

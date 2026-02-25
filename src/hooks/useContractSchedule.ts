@@ -1,6 +1,6 @@
 ﻿// src/hooks/useContractSchedule.ts
 import { useState, useEffect, useCallback } from 'react';
-import { traditionalDataService } from '../services/api/traditional/dataService';
+import { creditContractApi } from '../services/api/traditional/credit-contract.api';
 import { paymentApi } from '../services/api/traditional/payment.api';
 import { Repayment } from '../components/portfolio/traditional/RepaymentsTable';
 import { CreditContract } from '../types/credit-contract';
@@ -108,60 +108,54 @@ export function useContractSchedule(contractId: string): ContractScheduleData {
       setIsLoading(true);
       setError(null);
 
-      // Récupérer la synthèse complète du contrat
-      const summary = traditionalDataService.getContractSummary(contractId);
-      if (!summary) {
-        throw new Error(`Contrat avec l'ID ${contractId} non trouvé`);
-      }
+      // Récupérer le contrat et son échéancier depuis le vrai backend
+      const [contractData, scheduleItems, payments] = await Promise.all([
+        creditContractApi.getContractById(contractId),
+        creditContractApi.getPaymentSchedule(contractId).catch(() => [] as ScheduleItemData[]),
+        paymentApi.getPaymentsByContract(contractId).catch(() => [] as PaymentData[])
+      ]);
 
-      setContract(summary.contract as CreditContract);
+      setContract(contractData as CreditContract);
 
       // Préparer les échéances enrichies
-      if (summary.paymentSchedule) {
-        const enrichedSchedule = summary.paymentSchedule.map((item: ScheduleItemData) => ({
-          ...item,
-          // S'assurer que les valeurs par défaut sont définies
-          remaining_amount: item.remaining_amount || 0,
-          remaining_percentage: item.remaining_percentage || 0,
-          associated_payments: item.associated_payments || [],
-          // Assurer la compatibilité du statut avec le type EnrichedScheduleItem
-          status: (item.status as 'pending' | 'paid' | 'partial' | 'late' | 'defaulted') || 'pending'
-        }));
-
-        setSchedule(enrichedSchedule as EnrichedScheduleItem[]);
-      }
+      const enrichedSchedule = (scheduleItems as ScheduleItemData[]).map((item) => ({
+        ...item,
+        remaining_amount: item.remaining_amount ?? 0,
+        remaining_percentage: item.remaining_percentage ?? 0,
+        associated_payments: item.associated_payments ?? [],
+        status: (item.status as 'pending' | 'paid' | 'partial' | 'late' | 'defaulted') || 'pending'
+      }));
+      setSchedule(enrichedSchedule as EnrichedScheduleItem[]);
 
       // Convertir les paiements en format Repayment pour l'affichage
-      if (summary.payments) {
-        const formattedRepayments = summary.payments.map((payment: PaymentData) => ({
-          id: payment.id,
-          company: summary.contract.company_name,
-          product: summary.contract.product_type,
-          dueDate: payment.due_date || payment.payment_date || '',
-          amount: payment.amount,
-          status: payment.status === 'pending' ? 'à venir' : 
-                 payment.status === 'completed' ? 'payé' : 
-                 'retard' as 'à venir' | 'payé' | 'retard',
-          requestId: payment.scheduled_payment_id,
-          portfolioId: payment.portfolioId,
-          contractReference: payment.contract_id,
-          transactionReference: payment.transaction_reference,
-          paymentDate: payment.payment_date,
-          paymentMethod: (payment.payment_method || 'virement') as 'virement' | 'transfert' | 'chèque' | 'espèces',
-          paymentReference: payment.payment_reference,
-          installmentNumber: payment.installment_number,
-          totalInstallments: payment.total_installments || summary.contract.payment_schedule?.length,
-          principal: payment.payment_details?.principal_amount,
-          interest: payment.payment_details?.interest_amount,
-          penalties: payment.payment_details?.penalty_amount,
-          receiptUrl: payment.receipt_url,
-          remainingAmount: payment.remaining_amount,
-          remainingPercentage: payment.remaining_percentage,
-          slippage: payment.slippage
-        })) as Repayment[];
+      const formattedRepayments = (payments as PaymentData[]).map((payment) => ({
+        id: payment.id,
+        company: contractData.company_name ?? '',
+        product: contractData.product_type ?? '',
+        dueDate: payment.due_date || payment.payment_date || '',
+        amount: payment.amount,
+        status: payment.status === 'pending' ? 'à venir' :
+               payment.status === 'completed' ? 'payé' :
+               'retard' as 'à venir' | 'payé' | 'retard',
+        requestId: payment.scheduled_payment_id,
+        portfolioId: payment.portfolioId,
+        contractReference: payment.contract_id,
+        transactionReference: payment.transaction_reference,
+        paymentDate: payment.payment_date,
+        paymentMethod: (payment.payment_method || 'virement') as 'virement' | 'transfert' | 'chèque' | 'espèces',
+        paymentReference: payment.payment_reference,
+        installmentNumber: payment.installment_number,
+        totalInstallments: payment.total_installments || (contractData.payment_schedules?.length ?? contractData.payment_schedule?.length),
+        principal: payment.payment_details?.principal_amount,
+        interest: payment.payment_details?.interest_amount,
+        penalties: payment.payment_details?.penalty_amount,
+        receiptUrl: payment.receipt_url,
+        remainingAmount: payment.remaining_amount,
+        remainingPercentage: payment.remaining_percentage,
+        slippage: payment.slippage
+      })) as Repayment[];
+      setRepayments(formattedRepayments);
 
-        setRepayments(formattedRepayments);
-      }
     } catch (err) {
       console.error('Erreur lors du chargement des données du contrat:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -175,28 +169,13 @@ export function useContractSchedule(contractId: string): ContractScheduleData {
   }, [loadContractData]);
 
   // Fonction pour associer un paiement à une échéance spécifique
+  // NOTE: No dedicated backend endpoint for this — refresh data after manual reconciliation
   const associatePaymentWithSchedule = useCallback(async (
-    paymentId: string, 
-    installmentNumber: number
+    _paymentId: string,
+    _installmentNumber: number
   ): Promise<boolean> => {
-    try {
-      const result = traditionalDataService.associatePaymentWithSchedule(
-        paymentId,
-        installmentNumber
-      );
-      
-      if (result) {
-        // Rafraîchir les données
-        await loadContractData();
-        return true;
-      }
-      
-      return false;
-    } catch (err) {
-      console.error('Erreur lors de l\'association du paiement à l\'échéance:', err);
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-      return false;
-    }
+    await loadContractData();
+    return true;
   }, [loadContractData]);
 
   // Fonction pour enregistrer un paiement pour une échéance spécifique

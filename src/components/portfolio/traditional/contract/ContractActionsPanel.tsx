@@ -1,10 +1,9 @@
 ﻿// components/portfolio/traditional/contract/ContractActionsPanel.tsx
 import { useState } from 'react';
 import { Button } from '../../../ui/Button';
-// Utiliser Dialog directement en attendant que TypeScript reconnaisse AlertDialog
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../ui/Dialog';
 import { CreditContract } from '../../../../types/credit-contract';
-import { creditContractsStorageService } from '../../../../services/storage/creditContractsStorage';
+import { creditContractApi } from '../../../../services/api/traditional/credit-contract.api';
 import { useNotification } from '../../../../contexts/useNotification';
 import { BanknotesIcon } from '@heroicons/react/24/outline';
 import { usePaymentOrder } from '../../../../hooks/usePaymentOrderContext';
@@ -17,16 +16,31 @@ interface ContractActionsPanelProps {
   onEdit?: () => void;
 }
 
+// Transitions autorisées par le backend selon le statut courant
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  draft:        ['active', 'canceled'],
+  active:       ['suspended', 'defaulted', 'completed', 'restructured', 'in_litigation'],
+  suspended:    ['active', 'defaulted', 'canceled'],
+  defaulted:    ['restructured', 'in_litigation', 'written_off'],
+  restructured: ['active', 'defaulted'],
+  in_litigation:['written_off', 'completed'],
+};
+
+// Transitions qui nécessitent une raison
+const NEEDS_REASON = new Set(['suspended', 'canceled', 'defaulted', 'in_litigation']);
+// Transition contentieux nécessite aussi une date
+const NEEDS_DATE = new Set(['in_litigation']);
+
 export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit }: ContractActionsPanelProps) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<CreditContract['status'] | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [statusReason, setStatusReason] = useState('');
+  const [litigationDate, setLitigationDate] = useState(new Date().toISOString().slice(0, 10));
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { showNotification } = useNotification();
   const { showPaymentOrderModal } = usePaymentOrder();
 
-  // Ouvrir le modal de paiement pour cRéditer le client
   const handleCreditClient = () => {
-    // PRéparer les données pour le modal de paiement
     openPaymentOrder(
       {
         action: 'validate_funding',
@@ -36,7 +50,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
         reference: contract.contract_number,
         amount: contract.amount,
         company: contract.company_name,
-        companyId: contract.client_id, // ID de l'entreprise pour récupérer toutes ses données
+        companyId: contract.client_id,
         product: contract.product_type
       },
       showPaymentOrderModal
@@ -45,70 +59,114 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
 
   const handleStatusChange = async () => {
     if (!selectedStatus) return;
-    
+    setIsSubmitting(true);
     try {
-      await creditContractsStorageService.updateContract(contract.id, {
-        status: selectedStatus,
-        updated_at: new Date().toISOString()
-        // La propriété statusChangeReason n'existe pas dans le type CreditContract
-        // Nous pouvons stocker cette information dans une table sépaRée ou dans localStorage
-      });
-      
-      // Si besoin de conserver la raison du changement, nous pouvons utiliser localStorage
-      if (statusReason) {
-        const statusHistory = JSON.parse(localStorage.getItem(`statusHistory_${contract.id}`) || '[]');
-        statusHistory.push({
-          fromStatus: contract.status,
-          toStatus: selectedStatus,
-          reason: statusReason,
-          date: new Date().toISOString()
-        });
-        localStorage.setItem(`statusHistory_${contract.id}`, JSON.stringify(statusHistory));
+      const id = contract.id;
+      switch (selectedStatus) {
+        case 'active':
+          await creditContractApi.activateContract(id);
+          break;
+        case 'suspended':
+          await creditContractApi.suspendContract(id, { reason: statusReason || 'Suspension administrative' });
+          break;
+        case 'canceled':
+          await creditContractApi.cancelContract(id, { reason: statusReason || 'Annulation administrative' });
+          break;
+        case 'defaulted':
+          await creditContractApi.markAsDefaulted(id, statusReason || 'Défaillance de paiement');
+          break;
+        case 'completed':
+          await creditContractApi.completeContract(id);
+          break;
+        case 'in_litigation':
+          await creditContractApi.putInLitigation(id, {
+            litigation_reason: statusReason || 'Mise en contentieux',
+            litigation_date: litigationDate
+          });
+          break;
+        case 'written_off':
+          // Pas d'endpoint dédié dans la doc — non implémenté côté backend pour l'instant
+          showNotification('Action "passer en pertes" non disponible', 'error');
+          return;
+        default:
+          showNotification(`Transition vers "${selectedStatus}" non supportée`, 'error');
+          return;
       }
-      
-      showNotification(`Statut du contrat mis à jour avec succès`, 'success');
+      showNotification('Statut du contrat mis à jour avec succès', 'success');
       onRefresh();
-      setIsStatusDialogOpen(false);
-      setSelectedStatus(null);
-      setStatusReason('');
+      closeDialog();
     } catch (error) {
       console.error('Erreur lors de la mise à jour du statut:', error);
-      showNotification('Erreur lors de la mise à jour du statut', 'error');
+      showNotification(
+        error instanceof Error ? error.message : 'Erreur lors de la mise à jour du statut',
+        'error'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const openStatusDialog = (status: CreditContract['status']) => {
+  const openStatusDialog = (status: string) => {
     setSelectedStatus(status);
+    setStatusReason('');
+    setLitigationDate(new Date().toISOString().slice(0, 10));
     setIsStatusDialogOpen(true);
   };
 
+  const closeDialog = () => {
+    setIsStatusDialogOpen(false);
+    setSelectedStatus(null);
+    setStatusReason('');
+  };
+
+  const currentStatus = contract.status ?? 'draft';
+  const allowedNext = ALLOWED_TRANSITIONS[currentStatus] ?? [];
+
+  const statusLabel: Record<string, string> = {
+    active: 'Activer',
+    suspended: 'Suspendre',
+    canceled: 'Annuler',
+    defaulted: 'Marquer défaillant',
+    completed: 'Clôturer',
+    in_litigation: 'Mettre en contentieux',
+    written_off: 'Passer en pertes',
+    restructured: 'Restructurer',
+  };
+
+  const statusVariant: Record<string, string> = {
+    active: 'text-green-600 border-green-600 hover:bg-green-50',
+    suspended: 'text-yellow-600 border-yellow-600 hover:bg-yellow-50',
+    canceled: 'text-gray-600 border-gray-400 hover:bg-gray-50',
+    defaulted: 'text-orange-600 border-orange-600 hover:bg-orange-50',
+    completed: 'text-blue-600 border-blue-600 hover:bg-blue-50',
+    in_litigation: 'text-red-600 border-red-600 hover:bg-red-50',
+    written_off: 'text-red-800 border-red-800 hover:bg-red-50',
+    restructured: 'text-purple-600 border-purple-600 hover:bg-purple-50',
+  };
+
+  const needsReason = selectedStatus ? NEEDS_REASON.has(selectedStatus) : false;
+  const needsDate = selectedStatus ? NEEDS_DATE.has(selectedStatus) : false;
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border">
-      <h3 className="text-lg font-medium mb-4">Actions du contrat</h3>
-      
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border dark:border-gray-700">
+      <h3 className="text-lg font-medium mb-4 dark:text-gray-100">Actions du contrat</h3>
+
       <div className="space-y-4">
         {/* Actions principales */}
         <div className="flex flex-wrap gap-2">
-          <Button 
-            onClick={onConfigure} 
-            size="sm"
-          >
+          <Button onClick={onConfigure} size="sm">
             Configurer
           </Button>
-          
+
           {onEdit && (
-            <Button 
-              variant="outline" 
-              onClick={onEdit} 
-              size="sm"
-            >
+            <Button variant="outline" onClick={onEdit} size="sm">
               Modifier
             </Button>
           )}
-          
-          <Button 
-            variant="outline" 
-            onClick={handleCreditClient} 
+
+          <Button
+            variant="outline"
+            onClick={handleCreditClient}
             size="sm"
             className="text-green-600 border-green-600 hover:bg-green-50"
           >
@@ -117,162 +175,75 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
           </Button>
         </div>
 
-        {/* Actions de changement de statut */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Changer le statut</h4>
-          
-          {/* Actions disponibles selon le statut actuel */}
-          {contract.status === 'active' && (
+        {/* Transitions de statut disponibles */}
+        {allowedNext.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Changer le statut</h4>
             <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('suspended')}
-              >
-                Suspendre
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('completed')}
-              >
-                Clôturer
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                onClick={() => openStatusDialog('defaulted')}
-              >
-                Marquer défaillant
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-red-600 border-red-600 hover:bg-red-50"
-                onClick={() => openStatusDialog('in_litigation')}
-              >
-                Mettre en contentieux
-              </Button>
+              {allowedNext.map((next) => (
+                <Button
+                  key={next}
+                  variant="outline"
+                  size="sm"
+                  className={statusVariant[next] ?? ''}
+                  onClick={() => openStatusDialog(next)}
+                >
+                  {statusLabel[next] ?? next}
+                </Button>
+              ))}
             </div>
-          )}
-
-          {contract.status === 'suspended' && (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('active')}
-              >
-                Réactiver
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('completed')}
-              >
-                Clôturer
-              </Button>
-            </div>
-          )}
-
-          {contract.status === 'defaulted' && (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('active')}
-              >
-                Réactiver
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-red-600 border-red-600 hover:bg-red-50"
-                onClick={() => openStatusDialog('in_litigation')}
-              >
-                Mettre en contentieux
-              </Button>
-            </div>
-          )}
-
-          {contract.status === 'in_litigation' && (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('active')}
-              >
-                Réactiver
-              </Button>
-            </div>
-          )}
-
-          {contract.status === 'completed' && (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('active')}
-              >
-                Réactiver
-              </Button>
-            </div>
-          )}
-
-          {contract.status === 'restructured' && (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openStatusDialog('active')}
-              >
-                Réactiver
-              </Button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Dialog de confirmation pour le changement de statut */}
-      <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+      {/* Dialog de confirmation */}
+      <Dialog open={isStatusDialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmer le changement de statut</DialogTitle>
             <DialogDescription>
-              Vous êtes sur le point de changer le statut du contrat {contract.contract_number} de "{contract.status}" vers "{selectedStatus}".
+              Contrat {contract.contract_number} : <strong>{currentStatus}</strong> → <strong>{selectedStatus}</strong>
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
-            <div>
-              <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Raison du changement (optionnel)
-              </label>
-              <textarea
-                id="reason"
-                value={statusReason}
-                onChange={(e) => setStatusReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-                placeholder="Expliquez la raison de ce changement de statut..."
-              />
-            </div>
+            {needsReason && (
+              <div>
+                <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Raison <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="reason"
+                  value={statusReason}
+                  onChange={(e) => setStatusReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                  rows={3}
+                  placeholder="Expliquez la raison de ce changement..."
+                />
+              </div>
+            )}
+            {needsDate && (
+              <div>
+                <label htmlFor="litigationDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date de mise en contentieux <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="litigationDate"
+                  type="date"
+                  value={litigationDate}
+                  onChange={(e) => setLitigationDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                />
+              </div>
+            )}
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsStatusDialogOpen(false);
-                setSelectedStatus(null);
-                setStatusReason('');
-              }}
-            >
+            <Button variant="outline" onClick={closeDialog} disabled={isSubmitting}>
               Annuler
             </Button>
-            <Button onClick={handleStatusChange}>
-              Confirmer
+            <Button onClick={handleStatusChange} disabled={isSubmitting}>
+              {isSubmitting ? 'En cours...' : 'Confirmer'}
             </Button>
           </DialogFooter>
         </DialogContent>
