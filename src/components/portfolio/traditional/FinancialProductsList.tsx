@@ -51,7 +51,7 @@ export function FinancialProductsList({
   onDelete,
   onViewDetails,
 }: FinancialProductsListProps) {
-  const { formatAmount } = useCurrencyContext();
+  const { formatAmount, currency: ctxCurrency } = useCurrencyContext();
 
   // Filtrer les entrées malformées (ex: ["[]"] de l'API)
   const validProducts = (products ?? []).filter(
@@ -155,7 +155,7 @@ export function FinancialProductsList({
                 {product.fees.map((fee, i) => (
                   <span key={i}>
                     {i > 0 && ', '}
-                    {fee.type} {fee.amount}{fee.is_percentage ? '%' : ' FCFA'}
+                    {fee.type} {fee.amount}{fee.is_percentage ? '%' : ` ${ctxCurrency}`}
                   </span>
                 ))}
               </div>

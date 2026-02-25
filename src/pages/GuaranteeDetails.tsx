@@ -8,6 +8,7 @@ import { guaranteeStorageService } from '../services/storage/guaranteeStorage';
 import type { Guarantee } from '../types/guarantee';
 import { logGuaranteeEvent, ensureG001Exists } from '../scripts/guaranteeInitializer';
 import { DetailsSkeleton } from '../components/ui/DetailsSkeleton';
+import { useFormatCurrency } from '../hooks/useFormatCurrency';
 
 export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?: () => void }) {
   // The route can come in multiple formats:
@@ -23,6 +24,7 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
   const id = propId || guaranteeId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   
   console.log('Initial params extracted:', { 
     rawParams: params,
@@ -188,7 +190,7 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
       <h1 className="text-2xl font-bold mb-2">Détail de la garantie</h1>
       <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 space-y-2">
         <div><b>Type :</b> {guarantee.type}</div>
-        <div><b>Valeur :</b> {guarantee.value.toLocaleString('fr-FR')} FCFA</div>
+        <div><b>Valeur :</b> {formatCurrency(guarantee.value)}</div>
         <div><b>Statut :</b> {guarantee.status}</div>
         <div><b>Date :</b> {new Date(guarantee.created_at).toLocaleDateString('fr-FR')}</div>
         <div><b>Entreprise :</b> {guarantee.company}</div>

@@ -4,10 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioCompanyReports } from '../hooks/usePortfolioCompanyReports';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { NotFound } from '../components/ui/NotFound';
+import { useFormatCurrency } from '../hooks/useFormatCurrency';
 
 const PortfolioCompanyReportDetails: React.FC = () => {
   const { portfolioId, reportId } = useParams();
   const navigate = useNavigate();
+  const { formatCurrency } = useFormatCurrency();
   const { reports } = usePortfolioCompanyReports(portfolioId);
   const report = reports.find((r) => r.id === reportId);
 
@@ -30,10 +32,10 @@ const PortfolioCompanyReportDetails: React.FC = () => {
         <div className="mb-2"><strong>Entreprise:</strong> {company ? company.name : report.companyId}</div>
         <div className="mb-2"><strong>Période:</strong> {report.period}</div>
         {typeof report.kpis.ca !== 'undefined' && (
-          <div className="mb-2"><strong>Chiffre d'affaires:</strong> {report.kpis.ca.toLocaleString()} FCFA</div>
+          <div className="mb-2"><strong>Chiffre d'affaires:</strong> {formatCurrency(report.kpis.ca)}</div>
         )}
         {typeof report.kpis.ebitda !== 'undefined' && (
-          <div className="mb-2"><strong>EBITDA:</strong> {report.kpis.ebitda.toLocaleString()} FCFA</div>
+          <div className="mb-2"><strong>EBITDA:</strong> {formatCurrency(report.kpis.ebitda)}</div>
         )}
         {typeof report.kpis.effectif !== 'undefined' && (
           <div className="mb-2"><strong>Effectif:</strong> {report.kpis.effectif}</div>

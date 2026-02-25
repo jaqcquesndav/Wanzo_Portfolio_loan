@@ -23,7 +23,7 @@ interface AddRiskEntryFormProps {
 }
 
 export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRiskEntryFormProps) {
-  const { formatCurrency } = useFormatCurrency();
+  const { formatCurrency, currentCurrency } = useFormatCurrency();
   
   // State pour le chargement des données
   const [isLoading, setIsLoading] = useState(true);
@@ -479,7 +479,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       )}
                     </FormField>
                     
-                    <FormField label="Encours (FCFA)" error={errors.encours}>
+                    <FormField label={`Encours (${currentCurrency})`} error={errors.encours}>
                       <Input 
                         type="number" 
                         value={encours} 
@@ -566,7 +566,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       />
                     </FormField>
                     
-                    <FormField label="Valeur de financement (FCFA)" error={errors.valeurFinancement}>
+                    <FormField label={`Valeur de financement (${currentCurrency})`} error={errors.valeurFinancement}>
                       <Input 
                         type="number" 
                         value={valeurFinancement} 
@@ -632,7 +632,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                       </Select>
                     </FormField>
                     
-                    <FormField label="Montant investi (FCFA)" error={errors.montantInvesti}>
+                    <FormField label={`Montant investi (${currentCurrency})`} error={errors.montantInvesti}>
                       <Input 
                         type="number" 
                         value={montantInvesti} 
@@ -644,7 +644,7 @@ export function AddRiskEntryForm({ isOpen, onClose, onSuccess, riskType }: AddRi
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField label="Valorisation actuelle (FCFA)" error={errors.valorisation}>
+                    <FormField label={`Valorisation actuelle (${currentCurrency})`} error={errors.valorisation}>
                       <Input 
                         type="number" 
                         value={valorisation} 

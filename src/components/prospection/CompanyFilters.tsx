@@ -2,6 +2,7 @@
 import { Search, Filter, Download } from 'lucide-react';
 import { FormField, Input, Select } from '../ui/Form';
 import { Button } from '../ui/Button';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 
 interface CompanyFiltersProps {
   onSearch: (term: string) => void;
@@ -19,6 +20,7 @@ export interface CompanyFilters {
 
 export function CompanyFilters({ onSearch, onFilterChange }: CompanyFiltersProps) {
   const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const { currency: ctxCurrency } = useCurrencyContext();
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-4">
@@ -84,7 +86,7 @@ export function CompanyFilters({ onSearch, onFilterChange }: CompanyFiltersProps
           <FormField label="Chiffre d'affaires minimum">
             <Input
               type="number"
-              placeholder="En FCFA"
+              placeholder={`En ${ctxCurrency}`}
               onChange={(e) => onFilterChange({ 
                 revenueMin: e.target.value ? Number(e.target.value) : undefined 
               })}
@@ -94,7 +96,7 @@ export function CompanyFilters({ onSearch, onFilterChange }: CompanyFiltersProps
           <FormField label="Chiffre d'affaires maximum">
             <Input
               type="number"
-              placeholder="En FCFA"
+              placeholder={`En ${ctxCurrency}`}
               onChange={(e) => onFilterChange({ 
                 revenueMax: e.target.value ? Number(e.target.value) : undefined 
               })}

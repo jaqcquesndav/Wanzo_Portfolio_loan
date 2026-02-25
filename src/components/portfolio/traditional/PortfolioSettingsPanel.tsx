@@ -2,6 +2,7 @@
 import { Button } from '../../ui/Button';
 import type { Portfolio } from '../../../types/portfolio';
 import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 const riskProfiles = [
   { value: 'conservative', label: 'Conservateur' },
@@ -26,6 +27,7 @@ interface PortfolioSettingsPanelProps {
 }
 
 export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ portfolio, onSave }) => {
+  const { currency: ctxCurrency } = useCurrencyContext();
   const [name, setName] = useState(portfolio.name);
   // On supporte description si pRésent (pour traditional), sinon chaîne vide
   const [description, setDescription] = useState((portfolio as { description?: string }).description || '');
@@ -98,7 +100,7 @@ export const PortfolioSettingsPanel: React.FC<PortfolioSettingsPanelProps> = ({ 
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Objectif de collecte (FCFA)</label>
+          <label className="block text-sm font-medium mb-1">Objectif de collecte ({ctxCurrency})</label>
           <input
             type="number"
             className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"

@@ -7,12 +7,14 @@ import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useNotification } from '../contexts/useNotification';
 import { creditRequestApi } from '../services/api/traditional/credit-request.api';
 import type { CreditRequest } from '../types/credit';
+import { useFormatCurrency } from '../hooks/useFormatCurrency';
 
 export default function CreditRequestDetails({ id: propId }: { id?: string, onClose?: () => void }) {
   const { requestId, portfolioId } = useParams();
   const id = propId || requestId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   const [request, setRequest] = useState<CreditRequest | null>(null);
   const [showValidate, setShowValidate] = useState(false);
   const [showRefuse, setShowRefuse] = useState(false);
@@ -56,7 +58,7 @@ export default function CreditRequestDetails({ id: propId }: { id?: string, onCl
       <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-4 space-y-2">
         <div><b>ID du membre :</b> {request.memberId}</div>
         <div><b>Produit ID :</b> {request.productId}</div>
-        <div><b>Montant :</b> {request.requestAmount.toLocaleString()} FCFA</div>
+        <div><b>Montant :</b> {formatCurrency(request.requestAmount)}</div>
         <div><b>Statut :</b> {request.status}</div>
         <div><b>Date de création :</b> {new Date(request.createdAt).toLocaleDateString()}</div>
         <div><b>Taux d'intérêt :</b> {request.interestRate}%</div>

@@ -31,7 +31,7 @@ export function BankAccountsPanel({
     branch: '',
     swift_code: '',
     iban: '',
-    currency: 'XOF',
+    currency: 'CDF',
     is_primary: false,
     is_active: true,
     purpose: 'general'
@@ -73,7 +73,7 @@ export function BankAccountsPanel({
       branch: '',
       swift_code: '',
       iban: '',
-      currency: 'XOF',
+      currency: 'CDF',
       is_primary: false,
       is_active: true,
       purpose: 'general'
@@ -171,9 +171,10 @@ export function BankAccountsPanel({
                 onChange={handleChange}
                 className="w-full rounded border px-3 py-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
               >
-                <option value="XOF">XOF</option>
-                <option value="EUR">EUR</option>
+                <option value="CDF">CDF</option>
                 <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="XOF">XOF</option>
               </select>
             </div>
             <div>
@@ -230,7 +231,7 @@ export function BankAccountsPanel({
                 branch: '',
                 swift_code: '',
                 iban: '',
-                currency: 'XOF',
+                currency: 'CDF',
                 is_primary: false,
                 is_active: true,
                 purpose: 'general'

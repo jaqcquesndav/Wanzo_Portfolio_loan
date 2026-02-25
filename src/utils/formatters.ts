@@ -1,45 +1,50 @@
 export const formatCurrency = (
-  amount: number, 
-  currency: string = 'FCFA', 
+  amount: number,
+  currency: string = 'CDF',
   compact: boolean = false
 ): string => {
-  // Mapper les devises à leurs locales et symboles
-  const localeMap = {
+  // Mapper les devises à leurs locales
+  const localeMap: Record<string, string> = {
     'CDF': 'fr-CD',
     'USD': 'en-US',
     'EUR': 'fr-FR',
+    'XOF': 'fr-FR',
     'FCFA': 'fr-FR',
-    'XOF': 'fr-FR'
   };
-  
-  // Options de formatage
+
   const options: Intl.NumberFormatOptions = {
     style: 'decimal',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   };
-  
+
   if (compact) {
     options.notation = 'compact';
     options.compactDisplay = 'short';
   }
-  
-  // Si c'est FCFA ou XOF, format personnalisé car non standard dans Intl
-  if (currency === 'FCFA' || currency === 'XOF') {
+
+  // Devises non supportées nativement par Intl comme style 'currency'
+  const nonIsoDevises = ['FCFA', 'XOF'];
+  if (nonIsoDevises.includes(currency)) {
     const formatted = new Intl.NumberFormat('fr-FR', options).format(amount);
-    
     return `${formatted} ${currency}`;
   }
-  
-  // Pour les autres devises, utiliser Intl.NumberFormat avec style currency
-  const formatter = new Intl.NumberFormat(localeMap[currency as keyof typeof localeMap] || 'fr-CD', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  });
-  
-  return formatter.format(amount);
+
+  // Pour CDF, USD, EUR — format natif Intl
+  try {
+    const formatter = new Intl.NumberFormat(localeMap[currency] || 'fr-CD', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      ...(compact ? { notation: 'compact', compactDisplay: 'short' } : {}),
+    });
+    return formatter.format(amount);
+  } catch {
+    // Fallback si la devise n'est pas reconnue par Intl
+    const formatted = new Intl.NumberFormat(localeMap[currency] || 'fr-CD', options).format(amount);
+    return `${formatted} ${currency}`;
+  }
 };
 
 export const formatDate = (dateString: string): string => {

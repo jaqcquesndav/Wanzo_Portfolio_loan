@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { FormField, Select } from '../../ui/Form';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 interface PortfolioFiltersProps {
   filters: {
@@ -12,6 +13,7 @@ interface PortfolioFiltersProps {
 }
 
 export function PortfolioFilters({ filters, onFilterChange }: PortfolioFiltersProps) {
+  const { currency: ctxCurrency } = useCurrencyContext();
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <FormField label="Statut">
@@ -61,10 +63,10 @@ export function PortfolioFilters({ filters, onFilterChange }: PortfolioFiltersPr
           onChange={(e) => onFilterChange('minAmount', e.target.value)}
         >
           <option value="">Tous les montants</option>
-          <option value="1000000">1M FCFA</option>
-          <option value="5000000">5M FCFA</option>
-          <option value="10000000">10M FCFA</option>
-          <option value="50000000">50M FCFA</option>
+          <option value="1000000">1M {ctxCurrency}</option>
+          <option value="5000000">5M {ctxCurrency}</option>
+          <option value="10000000">10M {ctxCurrency}</option>
+          <option value="50000000">50M {ctxCurrency}</option>
         </Select>
       </FormField>
     </div>

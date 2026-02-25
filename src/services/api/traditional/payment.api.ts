@@ -122,7 +122,7 @@ export const paymentApi = {
             0 -30 Td
             (Référence: ${payment.payment_reference || payment.transaction_reference || payment.id}) Tj
             0 -20 Td
-            (Montant: ${payment.amount} FCFA) Tj
+            (Montant: ${payment.amount} ${(() => { try { const p = JSON.parse(localStorage.getItem('userPreferences') || '{}'); return p.currency || 'CDF'; } catch { return 'CDF'; } })()}) Tj
             0 -20 Td
             (Date: ${new Date(payment.payment_date).toLocaleDateString()}) Tj
             ET
@@ -333,7 +333,7 @@ export const paymentApi = {
           0 -30 Td
           (Référence paiement: ${payment.payment_reference || payment.transaction_reference || payment.id}) Tj
           0 -20 Td
-          (Montant: ${payment.amount} FCFA) Tj
+          (Montant: ${payment.amount} ${(() => { try { const p = JSON.parse(localStorage.getItem('userPreferences') || '{}'); return p.currency || 'CDF'; } catch { return 'CDF'; } })()}) Tj
           0 -20 Td
           (Date: ${new Date(payment.payment_date || new Date()).toLocaleDateString()}) Tj
           0 -20 Td

@@ -10,6 +10,7 @@ import { FormField, Input, Select, TextArea } from '../../ui/Form';
 import { Button } from '../../ui/Button';
 import { PRODUCT_TYPE_LABELS } from '../../../types/traditional-portfolio';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 
 // ─── Zod schema ──────────────────────────────────────────────────────────────
 
@@ -105,6 +106,7 @@ function buildDefaults(product?: FinancialProduct): Partial<ProductFormData> {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
+  const { currency: ctxCurrency } = useCurrencyContext();
   const {
     register,
     control,
@@ -195,7 +197,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           Montants &amp; durées
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Montant minimum (FCFA) *" error={errors.min_amount?.message}>
+          <FormField label={`Montant minimum (${ctxCurrency}) *`} error={errors.min_amount?.message}>
             <Input
               type="number" step="1000" min="0"
               {...register('min_amount', { valueAsNumber: true })}
@@ -203,7 +205,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
             />
           </FormField>
 
-          <FormField label="Montant maximum (FCFA) *" error={errors.max_amount?.message}>
+          <FormField label={`Montant maximum (${ctxCurrency}) *`} error={errors.max_amount?.message}>
             <Input
               type="number" step="1000" min="0"
               {...register('max_amount', { valueAsNumber: true })}

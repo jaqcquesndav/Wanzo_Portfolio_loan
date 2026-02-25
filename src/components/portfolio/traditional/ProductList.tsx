@@ -5,6 +5,7 @@ import { Badge } from '../../ui/Badge';
 import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import { PaginatedTable } from '../../ui/PaginatedTable';
 import { useTablePagination } from '../../../hooks/useTablePagination';
+import { useFormatCurrency } from '../../../hooks/useFormatCurrency';
 
 interface ProductListProps {
   products: FinancialProduct[];
@@ -15,6 +16,7 @@ interface ProductListProps {
 
 export function ProductList({ products, onEdit, onDelete, onView }: ProductListProps) {
   const { paginatedData, currentPage, totalPages, nextPage, prevPage } = useTablePagination(products, 10);
+  const { formatCurrency } = useFormatCurrency();
 
   const columns = [
     {
@@ -53,10 +55,10 @@ export function ProductList({ products, onEdit, onDelete, onView }: ProductListP
       accessor: (product: FinancialProduct) => (
         <>
           <div className="text-sm text-gray-900 dark:text-white">
-            Min: {product.minAmount.toLocaleString()} FCFA
+            Min: {formatCurrency(product.minAmount)}
           </div>
           <div className="text-sm text-gray-500">
-            Max: {product.maxAmount.toLocaleString()} FCFA
+            Max: {formatCurrency(product.maxAmount)}
           </div>
         </>
       )

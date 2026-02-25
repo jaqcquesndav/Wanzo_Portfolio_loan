@@ -62,7 +62,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   
   // Utiliser le contexte d'ordre de paiement
   const { showPaymentOrderModal } = usePaymentOrder();
-  const { formatAmount } = useCurrencyContext();
+  const { formatAmount, currency: ctxCurrency } = useCurrencyContext();
   
   // état pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
@@ -164,7 +164,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
       'Entreprise': d.company,
       'Produit': d.product,
       'référence Contrat': d.contractReference,
-      'Montant': d.amount.toLocaleString() + ' FCFA',
+      'Montant': formatAmount(d.amount),
       'Statut': statusConfig[d.status].label,
       'Date': new Date(d.date).toLocaleDateString(),
       'Bénéficiaire': d.beneficiary?.accountName || d.company,
@@ -182,7 +182,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
         d.company,
         d.product,
         d.contractReference,
-        d.amount.toLocaleString() + ' FCFA',
+        formatAmount(d.amount),
         statusConfig[d.status].label,
         new Date(d.date).toLocaleDateString()
       ]),
@@ -209,7 +209,7 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
       orderNumber: `OP${Date.now().toString().slice(-8)}`,
       date: new Date().toISOString(),
       amount: disbursement.amount,
-      currency: disbursement.currency || 'FCFA',
+      currency: disbursement.currency || ctxCurrency,
       // Adapter les données du bénéficiaire selon le type de compte
       paymentMethod: isMobileMoney ? 'mobile_money' : 'bank',
       beneficiary: isMobileMoney ? {

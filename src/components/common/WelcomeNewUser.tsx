@@ -7,11 +7,13 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
+import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 
 export const WelcomeNewUser: React.FC = () => {
   // ✅ Mutation React Query avec invalidation automatique du cache
   const createPortfolioMutation = useCreatePortfolioMutation();
   const { showNotification } = useNotification();
+  const { currency: ctxCurrency } = useCurrencyContext();
   const { institutionId, user } = useAppContextStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -123,7 +125,7 @@ export const WelcomeNewUser: React.FC = () => {
             
             <div>
               <label htmlFor="target_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Montant cible (FCFA)
+                Montant cible ({ctxCurrency})
               </label>
               <Input
                 id="target_amount"

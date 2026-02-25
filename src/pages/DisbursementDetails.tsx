@@ -9,12 +9,14 @@ import { useNotification } from '../contexts/useNotification';
 import { mockDisbursements } from '../data/mockDisbursements';
 import type { Disbursement } from '../types/disbursement';
 import { DetailsSkeleton } from '../components/ui/DetailsSkeleton';
+import { useFormatCurrency } from '../hooks/useFormatCurrency';
 
 export default function DisbursementDetails({ id: propId }: { id?: string }) {
   const { disbursementId, portfolioId } = useParams();
   const id = propId || disbursementId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   const [disbursement, setDisbursement] = useState<Disbursement | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -62,7 +64,7 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
             <p className="text-gray-600 dark:text-gray-400">{disbursement.product}</p>
           </div>
           <div className="text-right">
-            <p className="text-xl font-bold">{disbursement.amount.toLocaleString()} FCFA</p>
+            <p className="text-xl font-bold">{formatCurrency(disbursement.amount)}</p>
             <div className={`text-sm px-2 py-1 rounded-full inline-block ${
               disbursement.status === 'completed' 
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 

@@ -25,7 +25,6 @@ export const portfolioTypeConfig = {
     label: 'Portefeuille traditionnel',
     tabs: [
       { key: 'requests', label: 'Demandes', component: CreditRequestsTable },
-      { key: 'products', label: 'Produits', component: null },
       { key: 'contracts', label: 'Contrats', component: CreditContractsList },
       { key: 'disbursements', label: 'Virements', component: DisbursementsTable },
       { key: 'wallet', label: 'Wallet', component: PortfolioWalletPanel },

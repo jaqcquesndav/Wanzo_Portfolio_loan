@@ -9,12 +9,14 @@ import type { Repayment } from '../components/portfolio/traditional/RepaymentsTa
 // TODO: Replace with real data fetching logic
 import { mockRepayments } from '../data/mockRepayments';
 import { DetailsSkeleton } from '../components/ui/DetailsSkeleton';
+import { useFormatCurrency } from '../hooks/useFormatCurrency';
 
 export default function RepaymentDetails({ id: propId }: { id?: string, onClose?: () => void }) {
   const { repaymentId, portfolioId } = useParams();
   const id = propId || repaymentId;
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { formatCurrency } = useFormatCurrency();
   const [repayment, setRepayment] = useState<Repayment | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -62,7 +64,7 @@ export default function RepaymentDetails({ id: propId }: { id?: string, onClose?
             <p className="text-gray-600 dark:text-gray-400">{repayment.product}</p>
           </div>
           <div className="text-right">
-            <p className="text-xl font-bold">{repayment.amount.toLocaleString()} FCFA</p>
+            <p className="text-xl font-bold">{formatCurrency(repayment.amount)}</p>
             <div className={`text-sm px-2 py-1 rounded-full inline-block ${
               repayment.status === 'payé' 
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
@@ -107,16 +109,16 @@ export default function RepaymentDetails({ id: propId }: { id?: string, onClose?
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <span className="text-sm text-gray-600 dark:text-gray-400 block">Principal</span>
-                <span className="font-medium">{repayment.principal?.toLocaleString()} FCFA</span>
+                <span className="font-medium">{formatCurrency(repayment.principal ?? 0)}</span>
               </div>
               <div>
                 <span className="text-sm text-gray-600 dark:text-gray-400 block">Intérêts</span>
-                <span className="font-medium">{repayment.interest?.toLocaleString()} FCFA</span>
+                <span className="font-medium">{formatCurrency(repayment.interest ?? 0)}</span>
               </div>
               {repayment.penalties && (
                 <div>
                   <span className="text-sm text-red-600 dark:text-red-400 block">Pénalités</span>
-                  <span className="font-medium text-red-600">{repayment.penalties.toLocaleString()} FCFA</span>
+                  <span className="font-medium text-red-600">{formatCurrency(repayment.penalties)}</span>
                 </div>
               )}
             </div>

@@ -4,8 +4,11 @@
 export const formatters = {
   // Format currency with custom options
   currency: (value: number, options: Intl.NumberFormatOptions = {}) => {
-    // Déterminer la devise à utiliser (préférence utilisateur ou XOF par défaut)
-    let currency = 'XOF';
+    // Devises non supportées nativement par Intl comme style 'currency'
+    const nonIsoDevises = ['FCFA', 'XOF'];
+
+    // Lire la devise depuis les préférences utilisateur (défaut : CDF)
+    let currency = 'CDF';
     try {
       const savedPreferences = localStorage.getItem('userPreferences');
       if (savedPreferences) {
@@ -17,24 +20,34 @@ export const formatters = {
     } catch {
       // Fallback en cas d'erreur
     }
-    
-    // Pour FCFA, format spécial car non standard dans Intl
-    if (currency === 'FCFA' || currency === 'XOF') {
+
+    // Pour les devises non-ISO (FCFA, XOF), format personnalisé
+    if (nonIsoDevises.includes(currency)) {
       const formatted = new Intl.NumberFormat('fr-FR', {
         style: 'decimal',
         minimumFractionDigits: 0,
         ...options,
       }).format(value);
-      return `${formatted} FCFA`;
+      return `${formatted} ${currency}`;
     }
-    
-    // Pour les autres devises, utiliser le format standard
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      ...options,
-    }).format(value);
+
+    // Pour CDF, USD, EUR — format natif Intl
+    const localeMap: Record<string, string> = { 'CDF': 'fr-CD', 'USD': 'en-US', 'EUR': 'fr-FR' };
+    try {
+      return new Intl.NumberFormat(localeMap[currency] || 'fr-CD', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+        ...options,
+      }).format(value);
+    } catch {
+      const formatted = new Intl.NumberFormat('fr-CD', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        ...options,
+      }).format(value);
+      return `${formatted} ${currency}`;
+    }
   },
   
   // Format date with custom options
