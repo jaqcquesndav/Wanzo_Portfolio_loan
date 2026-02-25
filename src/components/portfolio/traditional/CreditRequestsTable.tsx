@@ -43,7 +43,7 @@ const periodicityLabel: Record<string, string> = {
 };
 
 // ─── Helper : référence courte ───────────────────────────────────────────────
-const shortRef = (id: string) => `#${id.slice(-8).toUpperCase()}`;
+const shortRef = (id?: string | null) => id ? `#${id.slice(-8).toUpperCase()}` : '#—';
 
 interface CreditRequestsTableProps {
   requests: CreditRequest[];
@@ -394,8 +394,8 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
                 currentPageData.map(request => {
                   const companyDisplayName =
                     request.companyName ||
-                    companyNames[request.memberId] ||
-                    `Client #${request.memberId.slice(-6).toUpperCase()}`;
+                    (request.memberId ? companyNames[request.memberId] : null) ||
+                    (request.memberId ? `Client #${request.memberId.slice(-6).toUpperCase()}` : 'Client inconnu');
                   const productLabel =
                     PRODUCT_LABELS[request.productId] ||
                     productNames[request.productId] ||

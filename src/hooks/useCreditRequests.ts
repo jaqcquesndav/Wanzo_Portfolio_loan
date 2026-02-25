@@ -317,7 +317,8 @@ export function useCreditRequests(portfolioId?: string) {
    * Retourne le nom du membre/entreprise
    * Priorité: 1. companyName depuis l'API (dans requests), 2. mock, 3. ID tronqué
    */
-  const getMemberName = useCallback((memberId: string): string => {
+  const getMemberName = useCallback((memberId: string | undefined | null): string => {
+    if (!memberId) return 'Client inconnu';
     // 1. Chercher dans les demandes chargées (l'API fournit companyName directement)
     const fromRequests = requests.find(r => r.memberId === memberId);
     if (fromRequests?.companyName) return fromRequests.companyName;
