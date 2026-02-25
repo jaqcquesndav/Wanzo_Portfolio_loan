@@ -42,7 +42,8 @@ export interface OHADAMetrics {
   // Ratios de performance
   roa: number; // Return on Assets (%)
   portfolioYield: number; // Rendement du portefeuille (%)
-  riskLevel: 'Faible' | 'Moyen' | 'Élevé';
+  /** Accepte valeurs backend 'LOW'|'MEDIUM'|'HIGH' et labels FR 'Faible'|'Moyen'|'Élevé' */
+  riskLevel: 'Faible' | 'Moyen' | 'Élevé' | 'LOW' | 'MEDIUM' | 'HIGH';
   growthRate: number; // Taux de croissance (%)
   
   // Données temporelles
@@ -51,6 +52,26 @@ export interface OHADAMetrics {
   
   // Conformité réglementaire
   regulatoryCompliance?: RegulatoryCompliance;
+}
+
+/** Normalise une entrée OHADAMetrics brute venant du backend */
+function normalizeMetrics(raw: OHADAMetrics): OHADAMetrics {
+  const riskMap: Record<string, 'Faible' | 'Moyen' | 'Élevé'> = {
+    LOW: 'Faible', MEDIUM: 'Moyen', HIGH: 'Élevé',
+    Faible: 'Faible', Moyen: 'Moyen', 'Élevé': 'Élevé'
+  };
+  return {
+    ...raw,
+    totalAmount: typeof raw.totalAmount === 'string' ? parseFloat(raw.totalAmount) || 0 : raw.totalAmount,
+    avgLoanSize: typeof raw.avgLoanSize === 'string' ? parseFloat(raw.avgLoanSize as unknown as string) || 0 : raw.avgLoanSize,
+    nplRatio: typeof raw.nplRatio === 'string' ? parseFloat(raw.nplRatio as unknown as string) || 0 : raw.nplRatio,
+    provisionRate: typeof raw.provisionRate === 'string' ? parseFloat(raw.provisionRate as unknown as string) || 0 : raw.provisionRate,
+    collectionEfficiency: typeof raw.collectionEfficiency === 'string' ? parseFloat(raw.collectionEfficiency as unknown as string) || 0 : raw.collectionEfficiency,
+    roa: typeof raw.roa === 'string' ? parseFloat(raw.roa as unknown as string) || 0 : raw.roa,
+    portfolioYield: typeof raw.portfolioYield === 'string' ? parseFloat(raw.portfolioYield as unknown as string) || 0 : raw.portfolioYield,
+    growthRate: typeof raw.growthRate === 'string' ? parseFloat(raw.growthRate as unknown as string) || 0 : raw.growthRate,
+    riskLevel: riskMap[raw.riskLevel as string] ?? 'Faible',
+  };
 }
 
 export interface OHADAMetricsResponse {
@@ -201,7 +222,10 @@ export const dashboardOHADAApi = {
       console.log('🔄 Récupération métriques OHADA...');
       const response = await apiClient.get<OHADAMetricsResponse>(API_ENDPOINTS.dashboard.metrics.ohada);
       console.log('✅ Métriques OHADA récupérées avec succès');
-      return response;
+      return {
+        ...response,
+        data: response.data.map(normalizeMetrics)
+      };
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         console.warn('⚠️ Endpoint OHADA non disponible, utilisation des données mockées conformes');
@@ -238,7 +262,7 @@ export const dashboardOHADAApi = {
         API_ENDPOINTS.dashboard.metrics.portfolio(portfolioId)
       );
       console.log('✅ Métriques portefeuille récupérées avec succès');
-      return response;
+      return { ...response, data: normalizeMetrics(response.data) };
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         console.warn(`⚠️ Endpoint portefeuille ${portfolioId} non disponible, utilisation des données mockées`);
@@ -262,7 +286,7 @@ export const dashboardOHADAApi = {
         API_ENDPOINTS.dashboard.metrics.global
       );
       console.log('✅ Métriques globales récupérées avec succès');
-      return response;
+      return { ...response, data: normalizeMetrics(response.data) };
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         console.warn('⚠️ Endpoint métriques globales non disponible, utilisation des données mockées');

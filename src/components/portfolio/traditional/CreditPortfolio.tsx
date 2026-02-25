@@ -36,7 +36,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
   const [companyDetailModalOpen, setCompanyDetailModalOpen] = useState(false);
   const { showNotification } = useNotification();
   
-  // Utiliser les hooks au niveau du composant
+  // Utiliser les hooks au niveau du composant (portfolioId requis par le backend)
   const { 
     requests, 
     loading, 
@@ -44,7 +44,7 @@ export function CreditPortfolio({ portfolioId }: CreditPortfolioProps) {
     getMemberName,
     getCreditProductName,
     changeRequestStatus
-  } = useCreditRequests();
+  } = useCreditRequests(portfolioId);
   const { addContract, resetToMockData: resetContracts } = useCreditContracts(portfolioId);
   
   // PRéparer les mappings pour les noms

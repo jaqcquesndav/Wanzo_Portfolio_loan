@@ -5,183 +5,129 @@ import type {
   InvestmentDashboardMetrics, 
   LeasingDashboardMetrics 
 } from '../types/dashboard';
+import { dashboardOHADAApi } from '../services/api/shared/dashboard-ohada.api';
 
+const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
-const metricsByType: Record<string, DashboardMetrics> = {
-  traditional: {
+/** Mapping OHADA → TraditionalDashboardMetrics pour exploiter les données réelles du backend */
+async function fetchTraditionalMetrics(): Promise<TraditionalDashboardMetrics> {
+  const ohadaResp = await dashboardOHADAApi.getOHADAMetrics();
+  const all = ohadaResp.data;
+  const count = all.length || 1;
+
+  // Agrégation multi-portefeuilles
+  const totalAmount = all.reduce((s, p) => s + p.totalAmount, 0);
+  const avgGrowth  = all.reduce((s, p) => s + p.growthRate, 0) / count;
+  const avgNpl     = all.reduce((s, p) => s + p.nplRatio, 0) / count;
+  const avgProv    = all.reduce((s, p) => s + p.provisionRate, 0) / count;
+  const avgYield   = all.reduce((s, p) => s + p.portfolioYield, 0) / count;
+  const avgRoa     = all.reduce((s, p) => s + p.roa, 0) / count;
+  const avgCollect = all.reduce((s, p) => s + p.collectionEfficiency, 0) / count;
+  const avgBalAGE  = {
+    current:   all.reduce((s,p) => s + p.balanceAGE.current,   0) / count,
+    days30:    all.reduce((s,p) => s + p.balanceAGE.days30,    0) / count,
+    days60:    all.reduce((s,p) => s + p.balanceAGE.days60,    0) / count,
+    days90Plus:all.reduce((s,p) => s + p.balanceAGE.days90Plus,0) / count,
+  };
+
+  // Performance mensuelle (agréger sur 12 mois)
+  const monthly = MONTHS_FR.map((month, i) => ({
+    month,
+    value: all.reduce((s, p) => s + (p.monthlyPerformance[i] ?? 0), 0) / count,
+    benchmark: 14.5 // Benchmark marché CEMAC
+  }));
+
+  return {
     assets: {
-      total: 10000000,
-      change: 10.2,
-      distribution: {
-        credit: 60,
-        microfinance: 20,
-        treasury: 20
-      },
-      creditUtilization: 75
+      total: totalAmount,
+      change: avgGrowth,
+      distribution: { credit: avgBalAGE.current, microfinance: avgBalAGE.days30, treasury: 100 - avgBalAGE.current - avgBalAGE.days30 },
+      creditUtilization: avgCollect
     },
     performance: {
-      global: 8.5,
-      change: 1.2,
-      monthly: [
-        { month: 'Jan', value: 3.2, benchmark: 2.8 },
-        { month: 'Fév', value: 4.1, benchmark: 3.2 },
-        { month: 'Mar', value: 4.8, benchmark: 3.5 },
-        { month: 'Avr', value: 5.2, benchmark: 4.1 },
-        { month: 'Mai', value: 6.4, benchmark: 4.8 },
-        { month: 'Juin', value: 6.9, benchmark: 5.2 }
-      ]
+      global: avgYield,
+      change: avgGrowth,
+      monthly
     },
     risk: {
-      level: 'Faible',
-      sharpeRatio: 2.1,
-      delinquencyRate: 3.2,
-      provisionRate: 2.5,
-      concentrationRisk: 12.4
+      level: all[0]?.riskLevel as string ?? 'Faible',
+      sharpeRatio: avgRoa,
+      delinquencyRate: avgNpl,
+      provisionRate: avgProv,
+      concentrationRisk: 0
     },
     clients: {
-      active: 30,
-      change: 2.2,
-      newThisMonth: 1,
-      churnRate: 0.2
+      active: all.reduce((s, p) => s + p.activeContracts, 0),
+      change: avgGrowth,
+      newThisMonth: 0,
+      churnRate: 0
     },
     paymentStatus: {
-      onTime: 82,
-      late30Days: 12,
-      late60Days: 4,
-      late90Days: 2
+      onTime: avgBalAGE.current,
+      late30Days: avgBalAGE.days30,
+      late60Days: avgBalAGE.days60,
+      late90Days: avgBalAGE.days90Plus
     }
-  } as TraditionalDashboardMetrics,
-  investment: {
-    assets: {
-      total: 15000000,
-      change: 18.7,
-      distribution: {
-        equities: 45,
-        bonds: 30,
-        alternatives: 15,
-        cash: 10
-      },
-      liquidity: 85
-    },
-    performance: {
-      global: 15.2,
-      change: 3.1,
-      monthly: [
-        { month: 'Jan', value: 6.2, benchmark: 5.8 },
-        { month: 'Fév', value: 7.1, benchmark: 6.2 },
-        { month: 'Mar', value: 7.8, benchmark: 6.5 },
-        { month: 'Avr', value: 8.2, benchmark: 7.1 },
-        { month: 'Mai', value: 9.4, benchmark: 7.8 },
-        { month: 'Juin', value: 9.9, benchmark: 8.2 }
-      ]
-    },
-    risk: {
-      level: 'Élevé',
-      sharpeRatio: 1.2,
-      volatility: 18.5,
-      var95: 3.2,
-      beta: 1.1,
-      maxDrawdown: 12.5
-    },
-    clients: {
-      active: 12,
-      change: 1.2,
-      newThisMonth: 2,
-      churnRate: 0.8
-    },
-    benchmarkComparison: {
-      ytd: 2.1,
-      oneYear: 5.3,
-      threeYears: 18.7,
-      fiveYears: 35.2
-    }
-  } as InvestmentDashboardMetrics,
-  leasing: {
-    assets: {
-      total: 25000000,
-      change: 15.4,
-      distribution: {
-        vehicles: 45,
-        machinery: 30,
-        it: 15,
-        office: 10
-      },
-      residualValue: 15.8,
-      utilizationRate: 82.5
-    },
-    performance: {
-      global: 12.5,
-      change: 2.3,
-      monthly: [
-        { month: 'Jan', value: 5.2, benchmark: 4.8 },
-        { month: 'Fév', value: 6.1, benchmark: 5.2 },
-        { month: 'Mar', value: 5.8, benchmark: 5.5 },
-        { month: 'Avr', value: 7.2, benchmark: 6.1 },
-        { month: 'Mai', value: 8.4, benchmark: 6.8 },
-        { month: 'Juin', value: 8.9, benchmark: 7.2 }
-      ]
-    },
-    risk: {
-      level: 'Modéré',
-      sharpeRatio: 1.8,
-      delinquencyRate: 3.5,
-      provisionRate: 2.8,
-      concentrationRisk: 15.2,
-      maintenanceRisk: 8.2,
-      defaultRate: 4.3,
-      assetDepreciation: 12.7
-    },
-    clients: {
-      active: 48,
-      change: 5.2,
-      newThisMonth: 3,
-      churnRate: 0.5
-    },
-    equipmentStatus: {
-      excellent: 35,
-      good: 45,
-      fair: 15,
-      poor: 5
-    }
-  } as LeasingDashboardMetrics
-};
+  } as TraditionalDashboardMetrics;
+}
+
+const mockInvestmentMetrics: InvestmentDashboardMetrics = {
+  assets: { total: 15000000, change: 18.7, distribution: { equities: 45, bonds: 30, alternatives: 15, cash: 10 }, liquidity: 85 },
+  performance: { global: 15.2, change: 3.1, monthly: MONTHS_FR.map((m, i) => ({ month: m, value: 6.2 + i * 0.3, benchmark: 5.8 + i * 0.3 })) },
+  risk: { level: 'Élevé', sharpeRatio: 1.2, volatility: 18.5, var95: 3.2, beta: 1.1, maxDrawdown: 12.5 },
+  clients: { active: 12, change: 1.2, newThisMonth: 2, churnRate: 0.8 }
+} as InvestmentDashboardMetrics;
+
+const mockLeasingMetrics: LeasingDashboardMetrics = {
+  assets: { total: 25000000, change: 15.4, distribution: { vehicles: 45, machinery: 30, it: 15, office: 10 }, residualValue: 15.8, utilizationRate: 82.5 },
+  performance: { global: 12.5, change: 2.3, monthly: MONTHS_FR.map((m, i) => ({ month: m, value: 5.2 + i * 0.3, benchmark: 4.8 + i * 0.3 })) },
+  risk: { level: 'Modéré', sharpeRatio: 1.8, delinquencyRate: 3.5, provisionRate: 2.8, concentrationRisk: 15.2, maintenanceRisk: 8.2, defaultRate: 4.3, assetDepreciation: 12.7 },
+  clients: { active: 48, change: 5.2, newThisMonth: 3, churnRate: 0.5 }
+} as LeasingDashboardMetrics;
 
 import { isValidPortfolioType, getDefaultPortfolioType } from '../config/portfolioTypes';
 
 export function useDashboardMetrics(portfolioType?: string) {
+  const validType = isValidPortfolioType(portfolioType)
+    ? (portfolioType as 'traditional' | 'investment' | 'leasing')
+    : getDefaultPortfolioType(portfolioType);
+
   const [metrics, setMetrics] = useState<DashboardMetrics>(() => {
-    const validType = isValidPortfolioType(portfolioType) 
-      ? portfolioType as 'traditional' | 'investment' | 'leasing'
-      : getDefaultPortfolioType(portfolioType);
-      
-    return metricsByType[validType];
+    if (validType === 'investment') return mockInvestmentMetrics;
+    if (validType === 'leasing') return mockLeasingMetrics;
+    // Placeholder traditionnel vide en attendant le fetch
+    return {
+      assets: { total: 0, change: 0, distribution: { credit: 0, microfinance: 0, treasury: 0 }, creditUtilization: 0 },
+      performance: { global: 0, change: 0, monthly: [] },
+      risk: { level: 'Faible', sharpeRatio: 0, delinquencyRate: 0, provisionRate: 0, concentrationRisk: 0 },
+      clients: { active: 0, change: 0, newThisMonth: 0, churnRate: 0 }
+    } as TraditionalDashboardMetrics;
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(validType === 'traditional');
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (isValidPortfolioType(portfolioType)) {
-          const validType = portfolioType as 'traditional' | 'investment' | 'leasing';
-          console.log(`Chargement des métriques pour le type: ${validType}`);
-          setMetrics(metricsByType[validType]);
+        setLoading(true);
+        if (validType === 'traditional') {
+          const data = await fetchTraditionalMetrics();
+          setMetrics(data);
+        } else if (validType === 'investment') {
+          setMetrics(mockInvestmentMetrics);
         } else {
-          const defaultType = getDefaultPortfolioType(portfolioType);
-          console.warn(`Type de portefeuille non reconnu ou invalide: ${portfolioType}, utilisation du type ${defaultType}`);
-          setMetrics(metricsByType[defaultType]);
+          setMetrics(mockLeasingMetrics);
         }
       } catch (err) {
-        console.error(`Erreur lors du chargement des métriques pour ${portfolioType}:`, err);
+        console.error(`Erreur lors du chargement des métriques pour ${validType}:`, err);
         setError(err as Error);
       } finally {
         setLoading(false);
       }
     };
     fetchMetrics();
-  }, [portfolioType]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validType]);
 
   return { metrics, loading, error };
 }

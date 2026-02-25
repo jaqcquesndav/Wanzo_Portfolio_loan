@@ -83,14 +83,14 @@ export default function TraditionalPortfolioDetails() {
   // Hook factorisé pour la persistance multi-type (localStorage)
   const { portfolio, loading, addOrUpdate } = usePortfolio(id, portfolioType as PortfolioType);
   
-  // Hook pour les demandes de crédit
+  // Hook pour les demandes de crédit (portfolioId requis par le backend)
   const { 
     requests, 
     loading: requestsLoading, 
     changeRequestStatus,
     getMemberName,
     getCreditProductName
-  } = useCreditRequests();
+  } = useCreditRequests(id);
   
   // Hook pour les contrats de crédit
   const { addContract } = useCreditContracts(id || 'default');

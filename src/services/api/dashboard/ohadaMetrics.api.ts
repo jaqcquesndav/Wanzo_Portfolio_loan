@@ -241,7 +241,7 @@ class OHADAMetricsService {
     
     if (avgNPL > this.BCEAO_NPL_THRESHOLD) {
       riskLevel = 'HIGH';
-      recommendations.push('Réduire le NPL ratio en-dessous du seuil BCEAO de 5%');
+      recommendations.push('Réduire le NPL ratio en-dessous du seuil BCC de 5%');
       recommendations.push('Renforcer les procédures de recouvrement');
     } else if (avgNPL > 3) {
       riskLevel = 'MEDIUM';
@@ -250,7 +250,7 @@ class OHADAMetricsService {
 
     if (complianceStatus === 'NON_COMPLIANT') {
       riskLevel = 'HIGH';
-      recommendations.push('Mise en conformité urgente avec les normes OHADA/BCEAO');
+      recommendations.push('Mise en conformité urgente avec les normes OHADA/BCC');
     }
 
     const summary = `Portfolio de ${metrics.length} portefeuilles avec NPL moyen de ${avgNPL}%. Statut: ${complianceStatus}`;

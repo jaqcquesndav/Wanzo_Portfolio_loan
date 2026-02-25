@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTraditionalPortfoliosQuery } from '../../hooks/queries';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
-import { useDashboardApi, useDashboardRiskMetrics } from '../../hooks/useDashboardApi';
+import { useDashboardApi, useDashboardRiskMetrics, useOHADAMetrics, useComplianceMetrics } from '../../hooks/useDashboardApi';
 import { useDashboardCustomization } from '../../hooks/dashboard/useDashboardCustomization';
 import { useRecentOperations } from '../../hooks/useRecentOperations';
 import { WidgetSelector } from './WidgetSelector';
@@ -58,6 +58,19 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     error: riskError
   } = useDashboardRiskMetrics();
 
+  // Métriques OHADA réelles (données backend normalisées)
+  const {
+    metrics: ohadaMetrics,
+    loading: ohadaLoading,
+    error: ohadaError
+  } = useOHADAMetrics();
+
+  // Conformité réglementaire réelle
+  const {
+    compliance: complianceData,
+    loading: complianceLoading
+  } = useComplianceMetrics();
+
   // Hook pour récupérer les opérations réelles
   const {
     operations: recentOperations,
@@ -97,60 +110,85 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     return widget?.isVisible ?? true;
   };
 
-  // Données à afficher selon la sélection - utiliser les données API
+  // Données à afficher selon la sélection - utiliser les données OHADA réelles
   const currentMetrics = useMemo(() => {
-    if (portfolioSelection.mode === 'global') {
-      // Utiliser les données globales du dashboard
-      return dashboardData?.portfolioSummary.traditional;
+    if (!ohadaMetrics?.data?.length) return null;
+    if (portfolioSelection.mode === 'individual' && portfolioSelection.selectedPortfolioId) {
+      // Chercher le portefeuille sélectionné dans les données OHADA
+      return ohadaMetrics.data.find(p => p.id === portfolioSelection.selectedPortfolioId)
+        ?? ohadaMetrics.data[0];
     }
-    if (portfolioSelection.selectedPortfolioId) {
-      // Pour un portefeuille spécifique, utiliser les données globales pour l'instant
-      return dashboardData?.portfolioSummary.traditional;
-    }
-    return null;
-  }, [portfolioSelection, dashboardData]);
-
-  // Adaptateur pour transformer les données API en métriques dashboard
-  const adaptedMetrics = useMemo(() => {
-    if (!currentMetrics && !dashboardData) return null;
-
-    // Données de base depuis l'API ou valeurs par défaut
-    const baseData = currentMetrics || dashboardData?.kpis || {};
-    
+    // Vue globale : agréger tous les portefeuilles
+    const all = ohadaMetrics.data;
+    const count = all.length || 1;
     return {
-      totalAmount: (baseData as { totalValue?: number })?.totalValue || 0,
-      activeContracts: (baseData as { activePortfolios?: number })?.activePortfolios || 0,
-      nplRatio: 3.2,
-      roa: 2.8,
-      portfolioYield: 4.5,
-      collectionEfficiency: 87.5,
+      ...all[0],
+      id: 'global',
+      name: 'Vue Globale',
+      totalAmount: all.reduce((s, p) => s + p.totalAmount, 0),
+      activeContracts: all.reduce((s, p) => s + p.activeContracts, 0),
+      avgLoanSize: all.reduce((s, p) => s + p.avgLoanSize, 0) / count,
+      nplRatio: all.reduce((s, p) => s + p.nplRatio, 0) / count,
+      provisionRate: all.reduce((s, p) => s + p.provisionRate, 0) / count,
+      collectionEfficiency: all.reduce((s, p) => s + p.collectionEfficiency, 0) / count,
+      roa: all.reduce((s, p) => s + p.roa, 0) / count,
+      portfolioYield: all.reduce((s, p) => s + p.portfolioYield, 0) / count,
+      growthRate: all.reduce((s, p) => s + p.growthRate, 0) / count,
       balanceAGE: {
-        current: 65,
-        days30: 20,
-        days60: 10,
-        days90Plus: 5
+        current: all.reduce((s, p) => s + p.balanceAGE.current, 0) / count,
+        days30: all.reduce((s, p) => s + p.balanceAGE.days30, 0) / count,
+        days60: all.reduce((s, p) => s + p.balanceAGE.days60, 0) / count,
+        days90Plus: all.reduce((s, p) => s + p.balanceAGE.days90Plus, 0) / count,
       },
-      sector: 'PME',
-      avgLoanSize: 75000000,
-      growthRate: 12.3,
-      riskLevel: 'Moyen' as const,
-      regulatoryCompliance: {
-        bceaoCompliant: true,
-        ohadaProvisionCompliant: true,
-        riskRating: 'BBB+'
-      },
-      provisionRate: 4.2
     };
-  }, [currentMetrics, dashboardData]);
+  }, [portfolioSelection, ohadaMetrics]);
 
-  // Données de conformité mockées
-  const complianceSummary = useMemo(() => {
+  // Métriques adaptées depuis les données OHADA réelles
+  const adaptedMetrics = useMemo(() => {
+    if (!currentMetrics) return null;
     return {
-      status: 'COMPLIANT' as const,
-      totalPortfolios: portfolios.length || 12,
-      complianceRate: 94.2
+      totalAmount: currentMetrics.totalAmount,
+      activeContracts: currentMetrics.activeContracts,
+      nplRatio: currentMetrics.nplRatio,
+      roa: currentMetrics.roa,
+      portfolioYield: currentMetrics.portfolioYield,
+      collectionEfficiency: currentMetrics.collectionEfficiency,
+      balanceAGE: currentMetrics.balanceAGE,
+      sector: currentMetrics.sector,
+      avgLoanSize: currentMetrics.avgLoanSize,
+      growthRate: currentMetrics.growthRate,
+      riskLevel: currentMetrics.riskLevel as 'Faible' | 'Moyen' | 'Élevé',
+      regulatoryCompliance: currentMetrics.regulatoryCompliance ?? {
+        bceaoCompliant: false,
+        ohadaProvisionCompliant: false,
+        riskRating: 'BB' as const
+      },
+      provisionRate: currentMetrics.provisionRate,
     };
-  }, [portfolios.length]);
+  }, [currentMetrics]);
+
+  // Données de conformité depuis l'API réelle
+  const complianceSummary = useMemo(() => {
+    if (complianceData) {
+      return {
+        status: complianceData.status,
+        totalPortfolios: complianceData.totalPortfolios,
+        complianceRate: parseFloat(complianceData.complianceRate)
+      };
+    }
+    // Fallback sur données OHADA metadata
+    const meta = ohadaMetrics?.metadata;
+    if (meta) {
+      const total = meta.totalPortfolios;
+      return {
+        status: meta.complianceStatus as 'COMPLIANT' | 'WARNING' | 'NON_COMPLIANT',
+        totalPortfolios: total,
+        complianceRate: meta.complianceStatus === 'COMPLIANT' ? 100 :
+                        meta.complianceStatus === 'WARNING' ? 75 : 50
+      };
+    }
+    return { status: 'COMPLIANT' as const, totalPortfolios: portfolios.length, complianceRate: 0 };
+  }, [complianceData, ohadaMetrics, portfolios.length]);
 
   // Options des sélecteurs
   const portfolioOptions = useMemo(() => {
@@ -212,7 +250,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
     }
   };
 
-  const loading = portfoliosLoading || dashboardLoading || riskLoading || operationsLoading;
+  const loading = portfoliosLoading || dashboardLoading || riskLoading || operationsLoading || ohadaLoading || complianceLoading;
 
   // Log pour debug
   console.log('Recent operations:', recentOperations);
@@ -289,7 +327,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
           </div>
 
           <div className="text-sm text-gray-500">
-            Conforme aux normes OHADA/BCEAO • 
+            Conforme aux normes OHADA/BCC • 
             Dernière MAJ: {dashboardData ? new Date().toLocaleString('fr-FR') : 'Chargement...'}
           </div>
         </div>
@@ -375,7 +413,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
                     adaptedMetrics.nplRatio <= 3 ? 'text-green-600' :
                     adaptedMetrics.nplRatio <= 5 ? 'text-yellow-600' : 'text-red-600'
                   }`}>
-                    Seuil BCEAO: 5%
+                    Seuil BCC: 5%
                   </p>
                 </div>
                 <AlertCircleIcon className="h-6 w-6 text-orange-600 opacity-75" />
@@ -579,7 +617,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
                 Dashboard Crédit
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                Conforme aux normes OHADA/BCEAO
+                Conforme aux normes OHADA/BCC
               </p>
             </div>
             {loading && (

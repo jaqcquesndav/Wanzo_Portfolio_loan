@@ -36,6 +36,9 @@ export function DynamicHeader({ onMenuClick }: DynamicHeaderProps) {
               className="mr-4 lg:hidden"
               aria-label="Menu"
             />
+            <span className="text-base font-semibold text-primary-dark dark:text-primary tracking-tight select-none">
+              Gestion de portefeuille
+            </span>
           </div>
 
           {/* Recherche globale */}

@@ -23,6 +23,11 @@ export const creditRequestApi = {
       search?: string;
     }
   ): Promise<CreditRequest[]> => {
+    // Le backend exige un portfolioId (UUID) — sans lui on tombe directement sur localStorage
+    if (!portfolioId) {
+      console.warn('[creditRequestApi] portfolioId manquant → fallback localStorage');
+      return creditRequestsStorageService.getAllRequests();
+    }
     try {
       let endpoint = '/portfolios/traditional/credit-requests';
       const queryParams = new URLSearchParams();

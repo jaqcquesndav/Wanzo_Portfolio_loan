@@ -57,11 +57,12 @@ interface LegacyDashboardData {
 function convertOHADAToLegacy(ohadaResponse: OHADAMetricsResponse): LegacyDashboardData {
   const portfolios = ohadaResponse.data;
   const metadata = ohadaResponse.metadata;
-  
-  // Calculer les agrégations par type
-  const traditionalPortfolios = portfolios.filter(p => p.sector === 'PME' || p.sector === 'Corporate');
+
+  // Tous les portefeuilles sont des portefeuilles traditionnels (crédit/microfinance)
+  const traditionalPortfolios = portfolios;
   const totalTraditionalValue = traditionalPortfolios.reduce((sum, p) => sum + p.totalAmount, 0);
-  const avgTraditionalRisk = traditionalPortfolios.reduce((sum, p) => sum + p.nplRatio, 0) / (traditionalPortfolios.length || 1);
+  const count = traditionalPortfolios.length || 1;
+  const avgTraditionalRisk = traditionalPortfolios.reduce((sum, p) => sum + p.nplRatio, 0) / count;
 
   // Générer des activités récentes basées sur les données OHADA
   const recentActivity = portfolios.slice(0, 5).map((portfolio, index) => ({
@@ -80,7 +81,7 @@ function convertOHADAToLegacy(ohadaResponse: OHADAMetricsResponse): LegacyDashbo
       type: 'compliance' as const,
       level: portfolio.nplRatio > 5.0 ? 'critical' as const : 'warning' as const,
       title: `Alerte conformité - ${portfolio.name}`,
-      description: `NPL Ratio: ${portfolio.nplRatio}% (Seuil BCEAO: 5%)`,
+      description: `NPL Ratio: ${portfolio.nplRatio}% (Seuil BCC: 5%)`,
       timestamp: new Date().toISOString()
     }));
 

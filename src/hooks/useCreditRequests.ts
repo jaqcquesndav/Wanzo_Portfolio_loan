@@ -7,12 +7,12 @@ import {
 } from '../data';
 import { creditRequestApi } from '../services/api/traditional/credit-request.api';
 
-export function useCreditRequests() {
+export function useCreditRequests(portfolioId?: string) {
   const [requests, setRequests] = useState<CreditRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequests = useCallback(async (portfolioId?: string, filters?: {
+  const fetchRequests = useCallback(async (pid?: string, filters?: {
     status?: CreditRequestStatus;
     clientId?: string;
     productType?: string;
@@ -23,7 +23,7 @@ export function useCreditRequests() {
     try {
       setLoading(true);
       // Appel au service API avec filtres optionnels
-      const data = await creditRequestApi.getAllRequests(portfolioId, filters);
+      const data = await creditRequestApi.getAllRequests(pid, filters);
       setRequests(data);
       setError(null);
     } catch (err) {
@@ -35,8 +35,8 @@ export function useCreditRequests() {
   }, []);
 
   useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    fetchRequests(portfolioId);
+  }, [fetchRequests, portfolioId]);
 
   const addRequest = useCallback(async (request: Omit<CreditRequest, 'id' | 'createdAt' | 'status'>) => {
     try {

@@ -109,7 +109,7 @@ export const OnboardingWelcome: React.FC<OnboardingWelcomeProps> = ({
     {
       icon: PieChart,
       title: 'Dashboard analytique',
-      description: 'Tableaux de bord conformes aux normes OHADA/BCEAO'
+      description: 'Tableaux de bord conformes aux normes OHADA/BCC'
     },
     {
       icon: FileText,

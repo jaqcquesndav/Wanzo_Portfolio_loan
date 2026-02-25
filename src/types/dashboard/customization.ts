@@ -99,7 +99,7 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
   {
     id: 'regulatory-compliance',
     title: 'Conformité Réglementaire',
-    description: 'Respect des normes OHADA/BCEAO',
+    description: 'Respect des normes OHADA/BCC',
     category: 'compliance',
     isVisible: true,
     position: 6,

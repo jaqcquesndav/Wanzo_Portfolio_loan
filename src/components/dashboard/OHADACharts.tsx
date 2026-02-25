@@ -63,14 +63,14 @@ export const OHADACharts: React.FC<OHADAChartsProps> = ({ metrics, selectedMetri
             
             {/* Zones de conformité */}
             <div className="absolute top-4 right-4 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-              Zone BCEAO Conforme
+              Zone BCC Conforme
             </div>
             
             {/* Seuils réglementaires */}
             <div 
               className="absolute border-t-2 border-dashed border-red-400 w-full" 
               style={{ top: '20%' }}
-              title="Seuil BCEAO NPL 5%"
+              title="Seuil BCC NPL 5%"
             ></div>
             
             {/* Points des portefeuilles */}
@@ -96,7 +96,7 @@ export const OHADACharts: React.FC<OHADAChartsProps> = ({ metrics, selectedMetri
             <div className="absolute bottom-16 right-4 text-xs space-y-1">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full border border-white"></div>
-                <span>Conforme BCEAO</span>
+                <span>Conforme BCC</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full border border-white"></div>
