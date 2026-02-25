@@ -5,6 +5,25 @@ import {
   mockCreditProducts,
   mockCreditManagers
 } from '../data';
+
+/**
+ * Mapping des identifiants produits API → labels affichables
+ * Le backend renvoie des identifiants courts (ex: 'lineOfCredit') pas des UUIDs
+ */
+const PRODUCT_LABELS: Record<string, string> = {
+  lineOfCredit: 'Ligne de crédit',
+  term_loan: 'Crédit à terme',
+  microfinance: 'Microfinance',
+  mortgage: 'Crédit hypothécaire',
+  equipment: 'Crédit équipement',
+  operating_capital: 'Fonds de roulement',
+  pledge: 'Nantissement',
+  revolving: 'Crédit revolving',
+  overdraft: 'Découvert',
+  personal_loan: 'Prêt personnel',
+  agricultural_loan: 'Crédit agricole',
+  group_loan: 'Crédit de groupe',
+};
 import { creditRequestApi } from '../services/api/traditional/credit-request.api';
 
 export function useCreditRequests(portfolioId?: string) {
@@ -294,14 +313,33 @@ export function useCreditRequests(portfolioId?: string) {
   }, [fetchRequests]);
 
   // Utilitaires pour obtenir des informations liées
+  /**
+   * Retourne le nom du membre/entreprise
+   * Priorité: 1. companyName depuis l'API (dans requests), 2. mock, 3. ID tronqué
+   */
   const getMemberName = useCallback((memberId: string): string => {
+    // 1. Chercher dans les demandes chargées (l'API fournit companyName directement)
+    const fromRequests = requests.find(r => r.memberId === memberId);
+    if (fromRequests?.companyName) return fromRequests.companyName;
+    // 2. Fallback mock
     const member = mockMembers.find(m => m.id === memberId);
-    return member ? member.name : 'Client inconnu';
-  }, []);
+    if (member) return member.name;
+    // 3. ID tronqué (évite d'afficher un UUID brut)
+    return `Client #${memberId.slice(-6).toUpperCase()}`;
+  }, [requests]);
 
+  /**
+   * Retourne le label du produit de crédit
+   * Priorité: 1. table PRODUCT_LABELS, 2. mock, 3. productId tel quel
+   */
   const getCreditProductName = useCallback((productId: string): string => {
+    // 1. Labels connus (IDs courts retournés par le backend)
+    if (PRODUCT_LABELS[productId]) return PRODUCT_LABELS[productId];
+    // 2. Fallback mock
     const product = mockCreditProducts.find(p => p.id === productId);
-    return product ? product.name : 'Produit inconnu';
+    if (product) return product.name;
+    // 3. productId tel quel (mieux que 'Produit inconnu' pour debug)
+    return productId;
   }, []);
 
   const getCreditManagerName = useCallback((managerId: string): string => {

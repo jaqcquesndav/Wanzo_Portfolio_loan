@@ -141,7 +141,10 @@ export default function TraditionalPortfolioDetails() {
   
   // Préparer les mappings pour les noms
   const safeRequests = Array.isArray(requests) ? requests : [];
-  const companyNames = Object.fromEntries(safeRequests.map(req => [req.memberId, getMemberName(req.memberId)]));
+  // Priorité: companyName fourni directement par l'API, sinon lookup mock
+  const companyNames = Object.fromEntries(
+    safeRequests.map(req => [req.memberId, req.companyName || getMemberName(req.memberId)])
+  );
   const productNames = Object.fromEntries(safeRequests.map(req => [req.productId, getCreditProductName(req.productId)]));
 
   // Fonction pour créer un contrat depuis une demande approuvée
@@ -478,22 +481,23 @@ export default function TraditionalPortfolioDetails() {
                   onRefuse={(id) => changeRequestStatus(id, 'rejected')}
                   onDisburse={(id) => changeRequestStatus(id, 'disbursed')}
                   onView={(id) => navigate(`/portfolio/${id}/requests/${id}`)}
-                  onViewCompany={(memberId) => {
-                    // Chercher d'abord dans mockCompanies par ID
-                    let company = mockCompanies.find(c => c.id === memberId);
+                  onViewCompany={(companyId, companyName) => {
+                    // companyId est le UUID de l'entreprise (fourni par l'API dans companyId ou memberId)
+                    // companyName est le nom lisible (fourni par l'API dans companyName)
+                    let company = mockCompanies.find(c => c.id === companyId);
                     
-                    // Si non trouvé, chercher par nom
-                    if (!company) {
-                      const companyName = getMemberName(memberId);
+                    // Si non trouvé par ID, chercher par nom
+                    if (!company && companyName) {
                       company = mockCompanies.find(c => c.name === companyName);
                     }
                     
+                    const resolvedName = companyName || getMemberName(companyId);
+                    
                     // Si toujours pas trouvé, créer un objet Company minimal
                     if (!company) {
-                      const companyName = getMemberName(memberId);
                       company = {
-                        id: memberId,
-                        name: companyName,
+                        id: companyId,
+                        name: resolvedName,
                         sector: 'Non spécifié',
                         size: 'PME' as CompanySize,
                         annual_revenue: 0,

@@ -111,9 +111,17 @@ export type CreditPeriodicity =
 export type CreditRequestMetadata = {
   sourceRequestId?: string;            // ID de la demande source (gestion commerciale)
   syncedFrom?: string;                 // Service source (ex: 'gestion_commerciale')
-  businessInformation?: any;           // Informations commerciales
-  financialInformation?: any;          // Informations financières
-  creditScore?: any;                   // Score de crédit
+  businessInformation?: Record<string, unknown>;  // Informations commerciales
+  financialInformation?: {             // Informations financières (structure connue de l'API)
+    assets?: number;
+    cash_flow?: number;
+    net_profit?: number;
+    liabilities?: number;
+    annual_revenue?: number;
+    existing_debts?: number;
+    [key: string]: number | undefined;
+  };
+  creditScore?: Record<string, unknown>;          // Score de crédit
   firstSyncAt?: string;                // Date de première synchronisation (ISO 8601)
   lastSyncAt?: string;                 // Date de dernière synchronisation (ISO 8601)
 };
@@ -143,6 +151,9 @@ export type CreditRequest = {
   status: CreditRequestStatus;
   isGroup: boolean;
   groupId?: string;
+  // Champs retournés directement par l'API (évitent les lookups mock)
+  companyId?: string;    // UUID de l'entreprise demandeuse
+  companyName?: string;  // Nom de l'entreprise (fourni par le backend)
   distributions?: CreditDistribution[];
   documents?: CreditDocument[]; // Documents et pièces jointes associés à la demande
   rejectionReason?: string;
