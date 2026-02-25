@@ -96,12 +96,13 @@ export default function TraditionalPortfolioDetails() {
   const { addContract } = useCreditContracts(id || 'default');
   
   // Préparer les mappings pour les noms
-  const companyNames = Object.fromEntries(requests.map(req => [req.memberId, getMemberName(req.memberId)]));
-  const productNames = Object.fromEntries(requests.map(req => [req.productId, getCreditProductName(req.productId)]));
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const companyNames = Object.fromEntries(safeRequests.map(req => [req.memberId, getMemberName(req.memberId)]));
+  const productNames = Object.fromEntries(safeRequests.map(req => [req.productId, getCreditProductName(req.productId)]));
 
   // Fonction pour créer un contrat depuis une demande approuvée
   const handleCreateContract = useCallback(async (requestId: string) => {
-    const request = requests.find(r => r.id === requestId);
+    const request = safeRequests.find(r => r.id === requestId);
     if (!request) {
       showNotification('Demande non trouvée', 'error');
       return;
@@ -152,7 +153,7 @@ export default function TraditionalPortfolioDetails() {
       console.error('Erreur lors de la création du contrat:', error);
       showNotification('Erreur lors de la création du contrat', 'error');
     }
-  }, [requests, id, addContract, changeRequestStatus, getMemberName, getCreditProductName, showNotification]);
+  }, [safeRequests, id, addContract, changeRequestStatus, getMemberName, getCreditProductName, showNotification]);
 
   // Hooks d'action (toujours avant tout return)
   const handleSaveSettings = useCallback(() => {
@@ -314,7 +315,7 @@ export default function TraditionalPortfolioDetails() {
   const config = portfolioTypeConfig[portfolioType as keyof typeof portfolioTypeConfig] || portfolioTypeConfig['traditional'];
 
   // Déterminer si le portefeuille est "vide" (nouvel utilisateur qui vient de créer son premier portefeuille)
-  const hasNoRequests = requests.length === 0;
+  const hasNoRequests = safeRequests.length === 0;
   const hasNoProducts = isTraditionalPortfolio(portfolio) && portfolio.products.length === 0;
   const isEmptyPortfolio = hasNoRequests && hasNoProducts;
 
@@ -449,7 +450,7 @@ export default function TraditionalPortfolioDetails() {
               >
                 {/* Utiliser le nouveau composant CreditRequestsTable avec les données nécessaires */}
                 <CreditRequestsTable 
-                  requests={requests} 
+                  requests={safeRequests} 
                   loading={requestsLoading}
                   companyNames={companyNames}
                   productNames={productNames}

@@ -23,7 +23,13 @@ export function useCreditRequests(portfolioId?: string) {
     try {
       setLoading(true);
       // Appel au service API avec filtres optionnels
-      const data = await creditRequestApi.getAllRequests(pid, filters);
+      const raw = await creditRequestApi.getAllRequests(pid, filters);
+      // L'API peut retourner { data: CreditRequest[], meta: {...} } ou CreditRequest[] directement
+      const data: CreditRequest[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray((raw as { data?: unknown }).data)
+          ? (raw as { data: CreditRequest[] }).data
+          : [];
       setRequests(data);
       setError(null);
     } catch (err) {
