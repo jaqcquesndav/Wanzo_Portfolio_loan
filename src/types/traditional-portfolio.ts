@@ -105,5 +105,8 @@ export interface TraditionalPortfolio extends Portfolio {
   description: string;
   manager_id: string;
   institution_id: string;
+  /** Champ émis par le backend dans la réponse portfolio (peut être null) */
+  financial_products?: FinancialProduct[] | null;
+  /** @deprecated backend utilise financial_products */
   products?: FinancialProduct[];
 }

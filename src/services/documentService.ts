@@ -43,9 +43,11 @@ const mockDocuments: PortfolioDocument[] = [
  */
 export async function getPortfolioDocuments(portfolioId: string): Promise<PortfolioDocument[]> {
   try {
-    // Tenter de récupérer depuis l'API
-    const response = await apiClient.get(`/portfolios/${portfolioId}/documents`);
-    return response as unknown as PortfolioDocument[];
+    // TODO: endpoint /portfolios/:id/documents non implémenté — retourne [] en attendant
+    // const response = await apiClient.get(`/portfolios/${portfolioId}/documents`);
+    // return response as unknown as PortfolioDocument[];
+    void portfolioId;
+    return [];
   } catch (error: unknown) {
     console.log('Fallback to local storage for documents', error);
     

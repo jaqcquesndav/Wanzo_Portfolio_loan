@@ -18,6 +18,11 @@ export interface UseFinancialProductsOptions {
    * @default true
    */
   autoFetch?: boolean;
+  /**
+   * Produits déjà chargés (ex: champ financial_products du portfolio) —
+   * utilisés comme état initial pour un affichage immédiat sans attendre le GET dédié.
+   */
+  initialProducts?: FinancialProduct[] | null;
   /** Filtre optionnel chargé au montage (ignoré si autoFetch=false) */
   initialFilters?: {
     status?: ProductStatus;
@@ -80,14 +85,28 @@ function normalizeProduct(p: FinancialProduct): FinancialProduct {
 export function useFinancialProducts(
   portfolioIdOrOptions: string | UseFinancialProductsOptions,
 ): UseFinancialProductsReturn {
-  const { portfolioId, autoFetch = true, initialFilters } =
+  const { portfolioId, autoFetch = true, initialFilters, initialProducts } =
     typeof portfolioIdOrOptions === 'string'
-      ? { portfolioId: portfolioIdOrOptions, autoFetch: true, initialFilters: undefined }
+      ? { portfolioId: portfolioIdOrOptions, autoFetch: true, initialFilters: undefined, initialProducts: undefined }
       : portfolioIdOrOptions;
 
-  const [products, setProducts] = useState<FinancialProduct[]>([]);
+  // Bootstrap depuis les données déjà chargées dans le portfolio (financial_products)
+  const seed = Array.isArray(initialProducts) ? initialProducts.map(normalizeProduct) : [];
+
+  const [products, setProducts] = useState<FinancialProduct[]>(seed);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Synchroniser l'état si le portfolio se charge après le montage du hook
+  // (initialProducts passe de [] à [produit1, ...])
+  useEffect(() => {
+    if (Array.isArray(initialProducts) && initialProducts.length > 0) {
+      setProducts((prev) =>
+        // Ne remplacer que si l'état est encore vide (pas encore de fetch dédié)
+        prev.length === 0 ? initialProducts.map(normalizeProduct) : prev,
+      );
+    }
+  }, [initialProducts]);
 
   const fetchProducts = useCallback(
     async (filters?: {

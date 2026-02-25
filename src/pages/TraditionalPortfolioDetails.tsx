@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect } from 'react';
+﻿import { useState, useCallback, useEffect, useMemo } from 'react';
 import { portfolioTypeConfig } from '../config/portfolioTypes';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
@@ -50,14 +50,6 @@ export default function TraditionalPortfolioDetails() {
   const { setCurrentPortfolioId } = usePortfolioContext();
   const [showProductForm, setShowProductForm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | undefined>(undefined);
-  const {
-    products: financialProducts,
-    loading: productsLoading,
-    fetchProducts,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-  } = useFinancialProducts({ portfolioId: id ?? '', autoFetch: false });
 
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'requests';
@@ -101,6 +93,27 @@ export default function TraditionalPortfolioDetails() {
 
   // Hook factorisé pour la persistance multi-type (localStorage)
   const { portfolio, loading, addOrUpdate } = usePortfolio(id, portfolioType as PortfolioType);
+
+  // Produits embarqués dans la réponse portfolio (champ financial_products)
+  // Utilisés comme données initiales pour un affichage immédiat sans appel supplémentaire
+  const embeddedProducts = useMemo(() => {
+    if (!isTraditionalPortfolio(portfolio)) return [];
+    const fp = (portfolio as TraditionalPortfolio).financial_products;
+    return Array.isArray(fp) ? fp : [];
+  }, [portfolio]);
+
+  const {
+    products: financialProducts,
+    loading: productsLoading,
+    fetchProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+  } = useFinancialProducts({
+    portfolioId: id ?? '',
+    autoFetch: false,
+    initialProducts: embeddedProducts,
+  });
   
   // Hook pour les demandes de crédit (portfolioId requis par le backend)
   const { 
