@@ -34,13 +34,24 @@ export function usePortfolioAccounts(portfolioId: string) {
     }
   }, [portfolioId]);
 
+  // Helper: normalise any API response to a plain array
+  const toArray = <T,>(raw: unknown): T[] => {
+    if (Array.isArray(raw)) return raw as T[];
+    if (raw && typeof raw === 'object') {
+      const wrapped = raw as Record<string, unknown>;
+      if (Array.isArray(wrapped.data))  return wrapped.data as T[];
+      if (Array.isArray(wrapped.items)) return wrapped.items as T[];
+    }
+    return [];
+  };
+
   // Charger tous les comptes bancaires
   const loadBankAccounts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const accounts = await portfolioAccountsApi.getBankAccounts(portfolioId);
-      setBankAccounts(accounts);
+      const raw = await portfolioAccountsApi.getBankAccounts(portfolioId);
+      setBankAccounts(toArray<BankAccount>(raw));
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load bank accounts'));
     } finally {
@@ -53,8 +64,8 @@ export function usePortfolioAccounts(portfolioId: string) {
     setLoading(true);
     setError(null);
     try {
-      const accounts = await portfolioAccountsApi.getMobileMoneyAccounts(portfolioId);
-      setMobileMoneyAccounts(accounts);
+      const raw = await portfolioAccountsApi.getMobileMoneyAccounts(portfolioId);
+      setMobileMoneyAccounts(toArray<MobileMoneyAccount>(raw));
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load mobile money accounts'));
     } finally {

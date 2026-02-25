@@ -421,7 +421,8 @@ export function PortfolioWalletPanel({ portfolioId }: PortfolioWalletPanelProps)
   const availBalance = mainSummary?.totalAvailable ?? wallet?.availableBalance ?? 0;
   const frozenBalance= mainSummary?.totalFrozen    ?? wallet?.frozenBalance    ?? 0;
   const currency     = mainSummary?.currency       ?? wallet?.currency         ?? 'CDF';
-  const walletActive = wallet?.status === 'active' || !wallet;
+  // Désactiver uniquement si le wallet est explicitement suspendu ou clôturé
+  const walletActive = !wallet?.status || !['suspended', 'closed', 'blocked'].includes(wallet.status);
 
   // dashboard stats
   const totalTx      = dashboard?.totalTransactions ?? 0;
@@ -435,7 +436,7 @@ export function PortfolioWalletPanel({ portfolioId }: PortfolioWalletPanelProps)
       {/* ══════════════════════════════════════════════
           HERO — Solde principal + actions rapides
       ══════════════════════════════════════════════ */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 shadow-lg">
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#156088] via-[#197ca8] to-[#1e90c3] shadow-lg">
         {/* motif décoratif */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full border-[20px] border-white" />
@@ -484,7 +485,7 @@ export function PortfolioWalletPanel({ portfolioId }: PortfolioWalletPanelProps)
             <button
               onClick={() => setModalMode('deposit')}
               disabled={!walletActive}
-              className="flex-1 flex items-center justify-center gap-2 bg-white text-blue-700 font-semibold rounded-xl py-2.5 px-4 text-sm hover:bg-blue-50 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow"
+              className="flex-1 flex items-center justify-center gap-2 bg-white text-[#197ca8] font-semibold rounded-xl py-2.5 px-4 text-sm hover:bg-[#e6f3f8] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow"
             >
               <ArrowDownCircle className="h-4 w-4 text-green-600" />
               Dépôt
