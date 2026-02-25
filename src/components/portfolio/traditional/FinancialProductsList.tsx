@@ -12,9 +12,13 @@ interface FinancialProductsListProps {
 
 export function FinancialProductsList({ products, onViewDetails }: FinancialProductsListProps) {
   const { formatAmount } = useCurrencyContext();
+  // L'API peut retourner products: ["[]"] — on filtre les entrées non-objet pour éviter le crash
+  const validProducts = (products ?? []).filter(
+    (p): p is FinancialProduct => typeof p === 'object' && p !== null && 'id' in p
+  );
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {products.map((product) => (
+      {validProducts.map((product) => (
         <div key={product.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -52,7 +56,7 @@ export function FinancialProductsList({ products, onViewDetails }: FinancialProd
           <div className="mt-4 space-y-2">
             <h4 className="text-sm font-medium text-gray-900 dark:text-white">Secteurs cibles</h4>
             <div className="flex flex-wrap gap-2">
-              {product.requirements.map((req, index) => (
+              {(product.requirements ?? []).map((req, index) => (
                 <span 
                   key={index}
                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"

@@ -37,13 +37,24 @@ export function usePortfolio(id: string | undefined, type: PortfolioType) {
           : ((response as { data: TraditionalPortfolio }).data);
 
         if (apiPortfolio?.id) {
+          // Sanitiser le champ products : l'API peut retourner ["[]"] au lieu de []
+          // On filtre les entrées invalides (chaînes, objets sans id)
+          const rawProducts = apiPortfolio.products as unknown[];
+          const cleanProducts = Array.isArray(rawProducts)
+            ? rawProducts.filter(
+                (p): p is import('../types/traditional-portfolio').FinancialProduct =>
+                  typeof p === 'object' && p !== null && 'id' in p
+              )
+            : [];
+          const sanitized = { ...apiPortfolio, products: cleanProducts };
+
           // Persister dans localStorage pour les prochains accès
           await portfolioStorageService.addOrUpdatePortfolio({
-            ...apiPortfolio,
+            ...sanitized,
             type: 'traditional',
           } as import('../types/portfolio').PortfolioWithType);
           console.log(`Portfolio ${id} chargé depuis l'API et persisté localement.`);
-          setPortfolio(apiPortfolio as AnyPortfolio);
+          setPortfolio(sanitized as AnyPortfolio);
         } else {
           console.warn(`Portfolio ${id} introuvable via l'API.`);
           setError(new Error(`Portfolio ${id} not found`));
