@@ -28,7 +28,7 @@ const guaranteeTypeConfig: Record<string, { label: string; color: string }> = {
   'gage': { label: 'Gage', color: 'bg-amber-100 text-amber-700' },
   'hypotheque': { label: 'Hypothèque', color: 'bg-rose-100 text-rose-700' },
   'depot_especes': { label: 'dûpôt Espèces', color: 'bg-cyan-100 text-cyan-700' },
-  'autre': { label: 'Autre', color: 'bg-gray-100 text-gray-700' },
+  'autre': { label: 'Autre', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
 };
 
 // Configuration pour l'affichage des statuts
@@ -36,7 +36,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   'active': { label: 'Active', color: 'bg-green-100 text-green-700' },
   'libéRée': { label: 'LibéRée', color: 'bg-blue-100 text-blue-700' },
   'saisie': { label: 'Saisie', color: 'bg-red-100 text-red-700' },
-  'expiRée': { label: 'ExpiRée', color: 'bg-gray-100 text-gray-700' },
+  'expiRée': { label: 'ExpiRée', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
 };
 
 // Type explicitement utilisé pour les filtres et les transformations
@@ -289,7 +289,7 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={guaranteeTypeConfig[g.type]?.color || 'bg-gray-100 text-gray-700'}
+                        className={guaranteeTypeConfig[g.type]?.color || 'bg-gray-100 text-gray-700 dark:text-gray-300'}
                       >
                         {guaranteeTypeConfig[g.type]?.label || g.type}
                       </Badge>
@@ -298,7 +298,7 @@ export function GuaranteesList({ portfolioId }: GuaranteesListProps) {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={statusConfig[g.status]?.color || 'bg-gray-100 text-gray-700'}
+                        className={statusConfig[g.status]?.color || 'bg-gray-100 text-gray-700 dark:text-gray-300'}
                       >
                         {statusConfig[g.status]?.label || g.status}
                       </Badge>

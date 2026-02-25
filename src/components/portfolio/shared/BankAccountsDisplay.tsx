@@ -1,4 +1,4 @@
-import type { BankAccount } from '../../../types/bankAccount';
+﻿import type { BankAccount } from '../../../types/bankAccount';
 
 interface BankAccountsDisplayProps {
   accounts: BankAccount[];

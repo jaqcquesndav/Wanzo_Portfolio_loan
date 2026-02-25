@@ -1,4 +1,4 @@
-// src/pages/TraditionalPortfolio.tsx
+﻿// src/pages/TraditionalPortfolio.tsx
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter } from 'lucide-react';

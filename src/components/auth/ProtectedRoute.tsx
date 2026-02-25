@@ -1,4 +1,4 @@
-// src/components/auth/ProtectedRoute.tsx
+﻿// src/components/auth/ProtectedRoute.tsx
 // Guard global pour toutes les routes /app/*
 // Vérifie : authentification + présence d'une institution
 

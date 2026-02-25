@@ -1,4 +1,4 @@
-// src/components/ui/SmartEmptyState.tsx
+﻿// src/components/ui/SmartEmptyState.tsx
 import { LucideIcon } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';

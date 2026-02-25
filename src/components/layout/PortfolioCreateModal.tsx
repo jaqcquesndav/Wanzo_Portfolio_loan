@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
 interface PortfolioCreateModalProps {
@@ -38,7 +38,7 @@ export function PortfolioCreateModal({ open, onClose, onCreate, portfolioType }:
         </button>
         <h2 className="text-xl font-bold mb-4">Nouveau portefeuille {portfolioType ? `(${portfolioType})` : ''}</h2>
         <form onSubmit={handleSubmit}>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Nom du portefeuille
             <input
               type="text"
@@ -52,7 +52,7 @@ export function PortfolioCreateModal({ open, onClose, onCreate, portfolioType }:
           <div className="flex justify-end mt-4">
             <button
               type="button"
-              className="mr-2 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
+              className="mr-2 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300"
               onClick={onClose}
             >
               Annuler

@@ -165,7 +165,7 @@ export function ContractSchedule({ contractId }: ContractScheduleProps) {
                         installment.status === 'paid' ? 'bg-green-100 text-green-800' :
                         installment.status === 'overdue' ? 'bg-red-100 text-red-800' :
                         installment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
+                        'bg-gray-100 text-gray-800 dark:text-gray-100'
                       }`}
                     >
                       {installment.status === 'paid' ? 'Payé' :

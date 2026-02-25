@@ -1,4 +1,4 @@
-// src/components/portfolio/CreatePortfolioModal.tsx
+﻿// src/components/portfolio/CreatePortfolioModal.tsx
 /**
  * Modal de création de portefeuille - Conforme OHADA/RDC
  * Utilise le PortfolioStepperForm (2 étapes)

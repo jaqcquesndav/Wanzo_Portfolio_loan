@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { auth0Service } from '../services/api/auth/auth0Service';

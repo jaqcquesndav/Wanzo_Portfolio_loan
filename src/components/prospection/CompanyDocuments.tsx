@@ -1,4 +1,4 @@
-// components/prospection/CompanyDocuments.tsx
+﻿// components/prospection/CompanyDocuments.tsx
 import React from 'react';
 import { FileText, Download, Eye } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -13,7 +13,7 @@ interface CompanyDocumentsProps {
 export function CompanyDocuments({ documents, onView, onDownload }: CompanyDocumentsProps) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Documents</h3>
       
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -42,7 +42,7 @@ export function CompanyDocuments({ documents, onView, onDownload }: CompanyDocum
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <FileText className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm font-medium text-gray-900">{doc.title}</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{doc.title}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

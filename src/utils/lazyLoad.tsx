@@ -1,4 +1,4 @@
-import React, { ComponentType, Suspense } from 'react';
+﻿import React, { ComponentType, Suspense } from 'react';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 /**

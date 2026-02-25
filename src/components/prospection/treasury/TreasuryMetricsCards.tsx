@@ -1,4 +1,4 @@
-// src/components/prospection/treasury/TreasuryMetricsCards.tsx
+﻿// src/components/prospection/treasury/TreasuryMetricsCards.tsx
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Activity } from 'lucide-react';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 import type { Company } from '../../../types/company';

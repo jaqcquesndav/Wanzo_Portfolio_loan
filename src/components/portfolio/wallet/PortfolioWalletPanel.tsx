@@ -1,4 +1,4 @@
-// src/components/portfolio/wallet/PortfolioWalletPanel.tsx
+﻿// src/components/portfolio/wallet/PortfolioWalletPanel.tsx
 import React, { useState } from 'react';
 import {
   Wallet,

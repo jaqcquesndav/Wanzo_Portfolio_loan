@@ -1,4 +1,4 @@
-// src/utils/lazySuspense.tsx
+﻿// src/utils/lazySuspense.tsx
 import React from 'react';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
 import * as lazyComponents from '../routes/lazyRoutes';

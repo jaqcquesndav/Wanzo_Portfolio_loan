@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTraditionalPortfoliosQuery } from '../../hooks/queries';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
@@ -285,7 +285,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <AlertCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Erreur de chargement</h3>
             <p className="text-sm text-gray-600 mb-4">{dashboardError || riskError || operationsError}</p>
             <Button onClick={() => {
               refreshDashboard();
@@ -304,7 +304,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BarChart3Icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune donnée disponible</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Aucune donnée disponible</h3>
             <p className="text-sm text-gray-600">Sélectionnez un portefeuille pour voir les métriques.</p>
           </div>
         </div>
@@ -344,7 +344,7 @@ export const ProfessionalCreditDashboard: React.FC = () => {
                   <AlertCircleIcon className="h-6 w-6 text-yellow-600" />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {complianceSummary.totalPortfolios} portefeuilles • {complianceSummary.complianceRate}% conforme
                   </p>
                 </div>

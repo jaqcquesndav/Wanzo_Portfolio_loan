@@ -1,4 +1,4 @@
-// components/ui/StatusBadge.tsx
+﻿// components/ui/StatusBadge.tsx
 import { Badge } from './Badge';
 
 type StatusType = 'active' | 'completed' | 'defaulted' | 'restructured' | 'suspended' | 'in_litigation';

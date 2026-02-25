@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OnboardingBanner - Bannière d'information pour les portefeuilles vides
  * 
  * S'affiche quand un portefeuille existe mais n'a pas encore de demandes de crédit

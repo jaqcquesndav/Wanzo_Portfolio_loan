@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+﻿import { useParams, useNavigate } from 'react-router-dom';
 import { EditableAmortizationSchedule } from '../components/portfolio/traditional/contract/EditableAmortizationSchedule';
 import { useCreditContracts } from '../hooks/useCreditContracts';
 import { Card } from '../components/ui/Card';

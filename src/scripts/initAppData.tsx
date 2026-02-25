@@ -1,4 +1,4 @@
-// src/scripts/initAppData.tsx
+﻿// src/scripts/initAppData.tsx
 // Script d'initialisation des données de l'application au démarrage
 
 import { useEffect } from 'react';

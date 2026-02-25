@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Book } from 'lucide-react';
 import { DocumentationSidebar } from '../components/documentation/DocumentationSidebar';
 import { DocumentationContent } from '../components/documentation/DocumentationContent';

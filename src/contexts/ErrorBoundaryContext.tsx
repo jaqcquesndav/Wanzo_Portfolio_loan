@@ -1,4 +1,4 @@
-// src/contexts/ErrorBoundaryContext.tsx
+﻿// src/contexts/ErrorBoundaryContext.tsx
 import { createContext, useState, useCallback, ReactNode } from 'react';
 
 interface AppError {

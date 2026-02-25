@@ -237,7 +237,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Référence du contrat
                 </label>
                 <Input
@@ -249,7 +249,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Type de produit
                 </label>
                 <Input
@@ -261,7 +261,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Date de signature
                 </label>
                 <Input
@@ -274,7 +274,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Date d'échéance
                 </label>
                 <Input
@@ -297,7 +297,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Montant accordé
                 </label>
                 <Input
@@ -312,7 +312,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Montant restant dû
                 </label>
                 <Input
@@ -327,7 +327,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Taux d'intérêt (%)
                 </label>
                 <Input
@@ -343,7 +343,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Méthode d'amortissement
                 </label>
                 <Select
@@ -361,7 +361,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Durée (mois)
                 </label>
                 <Input
@@ -377,7 +377,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Période de grâce (mois)
                 </label>
                 <Input
@@ -400,7 +400,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Client
                 </label>
                 <Input
@@ -412,7 +412,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   ID du client
                 </label>
                 <Input
@@ -434,7 +434,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Statut du contrat
                 </label>
                 <Select
@@ -453,7 +453,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Classe de risque
                 </label>
                 <Select
@@ -472,7 +472,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Montant décaissé
                 </label>
                 <Input
@@ -486,7 +486,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Jours de retard
                 </label>
                 <Input
@@ -535,7 +535,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 </div>
                 <div className="mt-3 text-sm">
                   <div className="font-medium">Valeur totale des garanties:</div>
-                  <div className="text-gray-700">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(formData.guarantee_amount || 0)}</div>
+                  <div className="text-gray-700 dark:text-gray-300">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF' }).format(formData.guarantee_amount || 0)}</div>
                 </div>
               </div>
             ) : (
@@ -547,7 +547,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               <h4 className="text-md font-medium mb-3">Ajouter une garantie</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Type de garantie
                   </label>
                   <Select
@@ -570,7 +570,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Valeur
                   </label>
                   <Input
@@ -584,7 +584,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Statut
                   </label>
                   <Select
@@ -604,7 +604,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Référence
                   </label>
                   <Input
@@ -619,7 +619,7 @@ export function EditContractForm({ contract, isOpen, onClose, onSave }: EditCont
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Description
                   </label>
                   <TextArea

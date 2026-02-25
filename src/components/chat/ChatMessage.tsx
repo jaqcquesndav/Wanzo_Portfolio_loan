@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { User, Bot, Copy, ThumbsUp, ThumbsDown, Check, Pencil, FileText, Image, Download, Sparkles } from 'lucide-react';
 import { MessageContent } from './MessageContent';
 import type { Message, Contact } from '../../types/chat';

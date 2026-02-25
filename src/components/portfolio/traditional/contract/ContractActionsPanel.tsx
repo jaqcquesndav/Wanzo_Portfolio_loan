@@ -119,7 +119,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
 
         {/* Actions de changement de statut */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-700">Changer le statut</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Changer le statut</h4>
           
           {/* Actions disponibles selon le statut actuel */}
           {contract.status === 'active' && (
@@ -246,7 +246,7 @@ export function ContractActionsPanel({ contract, onConfigure, onRefresh, onEdit 
           
           <div className="space-y-4">
             <div>
-              <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Raison du changement (optionnel)
               </label>
               <textarea

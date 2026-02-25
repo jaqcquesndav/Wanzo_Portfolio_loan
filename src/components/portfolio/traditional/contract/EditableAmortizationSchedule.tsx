@@ -550,7 +550,7 @@ export function EditableAmortizationSchedule({
             {/* Pagination - toujours afficher pour le debugging */}
             <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
               <div className="flex items-center">
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   Affichage de <span className="font-medium">{((currentPage - 1) * pageSize) + 1}</span> à{' '}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalItems)}</span> sur{' '}
                   <span className="font-medium">{totalItems}</span> Résultats

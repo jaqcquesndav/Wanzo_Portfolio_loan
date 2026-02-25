@@ -1,4 +1,4 @@
-import { initializeMockData } from './services/storage/mockDataInitializer';
+﻿import { initializeMockData } from './services/storage/mockDataInitializer';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';

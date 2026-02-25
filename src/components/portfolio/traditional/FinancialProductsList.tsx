@@ -50,7 +50,7 @@ export function FinancialProductsList({ products, onViewDetails }: FinancialProd
           </div>
 
           <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-900">Secteurs cibles</h4>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white">Secteurs cibles</h4>
             <div className="flex flex-wrap gap-2">
               {product.requirements.map((req, index) => (
                 <span 

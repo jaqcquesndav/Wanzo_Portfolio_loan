@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, FileText, Calendar, Users, 
@@ -66,7 +66,7 @@ export function QuickActions() {
           <div className={`${action.color} w-12 h-12 rounded-full flex items-center justify-center text-white mb-3`}>
             {action.icon}
           </div>
-          <h3 className="text-lg font-medium text-gray-900">{action.label}</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{action.label}</h3>
           <p className="text-sm text-gray-500 mt-1">{action.description}</p>
         </button>
       ))}

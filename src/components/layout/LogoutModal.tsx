@@ -1,4 +1,4 @@
-import { ConfirmModal } from '../ui/ConfirmModal';
+﻿import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface LogoutModalProps {
   open: boolean;

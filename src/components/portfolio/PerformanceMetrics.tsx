@@ -1,4 +1,4 @@
-// src/components/portfolio/PortfolioMetrics.tsx
+﻿// src/components/portfolio/PortfolioMetrics.tsx
 import React from 'react';
 import { TrendingUp, AlertTriangle, DollarSign } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
@@ -18,7 +18,7 @@ export function PortfolioMetrics({ portfolio }: PortfolioMetricsProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-sm text-gray-500">Valeur nette</p>
-          <p className="text-xl font-semibold text-gray-900">
+          <p className="text-xl font-semibold text-gray-900 dark:text-white">
             {formatCurrency(portfolio.metrics.net_value, undefined, 'USD')}
           </p>
         </div>
@@ -32,26 +32,26 @@ export function PortfolioMetrics({ portfolio }: PortfolioMetricsProps) {
 
         <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-sm text-gray-500">Ratio de Sharpe</p>
-          <p className="text-xl font-semibold text-gray-900">
+          <p className="text-xl font-semibold text-gray-900 dark:text-white">
             {portfolio.metrics.sharpe_ratio}
           </p>
         </div>
 
         <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-sm text-gray-500">Volatilité</p>
-          <p className="text-xl font-semibold text-gray-900">
+          <p className="text-xl font-semibold text-gray-900 dark:text-white">
             {portfolio.metrics.volatility}%
           </p>
         </div>
       </div>
 
       <div className="mt-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-4">Allocation des actifs</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">Allocation des actifs</h3>
         <div className="space-y-2">
           {portfolio.metrics.asset_allocation.map((asset) => (
             <div key={asset.type} className="flex justify-between items-center">
               <span className="text-sm text-gray-600">{asset.type}</span>
-              <span className="text-sm font-medium text-gray-900">{asset.percentage}%</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">{asset.percentage}%</span>
             </div>
           ))}
         </div>

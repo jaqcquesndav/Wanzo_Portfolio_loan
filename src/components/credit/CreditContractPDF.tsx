@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from 'react';
+﻿import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { CreditContract } from '../../types/credit-contract';
 import { formatAmount, formatDate, formatStatus } from '../../utils/credit';
 import { QRCodeSVG } from 'qrcode.react';

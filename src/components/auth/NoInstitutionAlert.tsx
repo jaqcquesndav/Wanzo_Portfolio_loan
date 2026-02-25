@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Composant d'alerte pour les utilisateurs sans institution
  * 
  * Affiché quand le user est authentifié mais n'a pas d'institution associée.

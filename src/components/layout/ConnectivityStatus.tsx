@@ -1,4 +1,4 @@
-// src/components/layout/ConnectivityStatus.tsx
+﻿// src/components/layout/ConnectivityStatus.tsx
 import React from 'react';
 import { useConnectivity } from '../../hooks/useConnectivity';
 import { useSyncManager } from '../../hooks/useSyncManager';

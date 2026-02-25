@@ -1,4 +1,4 @@
-// Helpers pour formater les données de manière uniforme
+﻿// Helpers pour formater les données de manière uniforme
 
 
 export const formatters = {

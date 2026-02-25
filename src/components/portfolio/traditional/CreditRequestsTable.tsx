@@ -29,17 +29,17 @@ interface CreditRequestsTableProps {
 
 // Mapping des statuts pour l'affichage cohérent
 const statusConfig: Record<CreditRequestStatus, { label: string; variant: "success" | "error" | "warning" | "primary" | "secondary"; color: string }> = {
-  'draft': { label: 'Brouillon', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
+  'draft': { label: 'Brouillon', variant: 'secondary', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
   'submitted': { label: 'Soumise', variant: 'secondary', color: 'bg-indigo-100 text-indigo-700' },
   'under_review': { label: 'En revue', variant: 'warning', color: 'bg-orange-100 text-orange-700' },
   'pending': { label: 'En attente', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
   'analysis': { label: 'En analyse', variant: 'primary', color: 'bg-blue-100 text-blue-700' },
   'approved': { label: 'Approuvée', variant: 'success', color: 'bg-green-100 text-green-700' },
   'rejected': { label: 'Rejetée', variant: 'error', color: 'bg-red-100 text-red-700' },
-  'canceled': { label: 'Annulée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
+  'canceled': { label: 'Annulée', variant: 'secondary', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
   'disbursed': { label: 'Décaissée', variant: 'primary', color: 'bg-blue-100 text-blue-700' },
   'active': { label: 'Active', variant: 'success', color: 'bg-green-100 text-green-700' },
-  'closed': { label: 'Fermée', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
+  'closed': { label: 'Fermée', variant: 'secondary', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
   'defaulted': { label: 'En défaut', variant: 'error', color: 'bg-red-100 text-red-700' },
   'restructured': { label: 'Restructurée', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
   'consolidated': { label: 'Consolidée', variant: 'primary', color: 'bg-blue-100 text-blue-700' },

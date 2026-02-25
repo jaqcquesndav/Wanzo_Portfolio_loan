@@ -1,4 +1,4 @@
-// src/components/prospection/treasury/TreasuryPeriodFilter.tsx
+﻿// src/components/prospection/treasury/TreasuryPeriodFilter.tsx
 import { Calendar, TrendingUp } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import type { TimeseriesScale, TreasuryPeriod } from '../../../types/company';

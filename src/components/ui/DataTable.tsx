@@ -1,4 +1,4 @@
-// src/components/ui/DataTable.tsx
+﻿// src/components/ui/DataTable.tsx
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { EmptyState } from './EmptyState';

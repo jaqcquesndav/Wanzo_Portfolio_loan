@@ -1,4 +1,4 @@
-// src/components/common/SubscriptionErrorBanner.tsx
+﻿// src/components/common/SubscriptionErrorBanner.tsx
 /**
  * Bannière d'affichage des erreurs d'abonnement et quota
  * 

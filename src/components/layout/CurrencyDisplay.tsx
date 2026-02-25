@@ -1,4 +1,4 @@
-import { useCurrencyContext } from '../../hooks/useCurrencyContext';
+﻿import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 
 export function CurrencyDisplay() {
   const { currency, getExchangeRates, lastUpdated } = useCurrencyContext();

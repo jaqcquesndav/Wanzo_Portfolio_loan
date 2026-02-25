@@ -1,4 +1,4 @@
-// src/components/dashboard/EnhancedDashboard.tsx
+﻿// src/components/dashboard/EnhancedDashboard.tsx
 import React from 'react';
 import { DashboardMetrics } from '../../types/dashboard';
 import EnhancedPortfolioDashboard from './EnhancedPortfolioDashboard';

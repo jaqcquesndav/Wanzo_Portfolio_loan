@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Calendar, Filter, HelpCircle, RefreshCw, BarChart3, X } from 'lucide-react';
 import { usePortfolioType } from '../../hooks/usePortfolioType';

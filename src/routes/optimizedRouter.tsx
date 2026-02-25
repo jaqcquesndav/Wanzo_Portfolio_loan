@@ -1,4 +1,4 @@
-// src/routes/optimizedRouter.tsx
+﻿// src/routes/optimizedRouter.tsx
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import * as components from './suspenseComponents';
 import Organization from '../pages/Organization';

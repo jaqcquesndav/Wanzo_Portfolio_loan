@@ -206,7 +206,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
             </div>
           ) : (
             <div className="mt-1 flex items-center group">
-              <dd className="text-sm text-gray-900">{value}</dd>
+              <dd className="text-sm text-gray-900 dark:text-white">{value}</dd>
               {onUpdate && (
                 <Button 
                   variant="ghost" 
@@ -440,7 +440,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
                     <div className="mr-2">{item.icon}</div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">{item.label}</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{item.displayValue || item.value}</dd>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{item.displayValue || item.value}</dd>
                     </div>
                   </div>
                 )
@@ -467,7 +467,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
                     <div className="mr-2">{item.icon}</div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">{item.label}</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{item.displayValue || item.value}</dd>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{item.displayValue || item.value}</dd>
                     </div>
                   </div>
                 )
@@ -494,7 +494,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
                     <div className="mr-2">{item.icon}</div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">{item.label}</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{item.displayValue || item.value}</dd>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{item.displayValue || item.value}</dd>
                     </div>
                   </div>
                 )
@@ -521,7 +521,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
                     <div className="mr-2">{item.icon}</div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">{item.label}</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{item.displayValue || item.value}</dd>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{item.displayValue || item.value}</dd>
                     </div>
                   </div>
                 )
@@ -537,7 +537,7 @@ export default function ContractDetails({ contract, onUpdate }: ContractDetailsP
           {contract.documents && contract.documents.length > 0 ? (
             <div className="space-y-2">
               {contract.documents.map(doc => (
-                <p key={doc.id} className="text-sm text-gray-700">
+                <p key={doc.id} className="text-sm text-gray-700 dark:text-gray-300">
                   <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
                     <DocumentIcon className="h-5 w-5 mr-2" />
                     {doc.name}

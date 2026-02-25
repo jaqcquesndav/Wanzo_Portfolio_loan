@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+﻿import { ReactNode } from 'react';
 import { Pagination } from './Pagination';
 import { useTablePagination } from '../../hooks/useTablePagination';
 import { Column } from './TableTypes';

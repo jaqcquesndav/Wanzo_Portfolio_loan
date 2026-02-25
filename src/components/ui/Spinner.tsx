@@ -1,4 +1,4 @@
-// src/components/ui/Spinner.tsx
+﻿// src/components/ui/Spinner.tsx
 import { cn } from '../../utils/cn';
 
 interface SpinnerProps {

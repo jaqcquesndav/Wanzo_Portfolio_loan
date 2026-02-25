@@ -1,4 +1,4 @@
-import { Switch } from '../../ui/Switch';
+﻿import { Switch } from '../../ui/Switch';
 import { useApplicationSettings } from '../../../hooks/useSettingsApi';
 import { useTranslation } from 'react-i18next';
 

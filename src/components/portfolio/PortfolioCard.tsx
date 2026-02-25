@@ -1,4 +1,4 @@
-// import React from 'react';
+﻿// import React from 'react';
 import { TrendingUp, Users, Target, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';

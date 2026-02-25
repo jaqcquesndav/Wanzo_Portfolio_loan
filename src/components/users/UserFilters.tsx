@@ -1,4 +1,4 @@
-// @ts-expect-error -- React is used for JSX
+﻿// @ts-expect-error -- React is used for JSX
 import React from 'react';
 import { Search } from 'lucide-react';
 import { FormField, Input, Select } from '../ui/Form';

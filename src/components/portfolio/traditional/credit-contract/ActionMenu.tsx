@@ -41,7 +41,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
     >
       <div className="py-1" role="menu" aria-orientation="vertical">
         <button
-          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100"
           role="menuitem"
           onClick={() => onNavigate(`/app/traditional/portfolio/${portfolioId}/contracts/${contract.id}`)}
         >
@@ -53,7 +53,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
         </button>
 
         <button
-          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100"
           role="menuitem"
           onClick={onViewSchedule}
         >
@@ -64,7 +64,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
         </button>
         
         <button
-          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100"
           role="menuitem"
           onClick={onGeneratePDF}
         >
@@ -78,7 +78,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
           <>
             <div className="border-t border-gray-100 my-1"></div>
             <button
-              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100"
               role="menuitem"
               onClick={() => onChangeStatus('suspended')}
             >
@@ -88,7 +88,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
               Suspendre
             </button>
             <button
-              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100"
               role="menuitem"
               onClick={() => onChangeStatus('completed')}
             >
@@ -124,7 +124,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
           <>
             <div className="border-t border-gray-100 my-1"></div>
             <button
-              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100"
               role="menuitem"
               onClick={() => onChangeStatus('active')}
             >

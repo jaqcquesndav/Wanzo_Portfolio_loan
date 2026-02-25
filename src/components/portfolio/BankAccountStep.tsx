@@ -1,4 +1,4 @@
-// src/components/portfolio/BankAccountStep.tsx
+﻿// src/components/portfolio/BankAccountStep.tsx
 /**
  * Étape 2 du formulaire de création : Association compte bancaire OU Mobile Money
  * Conforme aux pratiques bancaires RDC

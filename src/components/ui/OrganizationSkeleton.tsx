@@ -1,4 +1,4 @@
-export function OrganizationSkeleton() {
+﻿export function OrganizationSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
       {/* Header */}

@@ -1,4 +1,4 @@
-// src/components/ui/ErrorState.tsx
+﻿// src/components/ui/ErrorState.tsx
 import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from './Button';
 

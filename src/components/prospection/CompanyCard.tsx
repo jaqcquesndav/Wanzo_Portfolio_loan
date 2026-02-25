@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Building, Users, TrendingUp, MessageSquare, Calendar, Globe, Star, Leaf } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+﻿import { useParams, useNavigate } from 'react-router-dom';
 import { useCreditContracts } from '../hooks/useCreditContracts';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb } from '../components/common/Breadcrumb';

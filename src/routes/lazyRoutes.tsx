@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+﻿import { lazy } from 'react';
 
 // Composants essentiels au chargement initial (non lazy loaded)
 // Utiliser le nouveau LayoutWithPanels qui supporte le split-view

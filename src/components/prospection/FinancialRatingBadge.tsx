@@ -1,4 +1,4 @@
-// src/components/prospection/FinancialRatingBadge.tsx
+﻿// src/components/prospection/FinancialRatingBadge.tsx
 import type { FinancialRating } from '../../types/company';
 
 interface FinancialRatingBadgeProps {

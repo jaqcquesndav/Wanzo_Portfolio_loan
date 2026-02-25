@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+﻿import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './Button';
 
 interface PaginationProps {
@@ -32,7 +32,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, showPageNumb
       
       <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
             Page <span className="font-medium">{currentPage}</span> sur{' '}
             <span className="font-medium">{totalPages}</span>
           </p>

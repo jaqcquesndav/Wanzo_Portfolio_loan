@@ -1,4 +1,4 @@
-import { MessageSquare, Trash2, Plus, Clock, ChevronRight } from 'lucide-react';
+﻿import { MessageSquare, Trash2, Plus, Clock, ChevronRight } from 'lucide-react';
 import type { Conversation } from '../../types/chat';
 
 interface ConversationListProps {

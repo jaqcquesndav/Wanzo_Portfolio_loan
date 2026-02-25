@@ -1,4 +1,4 @@
-// src/components/ui/EmptyState.tsx
+﻿// src/components/ui/EmptyState.tsx
 import { LucideIcon } from 'lucide-react';
 import { Button } from './Button';
 

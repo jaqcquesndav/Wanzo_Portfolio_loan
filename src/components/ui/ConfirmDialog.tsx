@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './Dialog';
+﻿import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './Dialog';
 import { Button } from './Button';
 
 interface ConfirmDialogProps {

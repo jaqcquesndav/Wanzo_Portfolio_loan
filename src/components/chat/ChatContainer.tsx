@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageSquare, Maximize2, Minimize2, X, Send, Smile, Paperclip, Mic, MicOff, Copy, ThumbsUp, ThumbsDown, Sparkles, AlignJustify, AlertCircle, Loader2, Zap, User, Bot, RefreshCw, MessagesSquare, BarChart3, TrendingUp, FileText, HelpCircle, Square, Volume2 } from 'lucide-react';
 import { useChatStore } from '../../hooks/useChatStore';
 import { useAdhaWriteMode } from '../../hooks/useAdhaWriteMode';

@@ -1,4 +1,4 @@
-// components/ui/AlertDialog.tsx
+﻿// components/ui/AlertDialog.tsx
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './Dialog';
 import { Button } from './Button';

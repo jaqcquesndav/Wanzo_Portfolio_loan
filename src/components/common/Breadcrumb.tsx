@@ -1,4 +1,4 @@
-// import React from 'react'; // (not needed in modern React)
+﻿// import React from 'react'; // (not needed in modern React)
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 
@@ -44,7 +44,7 @@ export function Breadcrumb({ items, portfolioType }: BreadcrumbProps) {
                 {item.label}
               </Link>
             ) : (
-              <span className="ml-4 text-sm font-medium text-gray-700">
+              <span className="ml-4 text-sm font-medium text-gray-700 dark:text-gray-300">
                 {item.label}
               </span>
             )}

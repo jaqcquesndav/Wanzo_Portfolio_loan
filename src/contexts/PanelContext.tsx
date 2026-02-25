@@ -1,4 +1,4 @@
-// Re-export everything from the split files for backward compatibility
+﻿// Re-export everything from the split files for backward compatibility
 // Types and context
 export { 
   PanelContext,

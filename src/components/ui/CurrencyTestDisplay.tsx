@@ -1,4 +1,4 @@
-import { useCurrencyContext } from '../../hooks/useCurrencyContext';
+﻿import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 import { Badge } from './Badge';
 
 interface CurrencyTestDisplayProps {

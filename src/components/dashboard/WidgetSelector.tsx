@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Composant de sélection des widgets pour customiser le dashboard
  * Version flottante et draggable
  */
@@ -188,7 +188,7 @@ export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
                 <GripVerticalIcon className={`h-4 w-4 transition-colors ${
                   isDragging ? 'text-blue-500' : 'text-gray-400'
                 }`} />
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Widgets du Dashboard
                 </h3>
               </div>
@@ -236,7 +236,7 @@ export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {Object.entries(groupedWidgets).map(([category, categoryWidgets]) => (
                     <div key={category}>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2 border-b border-gray-100 pb-1">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 border-b border-gray-100 pb-1">
                         {categoryLabels[category as keyof typeof categoryLabels]}
                       </h4>
                       <div className="space-y-2">
@@ -247,7 +247,7 @@ export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm font-medium text-gray-900">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
                                   {widget.title}
                                 </span>
                                 <Badge 
@@ -256,7 +256,7 @@ export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
                                     widget.size === 'small' ? 'bg-green-100 text-green-700' :
                                     widget.size === 'medium' ? 'bg-blue-100 text-blue-700' :
                                     widget.size === 'large' ? 'bg-purple-100 text-purple-700' :
-                                    'bg-gray-100 text-gray-700'
+                                    'bg-gray-100 text-gray-700 dark:text-gray-300'
                                   }`}
                                 >
                                   {widget.size}

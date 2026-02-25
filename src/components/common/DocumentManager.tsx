@@ -1,4 +1,4 @@
-// src/components/common/DocumentManager.tsx
+﻿// src/components/common/DocumentManager.tsx
 import React, { useState } from 'react';
 import { PlusCircle, File, Trash2, Download, Eye, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';

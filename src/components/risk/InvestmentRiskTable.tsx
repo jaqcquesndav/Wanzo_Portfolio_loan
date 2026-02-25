@@ -1,4 +1,4 @@
-// src/components/risk/InvestmentRiskTable.tsx.new
+﻿// src/components/risk/InvestmentRiskTable.tsx.new
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { InvestmentRiskEntry } from '../../data/mockCentraleRisque';

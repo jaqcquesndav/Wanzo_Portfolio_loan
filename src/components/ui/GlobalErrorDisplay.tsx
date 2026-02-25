@@ -1,4 +1,4 @@
-// src/components/ui/GlobalErrorDisplay.tsx
+﻿// src/components/ui/GlobalErrorDisplay.tsx
 import { X, AlertTriangle, Wifi, Clock, RefreshCw } from 'lucide-react';
 import { useErrorBoundary } from '../../hooks/useErrorBoundary';
 import { Button } from './Button';

@@ -1,4 +1,4 @@
-// src/routes/createLazyRouter.tsx
+﻿// src/routes/createLazyRouter.tsx
 import React from 'react';
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import { withSuspense } from '../utils/withSuspense';

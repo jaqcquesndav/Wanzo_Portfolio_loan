@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+﻿import { useState, useMemo, useCallback } from 'react';
 import { 
   ArrowLeft, Download, Copy, Check, Phone, Mail, Globe, Users, Building2, Shield, Briefcase,
   Building, Wrench, Car, Package, BarChart3, Settings, FileText, Landmark, Smartphone,
@@ -1400,7 +1400,7 @@ function AssetsTable({ assets, showCategory = true }: { assets: Asset[]; showCat
               </td>
               <td className="px-4 py-3">
                 {asset.etatActuel ? (
-                  <span className={`px-2 py-1 rounded-full text-xs ${conditionColors[asset.etatActuel] || 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`px-2 py-1 rounded-full text-xs ${conditionColors[asset.etatActuel] || 'bg-gray-100 text-gray-800 dark:text-gray-100'}`}>
                     {conditionLabels[asset.etatActuel] || asset.etatActuel}
                   </span>
                 ) : (
@@ -1516,7 +1516,7 @@ function StocksTable({ stocks }: { stocks: Stock[] }): JSX.Element {
                 </td>
                 <td className="px-4 py-3">
                   {stock.etatStock ? (
-                    <span className={`px-2 py-1 rounded-full text-xs ${conditionColors[stock.etatStock] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs ${conditionColors[stock.etatStock] || 'bg-gray-100 text-gray-800 dark:text-gray-100'}`}>
                       {conditionLabels[stock.etatStock] || stock.etatStock}
                     </span>
                   ) : (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 // Import individual icons to avoid path issues
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { TrashIcon } from '@heroicons/react/24/outline';
@@ -242,7 +242,7 @@ export function AccountsPanel({
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                   accountType === 'bank'
                     ? 'border-primary bg-primary-light text-primary'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-primary/30'
+                    : 'border-gray-300 bg-white text-gray-700 dark:text-gray-300 hover:border-primary/30'
                 } ${editingId ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span className="font-medium">Compte bancaire</span>
@@ -255,7 +255,7 @@ export function AccountsPanel({
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                   accountType === 'mobile_money'
                     ? 'border-primary bg-primary-light text-primary'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-primary/30'
+                    : 'border-gray-300 bg-white text-gray-700 dark:text-gray-300 hover:border-primary/30'
                 } ${editingId ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span className="font-medium">Mobile Money</span>

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Page de diagnostic Auth0
  * Accessible via /auth/debug pour aider à résoudre les problèmes d'authentification
  */

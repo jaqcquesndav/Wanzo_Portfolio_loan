@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { DollarSign, Calendar, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -13,7 +13,7 @@ interface SecurityOpportunitiesProps {
 export function SecurityOpportunities({ opportunities, onViewDetails }: SecurityOpportunitiesProps) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Opportunités d'investissement</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Opportunités d'investissement</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {opportunities.map((opportunity, index) => (

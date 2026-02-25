@@ -1,4 +1,4 @@
-// components/ui/FileUpload.tsx
+﻿// components/ui/FileUpload.tsx
 import React, { useState, useRef } from 'react';
 import { Upload, X, Check, AlertCircle } from 'lucide-react';
 import { Button } from './Button';

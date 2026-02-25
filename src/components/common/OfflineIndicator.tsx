@@ -1,4 +1,4 @@
-import { WifiOff, Clock, CheckCircle } from 'lucide-react';
+﻿import { WifiOff, Clock, CheckCircle } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface OfflineIndicatorProps {

@@ -1,4 +1,4 @@
-import { Bot, Sparkles } from 'lucide-react';
+﻿import { Bot, Sparkles } from 'lucide-react';
 
 interface TypingIndicatorProps {
   mode?: 'typing' | 'thinking' | 'processing' | 'streaming';

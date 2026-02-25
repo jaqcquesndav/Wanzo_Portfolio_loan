@@ -1,4 +1,4 @@
-// src/components/portfolio/DefaultPortfolioForm.tsx
+﻿// src/components/portfolio/DefaultPortfolioForm.tsx
 /**
  * Formulaire de création de portefeuille - Étape 1: Informations de base
  * Conforme aux standards OHADA/RDC

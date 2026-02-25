@@ -1,4 +1,4 @@
-// @ts-expect-error -- React is used for JSX
+﻿// @ts-expect-error -- React is used for JSX
 import React from 'react';
 import { Mail, Phone, Edit, Trash2, UserCog, ShieldCheck, Briefcase, Globe } from 'lucide-react';
 import { Button } from '../ui/Button';

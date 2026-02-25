@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+﻿import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useCurrencyContext } from '../../hooks/useCurrencyContext';
 
 const mockData = {

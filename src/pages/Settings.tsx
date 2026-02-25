@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+﻿import { useState, Suspense } from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SettingsTabs } from '../components/settings/SettingsTabs';

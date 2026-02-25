@@ -1,4 +1,4 @@
-// src/utils/withSuspense.tsx
+﻿// src/utils/withSuspense.tsx
 import { Suspense } from 'react';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
 

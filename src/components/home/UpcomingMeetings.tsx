@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Calendar, Video, MapPin } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { Button } from '../ui/Button';
@@ -39,7 +39,7 @@ export function UpcomingMeetings() {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-medium text-gray-900">Prochains rendez-vous</h2>
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Prochains rendez-vous</h2>
         <Button variant="outline" size="sm" icon={<Calendar className="h-4 w-4" />}>
           Voir tout
         </Button>
@@ -60,7 +60,7 @@ export function UpcomingMeetings() {
             </div>
             <div className="ml-4 flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900">{meeting.title}</h3>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">{meeting.title}</h3>
                 <span className="text-sm text-gray-500">
                   {meeting.time}
                 </span>

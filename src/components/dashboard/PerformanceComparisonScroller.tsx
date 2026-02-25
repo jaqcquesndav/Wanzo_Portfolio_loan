@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+﻿import React, { useRef, useState, useEffect } from 'react';
 import type { Portfolio } from '../../types/portfolio';
 import { PerformanceComparisonCard } from './PerformanceComparisonCard';
 import { getPortfoliosByType, getCurrentPortfolio } from '../../services/dashboard/portfolioService';

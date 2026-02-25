@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Plus, Trash2, MapPin } from 'lucide-react';
 import { Button } from './Button';
 import { LocationPicker, Coordinates } from './LocationPicker';

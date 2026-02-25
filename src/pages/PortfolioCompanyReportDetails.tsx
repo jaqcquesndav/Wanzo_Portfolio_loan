@@ -1,4 +1,4 @@
-import { mockCompanies } from '../data/mockCompanies';
+﻿import { mockCompanies } from '../data/mockCompanies';
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolioCompanyReports } from '../hooks/usePortfolioCompanyReports';

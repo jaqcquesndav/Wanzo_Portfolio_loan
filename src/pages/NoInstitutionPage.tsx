@@ -1,4 +1,4 @@
-// src/pages/NoInstitutionPage.tsx
+﻿// src/pages/NoInstitutionPage.tsx
 // Page affichée quand un utilisateur authentifié n'a pas d'institution associée.
 // Accessible via /institution/required
 

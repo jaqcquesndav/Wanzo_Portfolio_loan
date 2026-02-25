@@ -1,4 +1,4 @@
-// src/components/risk/LeasingRiskTable.tsx.new
+﻿// src/components/risk/LeasingRiskTable.tsx.new
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { LeasingRiskEntry } from '../../data/mockCentraleRisque';

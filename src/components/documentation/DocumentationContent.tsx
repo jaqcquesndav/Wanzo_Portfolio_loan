@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { DOCUMENTATION_CONTENT } from './constants';
 import type { DocumentationSection, DocumentationContentType } from './types';
 

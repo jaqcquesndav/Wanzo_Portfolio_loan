@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Performance Provider - Contexte global pour la performance
  * Gère la qualité réseau, les animations, et le chargement adaptatif
  */

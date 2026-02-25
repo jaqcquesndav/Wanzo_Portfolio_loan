@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Page d'accès refusé / non autorisé.
  *
  * Utilisée dans deux cas :

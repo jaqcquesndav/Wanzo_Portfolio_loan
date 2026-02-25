@@ -1,4 +1,4 @@
-import { useRouteError, Link } from 'react-router-dom';
+﻿import { useRouteError, Link } from 'react-router-dom';
 import { AlertCircle, Home, RefreshCw } from 'lucide-react';
 import { Button } from './ui/Button';
 

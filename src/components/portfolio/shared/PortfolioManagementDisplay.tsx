@@ -1,4 +1,4 @@
-import type { Portfolio } from '../../../types/portfolio';
+﻿import type { Portfolio } from '../../../types/portfolio';
 
 interface PortfolioManagementDisplayProps {
   portfolio: Portfolio;

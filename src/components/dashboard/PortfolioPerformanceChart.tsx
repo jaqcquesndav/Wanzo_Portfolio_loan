@@ -1,4 +1,4 @@
-import { Line } from 'react-chartjs-2';
+﻿import { Line } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
 import {
   Chart,

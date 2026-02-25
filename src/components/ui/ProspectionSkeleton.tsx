@@ -1,4 +1,4 @@
-import { cn } from '../../utils/cn';
+﻿import { cn } from '../../utils/cn';
 
 interface ProspectionSkeletonProps {
   view?: 'list' | 'map';

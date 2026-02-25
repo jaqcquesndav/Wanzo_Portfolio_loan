@@ -1,4 +1,4 @@
-// src/components/layout/PageLayout.tsx
+﻿// src/components/layout/PageLayout.tsx
 import React from 'react';
 import { PageHeader } from '../ui/PageHeader';
 import { Breadcrumb } from '../common/Breadcrumb';

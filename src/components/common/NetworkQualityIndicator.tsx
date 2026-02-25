@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Composant d'indicateur de qualité réseau
  * Affiche un badge visuel de l'état de la connexion
  */

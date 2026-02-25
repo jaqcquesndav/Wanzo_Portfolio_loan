@@ -1,4 +1,4 @@
-// src/components/dashboard/OHADACharts.tsx
+﻿// src/components/dashboard/OHADACharts.tsx
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -211,7 +211,7 @@ export const OHADACharts: React.FC<OHADAChartsProps> = ({ metrics, selectedMetri
                 {/* Centre du graphique */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">
+                    <div className="text-lg font-bold text-gray-900 dark:text-white">
                       {selectedMetrics.balanceAGE.current}%
                     </div>
                     <div className="text-xs text-gray-600">Courant</div>

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+﻿import { useRef, useState, useEffect } from 'react';
 import { MoreVertical } from 'lucide-react';
 
 interface PortfolioActionsDropdownProps {
@@ -60,7 +60,7 @@ export function PortfolioActionsDropdown({ onAction, actions, buttonClassName }:
               <button
                 key={action.key}
                 onClick={e => { e.stopPropagation(); setOpen(false); onAction(action.key); }}
-                className="block w-full text-left px-4 py-2 text-sm rounded transition-colors duration-150 text-gray-700 hover:bg-primary hover:text-white focus:bg-primary focus:text-white"
+                className="block w-full text-left px-4 py-2 text-sm rounded transition-colors duration-150 text-gray-700 dark:text-gray-300 hover:bg-primary hover:text-white focus:bg-primary focus:text-white"
                 tabIndex={0}
               >
                 {action.label}

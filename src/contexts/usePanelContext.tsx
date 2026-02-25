@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+﻿import { useContext } from 'react';
 import { PanelContext, PanelType } from './panelTypes';
 
 // Hook principal pour utiliser le contexte des panels

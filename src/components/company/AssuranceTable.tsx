@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Shield, Calendar, AlertTriangle } from 'lucide-react';
 import type { Insurance, Currency } from '../../types/company';
 

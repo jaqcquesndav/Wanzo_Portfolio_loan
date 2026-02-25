@@ -1,4 +1,4 @@
-// src/components/prospection/CompanyListPaginated.tsx.new
+﻿// src/components/prospection/CompanyListPaginated.tsx.new
 import { useState, useMemo, ReactNode } from 'react';
 import { Button } from '../ui/Button';
 import { Eye, TrendingUp, TrendingDown } from 'lucide-react';

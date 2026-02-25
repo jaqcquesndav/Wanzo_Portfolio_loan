@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { AdvancedReportingTable } from '../components/reports/AdvancedReportingTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { BarChart2, PieChart, LineChart, Map as MapIcon } from 'lucide-react';

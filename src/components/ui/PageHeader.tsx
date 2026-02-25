@@ -1,4 +1,4 @@
-// src/components/ui/PageHeader.tsx
+﻿// src/components/ui/PageHeader.tsx
 import React from 'react';
 
 interface PageHeaderProps {
@@ -11,7 +11,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <div className="flex justify-between items-start">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{title}</h1>
         {description && (
           <p className="mt-1 text-sm text-gray-500">{description}</p>
         )}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OnboardingWelcome - Composant d'accueil pour les nouveaux utilisateurs
  * 
  * Ce composant s'affiche quand un utilisateur est connecté mais n'a pas encore

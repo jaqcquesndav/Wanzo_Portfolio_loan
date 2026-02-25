@@ -1,4 +1,4 @@
-import { Shield, Bell, Languages, DollarSign } from 'lucide-react';
+﻿import { Shield, Bell, Languages, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SecuritySettings } from './sections/SecuritySettings';
 import { NotificationSettings } from './sections/NotificationSettings';

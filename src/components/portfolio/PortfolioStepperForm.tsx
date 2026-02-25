@@ -1,4 +1,4 @@
-// src/components/portfolio/PortfolioStepperForm.tsx
+﻿// src/components/portfolio/PortfolioStepperForm.tsx
 /**
  * Formulaire de création de portefeuille en 2 étapes
  * Étape 1: Informations de base (nom, devise, capital, période)

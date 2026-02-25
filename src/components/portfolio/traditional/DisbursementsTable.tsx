@@ -29,14 +29,14 @@ interface DisbursementsTableProps {
 
 // Configuration pour l'affichage des statuts (conformes à DisbursementStatus enum)
 const statusConfig = {
-  'draft': { label: 'Brouillon', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
+  'draft': { label: 'Brouillon', variant: 'secondary', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
   'pending': { label: 'En attente', variant: 'warning', color: 'bg-yellow-100 text-yellow-700' },
   'approved': { label: 'Approuvé', variant: 'info', color: 'bg-blue-100 text-blue-700' },
   'rejected': { label: 'Rejeté', variant: 'danger', color: 'bg-red-100 text-red-700' },
   'processing': { label: 'En traitement', variant: 'info', color: 'bg-blue-100 text-blue-700' },
   'completed': { label: 'Effectué', variant: 'success', color: 'bg-green-100 text-green-700' },
   'failed': { label: 'Échoué', variant: 'danger', color: 'bg-red-100 text-red-700' },
-  'canceled': { label: 'Annulé', variant: 'secondary', color: 'bg-gray-100 text-gray-700' },
+  'canceled': { label: 'Annulé', variant: 'secondary', color: 'bg-gray-100 text-gray-700 dark:text-gray-300' },
 };
 
 export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({ 

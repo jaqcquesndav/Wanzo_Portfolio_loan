@@ -1,4 +1,4 @@
-// src/components/users/UsersTable.tsx
+﻿// src/components/users/UsersTable.tsx
 import { useState, useCallback } from 'react';
 import { Users, UserPlus, Search, Filter } from 'lucide-react';
 import { DataTable } from '../ui/DataTable';

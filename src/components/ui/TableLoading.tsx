@@ -1,4 +1,4 @@
-import { Table, TableHead, TableBody, TableRow, TableCell, TableHeader } from './Table';
+﻿import { Table, TableHead, TableBody, TableRow, TableCell, TableHeader } from './Table';
 
 interface TableLoadingProps {
   rows?: number;

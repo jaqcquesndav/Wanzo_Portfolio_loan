@@ -1,4 +1,4 @@
-// components/ui/SimpleSelect.tsx
+﻿// components/ui/SimpleSelect.tsx
 import React from 'react';
 
 interface SimpleSelectProps<T extends string = string> {

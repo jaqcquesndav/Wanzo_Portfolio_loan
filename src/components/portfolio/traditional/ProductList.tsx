@@ -21,7 +21,7 @@ export function ProductList({ products, onEdit, onDelete, onView }: ProductListP
       header: 'Produit',
       accessor: (product: FinancialProduct) => (
         <>
-          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+          <div className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</div>
           <div className="text-sm text-gray-500">
             {product.isPublic ? 'Public' : 'Privé'}
           </div>
@@ -52,7 +52,7 @@ export function ProductList({ products, onEdit, onDelete, onView }: ProductListP
       header: 'Montant',
       accessor: (product: FinancialProduct) => (
         <>
-          <div className="text-sm text-gray-900">
+          <div className="text-sm text-gray-900 dark:text-white">
             Min: {product.minAmount.toLocaleString()} FCFA
           </div>
           <div className="text-sm text-gray-500">

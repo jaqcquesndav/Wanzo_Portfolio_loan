@@ -85,11 +85,11 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
       case 'saisie':
         return 'bg-red-100 text-red-800';
       case 'expiRée':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:text-gray-100';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:text-gray-100';
     }
   };
 
@@ -101,11 +101,11 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
           <>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Description du matériel:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.description || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.description || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">référence:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
           </>
         );
@@ -114,15 +114,15 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
           <>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Localisation:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.location || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.location || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Description:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.description || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.description || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">référence cadastrale:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
           </>
         );
@@ -131,15 +131,15 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
           <>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Banque émettrice:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.provider || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.provider || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Numéro de caution:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Date d'expiration:</span>
-              <p className="text-sm text-gray-900">{formatDate(guarantee.expiry_date)}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{formatDate(guarantee.expiry_date)}</p>
             </div>
           </>
         );
@@ -148,19 +148,19 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
           <>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Assureur:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.provider || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.provider || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Numéro de police:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Taux de couverture:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.coverage ? `${guarantee.details.coverage}%` : 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.coverage ? `${guarantee.details.coverage}%` : 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Date d'expiration:</span>
-              <p className="text-sm text-gray-900">{formatDate(guarantee.expiry_date)}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{formatDate(guarantee.expiry_date)}</p>
             </div>
           </>
         );
@@ -169,15 +169,15 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
           <>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Gestionnaire du fonds:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.provider || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.provider || 'Non spécifié'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">référence du fonds:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.reference || 'À générer par le système'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.reference || 'À générer par le système'}</p>
             </div>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Taux de couverture:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.coverage ? `${guarantee.details.coverage}%` : 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.coverage ? `${guarantee.details.coverage}%` : 'Non spécifié'}</p>
             </div>
           </>
         );
@@ -186,18 +186,18 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
           <>
             <div className="mt-2">
               <span className="text-sm font-medium text-gray-500">Description:</span>
-              <p className="text-sm text-gray-900">{guarantee.details?.description || 'Non spécifié'}</p>
+              <p className="text-sm text-gray-900 dark:text-white">{guarantee.details?.description || 'Non spécifié'}</p>
             </div>
             {guarantee.details?.reference && (
               <div className="mt-2">
                 <span className="text-sm font-medium text-gray-500">référence:</span>
-                <p className="text-sm text-gray-900">{guarantee.details.reference}</p>
+                <p className="text-sm text-gray-900 dark:text-white">{guarantee.details.reference}</p>
               </div>
             )}
             {guarantee.expiry_date && (
               <div className="mt-2">
                 <span className="text-sm font-medium text-gray-500">Date d'expiration:</span>
-                <p className="text-sm text-gray-900">{formatDate(guarantee.expiry_date)}</p>
+                <p className="text-sm text-gray-900 dark:text-white">{formatDate(guarantee.expiry_date)}</p>
               </div>
             )}
           </>
@@ -222,11 +222,11 @@ export const GuaranteeCard: React.FC<GuaranteeCardProps> = ({ guarantee, showHea
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
         <div>
           <span className="text-sm font-medium text-gray-500">Entreprise/Entité:</span>
-          <p className="text-sm text-gray-900">{guarantee.company}</p>
+          <p className="text-sm text-gray-900 dark:text-white">{guarantee.company}</p>
         </div>
         <div>
           <span className="text-sm font-medium text-gray-500">Valeur:</span>
-          <p className="text-sm text-gray-900 font-semibold">{formatAmount(guarantee.value)}</p>
+          <p className="text-sm text-gray-900 dark:text-white font-semibold">{formatAmount(guarantee.value)}</p>
         </div>
       </div>
 

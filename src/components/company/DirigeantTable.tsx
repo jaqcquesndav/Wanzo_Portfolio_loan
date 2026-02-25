@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Mail, Phone, Linkedin, FileText } from 'lucide-react';
 import type { ContactPerson } from '../../types/company';
 

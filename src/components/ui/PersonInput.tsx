@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from './Button';
 import { PeopleTable } from '../company/PeopleTable';

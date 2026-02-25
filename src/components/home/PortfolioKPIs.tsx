@@ -1,4 +1,4 @@
-import { DollarSign, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
+﻿import { DollarSign, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
 import { useFormatCurrency } from '../../hooks/useFormatCurrency';
 import type { PortfolioMetrics } from '../../types/portfolio';
 

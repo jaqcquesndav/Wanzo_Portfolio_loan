@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AuthProvider } from './contexts/AuthContext';

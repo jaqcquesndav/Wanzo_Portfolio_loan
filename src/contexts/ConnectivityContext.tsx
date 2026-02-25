@@ -1,4 +1,4 @@
-// src/contexts/ConnectivityContext.tsx
+﻿// src/contexts/ConnectivityContext.tsx
 import React, { createContext, useState, useEffect } from 'react';
 
 export interface PendingAction {

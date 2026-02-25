@@ -1,4 +1,4 @@
-// components/ui/Separator.tsx
+﻿// components/ui/Separator.tsx
 import { cn } from '../../lib/utils';
 
 interface SeparatorProps {

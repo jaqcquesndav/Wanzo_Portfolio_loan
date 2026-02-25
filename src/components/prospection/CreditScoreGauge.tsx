@@ -1,4 +1,4 @@
-// src/components/prospection/CreditScoreGauge.tsx
+﻿// src/components/prospection/CreditScoreGauge.tsx
 
 interface CreditScoreGaugeProps {
   score: number; // 0-100

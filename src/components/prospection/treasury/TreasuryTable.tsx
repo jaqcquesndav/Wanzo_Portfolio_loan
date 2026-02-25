@@ -1,4 +1,4 @@
-// src/components/prospection/treasury/TreasuryTable.tsx
+﻿// src/components/prospection/treasury/TreasuryTable.tsx
 import { useState, useMemo } from 'react';
 import { ArrowUpDown, Building2, Wallet, TrendingUp, ArrowRightLeft, Search, Filter } from 'lucide-react';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '../../ui/Table';

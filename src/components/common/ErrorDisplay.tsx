@@ -1,4 +1,4 @@
-import { Button } from '../ui/Button';
+﻿import { Button } from '../ui/Button';
 
 interface ErrorDisplayProps {
   title?: string;
@@ -33,7 +33,7 @@ export function ErrorDisplay({
           </svg>
         </div>
         
-        <h3 className="text-xl font-semibold text-gray-900">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
           {title}
         </h3>
         
@@ -43,8 +43,8 @@ export function ErrorDisplay({
         
         {errorDetails && (
           <div className="mt-4 p-3 bg-gray-100 rounded text-left w-full">
-            <p className="text-sm font-medium text-gray-900 mb-1">Message d'erreur:</p>
-            <p className="text-sm text-gray-700 font-mono">{errorDetails}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Message d'erreur:</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-mono">{errorDetails}</p>
           </div>
         )}
         

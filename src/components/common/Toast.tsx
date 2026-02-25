@@ -1,4 +1,4 @@
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+﻿import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 interface ToastProps {
   type: 'success' | 'error' | 'info' | 'warning';

@@ -1,4 +1,4 @@
-// src/pages/Organization.tsx
+﻿// src/pages/Organization.tsx
 // Page de visualisation des informations de l'institution (VIEW ONLY)
 
 import { 

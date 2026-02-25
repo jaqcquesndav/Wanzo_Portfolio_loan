@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Composants Skeleton pour le chargement progressif
  * Style YouTube/moderne avec animations shimmer
  */

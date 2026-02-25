@@ -1,4 +1,4 @@
-// src/components/risk/CreditRiskTable.tsx.new
+﻿// src/components/risk/CreditRiskTable.tsx.new
 import { PaginatedTable } from '../ui/PaginatedTable';
 import { Column } from '../ui/TableTypes';
 import { CreditRiskEntry } from '../../data/mockCentraleRisque';

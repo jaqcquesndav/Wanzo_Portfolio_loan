@@ -1,4 +1,4 @@
-// src/routes/suspenseComponents.tsx
+﻿// src/routes/suspenseComponents.tsx
 import { withSuspense } from '../utils/withSuspense';
 import * as lazyComponents from './lazyRoutes';
 

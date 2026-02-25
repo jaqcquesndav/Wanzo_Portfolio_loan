@@ -1,4 +1,4 @@
-import { CurrencyRatesManager } from '../components/settings/CurrencyRatesManager';
+﻿import { CurrencyRatesManager } from '../components/settings/CurrencyRatesManager';
 
 export default function CurrencySettings() {
   return (

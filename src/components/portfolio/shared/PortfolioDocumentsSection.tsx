@@ -1,4 +1,4 @@
-// src/components/portfolio/shared/PortfolioDocumentsSection.tsx
+﻿// src/components/portfolio/shared/PortfolioDocumentsSection.tsx
 import { useState, useEffect } from 'react';
 import { DocumentManager } from '../../common/DocumentManager';
 import { useNotification } from '../../../contexts/useNotification';
