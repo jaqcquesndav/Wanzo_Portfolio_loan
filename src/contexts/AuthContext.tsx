@@ -294,6 +294,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
     setContextStatus(instId ? 'authenticated' : 'no_institution');
     console.log('✅ AuthContext.updateAuthState: contextStatus =', instId ? 'authenticated' : 'no_institution');
+
+    // ── CRITIQUE: Synchroniser le store Zustand global ──────────────────────
+    // checkAuth() a été sauté (page /auth/callback), donc le store Zustand n'a
+    // pas encore reçu l'institutionId. Sans cette synchro, useInstitutionId()
+    // retourne isReady=false → WebSocket jamais connecté → streaming cassé.
+    if (instId) {
+      useAppContextStore.getState().setContext({
+        user: userData,
+        institution: institutionData,
+        institutionProfile: profileData || null,
+        institutionId: instId,
+        auth0Id: a0Id,
+        permissions: perms,
+        isDemoMode: false
+      });
+      console.log('✅ AuthContext.updateAuthState: appContextStore synchronisé avec institutionId:', instId);
+    }
+    // ────────────────────────────────────────────────────────────────────────
   }, []);
 
   /**
