@@ -109,7 +109,8 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   
   // Filtrer et trier les dûboursements
   const filteredDisbursements = useMemo(() => {
-    let filtered = disbursements;
+    // Garde défensive : si l'API retourne une réponse paginée au lieu d'un tableau
+    let filtered = Array.isArray(disbursements) ? disbursements : [];
     
     // Filtre par recherche
     if (searchTerm) {

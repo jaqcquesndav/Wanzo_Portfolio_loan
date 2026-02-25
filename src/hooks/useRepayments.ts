@@ -40,6 +40,14 @@ export const useRepayments = (contractId?: string, portfolioId?: string) => {
     slippage: payment.slippage
   });
 
+  // Utilitaire : extrait un tableau depuis une réponse API potentiellement paginée
+  const toArray = <T>(raw: unknown): T[] => {
+    if (Array.isArray(raw)) return raw as T[];
+    if (raw && typeof raw === 'object' && 'data' in raw && Array.isArray((raw as {data:unknown}).data))
+      return (raw as {data: T[]}).data;
+    return [];
+  };
+
   /**
    * Récupérer les remboursements avec filtres
    * GET /portfolios/traditional/{portfolioId}/payments ou GET /contracts/{contractId}/payments
@@ -59,7 +67,7 @@ export const useRepayments = (contractId?: string, portfolioId?: string) => {
       if (contractId) {
         // Récupérer les remboursements pour un contrat spécifique
         const payments = await paymentApi.getPaymentsByContract(contractId);
-        data = payments.map(convertToRepayment);
+        data = toArray<CreditPayment>(payments).map(convertToRepayment);
       } else if (portfolioId) {
         try {
           // Essayer d'abord l'API getAllRepayments avec filtres
@@ -69,12 +77,12 @@ export const useRepayments = (contractId?: string, portfolioId?: string) => {
             dateFrom: filters?.dateFrom,
             dateTo: filters?.dateTo
           });
-          data = payments.map(convertToRepayment);
+          data = toArray<CreditPayment>(payments).map(convertToRepayment);
         } catch (apiError) {
           // Fallback vers getPaymentsByPortfolio
           try {
             const payments = await paymentApi.getPaymentsByPortfolio(portfolioId);
-            data = payments.map(convertToRepayment);
+            data = toArray<CreditPayment>(payments).map(convertToRepayment);
             
             // Appliquer les filtres manuellement si nécessaire
             if (filters?.status) {

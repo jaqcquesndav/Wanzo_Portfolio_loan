@@ -30,8 +30,13 @@ export function useGuarantees(portfolioId: string) {
       } else {
         // Essayer d'utiliser l'API conforme
         try {
-          const response = await guaranteeApiV2.getAllGuarantees(portfolioId, filters);
-          fetchedGuarantees = response.data;
+          const raw = await guaranteeApiV2.getAllGuarantees(portfolioId, filters);
+          // Normaliser : l'API peut renvoyer [] ou { data: [] }
+          fetchedGuarantees = Array.isArray(raw)
+            ? raw
+            : Array.isArray((raw as { data?: unknown }).data)
+              ? (raw as { data: Guarantee[] }).data
+              : [];
           console.log(`[useGuarantees] Loaded guarantees from API for portfolioId "${portfolioId}"`);
         } catch (apiError) {
           // Fallback sur le service local

@@ -85,7 +85,11 @@ export function useWallet(_portfolioId?: string): UseWalletResult {
 
   const fetchPendingCount = useCallback(async () => {
     try {
-      const { count } = await walletApi.getPendingCount();
+      const raw = await walletApi.getPendingCount();
+      // L'API peut retourner { count: N } ou N directement
+      const count = typeof raw === 'object' && raw !== null && 'count' in raw
+        ? (raw as { count: number }).count
+        : (typeof raw === 'number' ? raw : 0);
       setPendingCount(count);
     } catch (err) {
       console.error('Erreur lors de la récupération du nombre de transactions en attente:', err);
@@ -119,10 +123,23 @@ export function useWallet(_portfolioId?: string): UseWalletResult {
     async (filters?: WalletTransactionFilters): Promise<WalletTransactionListResponse | null> => {
       setIsLoadingTransactions(true);
       try {
-        const result = await walletApi.listTransactions(filters);
-        setTransactions(result.data);
-        setTransactionTotal(result.meta.total);
-        return result;
+        const raw = await walletApi.listTransactions(filters);
+        // L'API peut retourner WalletTransaction[] ou { data: WalletTransaction[], meta: {...} }
+        let txArray: WalletTransaction[];
+        let total: number;
+        if (Array.isArray(raw)) {
+          txArray = raw;
+          total = raw.length;
+        } else if (Array.isArray((raw as WalletTransactionListResponse).data)) {
+          txArray = (raw as WalletTransactionListResponse).data;
+          total = (raw as WalletTransactionListResponse).meta?.total ?? txArray.length;
+        } else {
+          txArray = [];
+          total = 0;
+        }
+        setTransactions(txArray);
+        setTransactionTotal(total);
+        return { data: txArray, meta: { total, page: filters?.page ?? 1, limit: filters?.limit ?? 20, totalPages: Math.ceil(total / (filters?.limit ?? 20)) } };
       } catch (err) {
         console.error('Erreur lors de la récupération des transactions:', err);
         showNotification('Erreur lors du chargement des transactions', 'error');

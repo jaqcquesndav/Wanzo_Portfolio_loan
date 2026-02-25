@@ -41,7 +41,13 @@ export function useDisbursements(portfolioId: string): UseDisbursementsResult {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await disbursementApi.getDisbursementsByPortfolio(portfolioId);
+      const raw = await disbursementApi.getDisbursementsByPortfolio(portfolioId);
+      // Normaliser : l'API peut retourner { data: [], meta: {} } ou [] directement
+      const data: Disbursement[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray((raw as { data?: unknown }).data)
+          ? (raw as { data: Disbursement[] }).data
+          : [];
       setDisbursements(data);
     } catch (err) {
       console.error('Erreur lors de la récupération des virements:', err);

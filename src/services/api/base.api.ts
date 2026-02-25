@@ -135,10 +135,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
       if (!rawData.success) {
         throw new ApiError(response.status, rawData.message || 'Erreur API', rawData);
       }
-      // Si c'est une réponse paginée, on garde la structure avec meta
-      if (rawData.meta) {
-        return { data: rawData.data, meta: rawData.meta } as T;
-      }
+      // Toujours retourner rawData.data (le tableau ou l'objet).
+      // Les hooks qui ont besoin de la pagination doivent utiliser une méthode dédiée.
+      // Retourner { data, meta } causait des crashes car les hooks setState
+      // reçoivent un objet au lieu d'un tableau et .map() échoue.
       return rawData.data;
     }
     

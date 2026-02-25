@@ -28,8 +28,14 @@ export function useCreditContracts(portfolioId: string) {
       setError(null);
       
       // Utiliser l'API avec fallback localStorage intégré
-      const data = await creditContractApi.getAllContracts(portfolioId, filters);
-      
+      const raw = await creditContractApi.getAllContracts(portfolioId, filters);
+      // Normaliser : l'API peut retourner { data: [], meta: {} } ou [] directement
+      const data: CreditContract[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray((raw as { data?: unknown }).data)
+          ? (raw as { data: CreditContract[] }).data
+          : [];
+
       console.log(`[useCreditContracts] Loaded ${data.length} contracts for portfolioId: "${portfolioId}"`);
       setContracts(data);
     } catch (err) {
