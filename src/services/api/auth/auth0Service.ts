@@ -244,16 +244,18 @@ class Auth0Service {
   getLogoutUrl(): string {
     const domain = import.meta.env.VITE_AUTH0_DOMAIN;
     const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
-    // Utiliser l'URL déclarée dans .env pour garantir la correspondance avec Auth0 dashboard
-    const allowedLogoutUrl =
-      import.meta.env.VITE_AUTH0_ALLOWED_LOGOUT_URLS || window.location.origin + '/';
-    const returnTo = encodeURIComponent(allowedLogoutUrl);
+    // Toujours utiliser l'origine courante de la fenêtre pour garantir la correspondance
+    // (évite les erreurs de logout Auth0 dues aux URL mal enregistrées).
+    // Cette URL DOIT être enregistrée dans "Allowed Logout URLs" du dashboard Auth0.
+    const returnToUrl = window.location.origin + '/';
+    const returnTo = encodeURIComponent(returnToUrl);
 
     if (!domain || !clientId) {
       console.warn('[Auth0] Variables d\'environnement manquantes pour la déconnexion');
-      return allowedLogoutUrl;
+      return returnToUrl;
     }
 
+    console.log('[Auth0] Logout returnTo:', returnToUrl);
     return `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${returnTo}`;
   }
 

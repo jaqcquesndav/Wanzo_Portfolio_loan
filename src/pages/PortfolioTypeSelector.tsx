@@ -1,12 +1,24 @@
-import { usePortfolioContext } from '../contexts/usePortfolioContext';
+﻿import { usePortfolioContext } from '../contexts/usePortfolioContext';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { Spinner } from '../components/ui/Spinner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { resetTokenExchangeFlag } from './AuthCallback';
+import { useAuth } from '../contexts/useAuth';
 
 export default function PortfolioTypeSelector() {
   const { setPortfolioType } = usePortfolioContext();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { isContextLoaded, contextStatus } = useAuth();
+
+  // Redirection automatique si déjà authentifié (évite le double-clic)
+  useEffect(() => {
+    if (isContextLoaded && (contextStatus === 'authenticated' || contextStatus === 'demo_mode')) {
+      console.log('✅ Déjà authentifié — redirection automatique vers /app/traditional');
+      navigate('/app/traditional', { replace: true });
+    }
+  }, [isContextLoaded, contextStatus, navigate]);
 
   // PKCE code challenge generation utility
   function base64URLEncode(str: ArrayBuffer) {

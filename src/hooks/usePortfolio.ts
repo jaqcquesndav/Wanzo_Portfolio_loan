@@ -1,7 +1,9 @@
 // src/hooks/usePortfolio.ts
 import { useEffect, useState, useCallback } from 'react';
 import { portfolioStorageService } from '../services/storage/localStorage';
+import { traditionalPortfolioApi } from '../services/api/traditional/portfolio.api';
 import type { Portfolio as AnyPortfolio } from '../types/portfolio';
+import type { TraditionalPortfolio } from '../types/traditional-portfolio';
 export type PortfolioType = 'traditional' | 'leasing' | 'investment';
 
 export function usePortfolio(id: string | undefined, type: PortfolioType) {
@@ -13,35 +15,50 @@ export function usePortfolio(id: string | undefined, type: PortfolioType) {
     if (!id) return;
     setLoading(true);
     setError(null);
-    
-    console.log(`Loading portfolio ${id} of type ${type}`);
-    
-    // Vérifier si les données mock ont été initialisées
-    const isMockInitialized = localStorage.getItem('mockDataInitialized') === 'true';
-    if (!isMockInitialized) {
-      console.warn('Mock data is not initialized. This might cause issues with portfolio loading.');
-    }
-    
-    portfolioStorageService.getPortfolio(id)
-      .then((p) => {
-        if (p && p.type === type) {
-          console.log(`Portfolio ${id} loaded successfully, type: ${p.type}`);
-          setPortfolio(p);
-        } else if (p) {
-          console.warn(`Portfolio ${id} found but with incorrect type: expected ${type}, got ${p.type}`);
-          setError(new Error(`Portfolio type mismatch: expected ${type}, got ${p.type}`));
-          setPortfolio(undefined);
+
+    const load = async () => {
+      console.log(`Loading portfolio ${id} of type ${type}`);
+
+      // 1) Essayer d'abord le localStorage
+      const local = await portfolioStorageService.getPortfolio(id);
+      if (local && local.type === type) {
+        console.log(`Portfolio ${id} loaded from localStorage.`);
+        setPortfolio(local);
+        setLoading(false);
+        return;
+      }
+
+      // 2) Fallback: récupérer depuis l'API backend
+      console.log(`Portfolio ${id} non trouvé localement — requête API...`);
+      try {
+        const response = await traditionalPortfolioApi.getPortfolioById(id);
+        const apiPortfolio = response && typeof response === 'object' && 'id' in response
+          ? (response as TraditionalPortfolio)
+          : ((response as { data: TraditionalPortfolio }).data);
+
+        if (apiPortfolio?.id) {
+          // Persister dans localStorage pour les prochains accès
+          await portfolioStorageService.addOrUpdatePortfolio({
+            ...apiPortfolio,
+            type: 'traditional',
+          } as import('../types/portfolio').PortfolioWithType);
+          console.log(`Portfolio ${id} chargé depuis l'API et persisté localement.`);
+          setPortfolio(apiPortfolio as AnyPortfolio);
         } else {
-          console.warn(`Portfolio ${id} not found`);
+          console.warn(`Portfolio ${id} introuvable via l'API.`);
           setError(new Error(`Portfolio ${id} not found`));
           setPortfolio(undefined);
         }
-      })
-      .catch(err => {
-        console.error(`Error loading portfolio ${id}:`, err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-      })
-      .finally(() => setLoading(false));
+      } catch (apiErr) {
+        console.error(`Erreur API pour portfolio ${id}:`, apiErr);
+        setError(apiErr instanceof Error ? apiErr : new Error(String(apiErr)));
+        setPortfolio(undefined);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
   }, [id, type]);
 
 

@@ -68,7 +68,18 @@ export function useTraditionalPortfoliosQuery(filters?: PortfolioFilters) {
         : (response as { data?: Portfolio[] }).data || [];
       
       console.log(`✅ [ReactQuery] ${data.length} portefeuilles chargés`);
-      return { data: data as TraditionalPortfolio[], meta: (response as { meta?: unknown }).meta };
+
+      // Persister chaque portefeuille dans localStorage pour que usePortfolio puisse les trouver
+      const portfolios = data as TraditionalPortfolio[];
+      for (const p of portfolios) {
+        try {
+          await portfolioStorageService.addOrUpdatePortfolio({ ...p, type: 'traditional' } as PortfolioWithType);
+        } catch (e) {
+          console.warn('[ReactQuery] Échec persistance localStorage pour portefeuille', p.id, e);
+        }
+      }
+
+      return { data: portfolios, meta: (response as { meta?: unknown }).meta };
     },
     // Options optimisées pour éviter les requêtes en boucle
     ...listDataOptions,
