@@ -3,11 +3,8 @@ import { portfolioTypeConfig } from '../config/portfolioTypes';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { TabsOverflow } from '../components/ui/TabsOverflow';
-import { EmptyState } from '../components/ui/EmptyState';
 import { PortfolioSettingsDisplay } from '../components/portfolio/traditional/PortfolioSettingsDisplay';
 import { PortfolioSettingsPanel } from '../components/portfolio/traditional/PortfolioSettingsPanel';
-import { Plus, CreditCard } from 'lucide-react';
-import { FinancialProductsList } from '../components/portfolio/traditional/FinancialProductsList';
 import { ProductForm } from '../components/portfolio/traditional/ProductForm';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -55,9 +52,9 @@ export default function TraditionalPortfolioDetails() {
   const initialTab = searchParams.get('tab') || 'requests';
   const [tab, setTab] = useState(initialTab);
 
-  // Charger les produits financiers à chaque activation de l'onglet "products"
+  // Charger les produits financiers à l'ouverture de l'onglet "settings" (sous-onglet Produits dedans)
   useEffect(() => {
-    if (tab === 'products' && id) {
+    if (tab === 'settings' && id) {
       fetchProducts();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -423,6 +420,11 @@ export default function TraditionalPortfolioDetails() {
                         showNotification('Erreur lors de la suppression du portefeuille', 'error');
                       }
                     }}
+                    financialProducts={financialProducts}
+                    productsLoading={productsLoading}
+                    onAddProduct={() => { setSelectedProduct(undefined); setShowProductForm(true); }}
+                    onEditProduct={handleEditProduct}
+                    onDeleteProduct={handleDeleteProduct}
                   />
                 )}
               </TabsContent>
@@ -439,50 +441,6 @@ export default function TraditionalPortfolioDetails() {
                   <PortfolioSettingsPanel
                     portfolio={portfolio as TraditionalPortfolio}
                     onSave={handleSaveSettings}
-                  />
-                )}
-              </TabsContent>
-            );
-          }
-          if (tabConfig.key === 'products') {
-            return (
-              <TabsContent
-                key={tabConfig.key}
-                value={tabConfig.key}
-                currentValue={tab}
-              >
-                <div className="flex justify-end mb-4">
-                  <Button
-                    onClick={() => { setSelectedProduct(undefined); setShowProductForm(true); }}
-                    icon={<Plus className="h-5 w-5" aria-hidden="true" />}
-                  >
-                    Nouveau produit
-                  </Button>
-                </div>
-                {productsLoading ? (
-                  <div className="flex items-center justify-center py-16 text-gray-400">
-                    <svg className="animate-spin h-7 w-7 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    <span className="text-sm">Chargement des produits…</span>
-                  </div>
-                ) : financialProducts.length > 0 ? (
-                  <FinancialProductsList
-                    products={financialProducts}
-                    onEdit={handleEditProduct}
-                    onDelete={handleDeleteProduct}
-                  />
-                ) : (
-                  <EmptyState
-                    icon={CreditCard}
-                    title="Aucun produit financier"
-                    description="Créez votre premier produit financier pour commencer à gérer vos offres de crédit."
-                    action={{
-                      label: "Créer un produit",
-                      onClick: () => { setSelectedProduct(undefined); setShowProductForm(true); },
-                      variant: "primary"
-                    }}
                   />
                 )}
               </TabsContent>

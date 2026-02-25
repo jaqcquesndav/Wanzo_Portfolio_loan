@@ -4,6 +4,7 @@ import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { auth0Service } from '../services/api/auth/auth0Service';
 import { userApi } from '../services/api/shared/user.api';
 import { useAppContextStore } from '../stores/appContextStore';
+import { useAuth } from '../contexts/useAuth';
 
 // Flag global pour éviter le double échange de token (React StrictMode)
 let isTokenExchangeInProgress = false;
@@ -19,6 +20,7 @@ export default function AuthCallback() {
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('Finalisation de votre connexion...');
   const { setContext: setGlobalContext } = useAppContextStore();
+  const { updateAuthState } = useAuth();
   const hasProcessedRef = useRef(false);
 
   useEffect(() => {
@@ -220,6 +222,20 @@ export default function AuthCallback() {
                 auth0Id,
                 permissions: permissions || []
               });
+
+              // ── CORRECTIF DOUBLE-LOGIN ─────────────────────────────────────────────
+              // Mettre à jour le React state d'AuthContext AVANT de naviguer.
+              // Sans ça, ProtectedRoute lirait contextStatus='unauthenticated' (défini
+              // par checkAuth qui s'est exécuté avant que le token soit disponible) et
+              // redirigerait vers '/', forçant l'utilisateur à se connecter deux fois.
+              updateAuthState(
+                mappedUser,
+                institutionData,
+                effectiveInstitutionId ?? null,
+                auth0Id,
+                permissions || []
+              );
+              // ──────────────────────────────────────────────────────────────────────
               
               // Nettoyer les données temporaires et rediriger
               auth0Service.clearAuthTemp();
@@ -243,6 +259,10 @@ export default function AuthCallback() {
 
               auth0Service.clearAuthTemp();
               localStorage.setItem('wanzo_no_institution', 'true');
+
+              // ── CORRECTIF DOUBLE-LOGIN ─────────────────────────────────────────────
+              updateAuthState(mappedUser, null, null, auth0Id, permissions || []);
+              // ──────────────────────────────────────────────────────────────────────
 
               // Rediriger directement vers la page "institution requise" — ne jamais entrer dans l'app
               console.log('🚫 Redirection vers /institution/required (pas d\'institution)');
@@ -269,6 +289,17 @@ export default function AuthCallback() {
             localStorage.setItem('wanzo_backend_unavailable', 'true');
             
             auth0Service.clearAuthTemp();
+            // ── CORRECTIF DOUBLE-LOGIN ─────────────────────────────────────────────
+            if (auth0User) {
+              updateAuthState(
+                auth0User as Parameters<typeof updateAuthState>[0],
+                null,
+                null,
+                auth0User.id ?? '',
+                (auth0User.permissions as string[]) || []
+              );
+            }
+            // ──────────────────────────────────────────────────────────────────────
             console.log('� Redirection vers /institution/required (backend indisponible)');
             navigate('/institution/required', { replace: true });
           }

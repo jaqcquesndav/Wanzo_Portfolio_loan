@@ -11,22 +11,40 @@ import { useToastStore } from '../../../stores/toastStore';
 import { ExportPortfolioData } from '../shared/ExportPortfolioData';
 import { PortfolioDocumentsSection } from '../shared/PortfolioDocumentsSection';
 import { BCCParametersPanel, BCCSurveillancePanel } from './bcc-components';
-import { Save, X, Edit3 } from 'lucide-react';
+import { Save, X, Edit3, Plus } from 'lucide-react';
 import type { Portfolio } from '../../../types/portfolio';
+import type { FinancialProduct } from '../../../types/traditional-portfolio';
 import { getPortfolioStatusLabel } from '../../../utils/portfolioStatus';
+import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
+import { FinancialProductsList } from './FinancialProductsList';
 
 interface PortfolioSettingsDisplayProps {
   portfolio: Portfolio;
   onEdit: (updatedPortfolio: Partial<Portfolio>) => void;
   onDelete: () => void;
+  financialProducts?: FinancialProduct[];
+  productsLoading?: boolean;
+  onAddProduct?: () => void;
+  onEditProduct?: (product: FinancialProduct) => void;
+  onDeleteProduct?: (product: FinancialProduct) => void;
 }
 
-export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: PortfolioSettingsDisplayProps) {
+export function PortfolioSettingsDisplay({
+  portfolio,
+  onEdit,
+  onDelete,
+  financialProducts = [],
+  productsLoading = false,
+  onAddProduct,
+  onEditProduct,
+  onDeleteProduct,
+}: PortfolioSettingsDisplayProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [isEditing, setIsEditing] = useState(false);
   const [editedPortfolio, setEditedPortfolio] = useState<Partial<Portfolio>>({});
   const addToast = useToastStore((state) => state.addToast);
+  const { formatAmount, currency: ctxCurrency } = useCurrencyContext();
   
   // Hook pour gérer les comptes du portefeuille
   const {
@@ -112,6 +130,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="general" currentValue={activeTab} onValueChange={setActiveTab}>Général</TabsTrigger>
+          <TabsTrigger value="products" currentValue={activeTab} onValueChange={setActiveTab}>Produits</TabsTrigger>
           <TabsTrigger value="accounts" currentValue={activeTab} onValueChange={setActiveTab}>Comptes</TabsTrigger>
           <TabsTrigger value="bcc-parameters" currentValue={activeTab} onValueChange={setActiveTab}>Paramètres BCC</TabsTrigger>
           <TabsTrigger value="bcc-surveillance" currentValue={activeTab} onValueChange={setActiveTab}>Surveillance BCC</TabsTrigger>
@@ -189,7 +208,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
                 
                 {/* Objectif de collecte */}
                 <div className="space-y-2">
-                  <Label htmlFor="target-amount">Objectif de collecte (FCFA)</Label>
+                  <Label htmlFor="target-amount">Objectif de collecte ({ctxCurrency})</Label>
                   {isEditing ? (
                     <Input
                       id="target-amount"
@@ -200,7 +219,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
                     />
                   ) : (
                     <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
-                      {portfolio.target_amount?.toLocaleString()} FCFA
+                      {formatAmount(parseFloat(String(portfolio.target_amount ?? 0)) || 0)}
                     </div>
                   )}
                 </div>
@@ -219,7 +238,7 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
                     />
                   ) : (
                     <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded border">
-                      {portfolio.target_return}%
+                      {portfolio.target_return != null ? `${portfolio.target_return} %` : '—'}
                     </div>
                   )}
                 </div>
@@ -259,6 +278,46 @@ export function PortfolioSettingsDisplay({ portfolio, onEdit, onDelete }: Portfo
                 Supprimer dûfinitivement
               </Button>
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="products" currentValue={activeTab}>
+          <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold">Produits financiers</h3>
+              {onAddProduct && (
+                <Button variant="primary" size="sm" onClick={onAddProduct}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Nouveau produit
+                </Button>
+              )}
+            </div>
+
+            {productsLoading ? (
+              <div className="flex items-center justify-center py-16 text-gray-400">
+                <svg className="animate-spin h-7 w-7 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                <span className="text-sm">Chargement des produits…</span>
+              </div>
+            ) : financialProducts.length > 0 ? (
+              <FinancialProductsList
+                products={financialProducts}
+                onEdit={onEditProduct}
+                onDelete={onDeleteProduct}
+              />
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <p className="mb-4">Aucun produit financier n'a encore été créé dans ce portefeuille.</p>
+                {onAddProduct && (
+                  <Button variant="secondary" size="sm" onClick={onAddProduct}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Créer un produit
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </TabsContent>
 

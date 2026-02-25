@@ -47,6 +47,18 @@ interface AuthContextType {
   logout: () => void;
   refreshContext: () => Promise<void>;  // Recharge le contexte depuis /users/me
   enableDemoMode: () => void;           // Active le mode démo si pas d'institution
+  /**
+   * Appelé par AuthCallback après un échange de token réussi pour mettre à jour
+   * le React state AVANT la navigation — évite la race condition de double-login.
+   */
+  updateAuthState: (
+    userData: User,
+    institutionData: Institution | InstitutionLite | null,
+    instId: string | null,
+    a0Id: string,
+    perms: string[],
+    profileData?: InstitutionProfile | null
+  ) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   isContextLoaded: boolean;  // Indique si le contexte user+institution est chargé
@@ -67,6 +79,7 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   refreshContext: async () => {},
   enableDemoMode: () => {},
+  updateAuthState: () => {},
   isAuthenticated: false,
   isLoading: false,
   isContextLoaded: false,
@@ -255,6 +268,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [loadUserContext]);
 
   /**
+   * Mise à jour directe du contexte Auth depuis AuthCallback après un échange de token réussi.
+   * Évite la race condition : AuthContext.checkAuth s'exécute avant que le token soit disponible,
+   * ce qui forçait une double connexion. En appelant cette méthode depuis AuthCallback AVANT
+   * navigate(), on s'assure que contextStatus === 'authenticated' quand ProtectedRoute s'évalue.
+   */
+  const updateAuthState = useCallback((
+    userData: User,
+    institutionData: Institution | InstitutionLite | null,
+    instId: string | null,
+    a0Id: string,
+    perms: string[],
+    profileData?: InstitutionProfile | null
+  ) => {
+    console.log('🔄 AuthContext.updateAuthState: mise à jour directe après AuthCallback');
+    setUser(userData);
+    setInstitution(institutionData);
+    setInstitutionId(instId);
+    setAuth0Id(a0Id);
+    setPermissions(perms);
+    if (profileData !== undefined) setInstitutionProfile(profileData);
+    setIsDemoMode(false);
+    setError(null);
+    setIsContextLoaded(true);
+    setIsLoading(false);
+    setContextStatus(instId ? 'authenticated' : 'no_institution');
+    console.log('✅ AuthContext.updateAuthState: contextStatus =', instId ? 'authenticated' : 'no_institution');
+  }, []);
+
+  /**
    * Active le mode démo avec des données mockées
    * À utiliser quand l'utilisateur n'a pas d'institution et veut explorer l'app
    */
@@ -322,6 +364,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       console.log('🔐 AuthContext: checkAuth démarré');
+
+      // ── CORRECTIF DOUBLE-LOGIN ──────────────────────────────────────────────
+      // Si on est sur la page /auth/callback, AuthCallback.tsx est en train d'échanger
+      // le code contre un token. À ce stade le token n'est pas encore dans localStorage,
+      // donc isAuthenticated() retournerait false → contextStatus = 'unauthenticated' →
+      // ProtectedRoute redirige vers '/' → l'utilisateur doit se reconnecter une seconde fois.
+      //
+      // Solution : rester en état 'loading' et laisser AuthCallback appeler updateAuthState()
+      // avant de naviguer, ce qui positionnera contextStatus = 'authenticated'.
+      if (
+        window.location.pathname === '/auth/callback' ||
+        sessionStorage.getItem('auth_callback_in_progress') === 'true'
+      ) {
+        console.log('🔐 AuthContext: page callback détectée → skip checkAuth (AuthCallback gère l\'auth)');
+        // Rester en 'loading' — updateAuthState() sera appelé par AuthCallback
+        setIsLoading(false);
+        return;
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       setContextStatus('loading');
       
       try {
@@ -517,6 +579,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     refreshContext,
     enableDemoMode,
+    updateAuthState,
     isAuthenticated: !!user,
     isLoading,
     isContextLoaded,
