@@ -59,6 +59,10 @@ export default function TraditionalPortfolioDetails() {
     deleteProduct,
   } = useFinancialProducts({ portfolioId: id ?? '', autoFetch: false });
 
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'requests';
+  const [tab, setTab] = useState(initialTab);
+
   // Charger les produits financiers à chaque activation de l'onglet "products"
   useEffect(() => {
     if (tab === 'products' && id) {
@@ -66,9 +70,6 @@ export default function TraditionalPortfolioDetails() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, id]);
-  const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'requests';
-  const [tab, setTab] = useState(initialTab);
   
   // État pour le modal de détails de l'entreprise
   const [companyDetailModalOpen, setCompanyDetailModalOpen] = useState(false);

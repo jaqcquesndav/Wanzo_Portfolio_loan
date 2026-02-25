@@ -67,30 +67,10 @@ class SyncService {
   private readonly SYNC_PAUSE_DURATION = 2 * 60 * 1000; // 2 minutes de pause après erreurs répétées
 
   async checkSyncStatus(): Promise<{ canSync: boolean; message?: string }> {
-    try {
-      // For demo/development, return success
-      if (import.meta.env.DEV) {
-        return { canSync: true };
-      }
-
-      const response = await apiClient.get(API_CONFIG.endpoints.sync.status);
-      if (typeof response === 'object' && response !== null && 'status' in response) {
-        return {
-          canSync: (response as { status: string }).status === 'ready',
-          message: (response as { message?: string }).message
-        };
-      }
-      return {
-        canSync: false,
-        message: 'Invalid response from sync status endpoint'
-      };
-    } catch (error) {
-      console.error('Error checking sync status:', error);
-      return {
-        canSync: false,
-        message: 'Failed to check sync status'
-      };
-    }
+    // TODO: endpoint /sync/status non implémenté côté backend — sync désactivée
+    // if (import.meta.env.DEV) { return { canSync: true }; }
+    // const response = await apiClient.get(API_CONFIG.endpoints.sync.status);
+    return { canSync: false, message: 'Sync disabled — endpoint not available' };
   }
 
   startSync(): void {
