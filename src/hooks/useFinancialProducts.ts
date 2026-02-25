@@ -12,7 +12,13 @@ import type {
 
 export interface UseFinancialProductsOptions {
   portfolioId: string;
-  /** Filtre optionnel chargé au montage */
+  /**
+   * Déclencher automatiquement le fetch au montage.
+   * Mettre à `false` pour un chargement paresseux (ex: déclenché à l'activation d'un onglet).
+   * @default true
+   */
+  autoFetch?: boolean;
+  /** Filtre optionnel chargé au montage (ignoré si autoFetch=false) */
   initialFilters?: {
     status?: ProductStatus;
     type?: ProductType;
@@ -74,9 +80,9 @@ function normalizeProduct(p: FinancialProduct): FinancialProduct {
 export function useFinancialProducts(
   portfolioIdOrOptions: string | UseFinancialProductsOptions,
 ): UseFinancialProductsReturn {
-  const { portfolioId, initialFilters } =
+  const { portfolioId, autoFetch = true, initialFilters } =
     typeof portfolioIdOrOptions === 'string'
-      ? { portfolioId: portfolioIdOrOptions, initialFilters: undefined }
+      ? { portfolioId: portfolioIdOrOptions, autoFetch: true, initialFilters: undefined }
       : portfolioIdOrOptions;
 
   const [products, setProducts] = useState<FinancialProduct[]>([]);
@@ -108,9 +114,11 @@ export function useFinancialProducts(
   );
 
   useEffect(() => {
-    fetchProducts(initialFilters);
+    if (autoFetch) {
+      fetchProducts(initialFilters);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portfolioId]);
+  }, [portfolioId, autoFetch]);
 
   const createProduct = useCallback(
     async (payload: FinancialProductPayload): Promise<FinancialProduct> => {

@@ -50,7 +50,22 @@ export default function TraditionalPortfolioDetails() {
   const { setCurrentPortfolioId } = usePortfolioContext();
   const [showProductForm, setShowProductForm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<FinancialProduct | undefined>(undefined);
-  const { products: financialProducts, createProduct, updateProduct, deleteProduct } = useFinancialProducts(id ?? '');
+  const {
+    products: financialProducts,
+    loading: productsLoading,
+    fetchProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+  } = useFinancialProducts({ portfolioId: id ?? '', autoFetch: false });
+
+  // Charger les produits financiers à chaque activation de l'onglet "products"
+  useEffect(() => {
+    if (tab === 'products' && id) {
+      fetchProducts();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, id]);
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'requests';
   const [tab, setTab] = useState(initialTab);
@@ -325,7 +340,7 @@ export default function TraditionalPortfolioDetails() {
 
   // Déterminer si le portefeuille est "vide" (nouvel utilisateur qui vient de créer son premier portefeuille)
   const hasNoRequests = safeRequests.length === 0;
-  const hasNoProducts = financialProducts.length === 0;
+  const hasNoProducts = !productsLoading && financialProducts.length === 0;
   const isEmptyPortfolio = hasNoRequests && hasNoProducts;
 
   return (
@@ -431,7 +446,15 @@ export default function TraditionalPortfolioDetails() {
                     Nouveau produit
                   </Button>
                 </div>
-                {financialProducts.length > 0 ? (
+                {productsLoading ? (
+                  <div className="flex items-center justify-center py-16 text-gray-400">
+                    <svg className="animate-spin h-7 w-7 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span className="text-sm">Chargement des produits…</span>
+                  </div>
+                ) : financialProducts.length > 0 ? (
                   <FinancialProductsList
                     products={financialProducts}
                     onEdit={handleEditProduct}
