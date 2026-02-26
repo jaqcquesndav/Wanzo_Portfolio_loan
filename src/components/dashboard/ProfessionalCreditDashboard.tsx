@@ -37,11 +37,14 @@ export const ProfessionalCreditDashboard: React.FC = () => {
   
   // Forcer l'initialisation des données mock au chargement
   React.useEffect(() => {
-    // Vérifier si les données mock sont bien dans le localStorage
-    const disbursements = localStorage.getItem('wanzo_portfolio_disbursements');
+    // Vérifier si les données sont bien dans le localStorage (nouvelle clé unifiée)
+    const disbursements = localStorage.getItem('wanzo_disbursements');
     if (!disbursements) {
       console.warn('Mock data not found in localStorage, initializing...');
-      // Vous pouvez importer et appeler initializeLocalStorageMocks ici si nécessaire
+      // Appeler l'initialisation si les données ne sont pas présentes
+      import('../../services/localStorage/mockStorage').then(({ initializeLocalStorageMocks }) => {
+        initializeLocalStorageMocks();
+      });
     }
   }, []);
   

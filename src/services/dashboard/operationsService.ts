@@ -87,34 +87,61 @@ export const getRecentOperations = async (portfolioType?: PortfolioType): Promis
     }));
     
     // Demandes de crédit
-    const requestOps = getCreditRequests().map((item) => ({
-      id: item.id,
-      type: 'request' as const,
-      amount: item.requestAmount, // Updated from amount to requestAmount
-      date: item.createdAt || new Date().toISOString(), // Updated from created_at to createdAt
-      status: mapStatus(item.status),
-      portfolioId: "default-portfolio", // We'll use a default value since portfolioId doesn't exist
-      portfolioName: "default-portfolio", // Same for portfolioName
-      clientName: item.memberId, // Updated from company to memberId
-      description: `Demande de ${item.requestAmount} XOF`, // Updated from amount to requestAmount
-      portfolioType: 'traditional' as const
-    }));
+    const requestOps = getCreditRequests().map((item) => {
+      const itemAny = item as unknown as Record<string, unknown>;
+      const portfolioId = (itemAny.portfolioId as string) || 'default-portfolio';
+      // memberId est le champ standard ; company est un champ legacy possible
+      const clientName =
+        (itemAny.company as string) ||
+        (itemAny.companyName as string) ||
+        item.memberId ||
+        'Client inconnu';
+      return {
+        id: item.id,
+        type: 'request' as const,
+        amount: item.requestAmount,
+        date: item.createdAt || (itemAny.created_at as string) || new Date().toISOString(),
+        status: mapStatus(item.status),
+        portfolioId,
+        portfolioName: portfolioId,
+        clientName,
+        description: `Demande de crédit – ${item.requestAmount?.toLocaleString('fr-FR')} XOF`,
+        portfolioType: 'traditional' as const
+      };
+    });
     
     // Contrats de crédit
     const contracts = getCreditContracts();
-    const contractOps = contracts.map((item) => ({
-      id: item.id,
-      type: 'contract' as const,
-      amount: item.amount,
-      date: item.startDate || new Date().toISOString(),
-      status: mapStatus(item.status),
-      portfolioId: item.portfolioId,
-      portfolioName: item.portfolioId, // à remplacer par le nom réel
-      clientName: item.memberName || 'Client inconnu',
-      contractId: item.id,
-      description: `Contrat - ${item.duration || 12} mois à ${item.interest_rate || 5}%`,
-      portfolioType: 'traditional' as const
-    }));
+    const contractOps = contracts.map((item) => {
+      // Le type CreditContract utilise start_date ; certains anciens objets utilisent startDate
+      const itemAny = item as unknown as Record<string, unknown>;
+      const dateField =
+        (itemAny.start_date as string) ||
+        (itemAny.startDate as string) ||
+        (itemAny.created_at as string) ||
+        new Date().toISOString();
+      // company_name (nouveau) ou memberName (legacy)
+      const clientName =
+        (itemAny.company_name as string) ||
+        (itemAny.memberName as string) ||
+        (itemAny.member_name as string) ||
+        'Client inconnu';
+      const portfolioId =
+        (item.portfolioId as string) || 'default-portfolio';
+      return {
+        id: item.id,
+        type: 'contract' as const,
+        amount: item.amount,
+        date: dateField,
+        status: mapStatus(item.status),
+        portfolioId,
+        portfolioName: portfolioId,
+        clientName,
+        contractId: item.id,
+        description: `Contrat - ${(itemAny.interest_rate as number) || item.interest_rate || 5}%`,
+        portfolioType: 'traditional' as const
+      };
+    });
     
     // Garanties
     const guaranteeOps = getGuarantees().map((item) => ({
