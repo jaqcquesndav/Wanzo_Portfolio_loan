@@ -89,43 +89,52 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
   );
 
   // Mettre à jour les données du formulaire lorsque initialData change
+  // Force mobile_money par défaut — toutes les transactions passent par les wallets Mobile Money.
+  // Le virement bancaire sera activé ultérieurement.
   useEffect(() => {
-    setFormData(initialData);
+    setFormData({
+      ...initialData,
+      paymentMethod: initialData.paymentMethod === 'mobile_money' ? 'mobile_money' : 'mobile_money',
+    });
   }, [initialData]);
 
-  // Auto-remplir avec le compte par défaut de la company
+  // Auto-remplir avec le compte Mobile Money par défaut de la company.
+  // Le virement bancaire est désactivé — on reste TOUJOURS sur mobile_money.
   useEffect(() => {
     if (company && isOpen) {
-      const preferredMethod = company.payment_info?.preferredMethod || 'bank';
-      
-      if (preferredMethod === 'bank' && bankAccounts.length > 0) {
-        const primaryAccount = bankAccounts.find(acc => acc.isPrimary) || bankAccounts[0];
-        setFormData(prev => ({
-          ...prev,
-          paymentMethod: 'bank',
-          beneficiary: {
-            ...prev.beneficiary,
-            name: primaryAccount.accountName || company.name,
-            accountNumber: primaryAccount.accountNumber,
-            bankName: primaryAccount.bankName,
-            swiftCode: primaryAccount.swiftCode,
-          }
-        }));
-      } else if (preferredMethod === 'mobile_money' && mobileMoneyAccounts.length > 0) {
-        const primaryAccount = mobileMoneyAccounts.find(acc => acc.isPrimary) || mobileMoneyAccounts[0];
-        setFormData(prev => ({
+      // Chercher d'abord un compte mobile money (isPrimary, sinon le premier disponible)
+      const mobilePrimary =
+        mobileMoneyAccounts.find((acc) => acc.isPrimary) ||
+        mobileMoneyAccounts[0];
+
+      if (mobilePrimary) {
+        setFormData((prev) => ({
           ...prev,
           paymentMethod: 'mobile_money',
           beneficiary: {
             ...prev.beneficiary,
-            name: primaryAccount.accountName || company.name,
-            phoneNumber: primaryAccount.phoneNumber,
-            provider: primaryAccount.provider,
-          }
+            name: mobilePrimary.accountName || company.name,
+            phoneNumber: mobilePrimary.phoneNumber,
+            provider: mobilePrimary.provider,
+            accountNumber: '',
+            bankName: undefined,
+            swiftCode: undefined,
+          },
+        }));
+      } else {
+        // Aucun compte mobile money — on garde mobile_money sélectionné
+        // mais on pré-remplit seulement le nom bénéficiaire
+        setFormData((prev) => ({
+          ...prev,
+          paymentMethod: 'mobile_money',
+          beneficiary: {
+            ...prev.beneficiary,
+            name: prev.beneficiary.name || company.name,
+          },
         }));
       }
     }
-  }, [company, isOpen, bankAccounts, mobileMoneyAccounts]);
+  }, [company, isOpen, mobileMoneyAccounts]);
 
   const handlePaymentMethodChange = (method: 'bank' | 'mobile_money') => {
     setFormData(prev => ({
@@ -325,20 +334,7 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Méthode de paiement</label>
                       <div className="flex gap-4">
-                        <button
-                          type="button"
-                          onClick={() => handlePaymentMethodChange('bank')}
-                          disabled={readOnly}
-                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                            formData.paymentMethod === 'bank'
-                              ? 'border-primary bg-primary-light dark:bg-primary/20 text-primary'
-                              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-primary/30'
-                          }`}
-                        >
-                          <BuildingLibraryIcon className="h-5 w-5" />
-                          <span className="font-medium">Virement bancaire</span>
-                        </button>
-                        
+                        {/* Mobile Money — actif */}
                         <button
                           type="button"
                           onClick={() => handlePaymentMethodChange('mobile_money')}
@@ -351,6 +347,20 @@ export const PaymentOrderModal: React.FC<PaymentOrderModalProps> = ({
                         >
                           <DevicePhoneMobileIcon className="h-5 w-5" />
                           <span className="font-medium">Mobile Money</span>
+                        </button>
+
+                        {/* Virement bancaire — désactivé, disponible prochainement */}
+                        <button
+                          type="button"
+                          disabled
+                          title="Disponible prochainement"
+                          className="flex-1 relative flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60"
+                        >
+                          <BuildingLibraryIcon className="h-5 w-5" />
+                          <span className="font-medium">Virement bancaire</span>
+                          <span className="absolute -top-2 -right-2 text-[10px] font-semibold bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                            Prochainement
+                          </span>
                         </button>
                       </div>
                     </div>

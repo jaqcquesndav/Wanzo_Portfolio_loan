@@ -9,8 +9,11 @@ export type WalletTransactionType =
   | 'deposit'
   | 'withdrawal'
   | 'fee'
-  | 'reversal'
-  | 'adjustment';
+  | 'internal_transfer'
+  | 'refund'
+  | 'settlement'
+  | 'reversal'      // kept for backward-compat with stored data
+  | 'adjustment';   // kept for backward-compat with stored data
 
 export type WalletTransactionStatus =
   | 'completed'
@@ -75,17 +78,18 @@ export interface WalletBalance {
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────
 // Conforme à GET /wallet/dashboard
+// Réponse réelle: { pendingApproval, frozenTransactions, todayCompletedCount, todayVolume[] }
 
-export interface WalletTypeStats {
-  count: number;
-  volume: number;
+export interface WalletDashboardVolumeEntry {
+  currency: string;
+  volume: string | number;
 }
 
 export interface WalletDashboard {
-  totalTransactions: number;
-  totalVolume: number;
-  byType: Partial<Record<WalletTransactionType, WalletTypeStats>>;
-  byStatus: Partial<Record<WalletTransactionStatus | 'cancelled', number>>;
+  pendingApproval:    number;
+  frozenTransactions: number;
+  todayCompletedCount: number;
+  todayVolume:        WalletDashboardVolumeEntry[];
 }
 
 // ─── Transaction ────────────────────────────────────────────────────────────

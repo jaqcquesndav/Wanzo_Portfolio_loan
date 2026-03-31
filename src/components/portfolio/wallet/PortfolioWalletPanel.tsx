@@ -1,5 +1,5 @@
 ﻿// src/components/portfolio/wallet/PortfolioWalletPanel.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Wallet,
   ArrowDownCircle,
@@ -43,6 +43,9 @@ const TX_TYPE_LABELS: Record<WalletTransactionType, string> = {
   deposit:             'Dépôt',
   withdrawal:          'Retrait',
   fee:                 'Frais',
+  internal_transfer:   'Transfert interne',
+  refund:              'Remboursement',
+  settlement:          'Règlement',
   reversal:            'Annulation',
   adjustment:          'Ajustement',
 };
@@ -53,6 +56,9 @@ const TX_TYPE_ICONS: Record<WalletTransactionType, React.ReactNode> = {
   deposit:             <ArrowDownCircle className="h-4 w-4 text-green-500"  />,
   withdrawal:          <ArrowUpCircle   className="h-4 w-4 text-orange-500" />,
   fee:                 <CreditCard      className="h-4 w-4 text-red-400"    />,
+  internal_transfer:   <ArrowRightLeft  className="h-4 w-4 text-blue-400"   />,
+  refund:              <RotateCcw       className="h-4 w-4 text-green-400"  />,
+  settlement:          <CheckCircle     className="h-4 w-4 text-teal-400"   />,
   reversal:            <RotateCcw       className="h-4 w-4 text-gray-400"   />,
   adjustment:          <ArrowRightLeft  className="h-4 w-4 text-gray-400"   />,
 };
@@ -62,9 +68,12 @@ const TX_AMOUNT_CLS: Record<WalletTransactionType, string> = {
   credit_repayment:    'text-green-600 dark:text-green-400',
   deposit:             'text-green-600 dark:text-green-400',
   reversal:            'text-green-600 dark:text-green-400',
+  refund:              'text-green-600 dark:text-green-400',
+  settlement:          'text-green-600 dark:text-green-400',
   credit_disbursement: 'text-red-600   dark:text-red-400',
   withdrawal:          'text-orange-600 dark:text-orange-400',
   fee:                 'text-red-500   dark:text-red-400',
+  internal_transfer:   'text-blue-600  dark:text-blue-400',
   adjustment:          'text-gray-700  dark:text-gray-300',
 };
 
@@ -79,6 +88,9 @@ const TX_STATUS_CONFIG: Record<
   rejected:         { label: 'Rejetée',             variant: 'danger'    },
   canceled:         { label: 'Annulée',             variant: 'secondary' },
 };
+
+const WALLET_CURRENCIES = ['CDF', 'USD', 'XOF'] as const;
+type WalletCurrency = typeof WALLET_CURRENCIES[number];
 
 const TELECOM_OPTIONS: { value: MobileMoneyTelecom; label: string; color: string }[] = [
   { value: 'OM', label: 'Orange Money',   color: '#FF6600' },
@@ -109,7 +121,9 @@ function MobileMoneyModal({
   const [phone, setPhone]             = useState(defaultPhone ?? '');
   const [telecom, setTelecom]         = useState<MobileMoneyTelecom>(defaultTelecom ?? 'OM');
   const [description, setDescription] = useState('');
-  const currency = defaultCurrency ?? 'CDF';
+  const [currency, setCurrency]       = useState<WalletCurrency>(
+    (WALLET_CURRENCIES as readonly string[]).includes(defaultCurrency ?? '') ? (defaultCurrency as WalletCurrency) : 'CDF'
+  );
 
   const isDeposit = mode === 'deposit';
 
@@ -151,6 +165,27 @@ function MobileMoneyModal({
 
         {/* ── formulaire ── */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* devise */}
+          <div>
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Devise</Label>
+            <div className="mt-1.5 grid grid-cols-3 gap-2">
+              {WALLET_CURRENCIES.map((cur) => (
+                <button
+                  key={cur}
+                  type="button"
+                  onClick={() => setCurrency(cur)}
+                  className={`rounded-lg border-2 py-2 text-sm font-bold transition-all ${
+                    currency === cur
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  {cur}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* montant */}
           <div>
             {defaultAccountName && (
@@ -169,7 +204,7 @@ function MobileMoneyModal({
             </Label>
             <div className="relative mt-1.5">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">
-                {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : 'FC'}
+                {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'XOF' ? 'CFA' : 'FC'}
               </span>
               <Input
                 id="wallet-amount"
@@ -375,6 +410,7 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
   const [isSubmitting,   setIsSubmitting]   = useState(false);
   const [currentPage,    setCurrentPage]    = useState(1);
+  const [balanceIndex,   setBalanceIndex]   = useState(0);
   const PAGE_SIZE = 20;
 
   // ── walletId ────────────────────────────────────────────────────────────────────
@@ -429,6 +465,17 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
     }
   };
 
+  // ── Auto-rotate balance currency ────────────────────────────────────────────
+  useEffect(() => {
+    const summaries = balance?.summary ?? [];
+    if (summaries.length <= 1) return;
+    const timer = setInterval(
+      () => setBalanceIndex(i => (i + 1) % summaries.length),
+      4000,
+    );
+    return () => clearInterval(timer);
+  }, [balance]);
+
   // ── Loading / error states ─────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -457,19 +504,30 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
     );
   }
 
-  const mainSummary  = balance?.summary?.[0];
-  const totalBalance = mainSummary?.totalBalance   ?? wallet?.balance          ?? 0;
-  const availBalance = mainSummary?.totalAvailable ?? wallet?.availableBalance ?? 0;
-  const frozenBalance= mainSummary?.totalFrozen    ?? wallet?.frozenBalance    ?? 0;
-  const currency     = mainSummary?.currency       ?? wallet?.currency         ?? 'CDF';
+  const allSummaries   = balance?.summary ?? [];
+  const activeSummary  = allSummaries.length > 0 ? allSummaries[balanceIndex % allSummaries.length] : null;
+  const totalBalance   = activeSummary?.totalBalance   ?? wallet?.balance          ?? 0;
+  const availBalance   = activeSummary?.totalAvailable ?? wallet?.availableBalance ?? 0;
+  const frozenBalance  = activeSummary?.totalFrozen    ?? wallet?.frozenBalance    ?? 0;
+  const currency       = activeSummary?.currency       ?? wallet?.currency         ?? 'CDF';
+
+  /** Format a wallet amount in its native currency (no conversion). */
+  const formatRawAmount = (amount: number) =>
+    new Intl.NumberFormat('fr-FR', {
+      maximumFractionDigits: (currency === 'USD' || currency === 'XOF') ? 2 : 0,
+    }).format(amount);
+
   // Désactiver uniquement si le wallet est explicitement suspendu ou clôturé
   const walletActive = !wallet?.status || !['suspended', 'closed', 'blocked'].includes(wallet.status);
 
-  // dashboard stats
-  const totalTx      = dashboard?.totalTransactions ?? 0;
-  const pendingTx    = (dashboard?.byStatus?.pending ?? 0) + (dashboard?.byStatus?.pending_approval ?? 0);
-  const disbursedVol = dashboard?.byType?.credit_disbursement?.volume ?? 0;
-  const repaidVol    = dashboard?.byType?.credit_repayment?.volume ?? 0;
+  // dashboard stats — alignés sur le vrai format API (pendingApproval, frozenTransactions, todayCompletedCount, todayVolume)
+  const completedToday = dashboard?.todayCompletedCount ?? 0;
+  const pendingTx      = dashboard?.pendingApproval    ?? 0;
+  const frozenTx       = dashboard?.frozenTransactions ?? 0;
+  const todayVolume    = (dashboard?.todayVolume ?? []).reduce(
+    (acc, v) => acc + parseFloat(String(v.volume ?? 0)),
+    0,
+  );
 
   return (
     <div className="space-y-5">
@@ -514,11 +572,51 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
 
           {/* solde principal */}
           <div className="mb-5">
-            <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Solde total</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-white/60 text-xs uppercase tracking-wider">Solde total</p>
+              {allSummaries.length > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setBalanceIndex(i => (i - 1 + allSummaries.length) % allSummaries.length)}
+                    className="bg-white/10 hover:bg-white/25 text-white rounded p-0.5 transition-colors"
+                    title="Devise précédente"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="text-white/50 text-xs tabular-nums">
+                    {balanceIndex + 1}&thinsp;/&thinsp;{allSummaries.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBalanceIndex(i => (i + 1) % allSummaries.length)}
+                    className="bg-white/10 hover:bg-white/25 text-white rounded p-0.5 transition-colors"
+                    title="Devise suivante"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
             <p className="text-4xl font-bold text-white tracking-tight leading-none">
-              {formatAmount(totalBalance)}
+              {formatRawAmount(totalBalance)}
             </p>
             <p className="text-white/60 text-sm mt-1">{currency}</p>
+            {allSummaries.length > 1 && (
+              <div className="flex gap-1.5 mt-2">
+                {allSummaries.map((s, i) => (
+                  <button
+                    key={s.currency}
+                    type="button"
+                    onClick={() => setBalanceIndex(i)}
+                    title={s.currency}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === balanceIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/65'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* actions */}
@@ -555,7 +653,7 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
             </div>
             <p className="text-xs font-medium text-green-700 dark:text-green-400 uppercase tracking-wide">Disponible</p>
           </div>
-          <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatAmount(availBalance)}</p>
+          <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatRawAmount(availBalance)}</p>
           <p className="text-xs text-green-600/70 dark:text-green-500 mt-0.5">{currency} · prêt à l'emploi</p>
         </div>
 
@@ -567,7 +665,7 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
             </div>
             <p className="text-xs font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wide">Gelé / En cours</p>
           </div>
-          <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{formatAmount(frozenBalance)}</p>
+          <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{formatRawAmount(frozenBalance)}</p>
           <p className="text-xs text-amber-600/70 dark:text-amber-500 mt-0.5">{currency} · en attente de validation</p>
         </div>
       </div>
@@ -578,15 +676,15 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
-            label: 'Total transactions',
-            value: String(totalTx),
+            label: 'Complétées aujourd\u2019hui',
+            value: String(completedToday),
             icon: <ArrowRightLeft className="h-4 w-4 text-blue-500" />,
             bg: 'bg-blue-50 dark:bg-blue-900/20',
             border: 'border-blue-100 dark:border-blue-900/40',
             text: 'text-blue-700 dark:text-blue-300',
           },
           {
-            label: 'En attente',
+            label: 'Approbation requise',
             value: String(pendingTx),
             icon: <Clock className="h-4 w-4 text-amber-500" />,
             bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -594,16 +692,16 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
             text: 'text-amber-700 dark:text-amber-300',
           },
           {
-            label: 'Volume décaissé',
-            value: formatAmount(disbursedVol),
+            label: 'Transactions gelées',
+            value: String(frozenTx),
             icon: <TrendingDown className="h-4 w-4 text-red-500" />,
             bg: 'bg-red-50 dark:bg-red-900/20',
             border: 'border-red-100 dark:border-red-900/40',
             text: 'text-red-700 dark:text-red-300',
           },
           {
-            label: 'Volume remboursé',
-            value: formatAmount(repaidVol),
+            label: 'Volume du jour',
+            value: formatRawAmount(todayVolume),
             icon: <TrendingUp className="h-4 w-4 text-green-500" />,
             bg: 'bg-green-50 dark:bg-green-900/20',
             border: 'border-green-100 dark:border-green-900/40',
@@ -662,18 +760,20 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
               ))}
             </select>
 
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => applyFilters(1)}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               Filtrer
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleResetFilters}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Réinitialiser
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -694,14 +794,16 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
             <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
               Effectuez votre premier dépôt pour commencer
             </p>
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => setModalMode('deposit')}
               disabled={!walletActive}
-              className="mt-5 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+              className="mt-5"
+              icon={<ArrowDownCircle className="h-4 w-4" />}
             >
-              <ArrowDownCircle className="h-4 w-4" />
               Effectuer un dépôt
-            </button>
+            </Button>
           </div>
         ) : (
           <Table>

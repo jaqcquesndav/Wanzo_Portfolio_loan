@@ -18,7 +18,8 @@ export type FundingRequestStatus =
   | 'approved'
   | 'rejected'
   | 'canceled'
-  | 'disbursed';
+  | 'converted'   // valeur réelle du backend lors de la conversion en contrat
+  | 'disbursed';  // conservé pour compatibilité avec données existantes
 
 export type DurationUnit = 'days' | 'weeks' | 'months' | 'years';
 

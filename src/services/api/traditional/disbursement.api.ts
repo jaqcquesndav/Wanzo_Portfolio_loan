@@ -53,11 +53,11 @@ export const disbursementApi = {
    */
   createDisbursement: async (disbursement: Omit<Disbursement, 'id'>): Promise<Disbursement> => {
     try {
-      // Assurer que currency est défini (valeur par défaut: CDF) et status est pending
+      // Assurer que currency est défini (valeur par défaut: CDF) et status est draft (état initial API)
       const disbursementWithDefaults = {
         ...disbursement,
         currency: disbursement.currency || 'CDF', // Code ISO 4217 par défaut
-        status: disbursement.status || 'pending',
+        status: disbursement.status || 'draft',
       };
       return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements`, disbursementWithDefaults);
     } catch (error) {
@@ -71,7 +71,7 @@ export const disbursementApi = {
       const newDisbursement: Disbursement = {
         ...disbursement,
         currency: disbursement.currency || 'CDF',
-        status: (disbursement.status || 'pending') as any,
+        status: (disbursement.status || 'draft') as any,
         id
       };
       
@@ -186,9 +186,9 @@ export const disbursementApi = {
   /**
    * Approuve un décaissement (admin, manager)
    * POST /portfolios/traditional/disbursements/:id/approve
-   * Payload: { approvalNotes?: string, prerequisitesVerified?: boolean }
+   * Payload: { comment?: string }
    */
-  approveDisbursement: async (id: string, payload?: { approvalNotes?: string; prerequisitesVerified?: boolean }): Promise<Disbursement | null> => {
+  approveDisbursement: async (id: string, payload?: { comment?: string }): Promise<Disbursement | null> => {
     try {
       return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements/${id}/approve`, payload ?? {});
     } catch (error) {
@@ -212,24 +212,23 @@ export const disbursementApi = {
   },
 
   /**
-   * Exécute / traite un décaissement (admin, manager)
+   * Exécute / traite un décaissement — transfert wallet-to-wallet réel (admin, manager)
    * POST /portfolios/traditional/disbursements/:id/process
-   * Payload: { transactionId?, transactionDate?, executionNotes?, documents?: string[] }
+   * Payload: { executionDate: string, notes?: string }
    */
   processDisbursement: async (id: string, payload?: {
-    transactionId?: string;
-    transactionDate?: string;
-    executionNotes?: string;
-    documents?: string[];
+    executionDate?: string;
+    notes?: string;
   }): Promise<Disbursement | null> => {
+    const body = {
+      executionDate: payload?.executionDate ?? new Date().toISOString().slice(0, 10),
+      ...(payload?.notes ? { notes: payload.notes } : {}),
+    };
     try {
-      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements/${id}/process`, payload ?? {});
+      return await apiClient.post<Disbursement>(`/portfolios/traditional/disbursements/${id}/process`, body);
     } catch (error) {
       console.warn(`Fallback to localStorage for processing disbursement ${id}`, error);
-      const updates: Partial<Disbursement> = { status: 'processing' };
-      if (payload?.transactionId) (updates as any).transactionReference = payload.transactionId;
-      if (payload?.transactionDate) (updates as any).executionDate = payload.transactionDate;
-      return disbursementApi.updateDisbursement(id, updates);
+      return disbursementApi.updateDisbursement(id, { status: 'processing' });
     }
   }
 };

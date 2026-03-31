@@ -18,9 +18,9 @@ interface UseDisbursementsResult {
     valueDate?: string;
   }) => Promise<Disbursement | null>;
   cancelDisbursement: (id: string, reason: string) => Promise<boolean>;
-  approveDisbursement: (id: string, payload?: { approvalNotes?: string; prerequisitesVerified?: boolean }) => Promise<Disbursement | null>;
+  approveDisbursement: (id: string, payload?: { comment?: string }) => Promise<Disbursement | null>;
   rejectDisbursement: (id: string, payload: { reason: string; notes?: string }) => Promise<Disbursement | null>;
-  processDisbursement: (id: string, payload?: { transactionId?: string; transactionDate?: string; executionNotes?: string; documents?: string[] }) => Promise<Disbursement | null>;
+  processDisbursement: (id: string, payload?: { executionDate?: string; notes?: string }) => Promise<Disbursement | null>;
   refreshDisbursements: () => Promise<void>;
 }
 
@@ -162,7 +162,7 @@ export function useDisbursements(portfolioId: string): UseDisbursementsResult {
   // Approuve un décaissement
   const approveDisbursement = useCallback(async (
     id: string,
-    payload?: { approvalNotes?: string; prerequisitesVerified?: boolean },
+    payload?: { comment?: string },
   ): Promise<Disbursement | null> => {
     try {
       const updated = await disbursementApi.approveDisbursement(id, payload);
@@ -197,10 +197,10 @@ export function useDisbursements(portfolioId: string): UseDisbursementsResult {
     }
   }, [showNotification]);
 
-  // Traite (exécute) un décaissement
+  // Traite (exécute) un décaissement — transfert wallet-to-wallet
   const processDisbursement = useCallback(async (
     id: string,
-    payload?: { transactionId?: string; transactionDate?: string; executionNotes?: string; documents?: string[] },
+    payload?: { executionDate?: string; notes?: string },
   ): Promise<Disbursement | null> => {
     try {
       const updated = await disbursementApi.processDisbursement(id, payload);

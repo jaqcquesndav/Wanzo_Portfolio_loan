@@ -57,6 +57,11 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
     isLoading, 
     error, 
     confirmDisbursement,
+    approveDisbursement,
+    rejectDisbursement,
+    processDisbursement,
+    cancelDisbursement,
+    updateDisbursement,
     refreshDisbursements
   } = useDisbursements(portfolioId);
   
@@ -66,12 +71,22 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
   
   // état pour la recherche et le filtrage
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'tous' | 'en attente' | 'effectué'>('tous');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<{ key: keyof Disbursement; direction: 'asc' | 'desc' } | null>(null);
   
   // état pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  // état pour les dialogues d'action
+  const [rejectTarget,   setRejectTarget]   = useState<Disbursement | null>(null);
+  const [cancelTarget,   setCancelTarget]   = useState<Disbursement | null>(null);
+  const [processTarget,  setProcessTarget]  = useState<Disbursement | null>(null);
+  const [rejectReason,   setRejectReason]   = useState('');
+  const [cancelReason,   setCancelReason]   = useState('');
+  const [processDate,    setProcessDate]    = useState(new Date().toISOString().slice(0, 10));
+  const [processNotes,   setProcessNotes]   = useState('');
+  const [actionLoading,  setActionLoading]  = useState(false);
   
   // Fonction de tri
   const handleSort = (key: keyof Disbursement) => {
@@ -122,8 +137,8 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
       );
     }
     
-    // Filtre par statut
-    if (statusFilter !== 'tous') {
+    // Filtre par statut (valeurs enum API)
+    if (statusFilter !== 'all') {
       filtered = filtered.filter(d => d.status === statusFilter);
     }
     
@@ -268,12 +283,18 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
           <div className="relative">
             <select 
               value={statusFilter} 
-              onChange={(e) => setStatusFilter(e.target.value as 'tous' | 'en attente' | 'effectué')}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="border rounded-md px-2 py-1 pr-8 bg-white dark:bg-gray-700 appearance-none"
             >
-              <option value="tous">Tous</option>
-              <option value="en attente">En attente</option>
-              <option value="effectué">Effectué</option>
+              <option value="all">Tous</option>
+              <option value="draft">Brouillon</option>
+              <option value="pending">En attente</option>
+              <option value="approved">Approuvé</option>
+              <option value="processing">En traitement</option>
+              <option value="completed">Effectué</option>
+              <option value="rejected">Rejeté</option>
+              <option value="failed">Échoué</option>
+              <option value="canceled">Annulé</option>
             </select>
             <Filter className="absolute right-2 top-2 h-4 w-4 text-gray-500 pointer-events-none" />
           </div>
@@ -434,19 +455,64 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
                   </TableCell>
                   <TableCell className="text-center overflow-visible relative">
                     <div 
-                      className="inline-block relative z-10" 
+                      className="inline-flex items-center gap-1.5" 
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <ActionsDropdown
-                        actions={[
-                          { label: 'Voir', onClick: () => onView(d.id) },
-                          d.status === 'en attente' ? { 
-                            label: 'Paiement', 
-                            onClick: () => handleConfirmPayment(d),
-                            className: 'text-green-600 hover:text-green-800'
-                          } : null,
-                        ].filter(Boolean) as { label: string; onClick: () => void, className?: string }[]}
-                      />
+                      {/* Voir */}
+                      <Button variant="outline" size="sm" onClick={() => onView(d.id)}>
+                        Voir
+                      </Button>
+
+                      {/* DRAFT → soumettre pour approbation */}
+                      {d.status === 'draft' && (
+                        <Button
+                          variant="primary" size="sm"
+                          onClick={() => updateDisbursement(d.id, { status: 'pending' as any })}
+                        >
+                          Soumettre
+                        </Button>
+                      )}
+
+                      {/* PENDING → approuver ou rejeter */}
+                      {d.status === 'pending' && (
+                        <>
+                          <Button
+                            variant="primary" size="sm"
+                            onClick={() => approveDisbursement(d.id)}
+                          >
+                            Approuver
+                          </Button>
+                          <Button
+                            variant="danger" size="sm"
+                            onClick={() => { setRejectTarget(d); setRejectReason(''); }}
+                          >
+                            Rejeter
+                          </Button>
+                        </>
+                      )}
+
+                      {/* APPROVED → traiter le transfert wallet ou annuler */}
+                      {d.status === 'approved' && (
+                        <>
+                          <Button
+                            variant="primary" size="sm"
+                            onClick={() => {
+                              setProcessTarget(d);
+                              setProcessDate(new Date().toISOString().slice(0, 10));
+                              setProcessNotes('');
+                            }}
+                          >
+                            Traiter
+                          </Button>
+                          <Button
+                            variant="outline" size="sm"
+                            onClick={() => { setCancelTarget(d); setCancelReason(''); }}
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            Annuler
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -455,6 +521,151 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
           </TableBody>
         </Table>
       </div>
+      )}
+
+      {/* ══ Dialogue — Rejeter un décaissement ══ */}
+      {rejectTarget && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Rejeter le décaissement</h3>
+            <p className="text-sm text-gray-500">Référence : <span className="font-mono font-medium">{rejectTarget.id}</span></p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Motif <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Expliquez la raison du rejet…"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setRejectTarget(null)} disabled={actionLoading}>
+                Annuler
+              </Button>
+              <Button
+                variant="danger" className="flex-1"
+                disabled={!rejectReason.trim() || actionLoading}
+                isLoading={actionLoading}
+                onClick={async () => {
+                  setActionLoading(true);
+                  try { await rejectDisbursement(rejectTarget.id, { reason: rejectReason }); }
+                  finally { setActionLoading(false); setRejectTarget(null); }
+                }}
+              >
+                Confirmer le rejet
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Dialogue — Annuler un décaissement ══ */}
+      {cancelTarget && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Annuler le décaissement</h3>
+            <p className="text-sm text-gray-500">Référence : <span className="font-mono font-medium">{cancelTarget.id}</span></p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Motif <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Expliquez la raison de l&apos;annulation…"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setCancelTarget(null)} disabled={actionLoading}>
+                Fermer
+              </Button>
+              <Button
+                variant="danger" className="flex-1"
+                disabled={!cancelReason.trim() || actionLoading}
+                isLoading={actionLoading}
+                onClick={async () => {
+                  setActionLoading(true);
+                  try { await cancelDisbursement(cancelTarget.id, cancelReason); }
+                  finally { setActionLoading(false); setCancelTarget(null); }
+                }}
+              >
+                Confirmer l&apos;annulation
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Dialogue — Traiter le transfert wallet-to-wallet ══ */}
+      {processTarget && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Traiter le transfert Wallet</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Wallet Institution → Wallet Entreprise (Mobile Money)</p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-4 py-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Bénéficiaire</span>
+                <span className="font-medium text-gray-900 dark:text-white">{processTarget.company}</span>
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-gray-500">Montant</span>
+                <span className="font-semibold text-blue-700 dark:text-blue-300">
+                  {formatAmount(processTarget.amount)} {processTarget.currency}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date d&apos;exécution</label>
+              <Input
+                type="date"
+                value={processDate}
+                onChange={(e) => setProcessDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Notes <span className="text-gray-400 font-normal">(optionnel)</span>
+              </label>
+              <Input
+                type="text"
+                value={processNotes}
+                onChange={(e) => setProcessNotes(e.target.value)}
+                placeholder="Ex : Référence transaction Airtel Money…"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setProcessTarget(null)} disabled={actionLoading}>
+                Annuler
+              </Button>
+              <Button
+                variant="primary" className="flex-1"
+                disabled={!processDate || actionLoading}
+                isLoading={actionLoading}
+                onClick={async () => {
+                  setActionLoading(true);
+                  try {
+                    await processDisbursement(processTarget.id, {
+                      executionDate: processDate,
+                      notes: processNotes || undefined,
+                    });
+                  } finally {
+                    setActionLoading(false);
+                    setProcessTarget(null);
+                  }
+                }}
+              >
+                Confirmer le transfert
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Pagination */}
