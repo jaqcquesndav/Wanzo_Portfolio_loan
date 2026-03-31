@@ -1,5 +1,5 @@
 // src/hooks/usePortfolioAccounts.ts
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { portfolioAccountsApi } from '../services/api/shared';
 import type { BankAccount } from '../types/bankAccount';
 import type { MobileMoneyAccount, MobileMoneyProvider } from '../types/mobileMoneyAccount';
@@ -80,6 +80,11 @@ export function usePortfolioAccounts(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // ── Stabilise the embedded reference so useCallbacks don't recreate on every render
+  // (an inline object literal passed as prop is a new reference each render → infinite loop)
+  const embeddedRef = useRef(embedded);
+  embeddedRef.current = embedded;
+
   // Fonction de synchronisation avec le portfolio (définie d'abord car utilisée par les autres)
   const syncAccountsToPortfolio = useCallback(async () => {
     try {
@@ -121,15 +126,15 @@ export function usePortfolioAccounts(
       const result = toArray<unknown>(raw).map(normalizeBankAccount);
       // Si l'API retourne vide, conserver les données embarquées du portfolio
       if (result.length > 0) setBankAccounts(result);
-      else if (Array.isArray(embedded?.bankAccounts) && embedded!.bankAccounts!.length > 0) {
-        setBankAccounts(embedded!.bankAccounts!.map(normalizeBankAccount));
+      else if (Array.isArray(embeddedRef.current?.bankAccounts) && embeddedRef.current!.bankAccounts!.length > 0) {
+        setBankAccounts(embeddedRef.current!.bankAccounts!.map(normalizeBankAccount));
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load bank accounts'));
     } finally {
       setLoading(false);
     }
-  }, [portfolioId, embedded]);
+  }, [portfolioId]);  // ⚠️ ne pas ajouter embedded/embeddedRef ici (réf stable via ref)
 
   // Charger tous les comptes Mobile Money
   const loadMobileMoneyAccounts = useCallback(async () => {
@@ -140,15 +145,15 @@ export function usePortfolioAccounts(
       const result = toArray<unknown>(raw).map(normalizeMobileMoneyAccount);
       // Si l'API retourne vide, conserver les données embarquées du portfolio
       if (result.length > 0) setMobileMoneyAccounts(result);
-      else if (Array.isArray(embedded?.mobileMoneyAccounts) && embedded!.mobileMoneyAccounts!.length > 0) {
-        setMobileMoneyAccounts(embedded!.mobileMoneyAccounts!.map(normalizeMobileMoneyAccount));
+      else if (Array.isArray(embeddedRef.current?.mobileMoneyAccounts) && embeddedRef.current!.mobileMoneyAccounts!.length > 0) {
+        setMobileMoneyAccounts(embeddedRef.current!.mobileMoneyAccounts!.map(normalizeMobileMoneyAccount));
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load mobile money accounts'));
     } finally {
       setLoading(false);
     }
-  }, [portfolioId, embedded]);
+  }, [portfolioId]);  // ⚠️ ne pas ajouter embedded/embeddedRef ici (réf stable via ref)
 
   // Ajouter un compte bancaire
   const addBankAccount = useCallback(async (account: Omit<BankAccount, 'id' | 'created_at' | 'updated_at'>) => {

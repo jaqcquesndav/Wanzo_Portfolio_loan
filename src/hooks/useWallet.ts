@@ -16,6 +16,7 @@ import type {
 
 export interface UseWalletResult {
   wallet: InstitutionWallet | null;
+  wallets: InstitutionWallet[];
   balance: WalletBalance | null;
   dashboard: WalletDashboard | null;
   pendingCount: number;
@@ -43,6 +44,7 @@ export interface UseWalletResult {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function useWallet(_portfolioId?: string): UseWalletResult {
   const [wallet, setWallet] = useState<InstitutionWallet | null>(null);
+  const [wallets, setWallets] = useState<InstitutionWallet[]>([]);
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [dashboard, setDashboard] = useState<WalletDashboard | null>(null);
   const [pendingCount, setPendingCount] = useState<number>(0);
@@ -57,8 +59,9 @@ export function useWallet(_portfolioId?: string): UseWalletResult {
 
   const fetchWallet = useCallback(async () => {
     try {
-      const data = await walletApi.getMyWallet();
-      setWallet(data);
+      const data = await walletApi.getMyWallet();  // returns InstitutionWallet[]
+      setWallets(data);
+      setWallet(data[0] ?? null);  // backward-compat: first wallet for single-wallet code
     } catch (err) {
       console.error('Erreur lors de la récupération du wallet:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -98,8 +101,8 @@ export function useWallet(_portfolioId?: string): UseWalletResult {
 
   // ── Initial load ─────────────────────────────────────────────────────────────
 
-  const loadAll = useCallback(async () => {
-    setIsLoading(true);
+  const loadAll = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     setError(null);
     try {
       await Promise.all([
@@ -109,7 +112,7 @@ export function useWallet(_portfolioId?: string): UseWalletResult {
         fetchPendingCount(),
       ]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [fetchWallet, fetchBalance, fetchDashboard, fetchPendingCount]);
 
@@ -233,12 +236,14 @@ export function useWallet(_portfolioId?: string): UseWalletResult {
   );
 
   const refresh = useCallback(async () => {
-    await loadAll();
+    // silent=true → no skeleton flash; balance/transactions update in background
+    await loadAll(true);
     await fetchTransactions({ page: 1, limit: 20 });
   }, [loadAll, fetchTransactions]);
 
   return {
     wallet,
+    wallets,
     balance,
     dashboard,
     pendingCount,

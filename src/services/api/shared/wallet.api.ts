@@ -30,10 +30,16 @@ export const walletApi = {
   // ─── Wallet ──────────────────────────────────────────────────────────────────
 
   /**
-   * Récupère le wallet de l'institution connectée (portfolioId extrait du JWT).
+   * Récupère les wallets de l'institution (un par devise : CDF, USD, XOF…).
+   * GET /wallet/my-wallet → { success, data: InstitutionWallet[] }
    */
-  getMyWallet: async (): Promise<InstitutionWallet> => {
-    return apiClient.get<InstitutionWallet>(`${BASE}/my-wallet`);
+  getMyWallet: async (): Promise<InstitutionWallet[]> => {
+    const raw = await apiClient.get<unknown>(`${BASE}/my-wallet`);
+    // Le backend retourne un tableau ; on garantit que c'est toujours un tableau.
+    if (Array.isArray(raw)) return raw as InstitutionWallet[];
+    if (raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).data))
+      return (raw as { data: InstitutionWallet[] }).data;
+    return raw ? [raw as InstitutionWallet] : [];
   },
 
   /**

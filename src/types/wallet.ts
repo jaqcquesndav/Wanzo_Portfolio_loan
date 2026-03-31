@@ -19,9 +19,15 @@ export type WalletTransactionStatus =
   | 'completed'
   | 'pending'
   | 'pending_approval'
+  | 'approved'
+  | 'processing'
   | 'failed'
   | 'rejected'
-  | 'canceled';
+  | 'canceled'
+  | 'cancelled'   // alias backend (double-l)
+  | 'frozen'
+  | 'refunded'
+  | 'expired';
 
 export type MobileMoneyTelecom = 'AM' | 'OM' | 'MP' | 'AF';
 
@@ -62,18 +68,14 @@ export interface InstitutionWallet {
 
 // ─── Solde ─────────────────────────────────────────────────────────────────
 // Conforme à GET /wallet/balance
-
-export interface WalletBalanceSummary {
-  ownerType: string;
-  currency: string;
-  totalBalance: number;
-  totalAvailable: number;
-  totalFrozen: number;
-  walletCount: number;
-}
+// Réponse réelle: { totalBalance, availableBalance, frozenBalance, currency, wallets? }
 
 export interface WalletBalance {
-  summary: WalletBalanceSummary[];
+  totalBalance: number;
+  availableBalance: number;
+  frozenBalance: number;
+  currency: string;
+  wallets?: InstitutionWallet[];
 }
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────

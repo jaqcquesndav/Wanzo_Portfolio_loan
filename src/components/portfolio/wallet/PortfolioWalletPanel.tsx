@@ -25,7 +25,6 @@ import { Input } from '../../ui/Input';
 import { Label } from '../../ui/Label';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { useWallet } from '../../../hooks/useWallet';
-import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
 import type {
   WalletTransaction,
   WalletTransactionType,
@@ -84,9 +83,15 @@ const TX_STATUS_CONFIG: Record<
   completed:        { label: 'Complétée',          variant: 'success'   },
   pending:          { label: 'En attente',          variant: 'warning'   },
   pending_approval: { label: 'Approbation requise', variant: 'warning'   },
+  approved:         { label: 'Approuvée',           variant: 'primary'   },
+  processing:       { label: 'En traitement',       variant: 'primary'   },
   failed:           { label: 'Échouée',             variant: 'error'     },
   rejected:         { label: 'Rejetée',             variant: 'danger'    },
   canceled:         { label: 'Annulée',             variant: 'secondary' },
+  cancelled:        { label: 'Annulée',             variant: 'secondary' },
+  frozen:           { label: 'Gelée',               variant: 'warning'   },
+  refunded:         { label: 'Remboursée',          variant: 'success'   },
+  expired:          { label: 'Expirée',             variant: 'secondary' },
 };
 
 const WALLET_CURRENCIES = ['CDF', 'USD', 'XOF'] as const;
@@ -387,6 +392,7 @@ interface PortfolioWalletPanelProps {
 export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: PortfolioWalletPanelProps) {
   const {
     wallet,
+    wallets,
     balance,
     dashboard,
     pendingCount,
@@ -402,7 +408,6 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
     refresh,
   } = useWallet(portfolioId);
 
-  const { formatAmount } = useCurrencyContext();
 
   const [txTypeFilter,   setTxTypeFilter]   = useState('');
   const [txStatusFilter, setTxStatusFilter] = useState('');
@@ -467,14 +472,13 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
 
   // ── Auto-rotate balance currency ────────────────────────────────────────────
   useEffect(() => {
-    const summaries = balance?.summary ?? [];
-    if (summaries.length <= 1) return;
+    if (wallets.length <= 1) return;
     const timer = setInterval(
-      () => setBalanceIndex(i => (i + 1) % summaries.length),
+      () => setBalanceIndex(i => (i + 1) % wallets.length),
       4000,
     );
     return () => clearInterval(timer);
-  }, [balance]);
+  }, [wallets]);
 
   // ── Loading / error states ─────────────────────────────────────────────────────
 
@@ -504,17 +508,17 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
     );
   }
 
-  const allSummaries   = balance?.summary ?? [];
+  const allSummaries   = wallets;                                              // un wallet par devise
   const activeSummary  = allSummaries.length > 0 ? allSummaries[balanceIndex % allSummaries.length] : null;
-  const totalBalance   = activeSummary?.totalBalance   ?? wallet?.balance          ?? 0;
-  const availBalance   = activeSummary?.totalAvailable ?? wallet?.availableBalance ?? 0;
-  const frozenBalance  = activeSummary?.totalFrozen    ?? wallet?.frozenBalance    ?? 0;
-  const currency       = activeSummary?.currency       ?? wallet?.currency         ?? 'CDF';
+  const totalBalance   = activeSummary?.balance          ?? 0;
+  const availBalance   = activeSummary?.availableBalance ?? 0;
+  const frozenBalance  = activeSummary?.frozenBalance    ?? 0;
+  const currency       = activeSummary?.currency         ?? wallet?.currency  ?? 'CDF';
 
   /** Format a wallet amount in its native currency (no conversion). */
-  const formatRawAmount = (amount: number) =>
+  const formatRawAmount = (amount: number, cur = currency) =>
     new Intl.NumberFormat('fr-FR', {
-      maximumFractionDigits: (currency === 'USD' || currency === 'XOF') ? 2 : 0,
+      maximumFractionDigits: (cur === 'USD' || cur === 'XOF') ? 2 : 0,
     }).format(amount);
 
   // Désactiver uniquement si le wallet est explicitement suspendu ou clôturé
@@ -839,7 +843,7 @@ export function PortfolioWalletPanel({ portfolioId, defaultMobileAccount }: Port
                     {/* montant */}
                     <TableCell>
                       <span className={`text-sm font-semibold ${amtCls}`}>
-                        {isCredit ? '+' : '-'}&nbsp;{formatAmount(tx.amount)}
+                        {isCredit ? '+' : '-'}&nbsp;{formatRawAmount(tx.amount, tx.currency)}
                         <span className="text-xs font-normal text-gray-400 ml-1">{tx.currency}</span>
                       </span>
                     </TableCell>
