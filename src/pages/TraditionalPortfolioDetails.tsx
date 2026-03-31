@@ -130,7 +130,8 @@ export default function TraditionalPortfolioDetails() {
   // Hook pour les demandes de crédit (portfolioId requis par le backend)
   const { 
     requests, 
-    loading: requestsLoading, 
+    loading: requestsLoading,
+    fetchRequests,
     changeRequestStatus,
     getMemberName,
     getCreditProductName
