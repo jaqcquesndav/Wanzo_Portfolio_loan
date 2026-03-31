@@ -4,17 +4,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { centraleRisqueApi, centraleRisqueApiV2 } from '../services/api/shared/centrale-risque.api';
 import { apiClient } from '../services/api/base.api';
-import type { 
-  RiskEntry, 
-  Incident, 
-  Alert, 
-  CentraleRisqueStats, 
+import type {
+  RiskEntry,
+  Incident,
+  Alert,
+  CentraleRisqueStats,
   EntityRiskSummary,
   RiskType,
+  RiskEntityType,
   RiskEntryStatus,
   IncidentType,
   IncidentStatus,
-  Severity
+  Severity,
+  AlertType,
+  AlertStatus,
 } from '../types/centrale-risque';
 
 // Types basés sur la documentation officielle
@@ -208,7 +211,7 @@ export function useRiskStatistics() {
     try {
       setLoading(true);
       setError(null);
-      const response = await centraleRisqueApi.getRiskStatistics();
+      const response = await centraleRisqueApiV2.getStats();
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques');
@@ -239,7 +242,7 @@ export function useCompanyRiskProfile(companyId: string | null) {
     try {
       setLoading(true);
       setError(null);
-      const response = await centraleRisqueApi.getCompanyRiskProfile(companyId);
+      const response = await centraleRisqueApiV2.getEntitySummary(companyId);
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement du profil de risque');
@@ -370,12 +373,16 @@ export function useCentraleRisqueComplete() {
  * Conforme à l'API: /centrale-risque/risk-entries
  */
 export function useRiskEntries(filters?: {
-  companyId?: string;
-  institutionId?: string;
-  riskType?: RiskType;
+  entityId?: string;
+  sector?: string;
+  category?: string;
+  riskType?: RiskEntityType;
   status?: RiskEntryStatus;
-  minCreditScore?: number;
-  maxCreditScore?: number;
+  reportingInstitutionId?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  startDateFrom?: string;
+  startDateTo?: string;
 }) {
   const [entries, setEntries] = useState<RiskEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -394,7 +401,12 @@ export function useRiskEntries(filters?: {
       });
       
       setEntries(response.data);
-      setPagination(response.meta);
+      setPagination({
+        total: response.total,
+        page: response.page,
+        limit: response.limit,
+        totalPages: Math.ceil(response.total / response.limit),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des entrées de risque');
       console.error('Erreur risk entries:', err);
@@ -466,12 +478,14 @@ export function useRiskEntries(filters?: {
  * Conforme à l'API: /centrale-risque/incidents
  */
 export function useIncidents(filters?: {
-  companyId?: string;
+  riskEntryId?: string;
   type?: IncidentType;
   status?: IncidentStatus;
-  severity?: Severity;
-  dateFrom?: string;
-  dateTo?: string;
+  minSeverity?: number;
+  maxSeverity?: number;
+  incidentDateFrom?: string;
+  incidentDateTo?: string;
+  minAmount?: number;
 }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(false);
@@ -490,7 +504,12 @@ export function useIncidents(filters?: {
       });
       
       setIncidents(response.data);
-      setPagination(response.meta);
+      setPagination({
+        total: response.total,
+        page: response.page,
+        limit: response.limit,
+        totalPages: Math.ceil(response.total / response.limit),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des incidents');
       console.error('Erreur incidents:', err);
@@ -562,12 +581,13 @@ export function useIncidents(filters?: {
  * Conforme à l'API: /centrale-risque/alerts
  */
 export function useAlerts(filters?: {
-  companyId?: string;
-  type?: string;
+  riskEntryId?: string;
+  type?: AlertType;
   severity?: Severity;
-  isAcknowledged?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
+  status?: AlertStatus;
+  unacknowledged?: boolean;
+  triggeredFrom?: string;
+  triggeredTo?: string;
 }) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
@@ -586,7 +606,12 @@ export function useAlerts(filters?: {
       });
       
       setAlerts(response.data);
-      setPagination(response.meta);
+      setPagination({
+        total: response.total,
+        page: response.page,
+        limit: response.limit,
+        totalPages: Math.ceil(response.total / response.limit),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des alertes');
       console.error('Erreur alerts:', err);
@@ -598,7 +623,8 @@ export function useAlerts(filters?: {
   const acknowledgeAlert = useCallback(async (id: string, notes?: string) => {
     try {
       setLoading(true);
-      const updated = await centraleRisqueApiV2.acknowledgeAlert(id, notes);
+      // userId = '' — le backend identifie le gestionnaire via le JWT
+      const updated = await centraleRisqueApiV2.acknowledgeAlert(id, '', notes);
       setAlerts(prev => prev.map(a => a.id === id ? updated : a));
       return updated;
     } catch (err) {
@@ -609,19 +635,7 @@ export function useAlerts(filters?: {
     }
   }, []);
 
-  const dismissAlert = useCallback(async (id: string, reason?: string) => {
-    try {
-      setLoading(true);
-      const updated = await centraleRisqueApiV2.dismissAlert(id, reason);
-      setAlerts(prev => prev.map(a => a.id === id ? updated : a));
-      return updated;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors du rejet');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // dismissAlert supprimé — non prévu dans la spec backend (utiliser updateAlert avec status RESOLVED)
 
   useEffect(() => {
     fetchAlerts();
@@ -634,7 +648,6 @@ export function useAlerts(filters?: {
     pagination,
     fetchAlerts,
     acknowledgeAlert,
-    dismissAlert,
     refetch: () => fetchAlerts()
   };
 }
@@ -708,7 +721,7 @@ export function useEntityRiskSummary(entityId: string | null, entityType: 'compa
 export function useCentraleRisqueV2Page() {
   const { entries, loading: entriesLoading, error: entriesError, createEntry, updateEntry, deleteEntry, refetch: refetchEntries } = useRiskEntries();
   const { incidents, loading: incidentsLoading, error: incidentsError, createIncident, updateIncident, deleteIncident, refetch: refetchIncidents } = useIncidents();
-  const { alerts, loading: alertsLoading, error: alertsError, acknowledgeAlert, dismissAlert, refetch: refetchAlerts } = useAlerts();
+  const { alerts, loading: alertsLoading, error: alertsError, acknowledgeAlert, refetch: refetchAlerts } = useAlerts();
   const { stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useCentraleRisqueStats();
 
   const loading = entriesLoading || incidentsLoading || alertsLoading || statsLoading;
@@ -740,7 +753,6 @@ export function useCentraleRisqueV2Page() {
     deleteIncident,
     // Actions sur les alertes
     acknowledgeAlert,
-    dismissAlert,
     // Rafraîchissement
     refetch: refetchAll
   };

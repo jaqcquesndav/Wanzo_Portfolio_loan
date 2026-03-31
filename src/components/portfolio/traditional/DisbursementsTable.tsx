@@ -3,7 +3,7 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { usePaymentOrder } from '../../../hooks/usePaymentOrderContext';
 import { PaymentOrderData } from '../../payment/PaymentOrderModal';
@@ -321,11 +321,13 @@ export const DisbursementsTable: React.FC<DisbursementsTableProps> = ({
             PDF
           </Button>
           <Button
-            variant="primary"
+            variant="ghost"
             size="sm"
             onClick={refreshDisbursements}
+            title="Actualiser les décaissements"
+            className="text-gray-500 hover:text-primary"
           >
-            Actualiser
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Button } from '../components/ui/Button';
-import { Download, CreditCard, Truck, TrendingUp, Filter, Plus } from 'lucide-react';
+import { Download, CreditCard, Truck, TrendingUp, Filter, Plus, RefreshCw } from 'lucide-react';
 import { useCentraleRisqueComplete } from '../hooks/useCentraleRisqueApi';
 import type { 
   CreditRiskEntry, 
@@ -149,6 +149,15 @@ export default function CentralRisque() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Centrale de Risque</h1>
         <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            title="Actualiser les données"
+            className="text-gray-500 hover:text-primary"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
           <Button onClick={() => setIsAddModalOpen(true)} variant="primary" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Ajouter une exposition

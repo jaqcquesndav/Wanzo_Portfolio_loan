@@ -3,7 +3,7 @@ import { ActionsDropdown } from '../../ui/ActionsDropdown';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, Download, Search, Filter, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../ui/Table';
 import { exportToExcel, exportToPDF } from '../../../utils/export';
 import { useCurrencyContext } from '../../../hooks/useCurrencyContext';
@@ -257,11 +257,13 @@ export const RepaymentsTable: React.FC<RepaymentsTableProps> = ({
           </Button>
           {refreshRepayments && (
             <Button
-              variant="primary"
+              variant="ghost"
               size="sm"
               onClick={refreshRepayments}
+              title="Actualiser les remboursements"
+              className="text-gray-500 hover:text-primary"
             >
-              Actualiser
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           )}
         </div>

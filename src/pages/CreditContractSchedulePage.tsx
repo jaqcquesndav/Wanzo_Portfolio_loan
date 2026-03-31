@@ -40,7 +40,7 @@ export default function CreditContractSchedulePage() {
       <div className="container mx-auto p-4 sm:p-6">
         <Breadcrumb 
           items={[
-            { label: 'Portefeuilles', href: '/app/traditional' },
+            { label: 'Portefeuilles', href: '/app/traditional/traditional' },
             { label: 'Portefeuille', href: `/app/traditional/${portfolioId || 'default'}` },
             { label: 'Contrats', href: `/app/traditional/${portfolioId || 'default'}?tab=contracts` },
             { label: 'Échéancier introuvable', href: '#' }
@@ -68,10 +68,10 @@ export default function CreditContractSchedulePage() {
     <div className="container mx-auto p-4 sm:p-6">
       <Breadcrumb 
         items={[
-          { label: 'Portefeuilles', href: '/app/traditional' },
+          { label: 'Portefeuilles', href: '/app/traditional/traditional' },
           { label: 'Portefeuille', href: `/app/traditional/${portfolioId || 'default'}` },
           { label: 'Contrats', href: `/app/traditional/${portfolioId || 'default'}?tab=contracts` },
-          { label: `Contrat ${contract.reference}`, href: `/app/traditional/${portfolioId}/contracts/${contractId}` },
+          { label: `Contrat ${contract.reference}`, href: `/app/traditional/portfolio/${portfolioId}/contracts/${contractId}` },
           { label: 'Échéancier', href: '#' }
         ]} 
       />
@@ -79,7 +79,7 @@ export default function CreditContractSchedulePage() {
       <div className="flex justify-between items-center my-6">
         <Button 
           variant="outline" 
-          onClick={() => navigate(`/app/traditional/${portfolioId || 'default'}/contracts/${contractId}`)}
+          onClick={() => navigate(`/app/traditional/portfolio/${portfolioId || 'default'}/contracts/${contractId}`)}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

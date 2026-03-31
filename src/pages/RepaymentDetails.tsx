@@ -50,8 +50,8 @@ export default function RepaymentDetails({ id: propId }: { id?: string, onClose?
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <Breadcrumb items={[
-        { label: 'Dashboard', href: '/app/dashboard' },
-        { label: 'Remboursements', href: '/app/traditional/repayments' },
+        { label: 'Tableau de bord', href: '/app/traditional' },
+        { label: 'Remboursements', href: `/app/traditional/${portfolioId}?tab=repayments` },
         { label: `Remboursement #${repayment.id}` }
       ]} />
       <h1 className="text-2xl font-bold mb-2">Détail du remboursement</h1>

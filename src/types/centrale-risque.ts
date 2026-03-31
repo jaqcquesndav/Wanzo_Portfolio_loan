@@ -1,9 +1,303 @@
 // src/types/centrale-risque.ts
-// Types pour la Centrale de Risque conformes à l'API backend
+// Types pour la Centrale de Risque — conformes à l'API backend (pas de wrapper success/data)
+
+// ============================================================================
+// ENUMS (valeurs exactes retournées par le backend)
+// ============================================================================
+
+/** Catégorie de risque — champ `category` dans RiskEntry */
+export type RiskCategory =
+  | 'CREDIT' | 'LEASING' | 'INVESTMENT'
+  | 'MARKET' | 'OPERATIONAL' | 'LIQUIDITY' | 'COUNTRY';
+
+/** Type d'entité risque — champ `riskType` dans RiskEntry */
+export type RiskEntityType = 'BUSINESS' | 'INDIVIDUAL' | 'SYSTEMIC' | 'CONCENTRATION';
+
+/** Statut d'une entrée de risque */
+export type RiskEntryStatus =
+  | 'active' | 'defaulted' | 'completed'
+  | 'in_litigation' | 'written_off' | 'restructured';
+
+/** Type d'incident — valeurs exactes backend */
+export type IncidentType =
+  | 'LATE_PAYMENT' | 'MISSED_PAYMENT' | 'PARTIAL_PAYMENT'
+  | 'DEFAULT' | 'LITIGATION' | 'WRITTEN_OFF';
+
+/** Statut d'incident */
+export type IncidentStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'ESCALATED';
+
+/** Type d'alerte */
+export type AlertType =
+  | 'OVERDUE' | 'DEFAULT_RISK' | 'CONCENTRATION'
+  | 'REGULATORY' | 'LIQUIDITY' | 'FRAUD';
+
+/** Statut d'alerte */
+export type AlertStatus = 'ACTIVE' | 'ACKNOWLEDGED' | 'RESOLVED' | 'EXPIRED' | 'PENDING';
+
+/** Sévérité */
+export type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+/** Classification de risque OHADA/BCC */
+export type RiskClass = 'STANDARD' | 'WATCH' | 'SUBSTANDARD' | 'DOUBTFUL' | 'LOSS';
+
+// ============================================================================
+// OBJETS PRINCIPAUX (retournés directement, sans wrapper)
+// ============================================================================
 
 /**
- * Profil de risque d'une entreprise
- * Correspond à l'endpoint GET /risk/central/company/${companyId}
+ * Entrée de risque — GET /centrale-risque/risk-entries/:id
+ * Créée automatiquement lors des transitions DEFAULTED/IN_LITIGATION/WRITTEN_OFF
+ */
+export interface RiskEntry {
+  id: string;
+  companyId: string;
+  companyName: string;
+  institution: string;
+  portfolioId: string;
+  entityId: string;
+  entityType: 'corporate' | 'individual';
+  entityName: string;
+  sector: string;
+  reportingInstitutionId: string;
+  creditId: string;
+  category: RiskCategory;
+  riskType: RiskEntityType;
+  amount: number;
+  currency: string;
+  outstandingAmount: number;
+  creditScore: number;
+  status: RiskEntryStatus;
+  startDate: string;
+  endDate?: string;
+  collateral?: Array<{ type: string; value: number; description: string }>;
+  guarantees?: Array<{ type: string; provider: string; amount: number }>;
+  paymentHistory?: Array<{
+    date: string;
+    amount: number;
+    status: 'paid' | 'missed' | 'late';
+    daysLate?: number;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Incident de paiement — GET /centrale-risque/incidents/:id
+ * Créé automatiquement lors des transitions de contrat
+ */
+export interface Incident {
+  id: string;
+  riskEntryId: string;
+  type: IncidentType;
+  description: string;
+  amount: number;
+  daysOverdue: number;
+  incidentDate: string;
+  severity: number; // 1-10
+  status: IncidentStatus;
+  resolvedDate?: string | null;
+  resolution?: { date: string; method: string; notes: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Alerte de risque — GET /centrale-risque/alerts/:id
+ * Créée automatiquement selon les transitions de contrat
+ */
+export interface Alert {
+  id: string;
+  riskEntryId: string;
+  type: AlertType;
+  severity: Severity;
+  message: string;
+  status: AlertStatus;
+  triggeredAt: string;
+  acknowledgedAt?: string | null;
+  acknowledgedBy?: string | null;
+  metadata?: {
+    threshold?: number;
+    currentValue?: number;
+    previousValue?: number;
+    period?: string;
+    affectedEntities?: string[];
+    recommendedActions?: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Statistiques globales — GET /centrale-risque/stats
+ */
+export interface CentraleRisqueStats {
+  date: string;
+  totalEntries: number;
+  activeEntries: number;
+  uniqueEntities: number;
+  totalExposure: number;
+  totalOutstanding: number;
+  activeIncidents: number;
+  activeAlerts: number;
+  byCategory: Record<string, number>;
+  bySector: Record<string, number>;
+  currency: string;
+}
+
+/**
+ * Résumé de risque d'une entité — GET /centrale-risque/entity/:entityId/summary
+ */
+export interface EntityRiskSummary {
+  entityId: string;
+  entityName: string;
+  entityType: string;
+  sector: string;
+  creditScore: number;
+  totalCredits: number;
+  activeCredits: number;
+  totalExposure: number;
+  totalOutstanding: number;
+  currency: string;
+  totalIncidents: number;
+  activeIncidents: number;
+  activeAlerts: number;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  lastUpdated: string;
+}
+
+/**
+ * Vue rapide dashboard — GET /risk/summary
+ */
+export interface RiskDashboardSummary {
+  entries: {
+    total: number;
+    active: number;
+    defaulted: number;
+    inLitigation: number;
+    writtenOff: number;
+  };
+  alerts: {
+    total: number;
+    critical: number;
+    high: number;
+    pending: number;
+  };
+  recentDefaulted: Array<{
+    id: string;
+    companyId: string;
+    companyName: string;
+    institution: string;
+    amount: number;
+    currency: string;
+    updatedAt: string;
+  }>;
+  recentLitigation: Array<{
+    id: string;
+    companyId: string;
+    companyName: string;
+    institution: string;
+    amount: number;
+    currency: string;
+    updatedAt: string;
+  }>;
+}
+
+/**
+ * Rapport de risque — réponse POST /centrale-risque/reports
+ */
+export interface RiskReport {
+  reportId: string;
+  generatedAt: string;
+  reportType: string;
+  period: { start: string; end: string };
+  summary: EntityRiskSummary & { totalCredits: number; latePayments?: number };
+  creditHistory?: Array<{
+    creditId: string;
+    institution: string;
+    creditType: string;
+    originalAmount: number;
+    outstandingAmount: number;
+    startDate: string;
+    endDate: string;
+    status: string;
+    paymentPerformance: number;
+    latePayments: number;
+  }>;
+  incidents?: Incident[];
+  alerts?: Alert[];
+  recommendations?: string[];
+}
+
+/** Alias pour rétrocompatibilité — RiskType = RiskEntityType */
+export type RiskType = RiskEntityType;
+
+/**
+ * Réponse paginée plate (pas de wrapper meta) — utilisée par
+ * /centrale-risque/risk-entries, /incidents, /alerts
+ */
+export interface CentraleRisquePaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Statistiques PAR/NPL portefeuille — GET /risk-statistics/portfolio
+ */
+export interface PortfolioStats {
+  par30: number;
+  par90: number;
+  nplRatio: number;
+  provisionRequired: number;
+  totalContracts: number;
+  totalAmount: number;
+  byClassification: Partial<Record<RiskClass, { count: number; amount: number; provisionRate: number }>>;
+}
+
+/**
+ * Résultat de mise à jour de classification — POST /risk-statistics/contract/:id/update-classification
+ */
+export interface ContractClassification {
+  contractId: string;
+  contractNumber: string;
+  riskClass: RiskClass;
+  delinquencyDays: number;
+  provisionRate: string;
+  updatedAt: string;
+}
+
+/**
+ * Seuils réglementaires BCC/OHADA — GET /risk-statistics/regulatory-thresholds
+ */
+export interface RegulatoryThresholds {
+  classification: Record<string, string>;
+  provisionRates: Record<string, number>;
+}
+
+/**
+ * Configuration BCC/OHADA par institution — GET /bcc/configuration/:institutionId
+ */
+export interface BCCConfiguration {
+  institutionId: string;
+  norm: string;
+  regulatoryBody: string;
+  classificationThresholds: {
+    watchDays: number;
+    substandardDays: number;
+    doubtfulDays: number;
+    lossDays: number;
+  };
+  provisionRates: Record<string, number>;
+  classificationLabels: Partial<Record<RiskClass, string>>;
+}
+
+// ============================================================================
+// LEGACY — conservés pour compatibilité avec composants non encore migrés
+// ============================================================================
+
+/**
+ * @deprecated Utiliser RiskEntry à la place
  */
 export interface CompanyRiskProfile {
   companyId: string;
@@ -38,374 +332,8 @@ export interface CompanyRiskProfile {
   lastUpdate: string;
 }
 
-/**
- * Incidents de paiement d'une entreprise
- * Correspond à l'endpoint GET /risk/central/company/${companyId}/incidents
- */
-export interface PaymentIncident {
-  id: string;
-  companyId: string;
-  type: 'cheque' | 'effet' | 'retard' | 'autre';
-  amount: number;
-  date: string;
-  status: 'pending' | 'resolved' | 'escalated';
-  description: string;
-  institution: string;
-  resolution?: {
-    date: string;
-    method: string;
-    notes: string;
-  };
-}
+// === end of centrale-risque types ===
+// The old PaymentIncident, CentralRiskEntry, CentralRiskStatistics, RiskSearchParams,
+// AlertType, AlertStatus, RiskAlert, RiskThresholds, RiskType, RiskEntryStatus,
+// IncidentType, IncidentStatus, Severity, RiskEntry, Incident, Alert,
 
-/**
- * Entrée de risque dans la centrale
- * Correspond aux endpoints POST/PUT /risk/central/entries
- */
-export interface CentralRiskEntry {
-  id: string;
-  companyId: string;
-  companyName: string;
-  institution: string;
-  sector: string;
-  riskType: 'credit' | 'leasing' | 'investment';
-  amount: number;
-  currency: string;
-  status: 'active' | 'closed' | 'defaulted' | 'restructured';
-  startDate: string;
-  endDate?: string;
-  creditScore: number;
-  collateral?: {
-    type: string;
-    value: number;
-    description: string;
-  };
-  guarantees?: Array<{
-    type: string;
-    amount: number;
-    provider: string;
-  }>;
-  paymentHistory: Array<{
-    date: string;
-    amount: number;
-    status: 'paid' | 'late' | 'missed';
-    daysLate?: number;
-  }>;
-  metadata: {
-    createdAt: string;
-    updatedAt: string;
-    createdBy: string;
-    lastModifiedBy: string;
-  };
-}
-
-/**
- * Statistiques de la centrale de risque
- * Correspond à l'endpoint GET /risk/central/statistics
- */
-export interface CentralRiskStatistics {
-  totalEntries: number;
-  activeEntries: number;
-  defaultedEntries: number;
-  totalExposure: number;
-  averageCreditScore: number;
-  riskDistribution: {
-    low: number;
-    medium: number;
-    high: number;
-    very_high: number;
-  };
-  sectorDistribution: Array<{
-    sector: string;
-    count: number;
-    exposure: number;
-    averageScore: number;
-  }>;
-  institutionDistribution: Array<{
-    institution: string;
-    count: number;
-    exposure: number;
-    averageScore: number;
-  }>;
-  trends: {
-    period: string;
-    newEntries: number;
-    closedEntries: number;
-    defaultRate: number;
-    recoveryRate: number;
-  };
-}
-
-/**
- * Paramètres pour la recherche d'entreprises à risque
- */
-export interface RiskSearchParams {
-  query?: string;
-  riskCategory?: 'low' | 'medium' | 'high' | 'very_high';
-  sector?: string;
-  institution?: string;
-  minCreditScore?: number;
-  maxCreditScore?: number;
-  minExposure?: number;
-  maxExposure?: number;
-  status?: 'active' | 'closed' | 'defaulted' | 'restructured';
-  page?: number;
-  limit?: number;
-  sortBy?: 'creditScore' | 'exposure' | 'lastUpdate' | 'companyName';
-  sortOrder?: 'asc' | 'desc';
-}
-
-/**
- * Réponse paginée pour les recherches
- */
-export interface RiskSearchResponse {
-  data: CompanyRiskProfile[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-/**
- * Types d'alertes de risque - Conformes à la documentation API (8 valeurs)
- * Voir: API DOCUMENTATION/centrale-risque/README.md
- */
-export type AlertType = 
-  | 'credit_score_drop'      // Baisse du score de crédit
-  | 'payment_delay'          // Retard de paiement
-  | 'exposure_limit'         // Limite d'exposition atteinte
-  | 'new_incident'           // Nouvel incident de paiement
-  | 'risk_increase'          // Augmentation du niveau de risque
-  | 'classification_change'  // Changement de classification OHADA/BCC
-  | 'payment_missed'         // Échéance manquée
-  | 'provisioning_required'; // Provisionnement requis
-
-/**
- * Statuts d'alerte - Conformes à la documentation API
- */
-export type AlertStatus = 'active' | 'acknowledged' | 'resolved' | 'dismissed';
-
-export interface RiskAlert {
-  id: string;
-  companyId: string;
-  companyName?: string;
-  type: AlertType;
-  severity: Severity;
-  message: string;
-  status?: AlertStatus;
-  triggeredAt: string;
-  acknowledgedAt?: string;
-  acknowledgedBy?: string;
-  isAcknowledged?: boolean;
-  riskEntryId?: string;
-  metadata?: {
-    previousValue?: number | string;
-    currentValue?: number | string;
-    threshold?: number;
-    details?: Record<string, unknown>;
-    resolution?: string;
-    daysOverdue?: number;
-    amount?: number;
-    currency?: string;
-  };
-  recommendations?: string[];
-}
-
-/**
- * Configuration des seuils de risque
- */
-export interface RiskThresholds {
-  creditScore: {
-    low: number;
-    medium: number;
-    high: number;
-  };
-  exposureLimit: number;
-  paymentDelayDays: number;
-  defaultProbability: number;
-}
-
-// ============================================================================
-// TYPES CONFORMES À LA DOCUMENTATION API /centrale-risque
-// ============================================================================
-
-/**
- * Types de risque
- */
-export type RiskType = 'credit' | 'leasing' | 'investment';
-
-/**
- * Statuts d'entrée de risque
- */
-export type RiskEntryStatus = 'active' | 'closed' | 'defaulted' | 'restructured';
-
-/**
- * Types d'incident
- */
-export type IncidentType = 'cheque' | 'effet' | 'retard' | 'autre';
-
-/**
- * Statuts d'incident
- */
-export type IncidentStatus = 'pending' | 'resolved' | 'escalated';
-
-/**
- * Sévérité
- */
-export type Severity = 'low' | 'medium' | 'high' | 'critical';
-
-/**
- * Entrée de risque conforme à la documentation API
- * GET /centrale-risque/risk-entries
- */
-export interface RiskEntry {
-  id: string;
-  companyId: string;
-  companyName: string;
-  institutionId: string;
-  institutionName: string;
-  riskType: RiskType;
-  amount: number;
-  currency: string;
-  outstandingAmount: number;
-  startDate: string;
-  endDate?: string;
-  status: RiskEntryStatus;
-  creditScore: number;
-  riskCategory: 'low' | 'medium' | 'high' | 'very_high';
-  guarantees?: Array<{
-    type: string;
-    value: number;
-    description: string;
-  }>;
-  paymentHistory?: Array<{
-    date: string;
-    amount: number;
-    status: 'paid' | 'late' | 'missed';
-    daysLate?: number;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Incident de paiement conforme à la documentation API
- * GET /centrale-risque/incidents
- */
-export interface Incident {
-  id: string;
-  companyId: string;
-  companyName: string;
-  institutionId: string;
-  institutionName: string;
-  type: IncidentType;
-  amount: number;
-  currency: string;
-  date: string;
-  status: IncidentStatus;
-  severity: Severity;
-  description: string;
-  reportedBy: string;
-  resolution?: {
-    date: string;
-    method: string;
-    notes: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Alerte conforme à la documentation API
- * GET /centrale-risque/alerts
- */
-export interface Alert {
-  id: string;
-  companyId: string;
-  companyName: string;
-  type: AlertType;
-  severity: Severity;
-  title: string;
-  message: string;
-  status?: AlertStatus;
-  isAcknowledged: boolean;
-  acknowledgedAt?: string;
-  acknowledgedBy?: string;
-  acknowledgedNotes?: string;
-  riskEntryId?: string;
-  recommendations?: string[];
-  triggeredAt: string;
-  createdAt: string;
-  metadata?: {
-    previousValue?: number | string;
-    currentValue?: number | string;
-    threshold?: number;
-    details?: Record<string, unknown>;
-    resolution?: string;
-    daysOverdue?: number;
-    amount?: number;
-    currency?: string;
-  };
-}
-
-/**
- * Statistiques globales de la centrale de risque
- * GET /centrale-risque/stats
- */
-export interface CentraleRisqueStats {
-  totalRiskEntries: number;
-  activeRiskEntries: number;
-  closedRiskEntries: number;
-  defaultedRiskEntries: number;
-  totalExposure: number;
-  averageCreditScore: number;
-  riskDistribution: {
-    low: number;
-    medium: number;
-    high: number;
-    veryHigh: number;
-  };
-  incidentsSummary: {
-    total: number;
-    pending: number;
-    resolved: number;
-    escalated: number;
-  };
-  alertsSummary: {
-    total: number;
-    unacknowledged: number;
-    acknowledged: number;
-  };
-  sectorDistribution: Array<{
-    sector: string;
-    count: number;
-    exposure: number;
-  }>;
-  lastUpdated: string;
-}
-
-/**
- * Résumé de risque d'une entité
- * GET /centrale-risque/entity/:entityId/summary
- */
-export interface EntityRiskSummary {
-  entityId: string;
-  entityName: string;
-  entityType: 'company' | 'institution';
-  creditScore: number;
-  riskCategory: 'low' | 'medium' | 'high' | 'very_high';
-  totalExposure: number;
-  activeLoans: number;
-  defaultedLoans: number;
-  incidentsCount: number;
-  alertsCount: number;
-  financialHealth: {
-    solvabilite: number;
-    liquidite: number;
-    rentabilite: number;
-    endettement: number;
-  };
-  lastUpdate: string;
-}

@@ -75,8 +75,8 @@ export default function CreditContractDetail() {
       <div className="container mx-auto p-4 sm:p-6">
       <Breadcrumb 
         items={[
-          { label: 'Tableau de bord', href: '/app' },
-          { label: 'Portefeuilles', href: '/app/traditional' },
+          { label: 'Tableau de bord', href: '/app/traditional' },
+          { label: 'Portefeuilles', href: '/app/traditional/traditional' },
           { label: `Portefeuille ${portfolioId || 'default'}`, href: getPortfolioUrl() },
           { label: 'Contrat introuvable', href: '#' }
         ]} 
@@ -102,8 +102,8 @@ export default function CreditContractDetail() {
     <div className="container mx-auto p-4 sm:p-6">
       <Breadcrumb 
         items={[
-          { label: 'Tableau de bord', href: '/app' },
-          { label: 'Portefeuilles', href: '/app/traditional' },
+          { label: 'Tableau de bord', href: '/app/traditional' },
+          { label: 'Portefeuilles', href: '/app/traditional/traditional' },
           { label: `Portefeuille ${portfolioId || 'default'}`, href: getPortfolioUrl() },
           { label: contract.contract_number, href: '#' }
         ]} 

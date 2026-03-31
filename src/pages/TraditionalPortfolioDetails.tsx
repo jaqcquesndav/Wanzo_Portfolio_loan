@@ -521,6 +521,7 @@ export default function TraditionalPortfolioDetails() {
                     navigate(`/app/traditional/company/${encodeURIComponent(company.id || company.name)}/view`, { state: { company } });
                   }}
                   onCreateContract={handleCreateContract}
+                  onRefresh={fetchRequests}
                 />
               </TabsContent>
             );

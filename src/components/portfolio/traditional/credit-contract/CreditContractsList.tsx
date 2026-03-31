@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Filter, Search, Star, X } from 'lucide-react';
+import { Filter, Search, Star, X, RefreshCw } from 'lucide-react';
 import { useCreditContracts } from '../../../../hooks/useCreditContracts';
 import { creditContractApi } from '../../../../services/api/traditional/credit-contract.api';
 import { Card } from '../../../ui/Card';
@@ -27,7 +27,7 @@ export function CreditContractsList({
   portfolioId = 'default',
   onViewCompany
 }: CreditContractsListProps) {
-  const { contracts, loading, error, resetToMockData } = useCreditContracts(portfolioId);
+  const { contracts, loading, error, resetToMockData, refresh } = useCreditContracts(portfolioId);
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   
@@ -299,6 +299,15 @@ export function CreditContractsList({
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Liste des contrats</h3>
               <div className="flex space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={refresh}
+                  title="Actualiser les contrats"
+                  className="text-gray-500 hover:text-primary"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 

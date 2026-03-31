@@ -54,6 +54,7 @@ interface CreditRequestsTableProps {
   /** companyId = UUID entreprise; companyName = nom lisible */
   onViewCompany?: (companyId: string, companyName?: string) => void;
   onCreateContract?: (id: string) => void;
+  onRefresh?: () => void;
   loading?: boolean;
   /** Map memberId → nom entreprise (fallback si companyName absent) */
   companyNames?: Record<string, string>;
@@ -88,6 +89,7 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
   onView,
   onViewCompany,
   onCreateContract,
+  onRefresh,
   loading = false,
   companyNames = {},
   productNames = {}
@@ -306,6 +308,12 @@ export const CreditRequestsTable: React.FC<CreditRequestsTableProps> = ({
               disabled={filteredAndSortedData.length === 0} title="Exporter en PDF">
               <FileText className="h-4 w-4 mr-1" />PDF
             </Button>
+            {onRefresh && (
+              <Button variant="ghost" size="sm" onClick={onRefresh}
+                title="Actualiser les demandes" className="text-gray-500 hover:text-primary">
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+            )}
           </div>
         </div>
 

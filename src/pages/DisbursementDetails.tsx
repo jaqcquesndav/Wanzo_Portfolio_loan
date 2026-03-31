@@ -50,8 +50,8 @@ export default function DisbursementDetails({ id: propId }: { id?: string }) {
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <Breadcrumb items={[
-        { label: 'Dashboard', href: '/app/dashboard' },
-        { label: 'Décaissements', href: '/app/traditional/disbursements' },
+        { label: 'Tableau de bord', href: '/app/traditional' },
+        { label: 'Décaissements', href: `/app/traditional/${portfolioId}?tab=disbursements` },
         { label: `Décaissement #${disbursement.id}` }
       ]} />
       <h1 className="text-2xl font-bold mb-2">Détail du décaissement</h1>

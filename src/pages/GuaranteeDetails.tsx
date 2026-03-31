@@ -182,8 +182,8 @@ export default function GuaranteeDetails({ id: propId }: { id?: string, onClose?
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <Breadcrumb items={[
-        { label: 'Dashboard', href: '/app/dashboard' },
-        { label: 'Portefeuilles', href: '/app/traditional' },
+        { label: 'Tableau de bord', href: '/app/traditional' },
+        { label: 'Portefeuilles', href: '/app/traditional/traditional' },
         { label: `Portefeuille ${portfolioId || 'N/A'}`, href: `/app/traditional/${portfolioId}` },
         { label: `Garantie #${guarantee.id}` }
       ]} />

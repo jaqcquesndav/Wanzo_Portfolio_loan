@@ -1,607 +1,307 @@
 // src/services/api/shared/centrale-risque.api.ts
 import { apiClient } from '../base.api';
-
-/**
- * API pour la centrale de risque
- */
-export const centraleRisqueApi = {
-  /**
-   * Recherche des informations de risque pour une entreprise
-   */
-  getCompanyRiskProfile: (companyId: string) => {
-    return apiClient.get<{
-      companyId: string;
-      companyName: string;
-      creditScore: number;
-      riskCategory: 'low' | 'medium' | 'high' | 'very_high';
-      financialHealth: {
-        solvabilite: number;
-        liquidite: number;
-        rentabilite: number;
-        endettement: number;
-        scoreGlobal: number;
-      };
-      creditHistory: {
-        encoursTotalActuel: number;
-        encoursTotalHistorique: number;
-        repartitionParType: {
-          creditsBancaires: number;
-          creditsBail: number;
-          lignesDeCredit: number;
-          autres: number;
-        };
-        incidents: {
-          total: number;
-          cheques: number;
-          effets: number;
-          retards: number;
-        };
-      };
-      defaultProbability: number;
-      recommendedActions: string[];
-      lastUpdate: string;
-    }>(`/risk/central/company/${companyId}`);
-  },
-
-  /**
-   * Récupère les incidents de paiement pour une entreprise
-   */
-  getCompanyPaymentIncidents: (companyId: string, period?: string) => {
-    const params = new URLSearchParams();
-    if (period) params.append('period', period);
-
-    return apiClient.get<{
-      companyId: string;
-      companyName: string;
-      incidents: Array<{
-        id: string;
-        type: 'cheque' | 'effet' | 'retard' | 'defaut';
-        date: string;
-        amount: number;
-        days?: number;
-        institution: string;
-        description: string;
-        status: 'ouvert' | 'régularisé';
-        regularisationDate?: string;
-      }>;
-      summary: {
-        totalIncidents: number;
-        totalAmount: number;
-        byType: Record<string, number>;
-        byStatus: Record<string, number>;
-        averageDaysLate: number;
-      };
-    }>(`/risk/central/company/${companyId}/incidents?${params.toString()}`);
-  },
-
-  /**
-   * Récupère les engagements d'une entreprise
-   */
-  getCompanyEngagements: (companyId: string) => {
-    return apiClient.get<{
-      companyId: string;
-      companyName: string;
-      totalEngagement: number;
-      engagements: Array<{
-        id: string;
-        institution: string;
-        type: 'credit' | 'leasing' | 'ligne_credit' | 'garantie' | 'autre';
-        startDate: string;
-        endDate?: string;
-        initialAmount: number;
-        currentAmount: number;
-        currency: string;
-        status: 'actif' | 'cloture' | 'en_defaut';
-        paymentStatus: 'normal' | 'retard' | 'defaut';
-        daysLate?: number;
-      }>;
-      summary: {
-        byType: Record<string, number>;
-        byStatus: Record<string, number>;
-        byPaymentStatus: Record<string, number>;
-      };
-    }>(`/risk/central/company/${companyId}/engagements`);
-  },
-
-  /**
-   * Ajoute une entrée de risque pour une entreprise
-   */
-  addRiskEntry: (entry: {
-    companyId: string;
-    type: 'incident_paiement' | 'credit' | 'defaut' | 'alerte' | 'autre';
-    date: string;
-    amount?: number;
-    description: string;
-    severity: 'low' | 'medium' | 'high';
-    source: string;
-    attachmentUrls?: string[];
-  }) => {
-    return apiClient.post<{
-      id: string;
-      companyId: string;
-      type: 'incident_paiement' | 'credit' | 'defaut' | 'alerte' | 'autre';
-      date: string;
-      amount?: number;
-      description: string;
-      severity: 'low' | 'medium' | 'high';
-      source: string;
-      attachmentUrls?: string[];
-      created_at: string;
-    }>('/risk/central/entries', entry);
-  },
-
-  /**
-   * Met à jour une entrée de risque
-   */
-  updateRiskEntry: (id: string, updates: {
-    type?: 'incident_paiement' | 'credit' | 'defaut' | 'alerte' | 'autre';
-    date?: string;
-    amount?: number;
-    description?: string;
-    severity?: 'low' | 'medium' | 'high';
-    status?: 'active' | 'resolved' | 'false_positive';
-    resolution?: string;
-    attachmentUrls?: string[];
-  }) => {
-    return apiClient.put<{
-      id: string;
-      companyId: string;
-      type: 'incident_paiement' | 'credit' | 'defaut' | 'alerte' | 'autre';
-      date: string;
-      amount?: number;
-      description: string;
-      severity: 'low' | 'medium' | 'high';
-      status: 'active' | 'resolved' | 'false_positive';
-      resolution?: string;
-      source: string;
-      attachmentUrls?: string[];
-      created_at: string;
-      updated_at: string;
-    }>(`/risk/central/entries/${id}`, updates);
-  },
-
-  /**
-   * Récupère les alertes de risque actives
-   */
-  getActiveRiskAlerts: (filters?: {
-    severity?: 'low' | 'medium' | 'high';
-    type?: 'market' | 'credit' | 'operational' | 'compliance' | 'liquidity';
-    page?: number;
-    limit?: number;
-  }) => {
-    const params = new URLSearchParams();
-    if (filters?.severity) params.append('severity', filters.severity);
-    if (filters?.type) params.append('type', filters.type);
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-
-    return apiClient.get<{
-      data: Array<{
-        id: string;
-        type: 'market' | 'credit' | 'operational' | 'compliance' | 'liquidity';
-        severity: 'low' | 'medium' | 'high';
-        title: string;
-        description: string;
-        affectedEntities: Array<{
-          id: string;
-          type: 'company' | 'portfolio' | 'sector' | 'region';
-          name: string;
-        }>;
-        createdAt: string;
-        status: 'new' | 'acknowledged' | 'in_progress' | 'resolved';
-      }>;
-      meta: {
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-      };
-    }>(`/risk/central/alerts?${params.toString()}`);
-  },
-
-  /**
-   * Récupère les statistiques de risque
-   */
-  getRiskStatistics: () => {
-    return apiClient.get<{
-      totalCompanies: number;
-      riskDistribution: {
-        low: number;
-        medium: number;
-        high: number;
-        very_high: number;
-      };
-      sectorRiskHeatmap: Array<{
-        sector: string;
-        riskScore: number;
-        exposure: number;
-        companies: number;
-      }>;
-      defaultRates: {
-        overall: number;
-        byCompanySize: Record<string, number>;
-        bySector: Record<string, number>;
-      };
-      trends: {
-        period: string;
-        defaultRate: Array<{ date: string; value: number }>;
-        riskDistribution: Array<{ date: string; low: number; medium: number; high: number; very_high: number }>;
-      };
-    }>('/risk/central/statistics');
-  },
-
-  /**
-   * Récupère le rapport de risque complet
-   */
-  getFullRiskReport: (companyId: string) => {
-    return apiClient.get<{
-      companyId: string;
-      companyName: string;
-      generateDate: string;
-      creditScore: number;
-      riskCategory: 'low' | 'medium' | 'high' | 'very_high';
-      financialAnalysis: {
-        balanceSheet: Record<string, number>;
-        incomeStatement: Record<string, number>;
-        cashFlow: Record<string, number>;
-        keyRatios: Record<string, number>;
-        trends: Record<string, Array<{ year: string; value: number }>>;
-      };
-      creditHistory: {
-        engagements: Array<{
-          institution: string;
-          type: string;
-          amount: number;
-          startDate: string;
-          status: string;
-        }>;
-        incidents: Array<{
-          type: string;
-          date: string;
-          amount: number;
-          status: string;
-        }>;
-      };
-      marketAnalysis: {
-        sectorRisk: number;
-        sectorTrend: string;
-        competitivePosition: string;
-        marketShareTrend: string;
-      };
-      managementAssessment: {
-        experienceScore: number;
-        stabilityScore: number;
-        complianceScore: number;
-        observations: string[];
-      };
-      recommendation: {
-        maxExposure: number;
-        suggestedCollateral: string[];
-        monitoringFrequency: string;
-        additionalConditions: string[];
-      };
-    }>(`/risk/central/company/${companyId}/full-report`);
-  },
-
-  /**
-   * Récupère l'historique des risques
-   */
-  getRiskHistory: (companyId: string, startDate?: string, endDate?: string) => {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-
-    return apiClient.get<{
-      companyId: string;
-      companyName: string;
-      history: Array<{
-        date: string;
-        creditScore: number;
-        riskCategory: 'low' | 'medium' | 'high' | 'very_high';
-        significantChanges?: {
-          type: string;
-          description: string;
-          impact: 'positive' | 'negative' | 'neutral';
-        }[];
-      }>;
-      trend: 'improving' | 'stable' | 'deteriorating';
-      volatility: number;
-    }>(`/risk/central/company/${companyId}/history?${params.toString()}`);
-  }
-};
-
-// ============================================================================
-// API CONFORME À LA DOCUMENTATION - /centrale-risque
-// ============================================================================
-
-import type { 
-  RiskEntry, 
-  Incident, 
-  Alert, 
-  CentraleRisqueStats, 
+import type {
+  RiskEntry,
+  RiskDashboardSummary,
+  Incident,
+  Alert,
+  CentraleRisqueStats,
   EntityRiskSummary,
-  RiskType,
+  RiskReport,
+  PortfolioStats,
+  ContractClassification,
+  RegulatoryThresholds,
+  BCCConfiguration,
+  CentraleRisquePaginatedResponse,
+  RiskCategory,
+  RiskEntityType,
   RiskEntryStatus,
   IncidentType,
   IncidentStatus,
-  Severity
+  AlertType,
+  AlertStatus,
+  Severity,
 } from '../../../types/centrale-risque';
 
-/**
- * API de la Centrale des Risques - Conforme à la documentation officielle
- * Base URL: /centrale-risque
- */
-export const centraleRisqueApiV2 = {
-  // ============================================================================
-  // 1. ENTRÉES DE RISQUE (Risk Entries)
-  // ============================================================================
+// ============================================================================
+// 1. VUE RAPIDE DASHBOARD + STATISTIQUES RÉGLEMENTAIRES + BCC
+//    Préfixes : /risk  |  /risk-statistics  |  /bcc
+// ============================================================================
+export const centraleRisqueApi = {
+  /** GET /risk/summary — résumé dashboard consolidé (entrées, alertes, défauts récents) */
+  getDashboardSummary: () =>
+    apiClient.get<RiskDashboardSummary>('/risk/summary'),
 
-  /**
-   * Liste des entrées de risque
-   * GET /centrale-risque/risk-entries
-   */
+  /** GET /risk?companyId=... — liste crédit / leasing / investissement */
+  getRisksByCompany: (companyId?: string) => {
+    const qs = companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
+    return apiClient.get<{
+      creditRisks: RiskEntry[];
+      leasingRisks: RiskEntry[];
+      investmentRisks: RiskEntry[];
+    }>(`/risk${qs}`);
+  },
+
+  /** GET /risk/:id — entrée de risque par UUID */
+  getRiskById: (id: string) =>
+    apiClient.get<RiskEntry>(`/risk/${id}`),
+
+  /** GET /risk/credit/:companyId */
+  getCreditRiskByCompany: (companyId: string) =>
+    apiClient.get<{ companyId: string; creditRisks: RiskEntry[]; totalCount: number }>(
+      `/risk/credit/${companyId}`
+    ),
+
+  /** GET /risk/leasing/:companyId */
+  getLeasingRiskByCompany: (companyId: string) =>
+    apiClient.get<{ companyId: string; leasingRisks: RiskEntry[]; totalCount: number }>(
+      `/risk/leasing/${companyId}`
+    ),
+
+  // ── Statistiques réglementaires ─────────────────────────────────────────
+
+  /** GET /risk-statistics/portfolio — PAR30, PAR90, NPL, provisions OHADA */
+  getPortfolioStats: (institutionId?: string) => {
+    const qs = institutionId ? `?institutionId=${encodeURIComponent(institutionId)}` : '';
+    return apiClient.get<PortfolioStats>(`/risk-statistics/portfolio${qs}`);
+  },
+
+  /** GET /risk-statistics/contract/:contractId/days-overdue */
+  getContractDaysOverdue: (contractId: string) =>
+    apiClient.get<{ contractId: string; daysOverdue: number; calculatedAt: string }>(
+      `/risk-statistics/contract/${contractId}/days-overdue`
+    ),
+
+  /** POST /risk-statistics/contract/:contractId/update-classification */
+  updateContractClassification: (contractId: string, daysOverdue?: number) =>
+    apiClient.post<ContractClassification>(
+      `/risk-statistics/contract/${contractId}/update-classification`,
+      daysOverdue !== undefined ? { daysOverdue } : {}
+    ),
+
+  /** POST /risk-statistics/update-all-classifications — recalcule toutes les classifications */
+  updateAllClassifications: () =>
+    apiClient.post<{ message: string; triggeredAt: string }>(
+      '/risk-statistics/update-all-classifications',
+      {}
+    ),
+
+  /** GET /risk-statistics/regulatory-thresholds */
+  getRegulatoryThresholds: () =>
+    apiClient.get<RegulatoryThresholds>('/risk-statistics/regulatory-thresholds'),
+
+  // ── Configuration BCC/OHADA ───────────────────────────────────────────────
+
+  /** GET /bcc/configuration/:institutionId */
+  getBCCConfiguration: (institutionId: string) =>
+    apiClient.get<BCCConfiguration>(`/bcc/configuration/${institutionId}`),
+};
+
+// ============================================================================
+// 2. CRUD COMPLET — /centrale-risque
+//    Entrées de risque | Incidents | Alertes | Rapports & stats
+// ============================================================================
+export const centraleRisqueApiV2 = {
+  // ── Entrées de risque ────────────────────────────────────────────────────
+
+  /** GET /centrale-risque/risk-entries */
   getRiskEntries: (filters?: {
-    companyId?: string;
-    institutionId?: string;
-    riskType?: RiskType;
+    entityId?: string;
+    sector?: string;
+    category?: RiskCategory;
+    riskType?: RiskEntityType;
     status?: RiskEntryStatus;
-    minCreditScore?: number;
-    maxCreditScore?: number;
+    reportingInstitutionId?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    startDateFrom?: string;
+    startDateTo?: string;
     page?: number;
     limit?: number;
   }) => {
-    const params = new URLSearchParams();
-    if (filters?.companyId) params.append('companyId', filters.companyId);
-    if (filters?.institutionId) params.append('institutionId', filters.institutionId);
-    if (filters?.riskType) params.append('riskType', filters.riskType);
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.minCreditScore) params.append('minCreditScore', filters.minCreditScore.toString());
-    if (filters?.maxCreditScore) params.append('maxCreditScore', filters.maxCreditScore.toString());
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-
-    return apiClient.get<{
-      data: RiskEntry[];
-      meta: { total: number; page: number; limit: number; totalPages: number };
-    }>(`/centrale-risque/risk-entries?${params.toString()}`);
+    const p = new URLSearchParams();
+    if (filters?.entityId) p.append('entityId', filters.entityId);
+    if (filters?.sector) p.append('sector', filters.sector);
+    if (filters?.category) p.append('category', filters.category);
+    if (filters?.riskType) p.append('riskType', filters.riskType);
+    if (filters?.status) p.append('status', filters.status);
+    if (filters?.reportingInstitutionId) p.append('reportingInstitutionId', filters.reportingInstitutionId);
+    if (filters?.minAmount !== undefined) p.append('minAmount', String(filters.minAmount));
+    if (filters?.maxAmount !== undefined) p.append('maxAmount', String(filters.maxAmount));
+    if (filters?.startDateFrom) p.append('startDateFrom', filters.startDateFrom);
+    if (filters?.startDateTo) p.append('startDateTo', filters.startDateTo);
+    if (filters?.page) p.append('page', String(filters.page));
+    if (filters?.limit) p.append('limit', String(filters.limit));
+    const qs = p.toString();
+    return apiClient.get<CentraleRisquePaginatedResponse<RiskEntry>>(
+      `/centrale-risque/risk-entries${qs ? `?${qs}` : ''}`
+    );
   },
 
-  /**
-   * Détail d'une entrée de risque
-   * GET /centrale-risque/risk-entries/:id
-   */
-  getRiskEntryById: (id: string) => {
-    return apiClient.get<RiskEntry>(`/centrale-risque/risk-entries/${id}`);
-  },
+  /** GET /centrale-risque/risk-entries/:id */
+  getRiskEntryById: (id: string) =>
+    apiClient.get<RiskEntry>(`/centrale-risque/risk-entries/${id}`),
 
-  /**
-   * Créer une entrée de risque
-   * POST /centrale-risque/risk-entries
-   */
-  createRiskEntry: (data: Omit<RiskEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return apiClient.post<RiskEntry>('/centrale-risque/risk-entries', data);
-  },
+  /** POST /centrale-risque/risk-entries */
+  createRiskEntry: (data: Omit<RiskEntry, 'id' | 'createdAt' | 'updatedAt'>) =>
+    apiClient.post<RiskEntry>('/centrale-risque/risk-entries', data),
 
-  /**
-   * Mettre à jour une entrée de risque
-   * PUT /centrale-risque/risk-entries/:id
-   */
-  updateRiskEntry: (id: string, data: Partial<RiskEntry>) => {
-    return apiClient.put<RiskEntry>(`/centrale-risque/risk-entries/${id}`, data);
-  },
+  /** PUT /centrale-risque/risk-entries/:id */
+  updateRiskEntry: (id: string, data: Partial<RiskEntry>) =>
+    apiClient.put<RiskEntry>(`/centrale-risque/risk-entries/${id}`, data),
 
-  /**
-   * Supprimer une entrée de risque
-   * DELETE /centrale-risque/risk-entries/:id
-   */
-  deleteRiskEntry: (id: string) => {
-    return apiClient.delete(`/centrale-risque/risk-entries/${id}`);
-  },
+  /** DELETE /centrale-risque/risk-entries/:id */
+  deleteRiskEntry: (id: string) =>
+    apiClient.delete(`/centrale-risque/risk-entries/${id}`),
 
-  // ============================================================================
-  // 2. INCIDENTS DE PAIEMENT
-  // ============================================================================
+  // ── Incidents de paiement ────────────────────────────────────────────────
 
-  /**
-   * Liste des incidents
-   * GET /centrale-risque/incidents
-   */
+  /** GET /centrale-risque/incidents */
   getIncidents: (filters?: {
-    companyId?: string;
+    riskEntryId?: string;
     type?: IncidentType;
     status?: IncidentStatus;
-    severity?: Severity;
-    dateFrom?: string;
-    dateTo?: string;
+    minSeverity?: number;
+    maxSeverity?: number;
+    incidentDateFrom?: string;
+    incidentDateTo?: string;
+    minAmount?: number;
     page?: number;
     limit?: number;
   }) => {
-    const params = new URLSearchParams();
-    if (filters?.companyId) params.append('companyId', filters.companyId);
-    if (filters?.type) params.append('type', filters.type);
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.severity) params.append('severity', filters.severity);
-    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-
-    return apiClient.get<{
-      data: Incident[];
-      meta: { total: number; page: number; limit: number; totalPages: number };
-    }>(`/centrale-risque/incidents?${params.toString()}`);
+    const p = new URLSearchParams();
+    if (filters?.riskEntryId) p.append('riskEntryId', filters.riskEntryId);
+    if (filters?.type) p.append('type', filters.type);
+    if (filters?.status) p.append('status', filters.status);
+    if (filters?.minSeverity !== undefined) p.append('minSeverity', String(filters.minSeverity));
+    if (filters?.maxSeverity !== undefined) p.append('maxSeverity', String(filters.maxSeverity));
+    if (filters?.incidentDateFrom) p.append('incidentDateFrom', filters.incidentDateFrom);
+    if (filters?.incidentDateTo) p.append('incidentDateTo', filters.incidentDateTo);
+    if (filters?.minAmount !== undefined) p.append('minAmount', String(filters.minAmount));
+    if (filters?.page) p.append('page', String(filters.page));
+    if (filters?.limit) p.append('limit', String(filters.limit));
+    const qs = p.toString();
+    return apiClient.get<CentraleRisquePaginatedResponse<Incident>>(
+      `/centrale-risque/incidents${qs ? `?${qs}` : ''}`
+    );
   },
 
-  /**
-   * Détail d'un incident
-   * GET /centrale-risque/incidents/:id
-   */
-  getIncidentById: (id: string) => {
-    return apiClient.get<Incident>(`/centrale-risque/incidents/${id}`);
-  },
+  /** GET /centrale-risque/incidents/:id */
+  getIncidentById: (id: string) =>
+    apiClient.get<Incident>(`/centrale-risque/incidents/${id}`),
 
-  /**
-   * Créer un incident
-   * POST /centrale-risque/incidents
-   */
-  createIncident: (data: Omit<Incident, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return apiClient.post<Incident>('/centrale-risque/incidents', data);
-  },
+  /** POST /centrale-risque/incidents */
+  createIncident: (data: Omit<Incident, 'id' | 'createdAt' | 'updatedAt'>) =>
+    apiClient.post<Incident>('/centrale-risque/incidents', data),
 
-  /**
-   * Mettre à jour un incident
-   * PUT /centrale-risque/incidents/:id
-   */
-  updateIncident: (id: string, data: Partial<Incident>) => {
-    return apiClient.put<Incident>(`/centrale-risque/incidents/${id}`, data);
-  },
+  /** PUT /centrale-risque/incidents/:id */
+  updateIncident: (id: string, data: Partial<Incident>) =>
+    apiClient.put<Incident>(`/centrale-risque/incidents/${id}`, data),
 
-  /**
-   * Supprimer un incident
-   * DELETE /centrale-risque/incidents/:id
-   */
-  deleteIncident: (id: string) => {
-    return apiClient.delete(`/centrale-risque/incidents/${id}`);
-  },
+  /** DELETE /centrale-risque/incidents/:id */
+  deleteIncident: (id: string) =>
+    apiClient.delete(`/centrale-risque/incidents/${id}`),
 
-  // ============================================================================
-  // 3. ALERTES DE RISQUE
-  // ============================================================================
+  // ── Alertes de risque ────────────────────────────────────────────────────
 
-  /**
-   * Liste des alertes
-   * GET /centrale-risque/alerts
-   */
+  /** GET /centrale-risque/alerts */
   getAlerts: (filters?: {
-    companyId?: string;
-    type?: string;
+    riskEntryId?: string;
+    type?: AlertType;
     severity?: Severity;
-    isAcknowledged?: boolean;
-    dateFrom?: string;
-    dateTo?: string;
+    status?: AlertStatus;
+    unacknowledged?: boolean;
+    triggeredFrom?: string;
+    triggeredTo?: string;
     page?: number;
     limit?: number;
   }) => {
-    const params = new URLSearchParams();
-    if (filters?.companyId) params.append('companyId', filters.companyId);
-    if (filters?.type) params.append('type', filters.type);
-    if (filters?.severity) params.append('severity', filters.severity);
-    if (filters?.isAcknowledged !== undefined) params.append('isAcknowledged', filters.isAcknowledged.toString());
-    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-
-    return apiClient.get<{
-      data: Alert[];
-      meta: { total: number; page: number; limit: number; totalPages: number };
-    }>(`/centrale-risque/alerts?${params.toString()}`);
+    const p = new URLSearchParams();
+    if (filters?.riskEntryId) p.append('riskEntryId', filters.riskEntryId);
+    if (filters?.type) p.append('type', filters.type);
+    if (filters?.severity) p.append('severity', filters.severity);
+    if (filters?.status) p.append('status', filters.status);
+    if (filters?.unacknowledged !== undefined) p.append('unacknowledged', String(filters.unacknowledged));
+    if (filters?.triggeredFrom) p.append('triggeredFrom', filters.triggeredFrom);
+    if (filters?.triggeredTo) p.append('triggeredTo', filters.triggeredTo);
+    if (filters?.page) p.append('page', String(filters.page));
+    if (filters?.limit) p.append('limit', String(filters.limit));
+    const qs = p.toString();
+    return apiClient.get<CentraleRisquePaginatedResponse<Alert>>(
+      `/centrale-risque/alerts${qs ? `?${qs}` : ''}`
+    );
   },
 
-  /**
-   * Détail d'une alerte
-   * GET /centrale-risque/alerts/:id
-   */
-  getAlertById: (id: string) => {
-    return apiClient.get<Alert>(`/centrale-risque/alerts/${id}`);
-  },
+  /** GET /centrale-risque/alerts/:id */
+  getAlertById: (id: string) =>
+    apiClient.get<Alert>(`/centrale-risque/alerts/${id}`),
+
+  /** POST /centrale-risque/alerts */
+  createAlert: (data: Omit<Alert, 'id' | 'createdAt' | 'updatedAt' | 'triggeredAt'>) =>
+    apiClient.post<Alert>('/centrale-risque/alerts', data),
+
+  /** PUT /centrale-risque/alerts/:id */
+  updateAlert: (id: string, data: Partial<Alert>) =>
+    apiClient.put<Alert>(`/centrale-risque/alerts/${id}`, data),
 
   /**
-   * Créer une alerte
-   * POST /centrale-risque/alerts
-   */
-  createAlert: (data: Omit<Alert, 'id' | 'createdAt' | 'triggeredAt'>) => {
-    return apiClient.post<Alert>('/centrale-risque/alerts', data);
-  },
-
-  /**
-   * Mettre à jour une alerte
-   * PUT /centrale-risque/alerts/:id
-   */
-  updateAlert: (id: string, data: Partial<Alert>) => {
-    return apiClient.put<Alert>(`/centrale-risque/alerts/${id}`, data);
-  },
-
-  /**
-   * Acquitter une alerte
    * PUT /centrale-risque/alerts/:id/acknowledge
+   * Body: { userId, notes? } — userId = gestionnaire qui acquitte
    */
-  acknowledgeAlert: (id: string, notes?: string) => {
-    return apiClient.put<Alert>(`/centrale-risque/alerts/${id}/acknowledge`, { notes });
-  },
+  acknowledgeAlert: (id: string, userId: string, notes?: string) =>
+    apiClient.put<Alert>(`/centrale-risque/alerts/${id}/acknowledge`, { userId, notes }),
+
+  /** DELETE /centrale-risque/alerts/:id */
+  deleteAlert: (id: string) =>
+    apiClient.delete(`/centrale-risque/alerts/${id}`),
+
+  // ── Rapports & statistiques globales ────────────────────────────────────
+
+  /** GET /centrale-risque/stats */
+  getStats: () =>
+    apiClient.get<CentraleRisqueStats>('/centrale-risque/stats'),
 
   /**
-   * Rejeter/Ignorer une alerte
-   * PUT /centrale-risque/alerts/:id/dismiss
-   */
-  dismissAlert: (id: string, reason?: string) => {
-    return apiClient.put<Alert>(`/centrale-risque/alerts/${id}/dismiss`, { reason });
-  },
-
-  /**
-   * Supprimer une alerte
-   * DELETE /centrale-risque/alerts/:id
-   */
-  deleteAlert: (id: string) => {
-    return apiClient.delete(`/centrale-risque/alerts/${id}`);
-  },
-
-  // ============================================================================
-  // 4. RAPPORTS ET STATISTIQUES
-  // ============================================================================
-
-  /**
-   * Statistiques globales
-   * GET /centrale-risque/stats
-   */
-  getStats: () => {
-    return apiClient.get<CentraleRisqueStats>('/centrale-risque/stats');
-  },
-
-  /**
-   * Résumé de risque d'une entité
    * GET /centrale-risque/entity/:entityId/summary
+   * Résumé allégé pour une entité (company / portfolio)
    */
-  getEntitySummary: (entityId: string, entityType: 'company' | 'portfolio' = 'company') => {
-    return apiClient.get<EntityRiskSummary>(`/centrale-risque/entity/${entityId}/summary?type=${entityType}`);
-  },
+  getEntitySummary: (entityId: string) =>
+    apiClient.get<EntityRiskSummary>(`/centrale-risque/entity/${entityId}/summary`),
 
-  /**
-   * Générer un rapport de risque
-   * POST /centrale-risque/reports
-   */
+  /** POST /centrale-risque/reports */
   generateReport: (data: {
     entityId: string;
-    reportType: 'full' | 'summary' | 'incidents' | 'trends';
-    periodStart?: string;
-    periodEnd?: string;
-    format?: 'pdf' | 'excel' | 'json';
-  }) => {
-    return apiClient.post<{ reportId: string; url?: string; status: string }>('/centrale-risque/reports', data);
+    entityType?: string;
+    reportType: 'summary' | 'detailed' | 'credit_history' | 'incidents' | 'exposure' | 'bcc_report';
+    format?: 'json' | 'pdf' | 'excel' | 'csv';
+    startDate?: string;
+    endDate?: string;
+    includeClosedCredits?: boolean;
+    includeIncidents?: boolean;
+  }) =>
+    apiClient.post<RiskReport>('/centrale-risque/reports', data),
+
+  // ── Legacy endpoints (rétrocompatibilité) ───────────────────────────────
+
+  /** GET /centrale-risque/credit-risks */
+  getCreditRisks: (companyId?: string, institutionId?: string) => {
+    const p = new URLSearchParams();
+    if (companyId) p.append('companyId', companyId);
+    if (institutionId) p.append('institutionId', institutionId);
+    const qs = p.toString();
+    return apiClient.get<RiskEntry[]>(`/centrale-risque/credit-risks${qs ? `?${qs}` : ''}`);
   },
 
-  // ============================================================================
-  // 5. ENDPOINTS LEGACY (Compatibilité)
-  // ============================================================================
-
-  /**
-   * GET /centrale-risque/credit-risks
-   */
-  getCreditRisks: () => {
-    return apiClient.get<RiskEntry[]>('/centrale-risque/credit-risks');
+  /** GET /centrale-risque/payment-incidents */
+  getPaymentIncidents: (companyId?: string, institutionId?: string) => {
+    const p = new URLSearchParams();
+    if (companyId) p.append('companyId', companyId);
+    if (institutionId) p.append('institutionId', institutionId);
+    const qs = p.toString();
+    return apiClient.get<Incident[]>(`/centrale-risque/payment-incidents${qs ? `?${qs}` : ''}`);
   },
 
-  /**
-   * GET /centrale-risque/payment-incidents
-   */
-  getPaymentIncidents: () => {
-    return apiClient.get<Incident[]>('/centrale-risque/payment-incidents');
-  },
-
-  /**
-   * GET /centrale-risque/risk-summary?companyId={companyId}
-   */
-  getRiskSummary: (companyId: string) => {
-    return apiClient.get<EntityRiskSummary>(`/centrale-risque/risk-summary?companyId=${companyId}`);
-  }
+  /** GET /centrale-risque/risk-summary?companyId=uuid */
+  getRiskSummary: (companyId: string) =>
+    apiClient.get<EntityRiskSummary>(`/centrale-risque/risk-summary?companyId=${companyId}`),
 };

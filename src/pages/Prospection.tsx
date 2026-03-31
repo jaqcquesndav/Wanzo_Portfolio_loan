@@ -11,7 +11,7 @@ import { useProspection } from '../hooks/useProspection';
 import { companyApi } from '../services/api/shared/company.api';
 import type { Company, FinancialMetrics, ESGMetrics } from '../types/company';
 import { ProspectionSkeleton } from '../components/ui/ProspectionSkeleton';
-import { Building2 } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
 import { useErrorBoundary } from '../hooks/useErrorBoundary';
 
 /**
@@ -290,6 +290,13 @@ export default function Prospection() {
           </p>
         </div>
         <div className="flex items-center space-x-4 mt-2 md:mt-0">
+          <button
+            onClick={loadCompanies}
+            title="Actualiser la liste"
+            className="p-1.5 rounded-md text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
           <ViewToggle view={view} onViewChange={setView} />
         </div>
       </div>
