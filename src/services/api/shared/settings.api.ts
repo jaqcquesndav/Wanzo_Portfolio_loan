@@ -6,14 +6,15 @@ import { apiClient } from '../base.api';
  */
 export const settingsApi = {
   /**
-   * Récupère les paramètres de l'application
+   * Récupère les paramètres de l'application en appelant les 3 endpoints catégoriels.
+   * Le backend retourne { success: true, data: {...} } pour chaque catégorie.
    */
-  getApplicationSettings: () => {
-    return apiClient.get<{
-      general: {
+  getApplicationSettings: async () => {
+    const [general, security, notifications] = await Promise.all([
+      apiClient.get<{
         applicationName: string;
-        logo: string;
-        favicon: string;
+        logo?: string;
+        favicon?: string;
         primaryColor: string;
         secondaryColor: string;
         tertiaryColor: string;
@@ -21,8 +22,8 @@ export const settingsApi = {
         language: string;
         dateFormat: string;
         timeFormat: string;
-      };
-      security: {
+      }>('/settings/general'),
+      apiClient.get<{
         passwordPolicy: {
           minLength: number;
           requireLowercase: boolean;
@@ -34,8 +35,8 @@ export const settingsApi = {
         sessionTimeout: number;
         mfaEnabled: boolean;
         mfaMethods: string[];
-      };
-      notifications: {
+      }>('/settings/security'),
+      apiClient.get<{
         emailEnabled: boolean;
         pushEnabled: boolean;
         desktopEnabled: boolean;
@@ -43,8 +44,9 @@ export const settingsApi = {
           enabled: boolean;
           channels: string[];
         }>;
-      };
-    }>('/settings');
+      }>('/settings/notifications'),
+    ]);
+    return { general, security, notifications };
   },
 
   /**
@@ -63,18 +65,16 @@ export const settingsApi = {
     timeFormat?: string;
   }) => {
     return apiClient.put<{
-      settings: {
-        applicationName: string;
-        logo: string;
-        favicon: string;
-        primaryColor: string;
-        secondaryColor: string;
-        tertiaryColor: string;
-        currency: string;
-        language: string;
-        dateFormat: string;
-        timeFormat: string;
-      };
+      applicationName: string;
+      logo?: string;
+      favicon?: string;
+      primaryColor: string;
+      secondaryColor: string;
+      tertiaryColor: string;
+      currency: string;
+      language: string;
+      dateFormat: string;
+      timeFormat: string;
     }>('/settings/general', settings);
   },
 
@@ -95,19 +95,17 @@ export const settingsApi = {
     mfaMethods?: string[];
   }) => {
     return apiClient.put<{
-      settings: {
-        passwordPolicy: {
-          minLength: number;
-          requireLowercase: boolean;
-          requireUppercase: boolean;
-          requireNumbers: boolean;
-          requireSpecialChars: boolean;
-          expiryDays: number;
-        };
-        sessionTimeout: number;
-        mfaEnabled: boolean;
-        mfaMethods: string[];
+      passwordPolicy: {
+        minLength: number;
+        requireLowercase: boolean;
+        requireUppercase: boolean;
+        requireNumbers: boolean;
+        requireSpecialChars: boolean;
+        expiryDays: number;
       };
+      sessionTimeout: number;
+      mfaEnabled: boolean;
+      mfaMethods: string[];
     }>('/settings/security', settings);
   },
 
@@ -124,15 +122,13 @@ export const settingsApi = {
     }>;
   }) => {
     return apiClient.put<{
-      settings: {
-        emailEnabled: boolean;
-        pushEnabled: boolean;
-        desktopEnabled: boolean;
-        notificationSettings: Record<string, {
-          enabled: boolean;
-          channels: string[];
-        }>;
-      };
+      emailEnabled: boolean;
+      pushEnabled: boolean;
+      desktopEnabled: boolean;
+      notificationSettings: Record<string, {
+        enabled: boolean;
+        channels: string[];
+      }>;
     }>('/settings/notifications', settings);
   }
 };

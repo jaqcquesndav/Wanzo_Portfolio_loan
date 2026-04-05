@@ -273,15 +273,9 @@ export function useProspection(initialCompanies: Company[] = []) {
     }
   };
 
-  const handleCreateCompany = async (data: Record<string, unknown>) => {
-    try {
-      const newCompany = await companyApi.createCompany(data as Partial<Company>);
-      setCompanies(prev => [...prev, newCompany]);
-      showNotification('Entreprise créée avec succès', 'success');
-      setShowNewCompanyModal(false);
-    } catch {
-      showNotification('Erreur lors de la création', 'error');
-    }
+  const handleCreateCompany = async (_data: Record<string, unknown>) => {
+    // La création d'entreprise n'est pas supportée par le backend (read-only depuis accounting-service)
+    showNotification('La création d\'entreprise n\'est pas disponible. Les entreprises sont synchronisées depuis le service comptable.', 'error');
   };
 
   return {

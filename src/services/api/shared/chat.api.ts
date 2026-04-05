@@ -67,10 +67,7 @@ export const chatApi = {
       sender: 'user';
       contextId: string;
       streamingEnabled: boolean;
-    }>('/chat/messages', {
-      ...message,
-      streaming: true
-    });
+    }>('/chat/stream', message);
   },
 
   /**

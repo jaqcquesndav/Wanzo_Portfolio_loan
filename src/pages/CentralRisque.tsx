@@ -2,6 +2,7 @@
 import { Button } from '../components/ui/Button';
 import { Download, CreditCard, Truck, TrendingUp, Filter, Plus, RefreshCw } from 'lucide-react';
 import { useCentraleRisqueComplete } from '../hooks/useCentraleRisqueApi';
+import type { RiskEntry } from '../types/centrale-risque';
 import type { 
   CreditRiskEntry, 
   LeasingRiskEntry, 
@@ -43,9 +44,9 @@ export default function CentralRisque() {
   } = useCentraleRisqueComplete();
 
   // Transformer les données API vers le format attendu par les composants
-  const creditData: CreditRiskEntry[] = entries ? CentraleRisqueAdapter.getCreditData(entries) : [];
-  const leasingData: LeasingRiskEntry[] = entries ? CentraleRisqueAdapter.getLeasingData(entries) : [];
-  const investmentData: InvestmentRiskEntry[] = entries ? CentraleRisqueAdapter.getInvestmentData(entries) : [];
+  const creditData: CreditRiskEntry[] = entries ? CentraleRisqueAdapter.getCreditData(entries as RiskEntry[]) : [];
+  const leasingData: LeasingRiskEntry[] = entries ? CentraleRisqueAdapter.getLeasingData(entries as RiskEntry[]) : [];
+  const investmentData: InvestmentRiskEntry[] = entries ? CentraleRisqueAdapter.getInvestmentData(entries as RiskEntry[]) : [];
 
   // Appliquer les filtres et la recherche
   const applyFilters = (data: CreditRiskEntry[] | LeasingRiskEntry[] | InvestmentRiskEntry[]) => {

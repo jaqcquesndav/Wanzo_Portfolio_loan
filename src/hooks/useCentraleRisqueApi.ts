@@ -301,34 +301,27 @@ export function useRiskSummary(filters?: {
 }
 
 /**
- * Hook combiné pour la page Centrale de Risque
- * Utilise les vrais endpoints documentés
+ * Hook combiné pour la page Centrale de Risque.
+ * Récupère toutes les entrées de risque via centraleRisqueApiV2 et retourne
+ * un tableau plat de RiskEntry[] discriminé par riskType.
  */
 export function useCentraleRisqueComplete() {
-  const [allEntries, setAllEntries] = useState<Array<CreditRiskResponse | LeasingRiskResponse | InvestmentRiskResponse>>([]);
+  const [allEntries, setAllEntries] = useState<RiskEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Utiliser les statistiques et alertes de l'API centrale de risque
   const { data: statistics } = useRiskStatistics();
-  const { data: summary } = useRiskSummary();
 
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Pour l'instant, on peut récupérer le rapport de synthèse
-      // qui nous donne la liste des entreprises à risque
-      // Puis pour chaque entreprise, récupérer ses données spécifiques
-      
-      // En attendant d'avoir une liste complète d'entreprises,
-      // on retourne un tableau vide pour éviter les erreurs
-      setAllEntries([]);
-      
+
+      const response = await centraleRisqueApiV2.getRiskEntries({ limit: 200 });
+      setAllEntries(response?.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des données');
-      console.error('Erreur données complètes:', err);
+      console.error('Erreur données centrale de risque:', err);
     } finally {
       setLoading(false);
     }
@@ -338,30 +331,30 @@ export function useCentraleRisqueComplete() {
     fetchAllData();
   }, [fetchAllData]);
 
-  // Pour l'instant, retournons les données en format compatible
   return {
     entries: allEntries,
     statistics,
     alerts: [],
     loading,
     error,
-    createEntry: async (entry: any) => {
-      // Implémenter la création via POST /risk/:type selon la documentation
-      console.log('Creating entry:', entry);
+    createEntry: async (entry: Omit<RiskEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const result = await centraleRisqueApiV2.createRiskEntry(entry);
+      await fetchAllData();
+      return result;
     },
-    updateEntry: async (id: string, updates: any) => {
-      // Implémenter la mise à jour via PUT /risk/:type/:id selon la documentation
-      console.log('Updating entry:', id, updates);
+    updateEntry: async (id: string, updates: Partial<RiskEntry>) => {
+      const result = await centraleRisqueApiV2.updateRiskEntry(id, updates);
+      await fetchAllData();
+      return result;
     },
     deleteEntry: async (id: string) => {
-      // Si l'API supporte la suppression
-      console.log('Deleting entry:', id);
+      await centraleRisqueApiV2.deleteRiskEntry(id);
+      await fetchAllData();
     },
     acknowledgeAlert: async (alertId: string) => {
-      // Si l'API supporte l'acquittement d'alertes
-      console.log('Acknowledging alert:', alertId);
+      await centraleRisqueApiV2.updateAlert(alertId, { status: 'acknowledged' } as any);
     },
-    refetch: fetchAllData
+    refetch: fetchAllData,
   };
 }
 // ============================================================================

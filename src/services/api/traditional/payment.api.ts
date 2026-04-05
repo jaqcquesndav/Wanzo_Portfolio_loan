@@ -69,8 +69,8 @@ export const paymentApi = {
    */
   getPaymentReceipt: async (paymentId: string) => {
     try {
-      const response = await apiClient.get<{ receipt_url: string }>(`/portfolios/traditional/repayments/${paymentId}/receipt`);
-      return response.receipt_url;
+      const response = await apiClient.get<{ url?: string; receiptUrl?: string; receipt_url?: string }>(`/portfolios/traditional/repayments/${paymentId}/receipt`);
+      return (response as any)?.url ?? (response as any)?.receiptUrl ?? (response as any)?.receipt_url ?? null;
     } catch (error) {
       // Fallback sur les données en localStorage si l'API échoue
       console.warn(`Fallback to localStorage for payment receipt ${paymentId}`, error);
@@ -257,19 +257,11 @@ export const paymentApi = {
       const formData = new FormData();
       formData.append('receipt', file);
       
-      // Utiliser les headers d'authentification pour l'upload
-      const response = await fetch(`/api/portfolios/traditional/repayments/${id}/upload-receipt`, {
-        method: 'POST',
-        headers: getAuthHeadersForUpload(),
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.receipt_url;
+      const data = await apiClient.upload<{ url?: string; receiptUrl?: string; receipt_url?: string }>(
+        `/portfolios/traditional/repayments/${id}/upload-receipt`,
+        formData,
+      );
+      return (data as any)?.url ?? (data as any)?.receiptUrl ?? (data as any)?.receipt_url ?? null;
     } catch (error) {
       // Fallback pour le développement
       console.warn(`Fallback for uploading receipt for payment ${id}`, error);

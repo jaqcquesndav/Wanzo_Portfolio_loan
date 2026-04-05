@@ -1,183 +1,153 @@
 // src/adapters/centraleRisqueAdapter.ts
-// Adaptateur pour convertir les données API documentées vers le format des composants existants
+// Converts backend RiskEntry objects to the component-facing legacy format.
 
-import type { 
-  CreditRiskEntry, 
-  LeasingRiskEntry, 
-  InvestmentRiskEntry 
+import type { RiskEntry } from '../types/centrale-risque';
+import type {
+  CreditRiskEntry,
+  LeasingRiskEntry,
+  InvestmentRiskEntry,
 } from '../data/mockCentraleRisque';
 
-// Types basés sur la documentation officielle de l'API
-interface CreditRiskResponse {
-  id: string;
-  companyId: string;
-  companyName: string;
-  sector: string;
-  institution: string;
-  encours: number;
-  statut: 'Actif' | 'En défaut' | 'Clôturé';
-  coteCredit: string;
-  incidents: number;
-  creditScore: number;
-  debtRatio: number;
-  lastUpdated: string;
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Maps RiskCategory enum → letter grade used by legacy UI components */
+function categoryToGrade(category: string | undefined): string {
+  switch (category) {
+    case 'low':       return 'A';
+    case 'medium':    return 'B';
+    case 'high':      return 'C';
+    case 'very_high': return 'D';
+    default:          return 'B';
+  }
 }
 
-interface LeasingRiskResponse {
-  id: string;
-  companyId: string;
-  companyName: string;
-  sector: string;
-  institution: string;
-  equipmentType: string;
-  valeurFinancement: number;
-  statut: 'Actif' | 'En défaut' | 'Clôturé';
-  coteCredit: string;
-  incidents: number;
-  lastUpdated: string;
+/** Maps RiskEntryStatus → French status label for credit/leasing */
+function statusToStatutCredit(status: string | undefined): 'Actif' | 'En défaut' | 'Clôturé' {
+  switch (status) {
+    case 'active':       return 'Actif';
+    case 'defaulted':    return 'En défaut';
+    case 'closed':
+    case 'restructured': return 'Clôturé';
+    default:             return 'Actif';
+  }
 }
 
-interface InvestmentRiskResponse {
-  id: string;
-  companyId: string;
-  companyName: string;
-  sector: string;
-  institution: string;
-  investmentType: 'Action' | 'Obligation';
-  montantInvesti: number;
-  valorisation: number;
-  statut: 'Performant' | 'En difficulté' | 'Clôturé';
-  coteCredit: string;
-  rendementActuel: number;
-  lastUpdated: string;
+/** Maps RiskEntryStatus → French status label for investment */
+function statusToStatutInvestment(status: string | undefined): 'Performant' | 'En difficulté' | 'Clôturé' {
+  switch (status) {
+    case 'active':       return 'Performant';
+    case 'defaulted':    return 'En difficulté';
+    case 'closed':
+    case 'restructured': return 'Clôturé';
+    default:             return 'Performant';
+  }
 }
 
-/**
- * Convertit une réponse API crédit vers le format de données crédit mock
- * (Les données API sont déjà dans le bon format selon la documentation)
- */
-export function adaptApiCreditToMock(apiData: CreditRiskResponse): CreditRiskEntry {
+/** Counts missed payments from paymentHistory */
+function countIncidents(entry: RiskEntry): number {
+  if (!Array.isArray(entry.paymentHistory)) return 0;
+  return entry.paymentHistory.filter((p) => p.status === 'missed').length;
+}
+
+// ── Individual adapters ───────────────────────────────────────────────────────
+
+export function adaptApiCreditToMock(entry: RiskEntry): CreditRiskEntry {
   return {
-    id: apiData.id,
-    companyId: apiData.companyId,
-    companyName: apiData.companyName,
-    sector: apiData.sector,
-    institution: apiData.institution,
-    encours: apiData.encours,
-    statut: apiData.statut,
-    coteCredit: apiData.coteCredit,
-    incidents: apiData.incidents,
-    creditScore: apiData.creditScore,
-    debtRatio: apiData.debtRatio,
-    lastUpdated: apiData.lastUpdated
+    id: entry.id,
+    companyId: entry.companyId,
+    companyName: entry.companyName,
+    sector: entry.sector ?? '',
+    institution: entry.institution ?? '',
+    encours: Number(entry.amount ?? 0),
+    statut: statusToStatutCredit(entry.status as string),
+    coteCredit: categoryToGrade(entry.category as string),
+    incidents: countIncidents(entry),
+    creditScore: entry.creditScore ?? 0,
+    debtRatio: Number(entry.riskScore ?? 0),
+    lastUpdated: entry.updatedAt ? new Date(entry.updatedAt).toISOString() : new Date().toISOString(),
+    createdBy: entry.createdBy,
   };
 }
 
-/**
- * Convertit une réponse API leasing vers le format de données leasing mock
- */
-export function adaptApiLeasingToMock(apiData: LeasingRiskResponse): LeasingRiskEntry {
+export function adaptApiLeasingToMock(entry: RiskEntry): LeasingRiskEntry {
   return {
-    id: apiData.id,
-    companyId: apiData.companyId,
-    companyName: apiData.companyName,
-    sector: apiData.sector,
-    institution: apiData.institution,
-    equipmentType: apiData.equipmentType,
-    valeurFinancement: apiData.valeurFinancement,
-    statut: apiData.statut,
-    coteCredit: apiData.coteCredit,
-    incidents: apiData.incidents,
-    lastUpdated: apiData.lastUpdated
+    id: entry.id,
+    companyId: entry.companyId,
+    companyName: entry.companyName,
+    sector: entry.sector ?? '',
+    institution: entry.institution ?? '',
+    equipmentType: (entry.collateral as any)?.type ?? 'Non spécifié',
+    valeurFinancement: Number(entry.amount ?? 0),
+    statut: statusToStatutCredit(entry.status as string),
+    coteCredit: categoryToGrade(entry.category as string),
+    incidents: countIncidents(entry),
+    lastUpdated: entry.updatedAt ? new Date(entry.updatedAt).toISOString() : new Date().toISOString(),
+    createdBy: entry.createdBy,
   };
 }
 
-/**
- * Convertit une réponse API investissement vers le format de données investissement mock
- */
-export function adaptApiInvestmentToMock(apiData: InvestmentRiskResponse): InvestmentRiskEntry {
+export function adaptApiInvestmentToMock(entry: RiskEntry): InvestmentRiskEntry {
   return {
-    id: apiData.id,
-    companyId: apiData.companyId,
-    companyName: apiData.companyName,
-    sector: apiData.sector,
-    institution: apiData.institution,
-    investmentType: apiData.investmentType,
-    montantInvesti: apiData.montantInvesti,
-    valorisation: apiData.valorisation,
-    statut: apiData.statut,
-    coteCredit: apiData.coteCredit,
-    rendementActuel: apiData.rendementActuel,
-    lastUpdated: apiData.lastUpdated
+    id: entry.id,
+    companyId: entry.companyId,
+    companyName: entry.companyName,
+    sector: entry.sector ?? '',
+    institution: entry.institution ?? '',
+    investmentType: 'Action',
+    montantInvesti: Number(entry.amount ?? 0),
+    valorisation: Number(entry.amount ?? 0),
+    statut: statusToStatutInvestment(entry.status as string),
+    coteCredit: categoryToGrade(entry.category as string),
+    rendementActuel: Number(entry.riskScore ?? 0),
+    lastUpdated: entry.updatedAt ? new Date(entry.updatedAt).toISOString() : new Date().toISOString(),
+    createdBy: entry.createdBy,
   };
 }
 
+// ── Main adapter class ────────────────────────────────────────────────────────
+
 /**
- * Adaptateur principal qui filtre et convertit les entrées par type
+ * Converts a flat RiskEntry[] (discriminated by riskType) to the legacy
+ * component-facing types used by CreditRiskTable / LeasingRiskTable / InvestmentRiskTable.
  */
 export class CentraleRisqueAdapter {
-  static getCreditData(entries: Array<CreditRiskResponse | LeasingRiskResponse | InvestmentRiskResponse>): CreditRiskEntry[] {
+  static getCreditData(entries: RiskEntry[]): CreditRiskEntry[] {
     return entries
-      .filter((entry): entry is CreditRiskResponse => 'encours' in entry)
+      .filter((e) => e.riskType === 'credit')
       .map(adaptApiCreditToMock);
   }
 
-  static getLeasingData(entries: Array<CreditRiskResponse | LeasingRiskResponse | InvestmentRiskResponse>): LeasingRiskEntry[] {
+  static getLeasingData(entries: RiskEntry[]): LeasingRiskEntry[] {
     return entries
-      .filter((entry): entry is LeasingRiskResponse => 'equipmentType' in entry)
+      .filter((e) => e.riskType === 'leasing')
       .map(adaptApiLeasingToMock);
   }
 
-  static getInvestmentData(entries: Array<CreditRiskResponse | LeasingRiskResponse | InvestmentRiskResponse>): InvestmentRiskEntry[] {
+  static getInvestmentData(entries: RiskEntry[]): InvestmentRiskEntry[] {
     return entries
-      .filter((entry): entry is InvestmentRiskResponse => 'investmentType' in entry)
+      .filter((e) => e.riskType === 'investment')
       .map(adaptApiInvestmentToMock);
   }
 
   /**
-   * Crée une nouvelle entrée API à partir des données du formulaire
-   * selon les spécifications de la documentation API
+   * Builds a CreateRiskEntryDto-compatible payload from a form.
+   * Uses actual backend field names.
    */
   static createApiEntryFromForm(formData: any, riskType: 'credit' | 'leasing' | 'investment') {
-    const baseEntry = {
+    return {
       companyId: formData.companyId,
       companyName: formData.companyName,
       institution: formData.institution,
-      sector: formData.sector
+      sector: formData.sector,
+      riskType,
+      amount: formData.amount ?? 0,
+      currency: formData.currency ?? 'CDF',
+      creditScore: formData.creditScore ?? 0,
+      riskScore: formData.riskScore ?? formData.debtRatio ?? 0,
+      category: formData.category ?? 'medium',
+      description: formData.description,
+      collateral: formData.collateral,
+      guarantees: formData.guarantees ?? [],
     };
-
-    switch (riskType) {
-      case 'credit':
-        return {
-          ...baseEntry,
-          encours: formData.encours || formData.amount || 0,
-          coteCredit: formData.coteCredit || 'B',
-          incidents: formData.incidents || 0,
-          creditScore: formData.creditScore || 0,
-          debtRatio: formData.debtRatio || 0
-        };
-
-      case 'leasing':
-        return {
-          ...baseEntry,
-          equipmentType: formData.equipmentType || 'Non spécifié',
-          valeurFinancement: formData.valeurFinancement || formData.amount || 0,
-          coteCredit: formData.coteCredit || 'B',
-          incidents: formData.incidents || 0
-        };
-
-      case 'investment':
-        return {
-          ...baseEntry,
-          investmentType: formData.investmentType || 'Action',
-          montantInvesti: formData.montantInvesti || formData.amount || 0,
-          valorisation: formData.valorisation || formData.amount || 0,
-          coteCredit: formData.coteCredit || 'B',
-          rendementActuel: formData.rendementActuel || 0
-        };
-
-      default:
-        throw new Error(`Type de risque non supporté: ${riskType}`);
-    }
   }
 }

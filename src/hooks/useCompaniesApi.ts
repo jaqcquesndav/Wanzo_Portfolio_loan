@@ -119,7 +119,10 @@ export function useCompanySearch() {
     try {
       setLoading(true);
       setError(null);
-      const data = await companyApi.searchCompanies(searchTerm);
+      const response = await companyApi.searchCompanies(searchTerm);
+      // searchCompanies retourne PaginatedResponse<Company>
+      const inner = (response as any)?.data ?? response;
+      const data: Company[] = Array.isArray(inner) ? inner : (inner?.data ?? []);
       setResults(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la recherche';
@@ -151,7 +154,6 @@ export function useCompanyManagement() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { showNotification } = useNotification();
 
   // Charger toutes les entreprises
   const fetchCompanies = useCallback(async () => {
@@ -186,103 +188,6 @@ export function useCompanyManagement() {
     }
   }, []);
 
-  // Créer une nouvelle entreprise
-  const createCompany = useCallback(async (companyData: Omit<Company, 'id'>) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const newCompany = await companyApi.createCompany(companyData);
-      setCompanies(prev => [...prev, newCompany]);
-      showNotification('Entreprise créée avec succès', 'success');
-      return newCompany;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la création';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur création:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [showNotification]);
-
-  // Mettre à jour une entreprise
-  const updateCompany = useCallback(async (id: string, updates: Partial<Company>) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const updatedCompany = await companyApi.updateCompany(id, updates);
-      setCompanies(prev => prev.map(company => 
-        company.id === id ? updatedCompany : company
-      ));
-      showNotification('Entreprise mise à jour avec succès', 'success');
-      return updatedCompany;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur mise à jour:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [showNotification]);
-
-  // Supprimer une entreprise
-  const deleteCompany = useCallback(async (id: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      await companyApi.deleteCompany(id);
-      setCompanies(prev => prev.filter(company => company.id !== id));
-      showNotification('Entreprise supprimée avec succès', 'success');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur suppression:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [showNotification]);
-
-  // Uploader un document pour une entreprise
-  const uploadDocument = useCallback(async (companyId: string, file: File, metadata: { type: string; description?: string }) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await companyApi.uploadCompanyDocument(companyId, file, metadata);
-      showNotification('Document uploadé avec succès', 'success');
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'upload';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-      console.error('Erreur upload:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [showNotification]);
-
-  // Récupérer les documents d'une entreprise
-  const getCompanyDocuments = useCallback(async (companyId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const documents = await companyApi.getCompanyDocuments(companyId);
-      return documents;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des documents';
-      setError(errorMessage);
-      console.error('Erreur documents:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
@@ -291,11 +196,6 @@ export function useCompanyManagement() {
     companies,
     loading,
     error,
-    createCompany,
-    updateCompany,
-    deleteCompany,
-    uploadDocument,
-    getCompanyDocuments,
     refetch: fetchCompanies
   };
 }
